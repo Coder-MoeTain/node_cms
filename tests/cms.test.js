@@ -1,14 +1,5 @@
 const request = require('supertest');
-const { app, sequelize, models } = require('../server');
-
-beforeAll(async () => {
-  await sequelize.authenticate();
-  await sequelize.sync({ alter: true });
-});
-
-afterAll(async () => {
-  await sequelize.close();
-});
+const { app, models } = require('../server');
 
 test('public home page responds with security headers', async () => {
   const response = await request(app).get('/');

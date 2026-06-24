@@ -9,8 +9,17 @@
     "db:sync": "node database/sync.js",
     "seed": "node database/seed.js",
     "migrate": "node database/migrate.js",
-    "test": "cross-env NODE_ENV=test jest --runInBand",
-    "audit": "npm audit"
+    "test": "cross-env NODE_ENV=test jest --runInBand --forceExit",
+    "test:watch": "cross-env NODE_ENV=test jest --runInBand --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "audit": "npm audit",
+    "backup": "node scripts/backup.js",
+    "health": "node scripts/health-check.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:reload": "pm2 reload ecosystem.config.js",
+    "pm2:stop": "pm2 stop nodepress-cms",
+    "predeploy": "npm run migrate && npm run test"
   },
   "keywords": [
     "cms",
@@ -39,7 +48,6 @@
     "express-session": "latest",
     "express-validator": "latest",
     "helmet": "latest",
-    "jest": "^30.4.2",
     "method-override": "latest",
     "morgan": "latest",
     "multer": "latest",
@@ -50,13 +58,17 @@
     "sharp": "^0.35.2",
     "slugify": "latest",
     "speakeasy": "^2.0.0",
-    "supertest": "^7.2.2",
     "tinymce": "^8.6.0",
     "unzipper": "^0.12.5",
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "cross-env": "^10.1.0",
-    "nodemon": "latest"
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "jest": "^30.4.2",
+    "nodemon": "latest",
+    "supertest": "^7.2.2"
   }
 }

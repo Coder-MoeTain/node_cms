@@ -53,7 +53,8 @@ function canEditComment(user) {
 function canManageUser(currentUser, targetUser) {
   if (!hasPermission(currentUser, 'manage_users')) return false;
   if (isSuperAdmin(currentUser)) return true;
-  return !isSuperAdmin(targetUser);
+  if (isSuperAdmin(targetUser)) return false;
+  return true;
 }
 
 function canManageResource(user, resource, action, record = null) {
@@ -111,6 +112,9 @@ function canManageResource(user, resource, action, record = null) {
   }
   if (record && resource === 'comments' && ['edit', 'update', 'destroy'].includes(action)) {
     return canEditComment(user, record);
+  }
+  if (record && resource === 'users' && ['edit', 'update', 'destroy'].includes(action)) {
+    return canManageUser(user, record);
   }
   return true;
 }

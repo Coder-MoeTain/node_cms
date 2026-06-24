@@ -1,6 +1,6 @@
-<article class="card post-card h-100">
-  <% if (post.featured_image) { %><img class="card-img-top" src="<%= post.featured_image %>" alt="<%= post.title %>"><% } %>
-  <div class="card-body">
+<article class="post-card h-100">
+  <% if (post.featured_image) { %><img class="post-card-image" src="<%= post.featured_image %>" alt="<%= post.title %>"><% } %>
+  <div class="post-card-body">
     <div class="small post-meta mb-2"><%= post.Category ? post.Category.name : 'Uncategorized' %> · <%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %></div>
     <h3 class="h5"><a href="/post/<%= post.slug %>"><%= post.title %></a></h3>
     <p><%= post.excerpt || '' %></p>

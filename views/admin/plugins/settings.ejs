@@ -2,28 +2,38 @@
 <%- include('../partials/sidebar') %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
-  <main class="admin-content">
+  <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <form class="card" method="post" action="/admin/plugins/<%= plugin.slug %>/settings?_method=PUT">
+    <div class="np-page-header">
+      <h1><%= plugin.name %> Settings</h1>
+      <a class="np-btn np-btn-secondary" href="/admin/plugins">Back to Plugins</a>
+    </div>
+
+    <form class="np-widget" method="post" action="/admin/plugins/<%= plugin.slug %>/settings?_method=PUT">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="card-header professional-card-header">
-        <span><%= plugin.name %> Settings</span>
-        <a href="/admin/plugins">Back to plugins</a>
-      </div>
-      <div class="card-body">
+      <div class="np-widget-header"><span>Configuration</span></div>
+      <div class="np-widget-body">
         <p class="text-muted"><%= plugin.description || '' %></p>
-        <% const settings = {}; (plugin.settings || []).forEach(function(setting) { settings[setting.key] = setting.value; }); %>
-        <div class="mb-3">
-          <label class="form-label">Enabled Note</label>
-          <input class="form-control" name="note" value="<%= settings.note || '' %>" placeholder="Internal note for this plugin">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Public Snippet</label>
-          <textarea class="form-control" name="public_snippet" rows="4"><%= settings.public_snippet || '' %></textarea>
-          <div class="form-text">Use plugin code for production snippets; this setting is stored for plugin use.</div>
-        </div>
+        <% fields.forEach(function(field) { %>
+          <div class="mb-3">
+            <label class="form-label" for="setting-<%= field.key %>"><%= field.label || field.key %></label>
+            <% if (field.type === 'textarea') { %>
+              <textarea class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" rows="4" placeholder="<%= field.placeholder || '' %>"><%= settingsMap[field.key] || '' %></textarea>
+            <% } else if (field.type === 'checkbox') { %>
+              <label class="form-check">
+                <input class="form-check-input" id="setting-<%= field.key %>" name="<%= field.key %>" type="checkbox" value="on" <%= settingsMap[field.key] === 'on' || settingsMap[field.key] === 'true' ? 'checked' : '' %>>
+                <%= field.description || field.label %>
+              </label>
+            <% } else { %>
+              <input class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" type="<%= field.type || 'text' %>" value="<%= settingsMap[field.key] || '' %>" placeholder="<%= field.placeholder || '' %>">
+            <% } %>
+            <% if (field.description && field.type !== 'checkbox') { %><div class="form-text"><%= field.description %></div><% } %>
+          </div>
+        <% }) %>
       </div>
-      <div class="card-footer"><button class="btn btn-primary">Save Settings</button></div>
+      <div class="np-widget-footer p-3 border-top">
+        <button class="np-btn np-btn-primary" type="submit">Save Settings</button>
+      </div>
     </form>
   </main>
 </div>

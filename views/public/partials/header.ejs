@@ -2,7 +2,7 @@
   <div class="container">
     <a class="navbar-brand fw-bold" href="/">
       <% const siteLogo = siteSettings.site_logo || activeTheme.logo; %>
-      <% if (siteLogo) { %><img class="site-logo" src="<%= siteLogo %>" alt="<%= siteSettings.site_title || 'NodePress CMS' %>"><% } else { %><span class="brand-orbit"></span><%= siteSettings.site_title || 'NodePress CMS' %><% } %>
+      <% if (siteLogo) { %><img class="site-logo" src="<%= siteLogo %>" alt="<%= siteSettings.site_title || 'NodePress CMS' %>"><% } else { %><span class="brand-mark">NP</span><%= siteSettings.site_title || 'NodePress CMS' %><% } %>
     </a>
     <button class="navbar-toggler site-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu"><span></span><span></span><span></span></button>
     <div class="collapse navbar-collapse" id="mainMenu">

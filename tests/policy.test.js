@@ -44,3 +44,15 @@ test('bulk trash respects post ownership', () => {
   expect(policy.canManageResource(editor, 'posts', 'bulk', otherPost)).toBe(true);
   expect(policy.canManageResource(author, 'posts', 'bulk', otherPost)).toBe(false);
 });
+
+test('admin cannot manage super admin user', () => {
+  const adminUser = { id: 5, Role: { slug: 'admin' }, permissions: ['manage_users'] };
+  const superAdmin = { id: 1, Role: { slug: 'super-admin' }, permissions: [] };
+  expect(policy.canManageUser(adminUser, superAdmin)).toBe(false);
+});
+
+test('super admin can manage other users', () => {
+  const superAdmin = { id: 1, Role: { slug: 'super-admin' }, permissions: [] };
+  const regular = { id: 10, Role: { slug: 'author' }, permissions: [] };
+  expect(policy.canManageUser(superAdmin, regular)).toBe(true);
+});

@@ -28,3 +28,8 @@ test('getLayoutClasses builds body class string', () => {
   expect(classes).toContain('footer-layout-minimal');
   expect(classes).toContain('theme-dark');
 });
+
+test('child theme manifest declares parent', () => {
+  const child = themeLoader.discoverThemes().find((t) => t.manifest.slug === 'minimal-personal');
+  expect(child?.manifest.parent).toBe('classic-blog');
+});

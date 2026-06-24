@@ -1,0 +1,3 @@
+ALTER TABLE themes
+  ADD COLUMN IF NOT EXISTS manifest JSON NULL AFTER preview_image,
+  ADD COLUMN IF NOT EXISTS parent_slug VARCHAR(180) NULL AFTER slug;

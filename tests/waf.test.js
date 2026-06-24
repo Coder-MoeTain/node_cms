@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { app, sequelize, models } = require('../server');
+const { app, models } = require('../server');
 const { clearWafCache } = require('../middleware/waf');
 const {
   validatePattern,
@@ -8,15 +8,6 @@ const {
   matchPattern,
   shouldSkipWaf
 } = require('../utils/wafHelper');
-
-beforeAll(async () => {
-  await sequelize.authenticate();
-  await sequelize.sync({ alter: true });
-});
-
-afterAll(async () => {
-  await sequelize.close();
-});
 
 async function setWafMode(mode) {
   await models.WafSetting.upsert({ setting_key: 'waf_enabled', setting_value: 'true', setting_type: 'boolean' });

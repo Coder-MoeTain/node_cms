@@ -1,14 +1,17 @@
-<aside class="sidebar">
+<aside class="sidebar" aria-label="Sidebar">
   <div class="widget">
     <h5>Recent Posts</h5>
-    <% recentPosts.forEach(function(post) { %><a class="d-block" href="/post/<%= post.slug %>"><%= post.title %></a><% }) %>
+    <% recentPosts.forEach(function(post) { %><a href="/post/<%= post.slug %>"><%= post.title %></a><% }) %>
+    <% if (!recentPosts.length) { %><p class="text-muted small mb-0">No posts yet.</p><% } %>
   </div>
   <div class="widget">
     <h5>Popular Posts</h5>
-    <% popularPosts.forEach(function(post) { %><a class="d-block" href="/post/<%= post.slug %>"><%= post.title %></a><% }) %>
+    <% popularPosts.forEach(function(post) { %><a href="/post/<%= post.slug %>"><%= post.title %></a><% }) %>
+    <% if (!popularPosts.length) { %><p class="text-muted small mb-0">No popular posts yet.</p><% } %>
   </div>
   <div class="widget">
     <h5>Categories</h5>
     <% sidebarCategories.forEach(function(category) { %><a class="badge text-bg-light me-1 mb-1" href="/category/<%= category.slug %>"><%= category.name %></a><% }) %>
+    <% if (!sidebarCategories.length) { %><p class="text-muted small mb-0">No categories yet.</p><% } %>
   </div>
 </aside>

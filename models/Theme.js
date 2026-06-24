@@ -6,5 +6,7 @@ module.exports = (sequelize) =>
     slug: { type: DataTypes.STRING(140), allowNull: false, unique: true },
     description: DataTypes.TEXT,
     preview_image: DataTypes.STRING(255),
+    manifest: DataTypes.JSON,
+    parent_slug: DataTypes.STRING(180),
     active: { type: DataTypes.BOOLEAN, defaultValue: false }
   }, { tableName: 'themes' });

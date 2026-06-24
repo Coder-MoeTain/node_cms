@@ -9,43 +9,67 @@
       <a class="np-btn np-btn-secondary" href="/admin/themes/editor">Customize</a>
     </div>
     <%- include('../partials/settings-nav') %>
+
+    <div class="np-widget mb-3">
+      <div class="np-widget-header"><span>Install Theme</span></div>
+      <div class="np-widget-body">
+        <form method="post" action="/admin/themes/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data" class="row g-2 align-items-end">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="col-md-8">
+            <label class="form-label" for="theme-archive">Upload theme (.zip)</label>
+            <input class="form-control" id="theme-archive" type="file" name="archive" accept=".zip" required>
+            <div class="form-text">Archive must contain <code>theme.json</code>. Child themes require the parent theme installed first.</div>
+          </div>
+          <div class="col-md-4">
+            <button class="np-btn np-btn-primary w-100" type="submit"><i class="bi bi-upload"></i> Install Theme</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div class="row g-3 mb-3">
       <% themes.forEach(function(theme) { %>
         <div class="col-md-4">
-          <div class="card h-100">
-            <div class="theme-preview"></div>
-            <div class="card-body">
-              <h5><%= theme.name %></h5>
-              <p class="text-muted"><%= theme.slug %></p>
+          <div class="np-widget h-100 theme-card">
+            <div class="theme-preview-card">
+              <% if (theme.preview_image) { %>
+                <img src="<%= theme.preview_image %>" alt="<%= theme.name %> preview" class="theme-preview-img">
+              <% } else { %>
+                <div class="theme-preview-placeholder"><i class="bi bi-image" aria-hidden="true"></i></div>
+              <% } %>
+            </div>
+            <div class="np-widget-body">
+              <h5 class="mb-1"><%= theme.name %></h5>
+              <p class="text-muted small mb-1"><%= theme.slug %><% if (theme.parent_slug) { %> · child of <%= theme.parent_slug %><% } %></p>
+              <p class="text-muted small mb-3"><%= theme.description || '' %></p>
               <form method="post" action="/admin/themes/activate">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <input type="hidden" name="theme_id" value="<%= theme.id %>">
-                <button class="btn <%= theme.active ? 'btn-success' : 'btn-outline-primary' %>"><%= theme.active ? 'Active' : 'Activate' %></button>
+                <button class="np-btn np-btn-small <%= theme.active ? 'np-btn-primary' : 'np-btn-secondary' %>" type="submit" <%= theme.active ? 'disabled' : '' %>><%= theme.active ? 'Active' : 'Activate' %></button>
               </form>
             </div>
           </div>
         </div>
       <% }) %>
     </div>
-    <form class="card" method="post" action="/admin/theme-settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
+
+    <form class="np-widget" method="post" action="/admin/theme-settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="card-header">Layout & Color Settings</div>
-      <div class="card-body row g-3">
-        <div class="col-md-3"><label class="form-label">Primary Color</label><input class="form-control" type="color" name="primary_color" value="<%= themeSetting.primary_color || '#0d6efd' %>"></div>
-        <div class="col-md-3"><label class="form-label">Secondary Color</label><input class="form-control" type="color" name="secondary_color" value="<%= themeSetting.secondary_color || '#6c757d' %>"></div>
+      <div class="np-widget-header"><span>Quick Theme Settings</span></div>
+      <div class="np-widget-body row g-3">
+        <div class="col-md-3"><label class="form-label">Primary</label><input class="form-control" type="color" name="primary_color" value="<%= themeSetting.primary_color || '#2271b1' %>"></div>
+        <div class="col-md-3"><label class="form-label">Secondary</label><input class="form-control" type="color" name="secondary_color" value="<%= themeSetting.secondary_color || '#50575e' %>"></div>
         <div class="col-md-3"><label class="form-label">Background</label><input class="form-control" type="color" name="background_color" value="<%= themeSetting.background_color || '#ffffff' %>"></div>
-        <div class="col-md-3"><label class="form-label">Text Color</label><input class="form-control" type="color" name="text_color" value="<%= themeSetting.text_color || '#212529' %>"></div>
-        <div class="col-md-4"><label class="form-label">Font Family</label><input class="form-control" name="font_family" value="<%= themeSetting.font_family || '' %>"></div>
-        <div class="col-md-4"><label class="form-label">Site Layout</label><select class="form-select" name="site_layout"><option value="full-width">Full width</option><option value="boxed" <%= themeSetting.site_layout === 'boxed' ? 'selected' : '' %>>Boxed</option></select></div>
+        <div class="col-md-3"><label class="form-label">Text</label><input class="form-control" type="color" name="text_color" value="<%= themeSetting.text_color || '#1d2327' %>"></div>
         <div class="col-md-4"><label class="form-label">Blog Layout</label><select class="form-select" name="blog_layout"><option value="grid">Grid</option><option value="list" <%= themeSetting.blog_layout === 'list' ? 'selected' : '' %>>List</option><option value="masonry" <%= themeSetting.blog_layout === 'masonry' ? 'selected' : '' %>>Masonry</option></select></div>
-        <div class="col-md-4"><label class="form-label">Header Style</label><input class="form-control" name="header_layout" value="<%= themeSetting.header_layout || 'standard' %>"></div>
-        <div class="col-md-4"><label class="form-label">Footer Style</label><input class="form-control" name="footer_layout" value="<%= themeSetting.footer_layout || 'four-columns' %>"></div>
-        <div class="col-md-4"><label class="form-label">Sidebar Position</label><select class="form-select" name="sidebar_position"><option value="right">Right</option><option value="left" <%= themeSetting.sidebar_position === 'left' ? 'selected' : '' %>>Left</option><option value="none" <%= themeSetting.sidebar_position === 'none' ? 'selected' : '' %>>None</option></select></div>
+        <div class="col-md-4"><label class="form-label">Header Layout</label><select class="form-select" name="header_layout"><% ['standard','centered','minimal'].forEach(function(v) { %><option value="<%= v %>" <%= (themeSetting.header_layout || 'standard') === v ? 'selected' : '' %>><%= v %></option><% }) %></select></div>
+        <div class="col-md-4"><label class="form-label">Footer Layout</label><select class="form-select" name="footer_layout"><% ['four-columns','simple','minimal'].forEach(function(v) { %><option value="<%= v %>" <%= (themeSetting.footer_layout || 'four-columns') === v ? 'selected' : '' %>><%= v %></option><% }) %></select></div>
         <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Logo', name: 'logo', fileName: 'logo_file', value: themeSetting.logo || '' }) %></div>
         <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Favicon', name: 'favicon', fileName: 'favicon_file', value: themeSetting.favicon || '' }) %></div>
-        <div class="col-12"><label class="form-check"><input class="form-check-input" name="dark_mode" type="checkbox" <%= themeSetting.dark_mode ? 'checked' : '' %>> Enable dark mode</label></div>
       </div>
-      <div class="card-footer"><button class="np-btn np-btn-primary" type="submit">Save Theme Settings</button></div>
+      <div class="np-widget-footer p-3 border-top">
+        <button class="np-btn np-btn-primary" type="submit">Save Theme Settings</button>
+      </div>
     </form>
   </main>
 </div>

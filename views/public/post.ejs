@@ -1,75 +1,183 @@
 <%- include('partials/head') %>
 <%- include('partials/header') %>
-<main class="container py-4" id="main-content">
-  <nav class="breadcrumb-nav small mb-3" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">/</span> <a href="/blog">Blog</a> <span aria-hidden="true">/</span> <span aria-current="page"><%= post.title %></span></nav>
-  <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
-    <article class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
-      <header class="entry-header mb-3">
-        <h1 class="entry-title"><%= post.title %></h1>
-        <div class="entry-meta text-muted">
-          <time datetime="<%= post.published_at || post.created_at %>"><%= (post.published_at || post.created_at).toLocaleDateString() %></time>
-          · By <%= post.author ? post.author.name : 'Author' %>
-          <% if (post.Category) { %> · <a href="/category/<%= post.Category.slug %>"><%= post.Category.name %></a><% } %>
-        </div>
-      </header>
-      <% if (post.featured_image) { %><img class="img-fluid entry-image mb-3" src="<%= post.featured_image %>" alt="<%= post.title %>"><% } %>
-      <% if (post.video_url) { %><div class="ratio ratio-16x9 mb-3"><iframe src="<%= post.video_url %>" title="Video" allowfullscreen></iframe></div><% } %>
-      <div class="entry-content content"><%- post.content %></div>
-      <% if ((post.Tags || []).length) { %>
-        <div class="entry-tags mt-3"><% (post.Tags || []).forEach(function(tag) { %><a class="np-badge np-badge-muted text-decoration-none me-1" href="/tag/<%= tag.slug %>"><%= tag.name %></a><% }) %></div>
-      <% } %>
+<%
+  const plainText = (post.content || '').replace(/<[^>]+>/g, ' ').trim();
+  const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+  const readMinutes = Math.max(1, Math.ceil(wordCount / 200));
+  const publishedDate = post.published_at || post.created_at;
+  const authorInitial = post.author && post.author.name ? post.author.name.trim().charAt(0).toUpperCase() : 'A';
+%>
+<main class="post-page" id="main-content">
+  <% if (post.featured_image) { %>
+    <figure class="post-hero">
+      <img src="<%= post.featured_image %>" alt="<%= post.title %>">
+      <div class="post-hero-shade" aria-hidden="true"></div>
+    </figure>
+  <% } %>
 
-      <% if (post.author) { %>
-        <aside class="post-author-box" aria-label="About the author">
-          <strong>About <%= post.author.name %></strong>
-          <p class="mb-0 text-muted">Author at <%= siteSettings.site_title || 'NodePress CMS' %></p>
-        </aside>
-      <% } %>
+  <div class="container post-page-shell py-4">
+    <nav class="post-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="post-breadcrumb-sep" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+      <a href="/blog">Blog</a>
+      <span class="post-breadcrumb-sep" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+      <span class="post-breadcrumb-current" aria-current="page"><%= post.title %></span>
+    </nav>
 
-      <% if (prevPost || nextPost) { %>
-        <nav class="post-nav-links" aria-label="Post navigation">
-          <div><% if (prevPost) { %><span class="text-muted small d-block">Previous</span><a href="/post/<%= prevPost.slug %>">← <%= prevPost.title %></a><% } %></div>
-          <div class="text-end"><% if (nextPost) { %><span class="text-muted small d-block">Next</span><a href="/post/<%= nextPost.slug %>"><%= nextPost.title %> →</a><% } %></div>
-        </nav>
-      <% } %>
+    <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
+      <article class="post-article <%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
+        <header class="post-header<%= post.featured_image ? ' post-header--overlap' : '' %>">
+          <% if (post.Category) { %>
+            <a class="post-category-pill" href="/category/<%= post.Category.slug %>"><%= post.Category.name %></a>
+          <% } %>
+          <h1 class="post-title"><%= post.title %></h1>
+          <% if (post.excerpt) { %><p class="post-lead"><%= post.excerpt %></p><% } %>
+          <ul class="post-meta-list">
+            <li>
+              <i class="bi bi-calendar3" aria-hidden="true"></i>
+              <time datetime="<%= publishedDate %>"><%= publishedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) %></time>
+            </li>
+            <li>
+              <i class="bi bi-person" aria-hidden="true"></i>
+              <span><%= post.author ? post.author.name : 'Author' %></span>
+            </li>
+            <li>
+              <i class="bi bi-clock" aria-hidden="true"></i>
+              <span><%= readMinutes %> min read</span>
+            </li>
+            <% if (post.views_count) { %>
+              <li>
+                <i class="bi bi-eye" aria-hidden="true"></i>
+                <span><%= post.views_count.toLocaleString() %> views</span>
+              </li>
+            <% } %>
+          </ul>
+        </header>
 
-      <% if (relatedPosts && relatedPosts.length) { %>
-        <section class="mt-5">
-          <h2 class="h4 mb-3">Related Posts</h2>
-          <div class="row g-3">
-            <% relatedPosts.forEach(function(item) { %>
-              <div class="col-md-4"><%- include('partials/post-card', { post: item }) %></div>
-            <% }) %>
+        <% if (post.video_url) { %>
+          <div class="post-media post-video">
+            <div class="ratio ratio-16x9">
+              <iframe src="<%= post.video_url %>" title="Video" allowfullscreen></iframe>
+            </div>
           </div>
-        </section>
-      <% } %>
+        <% } %>
 
-      <% if (post.allow_comments) { %>
-        <section class="mt-5" id="comments">
-          <h2 class="h4">Comments</h2>
-          <% (post.comments || []).forEach(function(comment) { %>
-            <div class="comment-item border rounded p-3 mb-2">
-              <strong><%= comment.name %></strong>
-              <p class="mb-0"><%= comment.content %></p>
+        <div class="post-content entry-content content"><%- post.content %></div>
+
+        <% if ((post.Tags || []).length) { %>
+          <div class="post-tags">
+            <span class="post-tags-label"><i class="bi bi-tags" aria-hidden="true"></i> Tags</span>
+            <div class="post-tags-list">
+              <% (post.Tags || []).forEach(function(tag) { %>
+                <a class="post-tag" href="/tag/<%= tag.slug %>"><%= tag.name %></a>
+              <% }) %>
             </div>
-          <% }) %>
-          <form class="np-card mt-3" method="post" action="/post/<%= post.id %>/comment">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <div class="np-card-body">
-              <h3 class="h5">Leave a Reply</h3>
-              <div class="row g-3">
-                <div class="col-md-6"><label class="form-label" for="comment-name">Name</label><input class="form-control" id="comment-name" name="name" required></div>
-                <div class="col-md-6"><label class="form-label" for="comment-email">Email</label><input class="form-control" id="comment-email" name="email" type="email" required></div>
-                <div class="col-12"><label class="form-label" for="comment-website">Website</label><input class="form-control" id="comment-website" name="website"></div>
-                <div class="col-12"><label class="form-label" for="comment-content">Comment</label><textarea class="form-control" id="comment-content" name="content" rows="4" required></textarea></div>
+          </div>
+        <% } %>
+
+        <% if (post.author) { %>
+          <aside class="post-author-box" aria-label="About the author">
+            <div class="post-author-avatar" aria-hidden="true">
+              <% if (post.author.profile_image) { %>
+                <img src="<%= post.author.profile_image %>" alt="">
+              <% } else { %>
+                <span><%= authorInitial %></span>
+              <% } %>
+            </div>
+            <div class="post-author-body">
+              <span class="post-author-label">Written by</span>
+              <strong class="post-author-name"><%= post.author.name %></strong>
+              <p class="mb-0">Contributor at <%= siteSettings.site_title || 'NodePress CMS' %></p>
+            </div>
+          </aside>
+        <% } %>
+
+        <% if (prevPost || nextPost) { %>
+          <nav class="post-nav-links" aria-label="Post navigation">
+            <% if (prevPost) { %>
+              <a class="post-nav-card post-nav-card--prev" href="/post/<%= prevPost.slug %>">
+                <span class="post-nav-direction"><i class="bi bi-arrow-left" aria-hidden="true"></i> Previous</span>
+                <span class="post-nav-title"><%= prevPost.title %></span>
+              </a>
+            <% } else { %>
+              <span class="post-nav-spacer"></span>
+            <% } %>
+            <% if (nextPost) { %>
+              <a class="post-nav-card post-nav-card--next" href="/post/<%= nextPost.slug %>">
+                <span class="post-nav-direction">Next <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                <span class="post-nav-title"><%= nextPost.title %></span>
+              </a>
+            <% } %>
+          </nav>
+        <% } %>
+
+        <% if (relatedPosts && relatedPosts.length) { %>
+          <section class="post-related">
+            <div class="section-heading post-related-heading">
+              <h2 class="h4 mb-0">Related Posts</h2>
+              <a href="/blog">View all</a>
+            </div>
+            <div class="row g-3">
+              <% relatedPosts.forEach(function(item) { %>
+                <div class="col-md-4"><%- include('partials/post-card', { post: item }) %></div>
+              <% }) %>
+            </div>
+          </section>
+        <% } %>
+
+        <% if (post.allow_comments) { %>
+          <section class="post-comments" id="comments">
+            <div class="post-comments-header">
+              <h2 class="h4 mb-0">Comments</h2>
+              <span class="post-comments-count"><%= (post.comments || []).length %> <%= (post.comments || []).length === 1 ? 'reply' : 'replies' %></span>
+            </div>
+            <% if ((post.comments || []).length) { %>
+              <div class="post-comment-list">
+                <% (post.comments || []).forEach(function(comment) { %>
+                  <article class="post-comment">
+                    <div class="post-comment-avatar" aria-hidden="true"><%= comment.name.trim().charAt(0).toUpperCase() %></div>
+                    <div class="post-comment-body">
+                      <header class="post-comment-meta">
+                        <strong><%= comment.name %></strong>
+                      </header>
+                      <p class="mb-0"><%= comment.content %></p>
+                    </div>
+                  </article>
+                <% }) %>
               </div>
-              <button class="np-btn np-btn-primary mt-3" type="submit">Post Comment</button>
-            </div>
-          </form>
-        </section>
+            <% } else { %>
+              <p class="post-comments-empty text-muted">No comments yet. Be the first to share your thoughts.</p>
+            <% } %>
+            <form class="post-comment-form" method="post" action="/post/<%= post.id %>/comment">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <h3 class="h5 post-comment-form-title">Leave a reply</h3>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="comment-name">Name</label>
+                  <input class="form-control" id="comment-name" name="name" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="comment-email">Email</label>
+                  <input class="form-control" id="comment-email" name="email" type="email" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="comment-website">Website</label>
+                  <input class="form-control" id="comment-website" name="website">
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="comment-content">Comment</label>
+                  <textarea class="form-control" id="comment-content" name="content" rows="4" required></textarea>
+                </div>
+              </div>
+              <button class="btn btn-primary post-comment-submit" type="submit">Post comment</button>
+            </form>
+          </section>
+        <% } %>
+      </article>
+      <% if (activeTheme.sidebar_position !== 'none') { %>
+        <div class="col-lg-4"><%- include('partials/sidebar') %></div>
       <% } %>
-    </article>
-    <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include('partials/sidebar') %></div><% } %>
+    </div>
   </div>
 </main>
 <%- include('partials/footer') %>

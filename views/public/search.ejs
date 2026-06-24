@@ -1,10 +1,18 @@
 <%- include('partials/head') %>
 <%- include('partials/header') %>
-<main class="container py-4">
-  <h1>Search</h1>
-  <form class="d-flex gap-2 mb-4"><input class="form-control" name="q" value="<%= q %>" placeholder="Search posts"><button class="btn btn-primary">Search</button></form>
+<main class="container py-4" id="main-content">
+  <h1 class="mb-4">Search</h1>
+  <form class="search-form-bar" action="/search" role="search">
+    <input class="form-control" name="q" value="<%= q %>" placeholder="Search posts…" aria-label="Search query">
+    <button class="site-btn" type="submit">Search</button>
+  </form>
+  <% if (q) { %><p class="text-muted mb-3">Results for “<%= q %>”</p><% } %>
   <div class="row g-4">
-    <% posts.forEach(function(post) { %><div class="col-md-4"><%- include('partials/post-card', { post }) %></div><% }) %>
+    <% if (posts.length) { %>
+      <% posts.forEach(function(post) { %><div class="col-md-6 col-lg-4"><%- include('partials/post-card', { post }) %></div><% }) %>
+    <% } else { %>
+      <div class="col-12"><div class="np-card"><div class="np-card-body text-center text-muted">No posts found.</div></div></div>
+    <% } %>
   </div>
 </main>
 <%- include('partials/footer') %>

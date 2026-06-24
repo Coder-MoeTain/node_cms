@@ -1,9 +1,4 @@
 const pluginLoader = require('../utils/pluginLoader');
-const { sequelize } = require('../models');
-
-beforeAll(async () => {
-  await sequelize.authenticate();
-});
 
 test('collectHook merges plugin widget output', async () => {
   pluginLoader.registerHook('widget-demo', () => ({ title: 'A', body: 'one' }), 10);

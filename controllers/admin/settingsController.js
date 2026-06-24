@@ -1,6 +1,9 @@
+const fs = require('fs');
+const path = require('path');
 const { SiteSetting, Theme, ThemeSetting, Media } = require('../../models');
 const themeLoader = require('../../utils/themeLoader');
 const { resolveImageValue } = require('../../utils/uploadHelper');
+const { extractZipArchive } = require('../../utils/packageArchive');
 
 const defaultSettings = {
   site_logo: { value: '', group: 'branding' },
@@ -145,4 +148,27 @@ async function themeEditor(req, res, next) {
   }
 }
 
-module.exports = { settings, updateSettings, mediaGallery, themes, activateTheme, updateThemeSettings, themeEditor };
+async function uploadTheme(req, res, next) {
+  try {
+    if (!req.file) {
+      req.flash('error', 'Choose a theme .zip archive to upload.');
+      return res.redirect('/admin/themes');
+    }
+    const { manifest } = await extractZipArchive(req.file.path, themeLoader.themesRoot, 'theme.json');
+    if (manifest.parent) {
+      const parentExists = fs.existsSync(path.join(themeLoader.themesRoot, manifest.parent, 'theme.json'));
+      if (!parentExists) {
+        req.flash('error', `Parent theme "${manifest.parent}" is not installed. Install the parent theme first.`);
+        return res.redirect('/admin/themes');
+      }
+    }
+    await themeLoader.syncInstalledThemes();
+    req.flash('success', `Theme "${manifest.name}" installed successfully.`);
+    return res.redirect('/admin/themes');
+  } catch (error) {
+    req.flash('error', error.message || 'Theme upload failed.');
+    return res.redirect('/admin/themes');
+  }
+}
+
+module.exports = { settings, updateSettings, mediaGallery, themes, activateTheme, updateThemeSettings, themeEditor, uploadTheme };

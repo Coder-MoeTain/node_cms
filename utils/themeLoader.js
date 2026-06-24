@@ -39,13 +39,17 @@ async function syncInstalledThemes() {
         name: manifest.name,
         description: manifest.description,
         preview_image: manifest.screenshot || `/themes/${manifest.slug}/screenshot.svg`,
+        manifest,
+        parent_slug: manifest.parent || null,
         active: false
       }
     });
     await Theme.update({
       name: manifest.name,
       description: manifest.description,
-      preview_image: manifest.screenshot || `/themes/${manifest.slug}/screenshot.svg`
+      preview_image: manifest.screenshot || `/themes/${manifest.slug}/screenshot.svg`,
+      manifest,
+      parent_slug: manifest.parent || null
     }, { where: { slug: manifest.slug } });
   }
   return discovered;

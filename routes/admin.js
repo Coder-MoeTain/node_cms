@@ -5,6 +5,7 @@ const { can, canAny, policy } = require('../middleware/permission');
 const { loginLimiter } = require('../middleware/security');
 const { activityLogMiddleware } = require('../middleware/activityLog');
 const upload = require('../middleware/upload');
+const { zipUpload } = require('../middleware/zipUpload');
 
 const crudImageUpload = upload.image.fields([
   { name: 'featured_image_file', maxCount: 1 },
@@ -53,8 +54,10 @@ router.put('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), 
 router.delete('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), media.destroy);
 
 router.get('/plugins', requireAuth, can('manage_plugins'), plugins.index);
+router.post('/plugins/upload', requireAuth, can('manage_plugins'), zipUpload.single('archive'), plugins.upload);
 router.post('/plugins/:slug/activate', requireAuth, can('manage_plugins'), plugins.activate);
 router.post('/plugins/:slug/deactivate', requireAuth, can('manage_plugins'), plugins.deactivate);
+router.post('/plugins/:slug/uninstall', requireAuth, can('manage_plugins'), plugins.uninstall);
 router.get('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.settings);
 router.put('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.updateSettings);
 
@@ -62,6 +65,7 @@ router.get('/settings/media-gallery', requireAuth, can('manage_settings'), setti
 router.get('/settings', requireAuth, can('manage_settings'), settings.settings);
 router.put('/settings', requireAuth, can('manage_settings'), brandingImageUpload, settings.updateSettings);
 router.get('/themes', requireAuth, can('manage_themes'), settings.themes);
+router.post('/themes/upload', requireAuth, can('manage_themes'), zipUpload.single('archive'), settings.uploadTheme);
 router.get('/themes/editor', requireAuth, can('manage_themes'), settings.themeEditor);
 router.post('/themes/activate', requireAuth, can('manage_themes'), settings.activateTheme);
 router.put('/theme-settings', requireAuth, can('manage_themes'), brandingImageUpload, settings.updateThemeSettings);
