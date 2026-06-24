@@ -6,6 +6,7 @@ const { resolveImageValue } = require('../../utils/uploadHelper');
 const { createSlug, createUniqueSlug } = require('../../utils/slugGenerator');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const policy = require('../../utils/policy');
+const pluginLoader = require('../../utils/pluginLoader');
 
 const richTextSanitizeOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
@@ -27,11 +28,13 @@ function sanitizePlainText(value, maxLength = 1000) {
   return sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).slice(0, maxLength);
 }
 
-function allowedStatus(body, req) {
-  if (body.status === 'published' && !policy.can(req.session.user, 'publish_posts')) {
-    return 'draft';
+function allowedStatus(body, req, record = null) {
+  const status = body.status || 'draft';
+  if (status === 'draft') return 'draft';
+  if (!policy.canPublishPost(req.session.user, record) && !policy.hasPermission(req.session.user, 'manage_pages')) {
+    return record?.status || 'draft';
   }
-  return body.status || 'draft';
+  return status;
 }
 
 async function ensureUserMutationAllowed(req, payload, record = null) {
@@ -40,6 +43,11 @@ async function ensureUserMutationAllowed(req, payload, record = null) {
 
   if (targetRole?.slug === 'super-admin' && !policy.isSuperAdmin(currentUser)) {
     const error = new Error('Only Super Admins can assign the Super Admin role.');
+    error.status = 403;
+    throw error;
+  }
+  if (targetRole && !policy.canAssignRole(currentUser, targetRole.slug)) {
+    const error = new Error('You cannot assign that role.');
     error.status = 403;
     throw error;
   }
@@ -81,7 +89,7 @@ const configs = {
     include: [{ model: models.Category }, { model: models.User, as: 'author' }, models.Tag],
     formData: async () => ({ categories: await models.Category.findAll(), tags: await models.Tag.findAll(), users: await models.User.findAll() }),
     payload: async (body, req, record = null, transaction = null) => {
-      const status = allowedStatus(body, req);
+      const status = allowedStatus(body, req, record);
       const canAssignAuthor = policy.can(req.session.user, 'manage_posts');
       return {
         title: sanitizePlainText(body.title, 220),
@@ -124,7 +132,7 @@ const configs = {
         record,
         transaction
       }),
-      status: allowedStatus(body, req),
+      status: allowedStatus(body, req, record),
       seo_title: sanitizePlainText(body.seo_title, 220),
       seo_description: sanitizePlainText(body.seo_description, 1000),
       og_image: sanitizePlainText(body.og_image, 255),
@@ -325,10 +333,22 @@ async function store(req, res, next) {
       return res.redirect(`/admin/${resource}`);
     }
     await models.sequelize.transaction(async (transaction) => {
-      const payload = await config.payload(req.body, req, null, transaction);
+      let payload = await config.payload(req.body, req, null, transaction);
       if (resource === 'users') await ensureUserMutationAllowed(req, payload);
+      if (resource === 'posts') {
+        const filtered = await pluginLoader.applyFilters('beforePostSave', payload, { req, record: null, transaction });
+        if (filtered === false || filtered === null) {
+          const error = new Error('Post save blocked by a plugin.');
+          error.status = 400;
+          throw error;
+        }
+        payload = filtered || payload;
+      }
       const record = await config.model.create(payload, { transaction });
       if (config.afterSave) await config.afterSave(record, req.body, transaction);
+      if (resource === 'posts') {
+        await pluginLoader.doAction('afterPostSave', record, { req, transaction, isNew: true });
+      }
     });
     req.flash('success', `${config.title} saved.`);
     return res.redirect(`/admin/${resource}`);
@@ -370,13 +390,25 @@ async function update(req, res, next) {
       return res.redirect(`/admin/${resource}`);
     }
     await models.sequelize.transaction(async (transaction) => {
-      const payload = await config.payload(req.body, req, record, transaction);
+      let payload = await config.payload(req.body, req, record, transaction);
       if (resource === 'users') {
         await ensureNotLastSuperAdmin(record);
         await ensureUserMutationAllowed(req, payload, record);
       }
+      if (resource === 'posts') {
+        const filtered = await pluginLoader.applyFilters('beforePostSave', payload, { req, record, transaction });
+        if (filtered === false || filtered === null) {
+          const error = new Error('Post save blocked by a plugin.');
+          error.status = 400;
+          throw error;
+        }
+        payload = filtered || payload;
+      }
       await record.update(payload, { transaction });
       if (config.afterSave) await config.afterSave(record, req.body, transaction);
+      if (resource === 'posts') {
+        await pluginLoader.doAction('afterPostSave', record, { req, transaction, isNew: false });
+      }
     });
     req.flash('success', `${config.title} updated.`);
     return res.redirect(`/admin/${resource}`);

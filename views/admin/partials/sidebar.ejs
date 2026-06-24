@@ -27,7 +27,7 @@
       </div>
     <% } %>
 
-    <% if (can('manage_media')) { %>
+    <% if (canAny(['manage_media', 'upload_media'])) { %>
       <div class="nav-menu">
         <button class="nav-menu-toggle <%= isActive('/admin/media') ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMedia" aria-expanded="<%= isActive('/admin/media') ? 'true' : 'false' %>">
           <span><i class="bi bi-images"></i> Media</span><i class="bi bi-chevron-down"></i>
@@ -140,6 +140,21 @@
           <div class="nav-submenu">
             <a class="nav-link <%= isActive('/admin/settings') && currentPath !== '/admin/settings/database' ? 'active' : '' %>" href="/admin/settings">General</a>
             <% if (canAny(['manage_settings','manage_security'])) { %><a class="nav-link <%= isActive('/admin/settings/database') ? 'active' : '' %>" href="/admin/settings/database">Database</a><% } %>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <% if ((pluginAdminMenuItems || []).length) { %>
+      <div class="nav-menu">
+        <button class="nav-menu-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarPluginMenus" aria-expanded="false">
+          <span><i class="bi bi-box-seam"></i> Extensions</span><i class="bi bi-chevron-down"></i>
+        </button>
+        <div id="sidebarPluginMenus" class="collapse">
+          <div class="nav-submenu">
+            <% pluginAdminMenuItems.forEach(function(item) { %>
+              <a class="nav-link <%= isActive(item.href || '') ? 'active' : '' %>" href="<%= item.href || '#' %>"><%= item.label || item.title %></a>
+            <% }) %>
           </div>
         </div>
       </div>

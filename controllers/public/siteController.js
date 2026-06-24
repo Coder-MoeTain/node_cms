@@ -65,8 +65,29 @@ async function translateViewData(res, data) {
   return output;
 }
 
-async function renderPublic(res, template, locals) {
-  return renderTheme(res, template, await translateViewData(res, locals));
+async function applyRenderHooks(res, locals, hookNames = {}) {
+  const context = { req: res.req, res, template: hookNames.template };
+  let data = locals;
+  if (hookNames.before) {
+    const filtered = await pluginLoader.applyFilters(hookNames.before, data, context);
+    if (filtered === false || filtered === null) return null;
+    data = filtered || data;
+  }
+  const translated = await translateViewData(res, data);
+  if (hookNames.after) {
+    await pluginLoader.doAction(hookNames.after, translated, context);
+  }
+  return translated;
+}
+
+async function renderPublic(res, template, locals, renderHooks = null) {
+  const hooks = renderHooks || {};
+  if (!hooks.template) hooks.template = template;
+  const data = await applyRenderHooks(res, locals, hooks);
+  if (data === null) {
+    return res.status(404).render('public/error', { title: 'Not Found', code: 404, message: 'This content is not available.' });
+  }
+  return renderTheme(res, template, data);
 }
 
 async function postsForCategorySlug(slug, limit = 6) {
@@ -189,7 +210,7 @@ async function post(req, res, next) {
       prevPost,
       nextPost,
       schema: postSchema(row, `${req.protocol}://${req.get('host')}${req.originalUrl}`)
-    });
+    }, { before: 'beforePostRender', after: 'afterPostRender', template: 'post' });
   } catch (error) {
     return next(error);
   }
@@ -248,7 +269,7 @@ async function page(req, res, next) {
       title: row.title,
       seo: meta(row.seo_title || row.title, row.seo_description, row.og_image || row.featured_image),
       page: row
-    });
+    }, { before: 'beforePageRender', after: 'afterPageRender', template: 'page' });
   } catch (error) {
     return next(error);
   }
@@ -334,7 +355,7 @@ async function submitContact(req, res, next) {
       subject: req.body.subject,
       content: sanitizeHtml(req.body.message || '', { allowedTags: [], allowedAttributes: {} })
     };
-    const allowed = await pluginLoader.applyHook('beforeContactSubmit', messagePayload, { req, res });
+    const allowed = await pluginLoader.applyFilters('beforeContactSubmit', messagePayload, { req, res });
     if (!allowed) {
       req.flash('error', 'Your message was flagged as spam.');
       return res.redirect('/contact');
@@ -377,12 +398,13 @@ async function comment(req, res, next) {
       user_agent: req.get('user-agent'),
       status: 'pending'
     };
-    const allowed = await pluginLoader.applyHook('beforeCommentCreate', commentPayload, { req, res, post: postRow });
+    const allowed = await pluginLoader.applyFilters('beforeCommentSave', commentPayload, { req, res, post: postRow });
     if (!allowed) {
       req.flash('error', 'Your comment was flagged as spam.');
       return res.redirect('back');
     }
-    await Comment.create(allowed);
+    const comment = await Comment.create(allowed);
+    await pluginLoader.doAction('afterCommentSave', comment, { req, res, post: postRow });
     req.flash('success', 'Comment submitted for moderation.');
     return res.redirect(`/post/${postRow.slug}`);
   } catch (error) {

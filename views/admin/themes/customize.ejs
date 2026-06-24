@@ -165,8 +165,9 @@
             <div><label class="form-label" for="custom_js">Custom JavaScript</label><textarea class="form-control font-monospace" id="custom_js" name="custom_js" rows="4" placeholder="// No &lt;script&gt; tags"><%= themeSetting.custom_js || '' %></textarea></div>
           </div>
 
-          <div class="np-customizer-save-bar">
+          <div class="np-customizer-save-bar d-flex flex-wrap gap-2">
             <button class="np-btn np-btn-primary" type="submit"><i class="bi bi-check-lg"></i> Save Changes</button>
+            <button class="np-btn np-btn-secondary" type="button" data-customizer-reset>Reset to theme defaults</button>
           </div>
         </div>
 
@@ -194,6 +195,9 @@
           </div>
         </div>
       </div>
+    </form>
+    <form method="post" action="/admin/themes/reset" data-customizer-reset-form class="d-none">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     </form>
   </main>
 </div>

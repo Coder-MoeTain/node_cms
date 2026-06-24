@@ -6,8 +6,8 @@
   "description": "Clean minimalist theme for personal blogs and portfolios.",
   "parent": "classic-blog",
   "layouts": ["default", "full-width"],
-  "templates": ["home", "blog", "post", "page", "archive", "search"],
-  "supports": ["logo", "favicon", "colors", "menus", "darkMode"],
+  "templates": ["home", "blog", "post", "page", "archive", "search", "contact", "error"],
+  "supports": ["logo", "favicon", "menus", "widgets", "customColors", "darkMode", "customCss"],
   "screenshot": "/themes/minimal-personal/screenshot.svg",
   "defaults": {
     "preset": "minimal-gray",

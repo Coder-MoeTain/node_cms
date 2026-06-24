@@ -51,6 +51,16 @@ beforeAll(async () => {
 
 afterEach(cleanupTestPlugin);
 
+test('admin can view plugin detail page', async () => {
+  await pluginLoader.syncInstalledPlugins();
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const page = await agent.get('/admin/plugins/seo-booster');
+  expect(page.status).toBe(200);
+  expect(page.text).toMatch(/Plugin Details/i);
+  expect(page.text).toMatch(/seo-booster/i);
+});
+
 test('admin can view plugin manager', async () => {
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');

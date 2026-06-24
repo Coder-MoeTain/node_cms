@@ -1,0 +1,69 @@
+{
+  "name": "Myanmar Portal",
+  "slug": "myanmar-portal",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "Government portal theme with utility bar, mega menu, citizen-service widgets, and Myanmar portal styling.",
+  "parent": "classic-blog",
+  "layouts": ["portal", "full-width"],
+  "templates": ["home", "blog", "post", "page", "archive", "search", "contact", "error"],
+  "supports": [
+    "logo",
+    "favicon",
+    "menus",
+    "widgets",
+    "customColors",
+    "darkMode",
+    "customCss",
+    "heroSlider",
+    "portalWidgets"
+  ],
+  "screenshot": "/themes/myanmar-portal/screenshot.svg",
+  "defaults": {
+    "preset": "myanmar-portal",
+    "primary_color": "#006ba6",
+    "secondary_color": "#ffcc00",
+    "background_color": "#e8edf2",
+    "text_color": "#2b2b2b",
+    "header_layout": "portal",
+    "footer_layout": "four-columns",
+    "sidebar_position": "none",
+    "blog_layout": "list",
+    "site_layout": "full-width",
+    "portal_config": {
+      "preset": "myanmar-portal",
+      "header": {
+        "showUtilityBar": true,
+        "showFontControls": true,
+        "showLanguageSwitcher": true,
+        "showLoginLinks": true,
+        "showSearch": true,
+        "layout": "portal"
+      },
+      "nav": {
+        "megaMenu": true,
+        "sticky": true,
+        "style": "portal"
+      },
+      "homepage": {
+        "hero": true,
+        "quickLinks": true,
+        "emergency": true,
+        "latestNews": true,
+        "announcements": true,
+        "tendersJobs": true,
+        "mediaGallery": true,
+        "hotNews": true,
+        "subscribe": true,
+        "statistics": true,
+        "mobileApp": true,
+        "quickServices": true,
+        "sectionNav": false,
+        "announcementTicker": true
+      },
+      "widgets": {
+        "cardStyle": "shadow"
+      }
+    }
+  }
+}

@@ -30,6 +30,8 @@
       </ul>
     <% } %>
 
+    <% const showBulk = !['comments','messages'].includes(resource) && canManageResource(resource, 'bulk'); %>
+    <% if (showBulk) { %>
     <div class="np-tablenav">
       <div class="tablenav-actions">
         <select class="form-select form-select-sm" aria-label="Bulk actions" data-bulk-action disabled>
@@ -42,6 +44,7 @@
         <% if (pagination.total) { %><%= pagination.total %> item<%= pagination.total === 1 ? '' : 's' %><% } %>
       </div>
     </div>
+    <% } %>
 
     <div class="list-toolbar">
       <form class="admin-search" method="get">

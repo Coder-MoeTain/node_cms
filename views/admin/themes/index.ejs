@@ -51,6 +51,7 @@
                   <input type="hidden" name="theme_id" value="<%= theme.id %>">
                   <button class="np-btn np-btn-small <%= theme.active ? 'np-btn-primary' : 'np-btn-secondary' %>" type="submit" <%= theme.active ? 'disabled' : '' %>><%= theme.active ? 'Active' : 'Activate' %></button>
                 </form>
+                <a class="np-btn np-btn-small np-btn-secondary" href="/admin/themes/<%= theme.slug %>">Details</a>
                 <% if (!theme.active) { %>
                   <form method="post" action="/admin/themes/<%= theme.slug %>/uninstall" data-confirm="Remove this theme from disk?">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">

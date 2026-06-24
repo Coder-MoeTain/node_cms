@@ -303,4 +303,12 @@
 
   syncIdentityPreviews();
   syncThemePreview();
+
+  const resetBtn = document.querySelector('[data-customizer-reset]');
+  const resetForm = document.querySelector('[data-customizer-reset-form]');
+  resetBtn?.addEventListener('click', () => {
+    if (window.confirm('Reset all customizer settings to the active theme defaults?')) {
+      resetForm?.submit();
+    }
+  });
 })();

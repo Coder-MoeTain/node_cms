@@ -5,6 +5,7 @@ const speakeasy = require('speakeasy');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
 const { User, Role, Permission, LoginAttempt, ActivityLog, PasswordResetToken } = require('../../models');
+const pluginLoader = require('../../utils/pluginLoader');
 
 function loginForm(req, res) {
   res.render('admin/auth/login', { title: 'Admin Login' });
@@ -83,10 +84,18 @@ async function login(req, res, next) {
       user_agent: req.get('user-agent')
     });
 
+    await pluginLoader.doAction('afterUserLogin', user, { req, res });
+
     if (user.force_password_change) {
       req.flash('error', 'Please change the default password.');
       return res.redirect('/admin/profile');
     }
+
+    if (user.Role?.slug === 'subscriber') {
+      req.flash('success', 'You are signed in.');
+      return res.redirect('/');
+    }
+
     return res.redirect('/admin');
   } catch (error) {
     return next(error);
