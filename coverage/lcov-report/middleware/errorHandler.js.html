@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">77.77% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/9</span>
+                <span class='fraction'>8/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">31.25% </span>
+                <span class="strong">81.25% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/16</span>
+                <span class='fraction'>13/16</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/8</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -92,41 +92,41 @@
 <a name='L27'></a><a href='#L27'>27</a>
 <a name='L28'></a><a href='#L28'>28</a>
 <a name='L29'></a><a href='#L29'>29</a>
-<a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">11x</span>
+<a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const logger = require('../utils/logger');
 &nbsp;
 function errorHandler(error, req, res, next) {
   <span class="missing-if-branch" title="if path not taken" >I</span>if (res.headersSent) <span class="cstat-no" title="statement not covered" >return next(error);</span>
 &nbsp;
-  const status = error.code === 'EBADCSRFTOKEN' ? 403 : <span class="branch-1 cbranch-no" title="branch not covered" >error.status || 500;</span>
+  const status = error.code === 'EBADCSRFTOKEN' ? 403 : error.status || 500;
   logger.error('request_error', {
     message: error.message,
     stack: error.stack,
@@ -137,15 +137,15 @@ function errorHandler(error, req, res, next) {
     ip: req.ip
   });
 &nbsp;
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (req.originalUrl.startsWith('/api')) {
-<span class="cstat-no" title="statement not covered" >    return res.status(status).json({ message: error.message || 'Server error' });</span>
+  if (req.originalUrl.startsWith('/api')) {
+    return res.status(status).json({ message: error.message || <span class="branch-1 cbranch-no" title="branch not covered" >'Server error' </span>});
   }
 &nbsp;
   return res.status(status).render('errors/500', {
-    title: status === 403 ? 'Forbidden' : <span class="branch-1 cbranch-no" title="branch not covered" >'Server Error',</span>
+    title: status === 403 ? 'Forbidden' : 'Server Error',
     message: error.code === 'EBADCSRFTOKEN'
       ? 'Your session token expired or was invalid. Please reload the form and try again.'
-      : <span class="branch-1 cbranch-no" title="branch not covered" >process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong.'</span>
+      : process.env.NODE_ENV === 'development' ? <span class="branch-0 cbranch-no" title="branch not covered" >error.message </span>: 'Something went wrong.'
   });
 }
 &nbsp;
@@ -157,7 +157,7 @@ module.exports = errorHandler;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-24T15:16:48.431Z
+                at 2026-06-24T16:28:04.579Z
             </div>
         <script src="../prettify.js"></script>
         <script>

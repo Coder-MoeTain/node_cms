@@ -89,3 +89,26 @@ test('role helpers identify roles', () => {
   expect(policy.isSubscriber(subscriber)).toBe(true);
   expect(policy.isEditor(editor)).toBe(true);
 });
+
+test('page and media policy helpers enforce permissions', () => {
+  const editorWithPages = { id: 6, Role: { slug: 'editor' }, permissions: ['manage_pages', 'manage_media'] };
+  const page = { id: 1 };
+  const media = { id: 1, uploaded_by: 2 };
+  expect(policy.canEditPage(editorWithPages, page)).toBe(true);
+  expect(policy.canDeletePage(editorWithPages, page)).toBe(true);
+  expect(policy.canEditMedia(author, media)).toBe(true);
+  expect(policy.canDeleteMedia(author, media)).toBe(true);
+  expect(policy.canEditComment(editorWithPages)).toBe(false);
+});
+
+test('canManageResource enforces page and media record checks', () => {
+  const editorWithPages = { id: 6, Role: { slug: 'editor' }, permissions: ['manage_pages'] };
+  const page = { id: 1 };
+  expect(policy.canManageResource(editorWithPages, 'pages', 'destroy', page)).toBe(true);
+  expect(policy.canManageResource(author, 'media', 'destroy', { id: 1, uploaded_by: 99 })).toBe(false);
+});
+
+test('super admin bypasses resource checks', () => {
+  const superAdmin = { id: 1, Role: { slug: 'super-admin' }, permissions: [] };
+  expect(policy.canManageResource(superAdmin, 'roles', 'index')).toBe(true);
+});
