@@ -1,0 +1,10 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main class="container py-4">
+  <h1>Search</h1>
+  <form class="d-flex gap-2 mb-4"><input class="form-control" name="q" value="<%= q %>" placeholder="Search posts"><button class="btn btn-primary">Search</button></form>
+  <div class="row g-4">
+    <% posts.forEach(function(post) { %><div class="col-md-4"><%- include('partials/post-card', { post }) %></div><% }) %>
+  </div>
+</main>
+<%- include('partials/footer') %>

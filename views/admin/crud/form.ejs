@@ -1,0 +1,113 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<%
+  const isEdit = Boolean(record.id);
+  const action = isEdit ? `/admin/${resource}/${record.id}?_method=PUT` : `/admin/${resource}`;
+  const val = (name, fallback = '') => record[name] == null ? fallback : record[name];
+  const selectedTags = record.Tags ? record.Tags.map((tag) => String(tag.id)) : [];
+  const selectedPermissions = record.Permissions ? record.Permissions.map((permission) => String(permission.id)) : [];
+%>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <form class="card" method="post" action="<%= action %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-body">
+        <% if (['posts','pages'].includes(resource)) { %>
+          <div class="mb-3"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= val('title') %>" required></div>
+          <div class="mb-3"><label class="form-label">Slug</label><input class="form-control" name="slug" value="<%= val('slug') %>"></div>
+          <div class="mb-3"><label class="form-label">Content</label><textarea class="form-control rich-editor" name="content" rows="14"><%- val('content') %></textarea></div>
+          <div class="mb-3"><label class="form-label">Excerpt</label><textarea class="form-control" name="excerpt" rows="3"><%= val('excerpt') %></textarea></div>
+          <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Status</label><select class="form-select" name="status"><% ['draft','published','private','scheduled'].forEach(function(status) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status %></option><% }) %></select></div>
+            <div class="col-md-4"><label class="form-label">Publish Date</label><input class="form-control" name="published_at" type="datetime-local"></div>
+            <% if (resource === 'posts') { %>
+              <div class="col-md-4"><label class="form-label">Category</label><select class="form-select" name="category_id"><option value="">None</option><% (extra.categories || []).forEach(function(category) { %><option value="<%= category.id %>" <%= String(val('category_id')) === String(category.id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select></div>
+            <% } %>
+          </div>
+          <% if (resource === 'posts') { %>
+            <div class="row g-3 mt-1">
+              <div class="col-md-6"><label class="form-label">Featured Image URL</label><input class="form-control media-preview-input" name="featured_image" value="<%= val('featured_image') %>"></div>
+              <div class="col-md-6"><label class="form-label">Video URL (YouTube/Vimeo/embed)</label><input class="form-control" name="video_url" value="<%= val('video_url') %>"></div>
+              <div class="col-md-6"><label class="form-label">Open Graph Image</label><input class="form-control" name="og_image" value="<%= val('og_image') %>"></div>
+              <div class="col-md-6"><label class="form-label">Author</label><select class="form-select" name="author_id"><% (extra.users || []).forEach(function(user) { %><option value="<%= user.id %>" <%= String(val('author_id')) === String(user.id) ? 'selected' : '' %>><%= user.name %></option><% }) %></select></div>
+              <div class="col-12"><label class="form-label">Tags</label><select class="form-select" name="tags" multiple><% (extra.tags || []).forEach(function(tag) { %><option value="<%= tag.id %>" <%= selectedTags.includes(String(tag.id)) ? 'selected' : '' %>><%= tag.name %></option><% }) %></select></div>
+              <div class="col-12"><label class="form-check"><input class="form-check-input" name="allow_comments" type="checkbox" <%= val('allow_comments', true) ? 'checked' : '' %>> Enable comments</label></div>
+            </div>
+          <% } %>
+          <div class="row g-3 mt-1">
+            <div class="col-md-6"><label class="form-label">SEO Title</label><input class="form-control" name="seo_title" value="<%= val('seo_title') %>"></div>
+            <div class="col-md-6"><label class="form-label">SEO Description</label><input class="form-control" name="seo_description" value="<%= val('seo_description') %>"></div>
+          </div>
+        <% } else if (['categories','tags','roles'].includes(resource)) { %>
+          <div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= val('name') %>" required></div>
+          <div class="mb-3"><label class="form-label">Slug</label><input class="form-control" name="slug" value="<%= val('slug') %>"></div>
+          <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" name="description"><%= val('description') %></textarea></div>
+          <% if (resource === 'categories') { %>
+            <div class="mb-3"><label class="form-label">Parent Category</label><select class="form-select" name="parent_id"><option value="">None</option><% (extra.categories || []).forEach(function(category) { if (category.id !== record.id) { %><option value="<%= category.id %>" <%= String(val('parent_id')) === String(category.id) ? 'selected' : '' %>><%= category.name %></option><% } }) %></select></div>
+            <div class="mb-3"><label class="form-label">Category Image URL</label><input class="form-control" name="image" value="<%= val('image') %>"></div>
+          <% } %>
+          <% if (resource === 'roles') { %>
+            <label class="form-label">Permissions</label>
+            <div class="row">
+              <% (extra.permissions || []).forEach(function(permission) { %>
+                <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="permissions" value="<%= permission.id %>" <%= selectedPermissions.includes(String(permission.id)) ? 'checked' : '' %>> <%= permission.name %></label></div>
+              <% }) %>
+            </div>
+          <% } %>
+        <% } else if (resource === 'users') { %>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= val('name') %>" required></div>
+            <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" name="email" type="email" value="<%= val('email') %>" required></div>
+            <div class="col-md-6"><label class="form-label">Password</label><input class="form-control" name="password" type="password" <%= isEdit ? '' : 'required' %>></div>
+            <div class="col-md-3"><label class="form-label">Role</label><select class="form-select" name="role_id"><% (extra.roles || []).forEach(function(role) { %><option value="<%= role.id %>" <%= String(val('role_id')) === String(role.id) ? 'selected' : '' %>><%= role.name %></option><% }) %></select></div>
+            <div class="col-md-3"><label class="form-label">Status</label><select class="form-select" name="status"><% ['active','disabled','pending'].forEach(function(status) { %><option value="<%= status %>" <%= val('status','active') === status ? 'selected' : '' %>><%= status %></option><% }) %></select></div>
+          </div>
+        <% } else if (resource === 'menus') { %>
+          <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= val('name') %>" required></div>
+            <div class="col-md-4"><label class="form-label">Slug</label><input class="form-control" name="slug" value="<%= val('slug') %>"></div>
+            <div class="col-md-4"><label class="form-label">Location</label><select class="form-select" name="location"><% ['header','footer','sidebar'].forEach(function(location) { %><option value="<%= location %>" <%= val('location','header') === location ? 'selected' : '' %>><%= location %></option><% }) %></select></div>
+          </div>
+          <label class="form-check mt-3"><input class="form-check-input" name="active" type="checkbox" <%= val('active', true) ? 'checked' : '' %>> Active</label>
+        <% } else if (resource === 'menu-items') { %>
+          <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Menu</label><select class="form-select" name="menu_id"><% (extra.menus || []).forEach(function(menu) { %><option value="<%= menu.id %>" <%= String(val('menu_id')) === String(menu.id) ? 'selected' : '' %>><%= menu.name %></option><% }) %></select></div>
+            <div class="col-md-4"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= val('title') %>" required></div>
+            <div class="col-md-4"><label class="form-label">URL</label><input class="form-control" name="url" value="<%= val('url') %>" required></div>
+            <div class="col-md-3"><label class="form-label">Parent</label><select class="form-select" name="parent_id"><option value="">None</option><% (extra.menuItems || []).forEach(function(item) { if (item.id !== record.id) { %><option value="<%= item.id %>" <%= String(val('parent_id')) === String(item.id) ? 'selected' : '' %>><%= item.title %></option><% } }) %></select></div>
+            <div class="col-md-3"><label class="form-label">Type</label><select class="form-select" name="item_type"><% ['custom','page','category','post'].forEach(function(type) { %><option value="<%= type %>" <%= val('item_type','custom') === type ? 'selected' : '' %>><%= type %></option><% }) %></select></div>
+            <div class="col-md-3"><label class="form-label">Target</label><select class="form-select" name="target"><option value="_self">Same tab</option><option value="_blank" <%= val('target') === '_blank' ? 'selected' : '' %>>New tab</option></select></div>
+            <div class="col-md-3"><label class="form-label">Order</label><input class="form-control" name="display_order" type="number" value="<%= val('display_order', 0) %>"></div>
+          </div>
+          <label class="form-check mt-3"><input class="form-check-input" name="active" type="checkbox" <%= val('active', true) ? 'checked' : '' %>> Active</label>
+        <% } else if (['banners','sliders'].includes(resource)) { %>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= val('title') %>" required></div>
+            <div class="col-md-6"><label class="form-label"><%= resource === 'banners' ? 'Subtitle' : 'Description' %></label><input class="form-control" name="<%= resource === 'banners' ? 'subtitle' : 'description' %>" value="<%= resource === 'banners' ? val('subtitle') : val('description') %>"></div>
+            <div class="col-md-6"><label class="form-label">Image URL</label><input class="form-control media-preview-input" name="image" value="<%= val('image') %>"></div>
+            <div class="col-md-3"><label class="form-label">Button Text</label><input class="form-control" name="button_text" value="<%= val('button_text') %>"></div>
+            <div class="col-md-3"><label class="form-label">Button URL</label><input class="form-control" name="<%= resource === 'banners' ? 'button_link' : 'button_url' %>" value="<%= resource === 'banners' ? val('button_link') : val('button_url') %>"></div>
+            <div class="col-md-3"><label class="form-label">Order</label><input class="form-control" name="display_order" type="number" value="<%= val('display_order', 0) %>"></div>
+          </div>
+          <label class="form-check mt-3"><input class="form-check-input" name="active" type="checkbox" <%= val('active', true) ? 'checked' : '' %>> Active</label>
+        <% } else if (resource === 'comments') { %>
+          <label class="form-label">Status</label><select class="form-select mb-3" name="status"><% ['pending','approved','spam','rejected'].forEach(function(status) { %><option value="<%= status %>" <%= val('status') === status ? 'selected' : '' %>><%= status %></option><% }) %></select>
+          <label class="form-label">Comment</label><textarea class="form-control" name="content"><%= val('content') %></textarea>
+        <% } else if (resource === 'messages') { %>
+          <p><strong>From:</strong> <%= record.name %> &lt;<%= record.email %>&gt;</p>
+          <p><strong>Subject:</strong> <%= record.subject %></p>
+          <p><%= record.message %></p>
+          <label class="form-label">Status</label><select class="form-select" name="status"><option value="unread">Unread</option><option value="read" <%= val('status') === 'read' ? 'selected' : '' %>>Read</option></select>
+          <a class="btn btn-outline-primary mt-3" href="mailto:<%= record.email %>?subject=Re: <%= record.subject %>">Reply by email</a>
+        <% } %>
+      </div>
+      <div class="card-footer d-flex justify-content-between">
+        <a class="btn btn-outline-secondary" href="/admin/<%= resource %>">Cancel</a>
+        <button class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,23 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <div class="card">
+      <div class="card-body">
+        <form method="post" action="/admin/profile?_method=PUT">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= user.name %>" required></div>
+            <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" name="email" type="email" value="<%= user.email %>" required></div>
+            <div class="col-md-6"><label class="form-label">New password</label><input class="form-control" name="password" type="password" placeholder="Leave blank to keep current password"></div>
+            <div class="col-md-6"><label class="form-label">Role</label><input class="form-control" value="<%= user.Role ? user.Role.name : '' %>" disabled></div>
+          </div>
+          <button class="btn btn-primary mt-3">Update Profile</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,51 @@
+{
+  "name": "nodepress-cms",
+  "version": "1.0.0",
+  "description": "A WordPress-like blog CMS built with Node.js, Express, MySQL, Sequelize, EJS, and Bootstrap 5.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "db:sync": "node database/sync.js",
+    "seed": "node database/seed.js"
+  },
+  "keywords": [
+    "cms",
+    "blog",
+    "wordpress",
+    "express",
+    "mysql",
+    "sequelize",
+    "ejs"
+  ],
+  "author": "NodePress CMS",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "latest",
+    "compression": "latest",
+    "connect-flash": "latest",
+    "connect-session-sequelize": "latest",
+    "cookie-parser": "latest",
+    "cors": "latest",
+    "csurf": "latest",
+    "dotenv": "latest",
+    "ejs": "latest",
+    "express": "latest",
+    "express-ejs-layouts": "latest",
+    "express-rate-limit": "latest",
+    "express-session": "latest",
+    "express-validator": "latest",
+    "helmet": "latest",
+    "method-override": "latest",
+    "morgan": "latest",
+    "multer": "latest",
+    "mysql2": "latest",
+    "sanitize-html": "latest",
+    "sequelize": "latest",
+    "slugify": "latest",
+    "tinymce": "^8.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "latest"
+  }
+}

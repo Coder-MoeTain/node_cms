@@ -1,0 +1,15 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main class="container py-4">
+  <h1 class="mb-4">Blog</h1>
+  <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
+    <section class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
+      <div class="row g-4 blog-layout-<%= activeTheme.blog_layout || 'grid' %>">
+        <% posts.forEach(function(post) { %><div class="<%= activeTheme.blog_layout === 'list' ? 'col-12' : 'col-md-6' %>"><%- include('partials/post-card', { post }) %></div><% }) %>
+      </div>
+      <nav class="mt-4"><ul class="pagination"><% for (let i = 1; i <= pagination.pages; i++) { %><li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?page=<%= i %>"><%= i %></a></li><% } %></ul></nav>
+    </section>
+    <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include('partials/sidebar') %></div><% } %>
+  </div>
+</main>
+<%- include('partials/footer') %>

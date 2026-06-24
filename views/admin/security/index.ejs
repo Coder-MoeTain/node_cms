@@ -1,0 +1,46 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <form class="card mb-3" method="post" action="/admin/security/settings?_method=PUT">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-header">Security Plugin Features</div>
+      <div class="card-body row">
+        <% settings.forEach(function(setting) { %>
+          <div class="col-md-4 mb-2"><label class="form-check"><input class="form-check-input" type="checkbox" name="<%= setting.key %>" <%= setting.enabled ? 'checked' : '' %>> <%= setting.key.replace(/_/g, ' ') %></label></div>
+        <% }) %>
+      </div>
+      <div class="card-footer"><button class="btn btn-primary">Save Security Settings</button></div>
+    </form>
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">Failed Login Attempts</div>
+          <table class="table mb-0"><tbody><% attempts.forEach(function(attempt) { %><tr><td><%= attempt.email || '-' %></td><td><%= attempt.ip_address %></td><td><span class="badge <%= attempt.success ? 'text-bg-success' : 'text-bg-danger' %>"><%= attempt.success ? 'success' : 'failed' %></span></td></tr><% }) %></tbody></table>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card mb-3">
+          <div class="card-header">Blocked IPs</div>
+          <div class="card-body">
+            <form class="row g-2" method="post" action="/admin/security/block-ip">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="col"><input class="form-control" name="ip_address" placeholder="IP address" required></div>
+              <div class="col"><input class="form-control" name="reason" placeholder="Reason"></div>
+              <div class="col-auto"><button class="btn btn-danger">Block</button></div>
+            </form>
+          </div>
+          <ul class="list-group list-group-flush">
+            <% blockedIps.forEach(function(ip) { %>
+              <li class="list-group-item d-flex justify-content-between"><span><%= ip.ip_address %> <small class="text-muted"><%= ip.reason || '' %></small></span><form method="post" action="/admin/security/unblock-ip/<%= ip.id %>?_method=DELETE"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-outline-secondary">Unblock</button></form></li>
+            <% }) %>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card mt-3"><div class="card-header">Admin Activity Log</div><table class="table mb-0"><tbody><% activityLogs.forEach(function(log) { %><tr><td><%= log.action %></td><td><%= log.entity_type || '' %></td><td><%= log.ip_address || '' %></td></tr><% }) %></tbody></table></div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

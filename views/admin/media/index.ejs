@@ -1,0 +1,38 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <div class="card mb-3">
+      <div class="card-body">
+        <form method="post" action="/admin/media/upload" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label class="form-label">Upload images, videos, PDFs, or docs</label>
+          <input class="form-control" type="file" name="files" multiple data-preview-file>
+          <div class="upload-preview mt-3"></div>
+          <button class="btn btn-primary mt-3">Upload</button>
+        </form>
+      </div>
+    </div>
+    <div class="row g-3">
+      <% rows.forEach(function(file) { %>
+        <div class="col-md-3">
+          <div class="card h-100">
+            <% if (file.file_type === 'image') { %><img class="card-img-top media-thumb" src="<%= file.file_path %>" alt=""><% } %>
+            <div class="card-body">
+              <h6><%= file.original_name %></h6>
+              <input class="form-control form-control-sm mb-2" value="<%= file.file_path %>" readonly onclick="this.select();navigator.clipboard.writeText(this.value)">
+              <span class="badge text-bg-secondary"><%= file.file_type %></span>
+              <form method="post" action="/admin/media/<%= file.id %>?_method=DELETE" data-confirm="Delete this media file?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-sm btn-outline-danger mt-2">Delete</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

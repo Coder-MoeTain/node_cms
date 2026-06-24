@@ -1,0 +1,25 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <form class="card" method="post" action="/admin/settings?_method=PUT">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-body row g-3">
+        <% rows.forEach(function(row) { %>
+          <div class="col-md-6">
+            <label class="form-label text-capitalize"><%= row.key.replace(/_/g, ' ') %></label>
+            <input class="form-control <%= ['site_logo','favicon'].includes(row.key) ? 'media-preview-input' : '' %>" name="<%= row.key %>" value="<%= row.value %>" placeholder="<%= row.key === 'site_logo' ? '/uploads/2026-06/logo.png' : '' %>">
+            <% if (['site_logo','favicon'].includes(row.key)) { %>
+              <div class="form-text">Paste a URL from Media Library or an external image URL.</div>
+              <% if (row.value) { %><img class="settings-image-preview mt-2" src="<%= row.value %>" alt="<%= row.key %> preview"><% } %>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+      <div class="card-footer"><button class="btn btn-primary">Save Settings</button></div>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

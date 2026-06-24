@@ -1,0 +1,47 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <div class="row g-3 mb-3">
+      <% themes.forEach(function(theme) { %>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="theme-preview"></div>
+            <div class="card-body">
+              <h5><%= theme.name %></h5>
+              <p class="text-muted"><%= theme.slug %></p>
+              <form method="post" action="/admin/themes/activate">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="theme_id" value="<%= theme.id %>">
+                <button class="btn <%= theme.active ? 'btn-success' : 'btn-outline-primary' %>"><%= theme.active ? 'Active' : 'Activate' %></button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    <form class="card" method="post" action="/admin/theme-settings?_method=PUT">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-header">Layout & Color Settings</div>
+      <div class="card-body row g-3">
+        <div class="col-md-3"><label class="form-label">Primary Color</label><input class="form-control" type="color" name="primary_color" value="<%= themeSetting.primary_color || '#0d6efd' %>"></div>
+        <div class="col-md-3"><label class="form-label">Secondary Color</label><input class="form-control" type="color" name="secondary_color" value="<%= themeSetting.secondary_color || '#6c757d' %>"></div>
+        <div class="col-md-3"><label class="form-label">Background</label><input class="form-control" type="color" name="background_color" value="<%= themeSetting.background_color || '#ffffff' %>"></div>
+        <div class="col-md-3"><label class="form-label">Text Color</label><input class="form-control" type="color" name="text_color" value="<%= themeSetting.text_color || '#212529' %>"></div>
+        <div class="col-md-4"><label class="form-label">Font Family</label><input class="form-control" name="font_family" value="<%= themeSetting.font_family || '' %>"></div>
+        <div class="col-md-4"><label class="form-label">Site Layout</label><select class="form-select" name="site_layout"><option value="full-width">Full width</option><option value="boxed" <%= themeSetting.site_layout === 'boxed' ? 'selected' : '' %>>Boxed</option></select></div>
+        <div class="col-md-4"><label class="form-label">Blog Layout</label><select class="form-select" name="blog_layout"><option value="grid">Grid</option><option value="list" <%= themeSetting.blog_layout === 'list' ? 'selected' : '' %>>List</option><option value="masonry" <%= themeSetting.blog_layout === 'masonry' ? 'selected' : '' %>>Masonry</option></select></div>
+        <div class="col-md-4"><label class="form-label">Header Style</label><input class="form-control" name="header_layout" value="<%= themeSetting.header_layout || 'standard' %>"></div>
+        <div class="col-md-4"><label class="form-label">Footer Style</label><input class="form-control" name="footer_layout" value="<%= themeSetting.footer_layout || 'four-columns' %>"></div>
+        <div class="col-md-4"><label class="form-label">Sidebar Position</label><select class="form-select" name="sidebar_position"><option value="right">Right</option><option value="left" <%= themeSetting.sidebar_position === 'left' ? 'selected' : '' %>>Left</option><option value="none" <%= themeSetting.sidebar_position === 'none' ? 'selected' : '' %>>None</option></select></div>
+        <div class="col-md-6"><label class="form-label">Logo URL</label><input class="form-control" name="logo" value="<%= themeSetting.logo || '' %>"></div>
+        <div class="col-md-6"><label class="form-label">Favicon URL</label><input class="form-control" name="favicon" value="<%= themeSetting.favicon || '' %>"></div>
+        <div class="col-12"><label class="form-check"><input class="form-check-input" name="dark_mode" type="checkbox" <%= themeSetting.dark_mode ? 'checked' : '' %>> Enable dark mode</label></div>
+      </div>
+      <div class="card-footer"><button class="btn btn-primary">Save Theme Settings</button></div>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

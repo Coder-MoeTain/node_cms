@@ -1,0 +1,10 @@
+<% if (success && success.length) { %>
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <% success.forEach(function(message) { %>
+      <div class="toast show text-bg-success"><div class="toast-body"><%= message %></div></div>
+    <% }) %>
+  </div>
+<% } %>
+<% if (error && error.length) { %>
+  <div class="alert alert-danger"><%= error[0] %></div>
+<% } %>

@@ -1,0 +1,37 @@
+<nav class="navbar navbar-expand-lg site-navbar sticky-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/">
+      <% const siteLogo = siteSettings.site_logo || activeTheme.logo; %>
+      <% if (siteLogo) { %><img class="site-logo" src="<%= siteLogo %>" alt="<%= siteSettings.site_title || 'NodePress CMS' %>"><% } else { %><span class="brand-orbit"></span><%= siteSettings.site_title || 'NodePress CMS' %><% } %>
+    </a>
+    <button class="navbar-toggler site-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu"><span></span><span></span><span></span></button>
+    <div class="collapse navbar-collapse" id="mainMenu">
+      <ul class="navbar-nav mx-lg-auto mission-menu">
+        <% (siteMenus.header || []).forEach(function(item) { %>
+          <% if (item.children && item.children.length) { %>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="<%= item.url %>" target="<%= item.target %>" role="button" data-bs-toggle="dropdown" aria-expanded="false"><%= item.title %></a>
+              <ul class="dropdown-menu mission-dropdown">
+                <% item.children.forEach(function(child) { %>
+                  <li><a class="dropdown-item" href="<%= child.url %>" target="<%= child.target %>"><%= child.title %></a></li>
+                <% }) %>
+              </ul>
+            </li>
+          <% } else { %>
+            <li class="nav-item"><a class="nav-link" href="<%= item.url %>" target="<%= item.target %>"><%= item.title %></a></li>
+          <% } %>
+        <% }) %>
+      </ul>
+      <form class="nav-search-wrap" action="/search">
+        <input class="form-control form-control-sm nav-search" name="q" placeholder="Search mission logs">
+        <button class="nav-search-button" type="submit">Go</button>
+      </form>
+      <div class="language-switcher" aria-label="Language selector">
+        <button type="button" class="language-flag" data-lang="my" aria-label="Myanmar" title="Myanmar">🇲🇲</button>
+        <button type="button" class="language-flag" data-lang="zh-CN" aria-label="Chinese" title="Chinese">🇨🇳</button>
+        <button type="button" class="language-flag" data-lang="en" aria-label="English" title="English">🇬🇧</button>
+        <button type="button" class="language-flag" data-lang="ru" aria-label="Russian" title="Russian">🇷🇺</button>
+      </div>
+    </div>
+  </div>
+</nav>

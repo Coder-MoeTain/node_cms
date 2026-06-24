@@ -1,0 +1,32 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main>
+  <% if (sliders.length) { %>
+    <div id="homeSlider" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-inner">
+        <% sliders.forEach(function(slide, index) { %>
+          <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+            <div class="hero-slide" style="<%= slide.image ? `background-image:url(${slide.image})` : '' %>">
+              <div class="container hero-content">
+                <span class="eyebrow">NodePress Mission Control</span>
+                <h1><%= slide.title %></h1>
+                <p><%= slide.description %></p>
+                <% if (slide.button_text) { %><a class="btn btn-primary btn-mission" href="<%= slide.button_url %>"><%= slide.button_text %></a><% } %>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+  <% banners.forEach(function(banner) { %>
+    <section class="container py-4"><div class="banner-box"><span class="eyebrow">Launch Briefing</span><h2><%= banner.title %></h2><p><%= banner.subtitle %></p><% if (banner.button_text) { %><a class="btn btn-outline-primary btn-mission-outline" href="<%= banner.button_link %>"><%= banner.button_text %></a><% } %></div></section>
+  <% }) %>
+  <section class="container py-4">
+    <div class="section-heading d-flex justify-content-between align-items-center mb-3"><div><span class="eyebrow">Telemetry Feed</span><h2>Latest Posts</h2></div><a href="/blog">View all</a></div>
+    <div class="row g-4">
+      <% posts.forEach(function(post) { %><div class="col-md-6 col-lg-4"><%- include('partials/post-card', { post }) %></div><% }) %>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>

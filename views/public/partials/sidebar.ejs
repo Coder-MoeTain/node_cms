@@ -1,0 +1,14 @@
+<aside class="sidebar">
+  <div class="widget">
+    <h5>Recent Posts</h5>
+    <% recentPosts.forEach(function(post) { %><a class="d-block" href="/post/<%= post.slug %>"><%= post.title %></a><% }) %>
+  </div>
+  <div class="widget">
+    <h5>Popular Posts</h5>
+    <% popularPosts.forEach(function(post) { %><a class="d-block" href="/post/<%= post.slug %>"><%= post.title %></a><% }) %>
+  </div>
+  <div class="widget">
+    <h5>Categories</h5>
+    <% sidebarCategories.forEach(function(category) { %><a class="badge text-bg-light me-1 mb-1" href="/category/<%= category.slug %>"><%= category.name %></a><% }) %>
+  </div>
+</aside>

@@ -1,0 +1,14 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main class="container py-4">
+  <h1 class="mb-4"><%= heading %></h1>
+  <div class="row g-4">
+    <section class="col-lg-8">
+      <div class="row g-4">
+        <% posts.forEach(function(post) { %><div class="col-md-6"><%- include('partials/post-card', { post }) %></div><% }) %>
+      </div>
+    </section>
+    <div class="col-lg-4"><%- include('partials/sidebar') %></div>
+  </div>
+</main>
+<%- include('partials/footer') %>
