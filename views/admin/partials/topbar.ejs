@@ -1,14 +1,21 @@
 <header class="admin-topbar">
-  <div>
-    <button class="btn btn-sm btn-outline-secondary d-lg-none" data-sidebar-toggle><i class="bi bi-list"></i></button>
-    <span class="fw-semibold"><%= title %></span>
+  <div class="topbar-title">
+    <button class="btn btn-sm btn-outline-secondary d-lg-none sidebar-toggle" data-sidebar-toggle><i class="bi bi-list"></i></button>
+    <div>
+      <span class="topbar-kicker">Admin Console</span>
+      <h1><%= title %></h1>
+    </div>
   </div>
-  <div class="d-flex align-items-center gap-3">
-    <button class="btn btn-sm btn-outline-dark" data-theme-toggle type="button">Dark/Light</button>
-    <a href="/admin/profile" class="text-decoration-none"><%= currentUser ? currentUser.name : 'Admin' %></a>
+  <div class="topbar-actions">
+    <a class="topbar-icon-button" href="/" target="_blank" title="View site"><i class="bi bi-globe2"></i></a>
+    <button class="topbar-icon-button" data-theme-toggle type="button" title="Toggle theme"><i class="bi bi-moon-stars"></i></button>
+    <a href="/admin/profile" class="user-chip text-decoration-none">
+      <span class="user-avatar"><%= currentUser && currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'A' %></span>
+      <span><%= currentUser ? currentUser.name : 'Admin' %></span>
+    </a>
     <form action="/admin/logout" method="post">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <button class="btn btn-sm btn-danger">Logout</button>
+      <button class="btn btn-sm btn-danger btn-logout"><i class="bi bi-box-arrow-right"></i> Logout</button>
     </form>
   </div>
 </header>

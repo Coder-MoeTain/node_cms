@@ -60,6 +60,7 @@ app.use(csrf());
 app.use((req, res, next) => {
   res.locals.csrfToken = req.csrfToken();
   res.locals.currentUser = req.session.user || null;
+  res.locals.currentPath = req.originalUrl || req.path;
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   res.locals.formData = {};

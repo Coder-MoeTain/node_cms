@@ -4,22 +4,37 @@
   <%- include('partials/topbar') %>
   <main class="admin-content">
     <%- include('partials/flash') %>
+    <section class="dashboard-hero">
+      <div>
+        <span class="dashboard-eyebrow">Mission Status</span>
+        <h2>Content command center</h2>
+        <p>Monitor publishing, users, media, messages, security, and site activity from one control surface.</p>
+      </div>
+      <a class="btn btn-primary" href="/admin/posts/create"><i class="bi bi-plus-lg"></i> New Post</a>
+    </section>
     <div class="row g-3">
+      <% const statIcons = { posts: 'bi-file-richtext', pages: 'bi-files', users: 'bi-people', categories: 'bi-folder', media: 'bi-images', messages: 'bi-envelope', comments: 'bi-chat-dots' }; %>
       <% Object.entries(stats).forEach(function(entry) { %>
         <div class="col-6 col-lg-3">
-          <div class="card stat-card"><div class="card-body"><span class="text-muted text-capitalize"><%= entry[0] %></span><h2><%= entry[1] %></h2></div></div>
+          <div class="card stat-card">
+            <div class="card-body">
+              <span class="stat-icon"><i class="bi <%= statIcons[entry[0]] || 'bi-activity' %>"></i></span>
+              <span class="stat-label text-capitalize"><%= entry[0] %></span>
+              <h2><%= entry[1] %></h2>
+            </div>
+          </div>
         </div>
       <% }) %>
     </div>
     <div class="row g-3 mt-2">
       <div class="col-lg-7">
         <div class="card">
-          <div class="card-header">Recent Posts</div>
+          <div class="card-header professional-card-header"><span>Recent Posts</span><a href="/admin/posts">View all</a></div>
           <div class="table-responsive">
             <table class="table align-middle mb-0">
               <tbody>
                 <% recentPosts.forEach(function(post) { %>
-                  <tr><td><%= post.title %></td><td><span class="badge text-bg-secondary"><%= post.status %></span></td><td><a href="/admin/posts/<%= post.id %>/edit">Edit</a></td></tr>
+                  <tr><td><strong><%= post.title %></strong></td><td><span class="status-pill status-<%= post.status %>"><%= post.status %></span></td><td><a class="table-action" href="/admin/posts/<%= post.id %>/edit">Edit</a></td></tr>
                 <% }) %>
               </tbody>
             </table>
@@ -27,16 +42,16 @@
         </div>
       </div>
       <div class="col-lg-5">
-        <div class="card mb-3"><div class="card-body"><h5>Website Traffic Summary</h5><p class="mb-0">Traffic counters can be connected to analytics; post views are tracked in the CMS.</p></div></div>
+        <div class="card mb-3 insight-card"><div class="card-body"><span class="stat-icon"><i class="bi bi-graph-up-arrow"></i></span><h5>Website Traffic Summary</h5><p class="mb-0">Traffic counters can be connected to analytics; post views are tracked in the CMS.</p></div></div>
         <div class="card">
-          <div class="card-header">Recent Login Activity</div>
+          <div class="card-header professional-card-header"><span>Recent Login Activity</span><a href="/admin/security">Security</a></div>
           <ul class="list-group list-group-flush">
             <% recentLogins.forEach(function(login) { %>
-              <li class="list-group-item d-flex justify-content-between"><span><%= login.email || login.ip_address %></span><span class="badge <%= login.success ? 'text-bg-success' : 'text-bg-danger' %>"><%= login.success ? 'success' : 'failed' %></span></li>
+              <li class="list-group-item d-flex justify-content-between"><span><%= login.email || login.ip_address %></span><span class="status-pill <%= login.success ? 'status-published' : 'status-private' %>"><%= login.success ? 'success' : 'failed' %></span></li>
             <% }) %>
           </ul>
         </div>
-        <div class="alert alert-warning mt-3">Security alerts: <strong><%= securityAlerts %></strong> failed login attempts recorded.</div>
+        <div class="alert alert-warning mt-3 security-alert"><i class="bi bi-shield-exclamation"></i> Security alerts: <strong><%= securityAlerts %></strong> failed login attempts recorded.</div>
       </div>
     </div>
   </main>

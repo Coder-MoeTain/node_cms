@@ -30,6 +30,8 @@
 
 NodePress CMS is a complete blog and content management system with a public website, admin dashboard, media library, theme settings, role permissions, SEO helpers, security tools, comments, dynamic menus, and flag-only translation controls.
 
+For the repository audit, missing-feature analysis, security review, and exact file-by-file upgrade notes, see [`docs/UPGRADE_ANALYSIS.md`](docs/UPGRADE_ANALYSIS.md).
+
 ## Preview
 
 ```text
@@ -53,6 +55,16 @@ Admin Panel  -> http://localhost:3000/admin/login
 | Media Library | Upload images, videos, PDFs, docs, copy URLs, and reuse assets in posts and pages |
 | Security | Sessions, bcrypt, Helmet, CSRF, rate limiting, upload validation, blocked IPs, login attempts, activity logs |
 | Internationalization | Flag-only translation buttons for Myanmar, Chinese, English, and Russian |
+
+## Maturity Level
+
+| Stage | Level | Meaning |
+| --- | --- | --- |
+| Original/Basic CMS | `3/10 - 5/10` | Basic content app with limited CMS depth |
+| Current Upgrade Target | `8/10 - 9/10` | WordPress-like CMS foundation with admin, content, media, themes, menus, settings, security, and RBAC |
+| Professional WordPress-like CMS | `10/10` | Requires plugin architecture, stronger security hardening, a full theme engine, complete RBAC policy coverage, tests, and production-grade extensibility |
+
+See [`docs/UPGRADE_ANALYSIS.md`](docs/UPGRADE_ANALYSIS.md) for the full upgrade roadmap.
 
 ## Visual Experience
 
