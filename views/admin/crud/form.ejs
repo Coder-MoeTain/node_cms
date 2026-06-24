@@ -21,7 +21,7 @@
           <div class="mb-3"><label class="form-label">Content</label><textarea class="form-control rich-editor" name="content" rows="14"><%- val('content') %></textarea></div>
           <div class="mb-3"><label class="form-label">Excerpt</label><textarea class="form-control" name="excerpt" rows="3"><%= val('excerpt') %></textarea></div>
           <div class="row g-3">
-            <div class="col-md-4"><label class="form-label">Status</label><select class="form-select" name="status"><% ['draft','published','private','scheduled'].forEach(function(status) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status %></option><% }) %></select></div>
+            <div class="col-md-4"><label class="form-label">Status</label><select class="form-select" name="status"><% ['draft','published','private','scheduled'].forEach(function(status) { if (status !== 'published' || can('publish_posts')) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status %></option><% } }) %></select></div>
             <div class="col-md-4"><label class="form-label">Publish Date</label><input class="form-control" name="published_at" type="datetime-local"></div>
             <% if (resource === 'posts') { %>
               <div class="col-md-4"><label class="form-label">Category</label><select class="form-select" name="category_id"><option value="">None</option><% (extra.categories || []).forEach(function(category) { %><option value="<%= category.id %>" <%= String(val('category_id')) === String(category.id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select></div>
@@ -43,7 +43,9 @@
               </div>
               <div class="col-md-6"><label class="form-label">Video URL (YouTube/Vimeo/embed)</label><input class="form-control" name="video_url" value="<%= val('video_url') %>"></div>
               <div class="col-md-6"><label class="form-label">Open Graph Image</label><input class="form-control" name="og_image" value="<%= val('og_image') %>"></div>
-              <div class="col-md-6"><label class="form-label">Author</label><select class="form-select" name="author_id"><% (extra.users || []).forEach(function(user) { %><option value="<%= user.id %>" <%= String(val('author_id')) === String(user.id) ? 'selected' : '' %>><%= user.name %></option><% }) %></select></div>
+              <% if (can('manage_posts')) { %>
+                <div class="col-md-6"><label class="form-label">Author</label><select class="form-select" name="author_id"><% (extra.users || []).forEach(function(user) { %><option value="<%= user.id %>" <%= String(val('author_id')) === String(user.id) ? 'selected' : '' %>><%= user.name %></option><% }) %></select></div>
+              <% } %>
               <div class="col-12"><label class="form-label">Tags</label><select class="form-select" name="tags" multiple><% (extra.tags || []).forEach(function(tag) { %><option value="<%= tag.id %>" <%= selectedTags.includes(String(tag.id)) ? 'selected' : '' %>><%= tag.name %></option><% }) %></select></div>
               <div class="col-12"><label class="form-check"><input class="form-check-input" name="allow_comments" type="checkbox" <%= val('allow_comments', true) ? 'checked' : '' %>> Enable comments</label></div>
             </div>

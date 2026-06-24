@@ -3,8 +3,19 @@ const multer = require('multer');
 const appConfig = require('../config/app');
 const { ensureDirectory, publicUploadPath } = require('../utils/fileHelper');
 
-const blockedExtensions = new Set(['.exe', '.bat', '.cmd', '.sh', '.php', '.phtml', '.js', '.mjs', '.jar']);
-const allowedMimePrefixes = ['image/', 'video/'];
+const blockedExtensions = new Set(['.exe', '.bat', '.cmd', '.sh', '.php', '.phtml', '.js', '.mjs', '.jar', '.svg', '.html', '.htm']);
+const blockedFileNames = new Set(['.env', 'wp-config.php', 'phpinfo.php', 'config.php', 'backup.sql', 'database.sql']);
+const allowedImageMimeTypes = new Map([
+  ['image/jpeg', ['.jpg', '.jpeg']],
+  ['image/png', ['.png']],
+  ['image/gif', ['.gif']],
+  ['image/webp', ['.webp']]
+]);
+const allowedVideoMimeTypes = new Map([
+  ['video/mp4', ['.mp4']],
+  ['video/webm', ['.webm']],
+  ['video/quicktime', ['.mov']]
+]);
 const allowedMimeTypes = [
   'application/pdf',
   'application/msword',
@@ -13,7 +24,8 @@ const allowedMimeTypes = [
 
 const storage = multer.diskStorage({
   destination(req, file, callback) {
-    const folder = new Date().toISOString().slice(0, 7);
+    const now = new Date();
+    const folder = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
     const destination = publicUploadPath(folder);
     ensureDirectory(destination);
     callback(null, destination);
@@ -24,10 +36,19 @@ const storage = multer.diskStorage({
   }
 });
 
+function hasUnsafeFileName(originalName) {
+  const normalized = String(originalName || '').toLowerCase().replace(/\\/g, '/');
+  const baseName = path.basename(normalized);
+  return normalized.includes('../') || normalized.includes('..') || blockedFileNames.has(baseName);
+}
+
 function fileFilter(req, file, callback) {
   const extension = path.extname(file.originalname).toLowerCase();
-  const allowedMime = allowedMimePrefixes.some((prefix) => file.mimetype.startsWith(prefix)) || allowedMimeTypes.includes(file.mimetype);
-  if (blockedExtensions.has(extension) || !allowedMime) {
+  if (hasUnsafeFileName(file.originalname)) return callback(new Error('File name is not allowed.'));
+  const allowedImage = allowedImageMimeTypes.get(file.mimetype)?.includes(extension);
+  const allowedVideo = allowedVideoMimeTypes.get(file.mimetype)?.includes(extension);
+  const allowedDocument = allowedMimeTypes.includes(file.mimetype) && ['.pdf', '.doc', '.docx'].includes(extension);
+  if (blockedExtensions.has(extension) || (!allowedImage && !allowedVideo && !allowedDocument)) {
     return callback(new Error('File type is not allowed.'));
   }
   return callback(null, true);
@@ -35,7 +56,8 @@ function fileFilter(req, file, callback) {
 
 function imageFileFilter(req, file, callback) {
   const extension = path.extname(file.originalname).toLowerCase();
-  if (blockedExtensions.has(extension) || !file.mimetype.startsWith('image/')) {
+  if (hasUnsafeFileName(file.originalname)) return callback(new Error('Featured image file name is not allowed.'));
+  if (blockedExtensions.has(extension) || !allowedImageMimeTypes.get(file.mimetype)?.includes(extension)) {
     return callback(new Error('Featured image must be an image file.'));
   }
   return callback(null, true);

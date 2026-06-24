@@ -9,5 +9,8 @@ module.exports = {
   sessionSecret: process.env.SESSION_SECRET || 'change-this-long-random-secret',
   sessionMaxAge: Number(process.env.SESSION_MAX_AGE || 86400000),
   uploadMaxSizeMb: Number(process.env.UPLOAD_MAX_SIZE_MB || 25),
-  adminSessionTimeoutMinutes: Number(process.env.ADMIN_SESSION_TIMEOUT_MINUTES || 60)
+  adminSessionTimeoutMinutes: Number(process.env.ADMIN_SESSION_TIMEOUT_MINUTES || 60),
+  trustProxy: process.env.TRUST_PROXY === 'true' ? 1 : false,
+  corsOrigin: process.env.CORS_ORIGIN || process.env.APP_URL || 'http://localhost:3000',
+  uploadsQuarantine: process.env.UPLOADS_QUARANTINE === 'true'
 };

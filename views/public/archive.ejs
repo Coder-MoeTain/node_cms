@@ -7,6 +7,15 @@
       <div class="row g-4">
         <% posts.forEach(function(post) { %><div class="col-md-6"><%- include('partials/post-card', { post }) %></div><% }) %>
       </div>
+      <% if (pagination && pagination.pages > 1) { %>
+        <nav class="mt-4">
+          <ul class="pagination">
+            <% for (let i = 1; i <= pagination.pages; i++) { %>
+              <li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?page=<%= i %>"><%= i %></a></li>
+            <% } %>
+          </ul>
+        </nav>
+      <% } %>
     </section>
     <div class="col-lg-4"><%- include('partials/sidebar') %></div>
   </div>

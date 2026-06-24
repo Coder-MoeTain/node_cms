@@ -21,6 +21,17 @@ const SecuritySetting = require('./SecuritySetting')(sequelize);
 const LoginAttempt = require('./LoginAttempt')(sequelize);
 const BlockedIp = require('./BlockedIp')(sequelize);
 const ActivityLog = require('./ActivityLog')(sequelize);
+const Plugin = require('./Plugin')(sequelize);
+const PluginSetting = require('./PluginSetting')(sequelize);
+const PluginHook = require('./PluginHook')(sequelize);
+const PluginMigration = require('./PluginMigration')(sequelize);
+const PasswordResetToken = require('./PasswordResetToken')(sequelize);
+const TwoFactorRecoveryCode = require('./TwoFactorRecoveryCode')(sequelize);
+const WafRule = require('./WafRule')(sequelize);
+const WafLog = require('./WafLog')(sequelize);
+const WafIpList = require('./WafIpList')(sequelize);
+const WafSetting = require('./WafSetting')(sequelize);
+const WafRateLimit = require('./WafRateLimit')(sequelize);
 
 Role.belongsToMany(Permission, { through: 'role_permissions', foreignKey: 'role_id', otherKey: 'permission_id' });
 Permission.belongsToMany(Role, { through: 'role_permissions', foreignKey: 'permission_id', otherKey: 'role_id' });
@@ -56,6 +67,22 @@ Comment.hasMany(Comment, { foreignKey: 'parent_id', as: 'replies' });
 User.hasMany(ActivityLog, { foreignKey: 'user_id' });
 ActivityLog.belongsTo(User, { foreignKey: 'user_id' });
 
+WafRule.hasMany(WafLog, { foreignKey: 'matched_rule_id' });
+WafLog.belongsTo(WafRule, { foreignKey: 'matched_rule_id' });
+User.hasMany(WafLog, { foreignKey: 'user_id' });
+WafLog.belongsTo(User, { foreignKey: 'user_id' });
+
+Plugin.hasMany(PluginSetting, { foreignKey: 'plugin_id', as: 'settings' });
+PluginSetting.belongsTo(Plugin, { foreignKey: 'plugin_id' });
+Plugin.hasMany(PluginHook, { foreignKey: 'plugin_id', as: 'hooks' });
+PluginHook.belongsTo(Plugin, { foreignKey: 'plugin_id' });
+Plugin.hasMany(PluginMigration, { foreignKey: 'plugin_id', as: 'migrations' });
+PluginMigration.belongsTo(Plugin, { foreignKey: 'plugin_id' });
+User.hasMany(PasswordResetToken, { foreignKey: 'user_id', as: 'passwordResetTokens' });
+PasswordResetToken.belongsTo(User, { foreignKey: 'user_id' });
+User.hasMany(TwoFactorRecoveryCode, { foreignKey: 'user_id', as: 'twoFactorRecoveryCodes' });
+TwoFactorRecoveryCode.belongsTo(User, { foreignKey: 'user_id' });
+
 module.exports = {
   sequelize,
   Role,
@@ -78,5 +105,16 @@ module.exports = {
   SecuritySetting,
   LoginAttempt,
   BlockedIp,
-  ActivityLog
+  ActivityLog,
+  Plugin,
+  PluginSetting,
+  PluginHook,
+  PluginMigration,
+  PasswordResetToken,
+  TwoFactorRecoveryCode,
+  WafRule,
+  WafLog,
+  WafIpList,
+  WafSetting,
+  WafRateLimit
 };

@@ -2,6 +2,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { BlockedIp } = require('../models');
+const appConfig = require('../config/app');
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -18,13 +19,32 @@ const apiLimiter = rateLimit({
   legacyHeaders: false
 });
 
+const publicMutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many submissions. Try again later.'
+});
+
 function applySecurityMiddleware(app) {
   app.use(
     helmet({
-      contentSecurityPolicy: false
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          "default-src": ["'self'"],
+          "script-src": ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://translate.google.com', 'https://translate.googleapis.com'],
+          "style-src": ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
+          "font-src": ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com', 'data:'],
+          "img-src": ["'self'", 'data:', 'https:'],
+          "frame-src": ["'self'", 'https://www.youtube.com', 'https://youtube.com', 'https://player.vimeo.com'],
+          "connect-src": ["'self'"]
+        }
+      }
     })
   );
-  app.use(cors({ origin: true, credentials: true }));
+  app.use(cors({ origin: appConfig.corsOrigin, credentials: true }));
   app.use(apiLimiter);
   app.use(async (req, res, next) => {
     try {
@@ -37,4 +57,4 @@ function applySecurityMiddleware(app) {
   });
 }
 
-module.exports = { applySecurityMiddleware, loginLimiter };
+module.exports = { applySecurityMiddleware, loginLimiter, publicMutationLimiter };

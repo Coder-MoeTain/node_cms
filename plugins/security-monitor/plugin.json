@@ -1,0 +1,10 @@
+{
+  "name": "Security Monitor",
+  "slug": "security-monitor",
+  "version": "1.0.0",
+  "description": "Adds security dashboard hooks and upload monitoring extension points.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins", "manage_security"],
+  "adminMenu": true,
+  "settingsPage": true
+}

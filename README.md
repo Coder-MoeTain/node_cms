@@ -1,3 +1,28 @@
+## Production Upgrade Commands
+
+```bash
+npm install
+npm run db:sync
+npm run seed
+npm run dev
+npm test
+```
+
+Production:
+
+```bash
+npm ci --omit=dev
+npm run migrate
+pm2 start ecosystem.config.js
+```
+
+Health endpoints:
+
+- `GET /health`
+- `GET /ready`
+
+Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. See `.env.example`, `docs/DEPLOYMENT.md`, and `docs/BACKUP_AND_RESTORE.md`.
+
 <p align="center">
   <img src="docs/assets/nodepress-cover.svg" alt="NodePress CMS cover" width="100%">
 </p>
@@ -170,6 +195,55 @@ The seeded admin account requires a password change after first login.
 | `npm run dev` | Run the app with Nodemon |
 | `npm run db:sync` | Sync Sequelize models to MySQL |
 | `npm run seed` | Seed roles, permissions, settings, menus, themes, and default admin |
+
+## Web Application Firewall
+
+NodePress CMS includes an Express middleware WAF for public, admin, and API requests. Static assets are served before the WAF, while dynamic requests are inspected after body parsing, sessions, CSRF, and site context are available.
+
+The WAF stores rules, logs, IP lists, settings, and dynamic rate-limit counters in MySQL through Sequelize: `waf_rules`, `waf_logs`, `waf_ip_lists`, `waf_settings`, and `waf_rate_limits`.
+
+Admin users with `manage_waf` or `manage_security` can manage it from `/admin/waf`, `/admin/waf/settings`, `/admin/waf/rules`, `/admin/waf/logs`, and `/admin/waf/ip-lists`.
+
+Default mode is `monitor`, so suspicious requests are logged before enforcement is enabled. Switch to `block` mode after reviewing logs and tuning false positives.
+
+### WAF Database Setup
+
+For a fresh Sequelize setup:
+
+```bash
+npm run db:sync
+npm run seed
+```
+
+For SQL-managed installs:
+
+```bash
+mysql -u root -p nodepress_cms < database/migrations/006_waf_system.sql
+mysql -u root -p nodepress_cms < database/seed_waf_rules.sql
+```
+
+### WAF Testing Checklist
+
+1. Normal homepage loads.
+2. Normal admin login works.
+3. Normal post creation works.
+4. Rich text post content does not get falsely blocked.
+5. SQL injection-like query is blocked in block mode.
+6. SQL injection-like query is logged in monitor mode.
+7. XSS-like payload is blocked in block mode.
+8. Bad bot user-agent is blocked.
+9. Blacklisted IP is blocked.
+10. Whitelisted IP bypasses block.
+11. WAF logs are created.
+12. WAF log detail page escapes malicious content.
+13. Admin can enable/disable WAF.
+14. Admin can switch monitor/block mode.
+15. Admin can create custom rule.
+16. Invalid custom regex does not crash the app.
+17. Auto-block creates a temporary block after repeated high-risk events.
+18. Static assets still load.
+19. File uploads still work.
+20. Dangerous upload names are blocked.
 
 ## Project Structure
 

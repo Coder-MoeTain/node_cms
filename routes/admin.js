@@ -1,7 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const { requireAuth, guestOnly } = require('../middleware/auth');
-const { can } = require('../middleware/permission');
+const { can, canAny, policy } = require('../middleware/permission');
 const { loginLimiter } = require('../middleware/security');
 const { activityLogMiddleware } = require('../middleware/activityLog');
 const upload = require('../middleware/upload');
@@ -10,8 +10,10 @@ const auth = require('../controllers/admin/authController');
 const dashboard = require('../controllers/admin/dashboardController');
 const crud = require('../controllers/admin/crudController');
 const media = require('../controllers/admin/mediaController');
+const plugins = require('../controllers/admin/pluginController');
 const settings = require('../controllers/admin/settingsController');
 const security = require('../controllers/admin/securityController');
+const waf = require('../controllers/admin/wafController');
 
 const router = express.Router();
 
@@ -24,6 +26,9 @@ router.get('/reset-password', guestOnly, auth.resetPasswordForm);
 router.post('/reset-password', guestOnly, auth.resetPassword);
 router.get('/profile', requireAuth, auth.profile);
 router.put('/profile', requireAuth, auth.updateProfile);
+router.get('/profile/2fa', requireAuth, auth.twoFactorForm);
+router.post('/profile/2fa/enable', requireAuth, auth.enableTwoFactor);
+router.post('/profile/2fa/disable', requireAuth, auth.disableTwoFactor);
 
 router.use(requireAuth, activityLogMiddleware('admin'));
 
@@ -31,11 +36,21 @@ router.get('/', requireAuth, can('view_dashboard'), dashboard.dashboard);
 
 router.get('/media', requireAuth, can('manage_media'), media.index);
 router.post('/media/upload', requireAuth, can('manage_media'), upload.array('files', 20), media.upload);
+router.get('/media/:id/edit', requireAuth, can('manage_media'), media.edit);
+router.put('/media/:id', requireAuth, can('manage_media'), upload.single('file'), media.update);
 router.delete('/media/:id', requireAuth, can('manage_media'), media.destroy);
 
+router.get('/plugins', requireAuth, can('manage_plugins'), plugins.index);
+router.post('/plugins/:slug/activate', requireAuth, can('manage_plugins'), plugins.activate);
+router.post('/plugins/:slug/deactivate', requireAuth, can('manage_plugins'), plugins.deactivate);
+router.get('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.settings);
+router.put('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.updateSettings);
+
+router.get('/settings/media-gallery', requireAuth, can('manage_settings'), settings.mediaGallery);
 router.get('/settings', requireAuth, can('manage_settings'), settings.settings);
 router.put('/settings', requireAuth, can('manage_settings'), settings.updateSettings);
 router.get('/themes', requireAuth, can('manage_themes'), settings.themes);
+router.get('/themes/editor', requireAuth, can('manage_themes'), settings.themeEditor);
 router.post('/themes/activate', requireAuth, can('manage_themes'), settings.activateTheme);
 router.put('/theme-settings', requireAuth, can('manage_themes'), settings.updateThemeSettings);
 
@@ -46,10 +61,39 @@ router.post('/security/block-ip', requireAuth, can('manage_security'), security.
 router.delete('/security/unblock-ip/:id', requireAuth, can('manage_security'), security.unblockIp);
 router.post('/security/backup-database', requireAuth, can('manage_security'), security.backupDatabase);
 
+const wafPermission = canAny(['manage_waf', 'manage_security']);
+router.get('/waf', requireAuth, wafPermission, waf.dashboard);
+router.get('/waf/settings', requireAuth, wafPermission, waf.settings);
+router.post('/waf/settings', requireAuth, wafPermission, waf.updateSettings);
+router.get('/waf/rules', requireAuth, wafPermission, waf.rules);
+router.get('/waf/rules/create', requireAuth, wafPermission, waf.createRule);
+router.post('/waf/rules', requireAuth, wafPermission, waf.storeRule);
+router.get('/waf/rules/:id/edit', requireAuth, wafPermission, waf.editRule);
+router.post('/waf/rules/:id', requireAuth, wafPermission, waf.updateRule);
+router.post('/waf/rules/:id/delete', requireAuth, wafPermission, waf.deleteRule);
+router.post('/waf/rules/:id/toggle', requireAuth, wafPermission, waf.toggleRule);
+router.get('/waf/logs', requireAuth, wafPermission, waf.logs);
+router.get('/waf/logs/:id', requireAuth, wafPermission, waf.logDetail);
+router.post('/waf/logs/:id/delete', requireAuth, wafPermission, waf.deleteLog);
+router.post('/waf/logs/delete-old', requireAuth, wafPermission, waf.deleteOldLogs);
+router.get('/waf/ip-lists', requireAuth, wafPermission, waf.ipLists);
+router.post('/waf/ip-lists', requireAuth, wafPermission, waf.addIpList);
+router.post('/waf/ip-lists/:id/delete', requireAuth, wafPermission, waf.removeIpList);
+router.post('/waf/logs/:id/block-ip', requireAuth, wafPermission, waf.blockIpFromLog);
+router.post('/waf/logs/:id/whitelist-ip', requireAuth, wafPermission, waf.whitelistIpFromLog);
+
 function resourcePermission(req, res, next) {
   try {
-    const config = crud.configs[req.params.resource];
-    return can(config.permission)(req, res, next);
+    const actionMap = {
+      GET: req.path.endsWith('/create') ? 'create' : req.path.endsWith('/edit') ? 'edit' : 'index',
+      POST: 'store',
+      PUT: 'update',
+      DELETE: 'destroy'
+    };
+    const action = actionMap[req.method] || 'index';
+    if (policy.canManageResource(req.session.user, req.params.resource, action)) return next();
+    req.flash('error', 'You do not have permission to perform that action.');
+    return res.redirect('/admin/profile');
   } catch (error) {
     return next(error);
   }

@@ -1,7 +1,5 @@
-const fs = require('fs');
-const path = require('path');
 const { Media } = require('../../models');
-const { classifyMime, publicUploadPath } = require('../../utils/fileHelper');
+const { buildMediaPayload, removeMediaFiles } = require('../../utils/mediaHelper');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 
 async function index(req, res, next) {
@@ -18,19 +16,41 @@ async function upload(req, res, next) {
   try {
     const files = req.files || (req.file ? [req.file] : []);
     for (const file of files) {
-      const relative = `/uploads/${path.relative(publicUploadPath(), file.path).replace(/\\/g, '/')}`;
-      await Media.create({
-        filename: file.filename,
-        original_name: file.originalname,
-        file_path: relative,
-        file_type: classifyMime(file.mimetype),
-        mime_type: file.mimetype,
-        file_size: file.size,
-        uploaded_by: req.session.user.id
-      });
+      await Media.create(await buildMediaPayload(file, req.session.user.id));
     }
     req.flash('success', 'Media uploaded.');
     return res.redirect('/admin/media');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function edit(req, res, next) {
+  try {
+    const media = await Media.findByPk(req.params.id);
+    if (!media) return res.status(404).render('errors/404', { title: 'Media Not Found' });
+    return res.render('admin/media/edit', { title: 'Edit Media', media });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function update(req, res, next) {
+  try {
+    const media = await Media.findByPk(req.params.id);
+    if (!media) return res.status(404).render('errors/404', { title: 'Media Not Found' });
+    const payload = {
+      alt_text: req.body.alt_text,
+      caption: req.body.caption,
+      description: req.body.description
+    };
+    if (req.file) {
+      removeMediaFiles(media);
+      Object.assign(payload, await buildMediaPayload(req.file, req.session.user.id));
+    }
+    await media.update(payload);
+    req.flash('success', 'Media updated.');
+    return res.redirect(`/admin/media/${media.id}/edit`);
   } catch (error) {
     return next(error);
   }
@@ -40,8 +60,7 @@ async function destroy(req, res, next) {
   try {
     const media = await Media.findByPk(req.params.id);
     if (media) {
-      const diskPath = publicUploadPath(media.file_path.replace('/uploads/', ''));
-      if (fs.existsSync(diskPath)) fs.unlinkSync(diskPath);
+      removeMediaFiles(media);
       await media.destroy();
     }
     req.flash('success', 'Media deleted.');
@@ -51,4 +70,4 @@ async function destroy(req, res, next) {
   }
 }
 
-module.exports = { index, upload, destroy };
+module.exports = { index, upload, edit, update, destroy };

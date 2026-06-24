@@ -1,0 +1,28 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <form class="card" method="post" action="/admin/media/<%= media.id %>?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
+      <div class="card-header professional-card-header"><span>Edit Media</span><a href="/admin/media">Back to media</a></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <% if (media.file_type === 'image') { %><img class="img-fluid rounded" src="<%= media.medium_path || media.file_path %>" alt="<%= media.alt_text || media.original_name %>"><% } %>
+            <input class="form-control mt-3" value="<%= media.file_path %>" readonly onclick="this.select();navigator.clipboard.writeText(this.value)">
+            <div class="small text-muted mt-2"><%= media.mime_type %> · <%= Math.round(media.file_size / 1024) %> KB <% if (media.width) { %>· <%= media.width %>x<%= media.height %><% } %></div>
+          </div>
+          <div class="col-lg-8">
+            <div class="mb-3"><label class="form-label">Alt Text</label><input class="form-control" name="alt_text" value="<%= media.alt_text || '' %>"></div>
+            <div class="mb-3"><label class="form-label">Caption</label><input class="form-control" name="caption" value="<%= media.caption || '' %>"></div>
+            <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="5"><%= media.description || '' %></textarea></div>
+            <div class="mb-3"><label class="form-label">Replace File</label><input class="form-control" type="file" name="file"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer"><button class="btn btn-primary">Save Media</button></div>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

@@ -1,4 +1,5 @@
 const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post } = require('../models');
+const pluginLoader = require('../utils/pluginLoader');
 
 function buildMenuTree(items = []) {
   const plainItems = items
@@ -40,6 +41,8 @@ async function loadSiteContext(req, res, next) {
     res.locals.sidebarCategories = categories;
     res.locals.recentPosts = recentPosts;
     res.locals.popularPosts = popularPosts;
+    res.locals.pluginPublicHead = await pluginLoader.collectHook('publicHead', { req, res });
+    res.locals.pluginPublicFooter = await pluginLoader.collectHook('publicFooter', { req, res });
     return next();
   } catch (error) {
     return next(error);

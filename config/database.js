@@ -1,13 +1,15 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+const isTest = process.env.NODE_ENV === 'test';
+
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'nodepress_cms',
-  process.env.DB_USER || 'root',
-  process.env.DB_PASSWORD || '',
+  (isTest && process.env.TEST_DB_NAME) || process.env.DB_NAME || 'nodepress_cms',
+  (isTest && process.env.TEST_DB_USER) || process.env.DB_USER || 'root',
+  (isTest && process.env.TEST_DB_PASSWORD) || process.env.DB_PASSWORD || '',
   {
-    host: process.env.DB_HOST || '127.0.0.1',
-    port: Number(process.env.DB_PORT || 3306),
+    host: (isTest && process.env.TEST_DB_HOST) || process.env.DB_HOST || '127.0.0.1',
+    port: Number((isTest && process.env.TEST_DB_PORT) || process.env.DB_PORT || 3306),
     dialect: 'mysql',
     logging: process.env.NODE_ENV === 'development' ? false : false,
     define: {

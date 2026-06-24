@@ -1,0 +1,83 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <div>
+        <h2 class="mb-1">Web Application Firewall</h2>
+        <p class="text-muted mb-0">Request inspection, blocking, rate limiting, and WAF event logging.</p>
+      </div>
+      <div class="btn-group">
+        <a class="btn btn-outline-secondary" href="/admin/waf/logs">Logs</a>
+        <a class="btn btn-outline-secondary" href="/admin/waf/rules">Rules</a>
+        <a class="btn btn-primary" href="/admin/waf/settings">Settings</a>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">WAF Status</span><h3><span class="badge <%= settings.waf_enabled === 'true' ? 'text-bg-success' : 'text-bg-secondary' %>"><%= settings.waf_enabled === 'true' ? 'Enabled' : 'Disabled' %></span></h3></div></div></div>
+      <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">Mode</span><h3><span class="badge <%= settings.waf_mode === 'block' ? 'text-bg-danger' : 'text-bg-warning' %>"><%= settings.waf_mode || 'monitor' %></span></h3></div></div></div>
+      <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">Blocked Today</span><h3><%= blockedToday %></h3></div></div></div>
+      <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">Active Blocks</span><h3><%= activeBlocks %></h3></div></div></div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header professional-card-header"><span>Recent Blocked Requests</span><span class="badge text-bg-light"><%= loggedToday %> logged today</span></div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead><tr><th>Time</th><th>IP</th><th>Rule</th><th>Category</th><th>Risk</th><th></th></tr></thead>
+              <tbody>
+                <% recentBlocked.forEach(function(log) { %>
+                  <tr>
+                    <td><%= log.created_at.toLocaleString() %></td>
+                    <td><code><%= log.ip_address %></code></td>
+                    <td><%= log.matched_rule_name || '-' %></td>
+                    <td><span class="badge text-bg-secondary"><%= log.category || '-' %></span></td>
+                    <td><span class="badge <%= log.risk_score >= 50 ? 'text-bg-danger' : 'text-bg-warning' %>"><%= log.risk_score %></span></td>
+                    <td><a class="btn btn-sm btn-outline-primary" href="/admin/waf/logs/<%= log.id %>">View</a></td>
+                  </tr>
+                <% }) %>
+                <% if (!recentBlocked.length) { %><tr><td colspan="6" class="text-center text-muted py-4">No blocked requests yet.</td></tr><% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card mb-3">
+          <div class="card-header">Risk Summary Today</div>
+          <ul class="list-group list-group-flush">
+            <% riskSummary.forEach(function(row) { %>
+              <li class="list-group-item d-flex justify-content-between"><span><%= row.severity || 'unknown' %></span><span class="badge text-bg-dark"><%= row.get('count') %></span></li>
+            <% }) %>
+            <% if (!riskSummary.length) { %><li class="list-group-item text-muted">No risk events today.</li><% } %>
+          </ul>
+        </div>
+        <div class="card mb-3">
+          <div class="card-header">Top Attacking IPs</div>
+          <ul class="list-group list-group-flush">
+            <% topIps.forEach(function(row) { %><li class="list-group-item d-flex justify-content-between"><code><%= row.ip_address %></code><span class="badge text-bg-danger"><%= row.get('count') %></span></li><% }) %>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-header">Top Categories</div>
+          <ul class="list-group list-group-flush">
+            <% topCategories.forEach(function(row) { %><li class="list-group-item d-flex justify-content-between"><span><%= row.category %></span><span class="badge text-bg-secondary"><%= row.get('count') %></span></li><% }) %>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">Top Matched Rules</div>
+      <div class="table-responsive">
+        <table class="table mb-0"><tbody><% topRules.forEach(function(row) { %><tr><td><%= row.matched_rule_name %></td><td class="text-end"><span class="badge text-bg-dark"><%= row.get('count') %></span></td></tr><% }) %></tbody></table>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

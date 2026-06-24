@@ -20,5 +20,6 @@
     }
   </style>
   <% if (typeof schema !== 'undefined' && schema) { %><script type="application/ld+json"><%- schema %></script><% } %>
+  <% (pluginPublicHead || []).forEach(function(snippet) { %><%- snippet %><% }) %>
 </head>
 <body class="<%= activeTheme.dark_mode ? 'theme-dark' : '' %> <%= activeTheme.site_layout === 'boxed' ? 'boxed-layout' : '' %>">

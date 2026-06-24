@@ -14,7 +14,10 @@
             <div class="col-md-6"><label class="form-label">New password</label><input class="form-control" name="password" type="password" placeholder="Leave blank to keep current password"></div>
             <div class="col-md-6"><label class="form-label">Role</label><input class="form-control" value="<%= user.Role ? user.Role.name : '' %>" disabled></div>
           </div>
-          <button class="btn btn-primary mt-3">Update Profile</button>
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary">Update Profile</button>
+            <a class="btn btn-outline-secondary" href="/admin/profile/2fa"><%= user.two_factor_enabled ? 'Manage 2FA' : 'Enable 2FA' %></a>
+          </div>
         </form>
       </div>
     </div>

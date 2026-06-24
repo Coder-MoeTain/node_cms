@@ -6,5 +6,7 @@
   </div>
 <% } %>
 <% if (error && error.length) { %>
-  <div class="alert alert-danger"><%= error[0] %></div>
+  <% error.forEach(function(message) { %>
+    <div class="alert alert-danger"><%= message %></div>
+  <% }) %>
 <% } %>

@@ -1,0 +1,12 @@
+{
+  "name": "Minimal Personal",
+  "slug": "minimal-personal",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "A minimalist child theme for personal publishing.",
+  "parent": "classic-blog",
+  "layouts": ["default", "full-width"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "darkMode"],
+  "screenshot": "/themes/minimal-personal/screenshot.svg"
+}

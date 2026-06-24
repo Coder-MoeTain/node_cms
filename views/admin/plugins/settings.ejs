@@ -1,0 +1,30 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <form class="card" method="post" action="/admin/plugins/<%= plugin.slug %>/settings?_method=PUT">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-header professional-card-header">
+        <span><%= plugin.name %> Settings</span>
+        <a href="/admin/plugins">Back to plugins</a>
+      </div>
+      <div class="card-body">
+        <p class="text-muted"><%= plugin.description || '' %></p>
+        <% const settings = {}; (plugin.settings || []).forEach(function(setting) { settings[setting.key] = setting.value; }); %>
+        <div class="mb-3">
+          <label class="form-label">Enabled Note</label>
+          <input class="form-control" name="note" value="<%= settings.note || '' %>" placeholder="Internal note for this plugin">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Public Snippet</label>
+          <textarea class="form-control" name="public_snippet" rows="4"><%= settings.public_snippet || '' %></textarea>
+          <div class="form-text">Use plugin code for production snippets; this setting is stored for plugin use.</div>
+        </div>
+      </div>
+      <div class="card-footer"><button class="btn btn-primary">Save Settings</button></div>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

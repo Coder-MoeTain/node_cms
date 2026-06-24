@@ -1,4 +1,5 @@
-const { SiteSetting, Theme, ThemeSetting } = require('../../models');
+const { SiteSetting, Theme, ThemeSetting, Media } = require('../../models');
+const themeLoader = require('../../utils/themeLoader');
 
 const defaultSettings = {
   site_logo: { value: '', group: 'branding' },
@@ -31,8 +32,33 @@ async function updateSettings(req, res, next) {
   }
 }
 
+async function mediaGallery(req, res, next) {
+  try {
+    const mediaType = req.query.type || 'image';
+    const rows = await Media.findAll({
+      where: { file_type: mediaType },
+      limit: 60,
+      order: [['created_at', 'DESC']]
+    });
+    return res.json({
+      items: rows.map((item) => ({
+        id: item.id,
+        originalName: item.original_name,
+        filePath: item.file_path,
+        fileType: item.file_type,
+        mimeType: item.mime_type,
+        fileSize: item.file_size,
+        createdAt: item.created_at
+      }))
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function themes(req, res, next) {
   try {
+    await themeLoader.syncInstalledThemes();
     const [themes, themeSetting] = await Promise.all([Theme.findAll(), ThemeSetting.findOne({ where: { active: true } })]);
     return res.render('admin/themes/index', { title: 'Themes', themes, themeSetting: themeSetting || {} });
   } catch (error) {
@@ -82,4 +108,14 @@ async function updateThemeSettings(req, res, next) {
   }
 }
 
-module.exports = { settings, updateSettings, themes, activateTheme, updateThemeSettings };
+async function themeEditor(req, res, next) {
+  try {
+    await themeLoader.syncInstalledThemes();
+    const [themes, themeSetting] = await Promise.all([Theme.findAll(), ThemeSetting.findOne({ where: { active: true } })]);
+    return res.render('admin/themes/editor', { title: 'Theme Editor', themes, themeSetting: themeSetting || {} });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { settings, updateSettings, mediaGallery, themes, activateTheme, updateThemeSettings, themeEditor };

@@ -1,0 +1,48 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h1>Plugins</h1>
+        <p class="text-muted mb-0">Install, activate, deactivate, and configure NodePress plugins.</p>
+      </div>
+    </div>
+    <div class="row g-3">
+      <% plugins.forEach(function(plugin) { %>
+        <div class="col-md-6 col-xl-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between gap-2">
+                <h5><%= plugin.name %></h5>
+                <span class="status-pill status-<%= plugin.active ? 'published' : 'draft' %>"><%= plugin.active ? 'active' : 'inactive' %></span>
+              </div>
+              <p class="text-muted"><%= plugin.description || '' %></p>
+              <small class="text-muted d-block">Version <%= plugin.version %> · <%= plugin.author || 'Unknown author' %></small>
+            </div>
+            <div class="card-footer d-flex gap-2">
+              <% if (plugin.active) { %>
+                <form method="post" action="/admin/plugins/<%= plugin.slug %>/deactivate">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                </form>
+              <% } else { %>
+                <form method="post" action="/admin/plugins/<%= plugin.slug %>/activate">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-sm btn-primary">Activate</button>
+                </form>
+              <% } %>
+              <a class="btn btn-sm btn-outline-secondary" href="/admin/plugins/<%= plugin.slug %>/settings">Settings</a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+      <% if (!plugins.length) { %>
+        <div class="col-12"><div class="empty-state"><i class="bi bi-plug"></i><strong>No plugins found</strong><span>Add plugins under the plugins directory.</span></div></div>
+      <% } %>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

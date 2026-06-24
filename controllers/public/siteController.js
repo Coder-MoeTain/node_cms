@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
 const sanitizeHtml = require('sanitize-html');
+const { validationResult } = require('express-validator');
 const {
   Post,
   Page,
@@ -14,8 +15,13 @@ const {
 } = require('../../models');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { meta, postSchema } = require('../../utils/seoHelper');
+const themeLoader = require('../../utils/themeLoader');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
+
+async function renderTheme(res, template, locals) {
+  return res.render(await themeLoader.resolveTemplate(template), locals);
+}
 
 async function home(req, res, next) {
   try {
@@ -24,7 +30,7 @@ async function home(req, res, next) {
       Banner.findAll({ where: { active: true }, order: [['display_order', 'ASC']] }),
       Slider.findAll({ where: { active: true }, order: [['display_order', 'ASC']] })
     ]);
-    return res.render('public/home', { title: 'Home', seo: meta('Home'), posts, banners, sliders });
+    return renderTheme(res, 'home', { title: 'Home', seo: meta('Home'), posts, banners, sliders });
   } catch (error) {
     return next(error);
   }
@@ -41,7 +47,7 @@ async function blog(req, res, next) {
       offset,
       order: [['published_at', 'DESC']]
     });
-    return res.render('public/blog', { title: 'Blog', seo: meta('Blog'), posts: rows, pagination: pageMeta(count, page, limit) });
+    return renderTheme(res, 'blog', { title: 'Blog', seo: meta('Blog'), posts: rows, pagination: pageMeta(count, page, limit) });
   } catch (error) {
     return next(error);
   }
@@ -65,7 +71,7 @@ async function post(req, res, next) {
       limit: 3,
       order: [['published_at', 'DESC']]
     });
-    return res.render('public/post', {
+    return renderTheme(res, 'post', {
       title: row.title,
       seo: meta(row.seo_title || row.title, row.seo_description || row.excerpt, row.og_image || row.featured_image),
       post: row,
@@ -81,8 +87,16 @@ async function category(req, res, next) {
   try {
     const categoryRow = await Category.findOne({ where: { slug: req.params.slug } });
     if (!categoryRow) return res.status(404).render('errors/404', { title: 'Category Not Found' });
-    const posts = await Post.findAll({ where: { category_id: categoryRow.id, status: 'published' }, include: publishedPostInclude });
-    return res.render('public/archive', { title: categoryRow.name, seo: meta(categoryRow.name, categoryRow.description), heading: categoryRow.name, posts });
+    const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
+    const { rows, count } = await Post.findAndCountAll({
+      where: { category_id: categoryRow.id, status: 'published' },
+      include: publishedPostInclude,
+      distinct: true,
+      limit,
+      offset,
+      order: [['published_at', 'DESC']]
+    });
+    return renderTheme(res, 'archive', { title: categoryRow.name, seo: meta(categoryRow.name, categoryRow.description), heading: categoryRow.name, posts: rows, pagination: pageMeta(count, page, limit) });
   } catch (error) {
     return next(error);
   }
@@ -90,9 +104,18 @@ async function category(req, res, next) {
 
 async function tag(req, res, next) {
   try {
-    const tagRow = await Tag.findOne({ where: { slug: req.params.slug }, include: [{ model: Post, where: { status: 'published' }, required: false, include: publishedPostInclude }] });
+    const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
+    const tagRow = await Tag.findOne({ where: { slug: req.params.slug } });
     if (!tagRow) return res.status(404).render('errors/404', { title: 'Tag Not Found' });
-    return res.render('public/archive', { title: tagRow.name, seo: meta(tagRow.name), heading: `Tag: ${tagRow.name}`, posts: tagRow.Posts || [] });
+    const { rows, count } = await Post.findAndCountAll({
+      where: { status: 'published' },
+      include: [...publishedPostInclude, { model: Tag, where: { id: tagRow.id } }],
+      distinct: true,
+      limit,
+      offset,
+      order: [['published_at', 'DESC']]
+    });
+    return renderTheme(res, 'archive', { title: tagRow.name, seo: meta(tagRow.name), heading: `Tag: ${tagRow.name}`, posts: rows, pagination: pageMeta(count, page, limit) });
   } catch (error) {
     return next(error);
   }
@@ -102,7 +125,7 @@ async function page(req, res, next) {
   try {
     const row = await Page.findOne({ where: { slug: req.params.slug, status: 'published' } });
     if (!row) return res.status(404).render('errors/404', { title: 'Page Not Found' });
-    return res.render('public/page', { title: row.title, seo: meta(row.seo_title || row.title, row.seo_description), page: row });
+    return renderTheme(res, 'page', { title: row.title, seo: meta(row.seo_title || row.title, row.seo_description), page: row });
   } catch (error) {
     return next(error);
   }
@@ -111,27 +134,41 @@ async function page(req, res, next) {
 async function search(req, res, next) {
   try {
     const q = req.query.q || '';
+    const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const posts = q
       ? await Post.findAll({
           where: {
             status: 'published',
             [Op.or]: [{ title: { [Op.like]: `%${q}%` } }, { excerpt: { [Op.like]: `%${q}%` } }, { content: { [Op.like]: `%${q}%` } }]
           },
-          include: publishedPostInclude
+          include: publishedPostInclude,
+          limit,
+          offset,
+          order: [['published_at', 'DESC']]
         })
       : [];
-    return res.render('public/search', { title: 'Search', seo: meta('Search'), q, posts });
+    return renderTheme(res, 'search', { title: 'Search', seo: meta('Search'), q, posts, pagination: null });
   } catch (error) {
     return next(error);
   }
 }
 
-function contact(req, res) {
-  res.render('public/contact', { title: 'Contact', seo: meta('Contact') });
+async function contact(req, res, next) {
+  try {
+    return renderTheme(res, 'contact', { title: 'Contact', seo: meta('Contact') });
+  } catch (error) {
+    return next(error);
+  }
 }
 
 async function submitContact(req, res, next) {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.flash('error', errors.array()[0].msg || 'Please check the contact form.');
+      return res.redirect('/contact');
+    }
+
     await ContactMessage.create({
       name: req.body.name,
       email: req.body.email,
@@ -148,6 +185,12 @@ async function submitContact(req, res, next) {
 
 async function comment(req, res, next) {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.flash('error', errors.array()[0].msg || 'Please check your comment.');
+      return res.redirect('back');
+    }
+
     const postRow = await Post.findByPk(req.params.id);
     if (!postRow || !postRow.allow_comments) {
       req.flash('error', 'Comments are closed.');

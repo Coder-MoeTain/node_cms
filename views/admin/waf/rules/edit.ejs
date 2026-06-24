@@ -1,0 +1,28 @@
+<%- include('../../partials/head') %>
+<%- include('../../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../../partials/flash') %>
+    <div class="d-flex justify-content-between align-items-center mb-3"><h2>Edit WAF Rule</h2><a class="btn btn-outline-secondary" href="/admin/waf/rules">Back</a></div>
+    <% const locked = rule.category !== 'custom'; %>
+    <% if (locked) { %><div class="alert alert-info">This is a default rule. You can tune status, action, severity, score, and description; pattern/category are locked to preserve baseline coverage.</div><% } %>
+    <form class="card" method="post" action="/admin/waf/rules/<%= rule.id %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-body row g-3">
+        <div class="col-md-6"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= rule.name %>" required></div>
+        <div class="col-md-6"><label class="form-label">Rule key</label><input class="form-control" name="rule_key" value="<%= rule.rule_key %>" <%= locked ? 'readonly' : '' %>></div>
+        <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="2"><%= rule.description || '' %></textarea></div>
+        <div class="col-md-3"><label class="form-label">Category</label><select class="form-select" name="category" <%= locked ? 'disabled' : '' %>><% categories.forEach(function(category) { %><option value="<%= category %>" <%= rule.category === category ? 'selected' : '' %>><%= category %></option><% }) %></select></div>
+        <div class="col-md-3"><label class="form-label">Target</label><select class="form-select" name="target"><% targets.forEach(function(target) { %><option value="<%= target %>" <%= rule.target === target ? 'selected' : '' %>><%= target %></option><% }) %></select></div>
+        <div class="col-md-3"><label class="form-label">Action</label><select class="form-select" name="action"><% actions.forEach(function(action) { %><option value="<%= action %>" <%= rule.action === action ? 'selected' : '' %>><%= action %></option><% }) %></select></div>
+        <div class="col-md-3"><label class="form-label">Severity</label><select class="form-select" name="severity"><% severities.forEach(function(severity) { %><option value="<%= severity %>" <%= rule.severity === severity ? 'selected' : '' %>><%= severity %></option><% }) %></select></div>
+        <div class="col-md-3"><label class="form-label">Score</label><input class="form-control" type="number" min="1" max="100" name="score" value="<%= rule.score %>"></div>
+        <div class="col-md-3 d-flex align-items-end"><label class="form-check"><input class="form-check-input" type="checkbox" name="status" <%= rule.status ? 'checked' : '' %>> Enabled</label></div>
+        <div class="col-12"><label class="form-label">Regex pattern</label><textarea class="form-control font-monospace" name="pattern" rows="4" <%= locked ? 'readonly' : '' %>><%= rule.pattern %></textarea></div>
+      </div>
+      <div class="card-footer d-flex justify-content-end"><button class="btn btn-primary">Save Rule</button></div>
+    </form>
+  </main>
+</div>
+<%- include('../../partials/footer') %>

@@ -24,7 +24,7 @@
         <% } %>
         <button class="btn btn-outline-primary">Search</button>
       </form>
-      <% if (!['comments','messages'].includes(resource)) { %><a class="btn btn-primary" href="/admin/<%= resource %>/create"><i class="bi bi-plus-lg"></i> Add New</a><% } %>
+      <% if (!['comments','messages'].includes(resource) && canManageResource(resource, 'create')) { %><a class="btn btn-primary" href="/admin/<%= resource %>/create"><i class="bi bi-plus-lg"></i> Add New</a><% } %>
     </div>
     <div class="card">
       <div class="table-responsive">
@@ -38,11 +38,15 @@
                 <td><span class="status-pill status-<%= row.status || (row.active ? 'published' : 'draft') %>"><%= row.status || (row.active ? 'active' : 'inactive') %></span></td>
                 <td><%= row.created_at ? row.created_at.toISOString().slice(0,10) : '' %></td>
                 <td class="text-end">
-                  <a class="btn btn-sm btn-outline-primary" href="/admin/<%= resource %>/<%= row.id %>/edit"><i class="bi bi-pencil"></i> Edit</a>
-                  <form class="d-inline" method="post" action="/admin/<%= resource %>/<%= row.id %>?_method=DELETE" data-confirm="Delete this item?">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
-                  </form>
+                  <% if (canManageResource(resource, 'edit', row)) { %>
+                    <a class="btn btn-sm btn-outline-primary" href="/admin/<%= resource %>/<%= row.id %>/edit"><i class="bi bi-pencil"></i> Edit</a>
+                  <% } %>
+                  <% if (canManageResource(resource, 'destroy', row)) { %>
+                    <form class="d-inline" method="post" action="/admin/<%= resource %>/<%= row.id %>?_method=DELETE" data-confirm="Delete this item?">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
+                    </form>
+                  <% } %>
                 </td>
               </tr>
             <% }) %>

@@ -1,0 +1,11 @@
+{
+  "name": "Classic Blog",
+  "slug": "classic-blog",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "A balanced classic blog layout using the shared NodePress public templates.",
+  "layouts": ["default", "sidebar-left", "sidebar-right"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "screenshot": "/themes/classic-blog/screenshot.svg"
+}

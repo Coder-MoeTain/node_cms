@@ -19,11 +19,12 @@
       <% rows.forEach(function(file) { %>
         <div class="col-md-3">
           <div class="card h-100">
-            <% if (file.file_type === 'image') { %><img class="card-img-top media-thumb" src="<%= file.file_path %>" alt=""><% } %>
+            <% if (file.file_type === 'image') { %><img class="card-img-top media-thumb" src="<%= file.thumbnail_path || file.file_path %>" alt="<%= file.alt_text || file.original_name %>"><% } %>
             <div class="card-body">
               <h6><%= file.original_name %></h6>
               <input class="form-control form-control-sm mb-2" value="<%= file.file_path %>" readonly onclick="this.select();navigator.clipboard.writeText(this.value)">
               <span class="badge text-bg-secondary"><%= file.file_type %></span>
+              <a class="btn btn-sm btn-outline-primary mt-2" href="/admin/media/<%= file.id %>/edit">Edit</a>
               <form method="post" action="/admin/media/<%= file.id %>?_method=DELETE" data-confirm="Delete this media file?">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button class="btn btn-sm btn-outline-danger mt-2">Delete</button>

@@ -14,7 +14,9 @@ const {
   Theme,
   ThemeSetting,
   SiteSetting,
-  SecuritySetting
+  SecuritySetting,
+  WafSetting,
+  WafRule
 } = require('../models');
 
 const permissions = [
@@ -35,8 +37,59 @@ const permissions = [
   'manage_roles',
   'manage_themes',
   'manage_comments',
+  'manage_messages',
+  'manage_plugins',
   'manage_settings',
-  'manage_security'
+  'manage_security',
+  'manage_waf'
+];
+
+const wafSettings = {
+  waf_enabled: ['true', 'boolean'],
+  waf_mode: ['monitor', 'string'],
+  block_sql_injection: ['true', 'boolean'],
+  block_xss: ['true', 'boolean'],
+  block_path_traversal: ['true', 'boolean'],
+  block_command_injection: ['true', 'boolean'],
+  block_bad_bots: ['true', 'boolean'],
+  block_scanners: ['true', 'boolean'],
+  max_risk_score: ['50', 'number'],
+  log_all_requests: ['false', 'boolean'],
+  log_blocked_only: ['true', 'boolean'],
+  admin_protection_enabled: ['true', 'boolean'],
+  public_protection_enabled: ['true', 'boolean'],
+  auto_block_enabled: ['true', 'boolean'],
+  auto_block_threshold: ['5', 'number'],
+  auto_block_duration_minutes: ['60', 'number'],
+  trusted_proxy_enabled: ['false', 'boolean']
+};
+
+const wafRules = [
+  ['SQLi UNION SELECT', 'sqli_union_select', 'Detects UNION SELECT probes.', 'sql_injection', '\\bunion\\s+(all\\s+)?select\\b', 'all', 'block', 'critical', 50],
+  ['SQLi Boolean OR', 'sqli_or_boolean', 'Detects OR 1=1 style boolean SQL injection.', 'sql_injection', '\\bor\\s+1\\s*=\\s*1\\b', 'all', 'block', 'critical', 45],
+  ['SQLi Boolean AND', 'sqli_and_boolean', 'Detects AND 1=1 style boolean SQL injection.', 'sql_injection', '\\band\\s+1\\s*=\\s*1\\b', 'all', 'block', 'high', 35],
+  ['SQLi DROP TABLE', 'sqli_drop_table', 'Detects destructive DROP TABLE statements.', 'sql_injection', '\\bdrop\\s+table\\b', 'all', 'block', 'critical', 60],
+  ['SQLi Information Schema', 'sqli_information_schema', 'Detects information_schema enumeration.', 'sql_injection', '\\binformation_schema\\b', 'all', 'block', 'high', 35],
+  ['SQLi Time Delay', 'sqli_time_delay', 'Detects SLEEP or BENCHMARK SQL timing probes.', 'sql_injection', '\\b(sleep|benchmark)\\s*\\(', 'all', 'block', 'critical', 50],
+  ['SQLi File Access', 'sqli_file_access', 'Detects LOAD_FILE or INTO OUTFILE usage.', 'sql_injection', '\\b(load_file|into\\s+outfile)\\b', 'all', 'block', 'critical', 50],
+  ['SQLi Comment Abuse', 'sqli_comment_abuse', 'Detects common SQL comment abuse.', 'sql_injection', '(/\\*|\\*/|--\\s|#)', 'query', 'block', 'medium', 20],
+  ['XSS Script Tag', 'xss_script_tag', 'Detects script tag injection.', 'xss', '<\\s*/?\\s*script\\b', 'all', 'block', 'critical', 50],
+  ['XSS JavaScript URI', 'xss_javascript_uri', 'Detects javascript: URI injection.', 'xss', 'javascript\\s*:', 'all', 'block', 'high', 35],
+  ['XSS Event Handler', 'xss_event_handler', 'Detects onerror/onload event handlers.', 'xss', '\\bon(error|load)\\s*=', 'all', 'block', 'high', 35],
+  ['XSS Iframe', 'xss_iframe', 'Detects iframe injection attempts.', 'xss', '<\\s*iframe\\b', 'all', 'block', 'medium', 25],
+  ['XSS SVG Onload', 'xss_svg_onload', 'Detects SVG onload payloads.', 'xss', '<\\s*svg\\b[^>]*\\bonload\\s*=', 'all', 'block', 'high', 35],
+  ['XSS Cookie Theft', 'xss_document_cookie', 'Detects document.cookie access.', 'xss', 'document\\s*\\.\\s*cookie', 'all', 'block', 'high', 35],
+  ['XSS Eval Alert', 'xss_eval_alert', 'Detects eval or alert JavaScript payloads.', 'xss', '\\b(eval|alert)\\s*\\(', 'all', 'block', 'medium', 20],
+  ['Path Traversal Dots', 'path_traversal_dots', 'Detects ../ and ..\\ traversal.', 'path_traversal', '(\\.\\./|\\.\\.\\\\)', 'all', 'block', 'high', 35],
+  ['Path Traversal Encoded', 'path_traversal_encoded', 'Detects encoded dot-dot traversal.', 'path_traversal', '(%2e%2e|%252e%252e)', 'all', 'block', 'high', 35],
+  ['Path Sensitive Files', 'path_sensitive_files', 'Detects common OS sensitive file probes.', 'path_traversal', '(/etc/passwd|boot\\.ini|win\\.ini)', 'all', 'block', 'critical', 50],
+  ['Command Chaining', 'cmd_chain', 'Detects shell command chaining probes.', 'command_injection', '(;\\s*cat\\b|&&\\s*whoami\\b|\\|\\s*whoami\\b)', 'all', 'block', 'critical', 50],
+  ['Command Substitution', 'cmd_substitution', 'Detects backtick or dollar command substitution.', 'command_injection', '(`[^`]+`|\\$\\([^)]*\\))', 'all', 'block', 'high', 35],
+  ['Command Shells', 'cmd_shells', 'Detects shell executable references.', 'command_injection', '(/bin/bash|powershell|cmd\\.exe)', 'all', 'block', 'critical', 50],
+  ['Scanner User Agent', 'scanner_user_agent', 'Detects common scanner user agents.', 'scanner', '(sqlmap|nikto|nmap|masscan|dirbuster|gobuster|ffuf|wpscan|acunetix|nessus|openvas|burpsuite)', 'user_agent', 'block', 'critical', 60],
+  ['Suspicious Dotfile Request', 'file_dotfile_request', 'Detects requests for hidden config repositories.', 'file_attack', '(\\.env|\\.git)(/|$)', 'url', 'block', 'critical', 60],
+  ['Suspicious PHP Config Request', 'file_php_config_request', 'Detects common PHP config and info probes.', 'file_attack', '(wp-config\\.php|phpinfo\\.php|config\\.php)$', 'url', 'block', 'high', 35],
+  ['Suspicious Database Backup Request', 'file_database_backup_request', 'Detects common database backup file probes.', 'file_attack', '(backup\\.sql|database\\.sql)$', 'url', 'block', 'critical', 50]
 ];
 
 const roles = [
@@ -212,6 +265,17 @@ async function seed() {
   };
   for (const [key, value] of Object.entries(securitySettings)) {
     await SecuritySetting.findOrCreate({ where: { key }, defaults: { value, enabled: value === 'true' } });
+  }
+
+  for (const [setting_key, [setting_value, setting_type]] of Object.entries(wafSettings)) {
+    await WafSetting.findOrCreate({ where: { setting_key }, defaults: { setting_value, setting_type } });
+  }
+
+  for (const [name, rule_key, description, category, pattern, target, action, severity, score] of wafRules) {
+    await WafRule.findOrCreate({
+      where: { rule_key },
+      defaults: { name, description, category, pattern, target, action, severity, score, status: true }
+    });
   }
 
   console.log('Seed complete. Login with admin@example.com / Admin@12345');

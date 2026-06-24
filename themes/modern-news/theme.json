@@ -1,0 +1,12 @@
+{
+  "name": "Modern News",
+  "slug": "modern-news",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "A news-oriented child theme that inherits Classic Blog templates.",
+  "parent": "classic-blog",
+  "layouts": ["default", "full-width", "sidebar-right"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "screenshot": "/themes/modern-news/screenshot.svg"
+}

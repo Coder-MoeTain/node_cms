@@ -1,0 +1,10 @@
+{
+  "name": "Analytics Lite",
+  "slug": "analytics-lite",
+  "version": "1.0.0",
+  "description": "Lightweight analytics placeholder that can inject a privacy-friendly tracking snippet.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins"],
+  "adminMenu": true,
+  "settingsPage": true
+}

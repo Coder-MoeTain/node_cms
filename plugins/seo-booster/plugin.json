@@ -1,0 +1,10 @@
+{
+  "name": "SEO Booster",
+  "slug": "seo-booster",
+  "version": "1.0.0",
+  "description": "Advanced SEO metadata and public head enhancements for NodePress CMS.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins"],
+  "adminMenu": true,
+  "settingsPage": true
+}

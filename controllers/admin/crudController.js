@@ -1,11 +1,11 @@
 const bcrypt = require('bcrypt');
-const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const { Op } = require('sequelize');
 const models = require('../../models');
-const { classifyMime, publicUploadPath } = require('../../utils/fileHelper');
-const { createSlug } = require('../../utils/slugGenerator');
+const { buildMediaPayload } = require('../../utils/mediaHelper');
+const { createSlug, createUniqueSlug } = require('../../utils/slugGenerator');
 const { getPagination, pageMeta } = require('../../utils/pagination');
+const policy = require('../../utils/policy');
 
 const richTextSanitizeOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
@@ -18,20 +18,66 @@ const richTextSanitizeOptions = {
   allowedIframeHostnames: ['www.youtube.com', 'youtube.com', 'player.vimeo.com']
 };
 
-async function createMediaFromUpload(file, userId) {
+async function createMediaFromUpload(file, userId, transaction = null) {
   if (!file) return null;
 
-  const relative = `/uploads/${path.relative(publicUploadPath(), file.path).replace(/\\/g, '/')}`;
-  await models.Media.create({
-    filename: file.filename,
-    original_name: file.originalname,
-    file_path: relative,
-    file_type: classifyMime(file.mimetype),
-    mime_type: file.mimetype,
-    file_size: file.size,
-    uploaded_by: userId
-  });
-  return relative;
+  const payload = await buildMediaPayload(file, userId);
+  await models.Media.create(payload, { transaction });
+  return payload.file_path;
+}
+
+function normalizeArray(value) {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function sanitizePlainText(value, maxLength = 1000) {
+  return sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).slice(0, maxLength);
+}
+
+function allowedStatus(body, req) {
+  if (body.status === 'published' && !policy.can(req.session.user, 'publish_posts')) {
+    return 'draft';
+  }
+  return body.status || 'draft';
+}
+
+async function ensureUserMutationAllowed(req, payload, record = null) {
+  const targetRole = payload.role_id ? await models.Role.findByPk(payload.role_id) : null;
+  const currentUser = req.session.user;
+
+  if (targetRole?.slug === 'super-admin' && !policy.isSuperAdmin(currentUser)) {
+    const error = new Error('Only Super Admins can assign the Super Admin role.');
+    error.status = 403;
+    throw error;
+  }
+
+  if (record) {
+    const existing = await models.User.findByPk(record.id, { include: [models.Role] });
+    if (!policy.canManageUser(currentUser, existing)) {
+      const error = new Error('You cannot manage this user.');
+      error.status = 403;
+      throw error;
+    }
+    if (Number(record.id) === Number(currentUser.id) && payload.status && payload.status !== 'active') {
+      const error = new Error('You cannot disable your own account.');
+      error.status = 400;
+      throw error;
+    }
+  }
+}
+
+async function ensureNotLastSuperAdmin(record) {
+  if (!record) return;
+  const current = await models.User.findByPk(record.id, { include: [models.Role] });
+  if (current?.Role?.slug !== 'super-admin') return;
+  const superAdminRole = await models.Role.findOne({ where: { slug: 'super-admin' } });
+  const count = await models.User.count({ where: { role_id: superAdminRole.id, status: 'active' } });
+  if (count <= 1) {
+    const error = new Error('Cannot modify or delete the last active Super Admin.');
+    error.status = 400;
+    throw error;
+  }
 }
 
 const configs = {
@@ -42,42 +88,44 @@ const configs = {
     searchFields: ['title', 'slug', 'excerpt'],
     include: [{ model: models.Category }, { model: models.User, as: 'author' }, models.Tag],
     formData: async () => ({ categories: await models.Category.findAll(), tags: await models.Tag.findAll(), users: await models.User.findAll() }),
-    payload: async (body, req) => {
-      const uploadedFeaturedImage = await createMediaFromUpload(req.file, req.session.user.id);
+    payload: async (body, req, record = null, transaction = null) => {
+      const uploadedFeaturedImage = await createMediaFromUpload(req.file, req.session.user.id, transaction);
+      const status = allowedStatus(body, req);
+      const canAssignAuthor = policy.can(req.session.user, 'manage_posts');
       return {
-        title: body.title,
-        slug: createSlug(body.slug || body.title, 'post'),
+        title: sanitizePlainText(body.title, 220),
+        slug: await createUniqueSlug(models.Post, body.slug || body.title, 'post', record?.id),
         content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
-        excerpt: body.excerpt,
-        featured_image: uploadedFeaturedImage || body.featured_image,
-        video_url: body.video_url,
-        status: body.status || 'draft',
+        excerpt: sanitizePlainText(body.excerpt, 1000),
+        featured_image: uploadedFeaturedImage || sanitizePlainText(body.featured_image, 255),
+        video_url: sanitizePlainText(body.video_url, 500),
+        status,
         category_id: body.category_id || null,
-        author_id: body.author_id || req.session.user.id,
-        seo_title: body.seo_title,
-        seo_description: body.seo_description,
-        og_image: body.og_image,
+        author_id: canAssignAuthor ? body.author_id || req.session.user.id : req.session.user.id,
+        seo_title: sanitizePlainText(body.seo_title, 220),
+        seo_description: sanitizePlainText(body.seo_description, 1000),
+        og_image: sanitizePlainText(body.og_image, 255),
         allow_comments: body.allow_comments === 'on',
-        published_at: body.published_at || (body.status === 'published' ? new Date() : null)
+        published_at: body.published_at || (status === 'published' ? new Date() : null)
       };
     },
-    afterSave: async (record, body) => record.setTags(body.tags || [])
+    afterSave: async (record, body, transaction = null) => record.setTags(normalizeArray(body.tags), { transaction })
   },
   pages: {
     model: models.Page,
     title: 'Pages',
     permission: 'manage_pages',
     searchFields: ['title', 'slug', 'excerpt'],
-    payload: (body, req) => ({
-      title: body.title,
-      slug: createSlug(body.slug || body.title, 'page'),
+    payload: async (body, req, record = null) => ({
+      title: sanitizePlainText(body.title, 220),
+      slug: await createUniqueSlug(models.Page, body.slug || body.title, 'page', record?.id),
       content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
-      excerpt: body.excerpt,
-      status: body.status || 'draft',
-      seo_title: body.seo_title,
-      seo_description: body.seo_description,
-      author_id: req.session.user.id,
-      published_at: body.published_at || (body.status === 'published' ? new Date() : null)
+      excerpt: sanitizePlainText(body.excerpt, 1000),
+      status: allowedStatus(body, req),
+      seo_title: sanitizePlainText(body.seo_title, 220),
+      seo_description: sanitizePlainText(body.seo_description, 1000),
+      author_id: record?.author_id || req.session.user.id,
+      published_at: body.published_at || (allowedStatus(body, req) === 'published' ? new Date() : null)
     })
   },
   categories: {
@@ -86,28 +134,28 @@ const configs = {
     permission: 'manage_categories',
     searchFields: ['name', 'slug'],
     formData: async () => ({ categories: await models.Category.findAll() }),
-    payload: (body) => ({ name: body.name, slug: createSlug(body.slug || body.name, 'category'), description: body.description, parent_id: body.parent_id || null, image: body.image })
+    payload: async (body, req, record = null) => ({ name: sanitizePlainText(body.name, 120), slug: await createUniqueSlug(models.Category, body.slug || body.name, 'category', record?.id), description: sanitizePlainText(body.description, 1000), parent_id: body.parent_id || null, image: sanitizePlainText(body.image, 255) })
   },
   tags: {
     model: models.Tag,
     title: 'Tags',
     permission: 'manage_tags',
     searchFields: ['name', 'slug'],
-    payload: (body) => ({ name: body.name, slug: createSlug(body.slug || body.name, 'tag'), description: body.description })
+    payload: async (body, req, record = null) => ({ name: sanitizePlainText(body.name, 120), slug: await createUniqueSlug(models.Tag, body.slug || body.name, 'tag', record?.id), description: sanitizePlainText(body.description, 1000) })
   },
   banners: {
     model: models.Banner,
     title: 'Banners',
     permission: 'manage_banners',
     searchFields: ['title', 'subtitle'],
-    payload: (body) => ({ title: body.title, subtitle: body.subtitle, image: body.image, button_text: body.button_text, button_link: body.button_link, display_order: body.display_order || 0, active: body.active === 'on' })
+    payload: (body) => ({ title: sanitizePlainText(body.title, 180), subtitle: sanitizePlainText(body.subtitle, 500), image: sanitizePlainText(body.image, 255), button_text: sanitizePlainText(body.button_text, 80), button_link: sanitizePlainText(body.button_link, 255), display_order: body.display_order || 0, active: body.active === 'on' })
   },
   sliders: {
     model: models.Slider,
     title: 'Sliders',
     permission: 'manage_sliders',
     searchFields: ['title', 'description'],
-    payload: (body) => ({ title: body.title, description: body.description, image: body.image, button_text: body.button_text, button_url: body.button_url, display_order: body.display_order || 0, active: body.active === 'on' })
+    payload: (body) => ({ title: sanitizePlainText(body.title, 180), description: sanitizePlainText(body.description, 500), image: sanitizePlainText(body.image, 255), button_text: sanitizePlainText(body.button_text, 80), button_url: sanitizePlainText(body.button_url, 255), display_order: body.display_order || 0, active: body.active === 'on' })
   },
   menus: {
     model: models.Menu,
@@ -115,7 +163,7 @@ const configs = {
     permission: 'manage_menus',
     searchFields: ['name', 'slug'],
     include: [{ model: models.MenuItem, as: 'items' }],
-    payload: (body) => ({ name: body.name, slug: createSlug(body.slug || body.name, 'menu'), location: body.location || 'header', active: body.active === 'on' })
+    payload: async (body, req, record = null) => ({ name: sanitizePlainText(body.name, 120), slug: await createUniqueSlug(models.Menu, body.slug || body.name, 'menu', record?.id), location: body.location || 'header', active: body.active === 'on' })
   },
   'menu-items': {
     model: models.MenuItem,
@@ -123,7 +171,7 @@ const configs = {
     permission: 'manage_menus',
     searchFields: ['title', 'url'],
     formData: async () => ({ menus: await models.Menu.findAll(), menuItems: await models.MenuItem.findAll() }),
-    payload: (body) => ({ menu_id: body.menu_id, parent_id: body.parent_id || null, title: body.title, url: body.url, item_type: body.item_type || 'custom', reference_id: body.reference_id || null, target: body.target || '_self', display_order: body.display_order || 0, active: body.active === 'on' })
+    payload: (body) => ({ menu_id: body.menu_id, parent_id: body.parent_id || null, title: sanitizePlainText(body.title, 120), url: sanitizePlainText(body.url, 255), item_type: body.item_type || 'custom', reference_id: body.reference_id || null, target: body.target || '_self', display_order: body.display_order || 0, active: body.active === 'on' })
   },
   users: {
     model: models.User,
@@ -133,7 +181,7 @@ const configs = {
     include: [models.Role],
     formData: async () => ({ roles: await models.Role.findAll() }),
     payload: async (body) => {
-      const payload = { name: body.name, email: body.email, role_id: body.role_id || null, status: body.status || 'active' };
+      const payload = { name: sanitizePlainText(body.name, 120), email: sanitizePlainText(body.email, 180), role_id: body.role_id || null, status: body.status || 'active' };
       if (body.password) payload.password = await bcrypt.hash(body.password, 12);
       return payload;
     }
@@ -145,8 +193,8 @@ const configs = {
     searchFields: ['name', 'slug'],
     include: [models.Permission],
     formData: async () => ({ permissions: await models.Permission.findAll() }),
-    payload: (body) => ({ name: body.name, slug: createSlug(body.slug || body.name, 'role'), description: body.description }),
-    afterSave: async (record, body) => record.setPermissions(body.permissions || [])
+    payload: async (body, req, record = null) => ({ name: sanitizePlainText(body.name, 120), slug: await createUniqueSlug(models.Role, body.slug || body.name, 'role', record?.id), description: sanitizePlainText(body.description, 1000) }),
+    afterSave: async (record, body, transaction = null) => record.setPermissions(normalizeArray(body.permissions), { transaction })
   },
   comments: {
     model: models.Comment,
@@ -154,7 +202,7 @@ const configs = {
     permission: 'manage_comments',
     searchFields: ['name', 'email', 'content'],
     include: [models.Post],
-    payload: (body) => ({ status: body.status || 'pending', content: body.content })
+    payload: (body) => ({ status: body.status || 'pending', content: sanitizePlainText(body.content, 3000) })
   },
   messages: {
     model: models.ContactMessage,
@@ -179,6 +227,10 @@ async function index(req, res, next) {
   try {
     const resource = req.params.resource;
     const config = getConfig(resource);
+    if (!policy.canManageResource(req.session.user, resource, 'index')) {
+      req.flash('error', 'You do not have permission to access that resource.');
+      return res.redirect('/admin/profile');
+    }
     const { page, limit, offset } = getPagination(req, 10);
     const query = req.query.q || '';
     const where = query
@@ -187,6 +239,7 @@ async function index(req, res, next) {
     if (resource === 'posts') {
       if (req.query.status) where.status = req.query.status;
       if (req.query.category_id) where.category_id = req.query.category_id;
+      if (!policy.can(req.session.user, 'manage_posts')) where.author_id = req.session.user.id;
     }
     const { rows, count } = await config.model.findAndCountAll({
       where,
@@ -218,6 +271,10 @@ async function create(req, res, next) {
   try {
     const resource = req.params.resource;
     const config = getConfig(resource);
+    if (!policy.canManageResource(req.session.user, resource, 'create')) {
+      req.flash('error', 'You do not have permission to create that resource.');
+      return res.redirect(`/admin/${resource}`);
+    }
     return res.render('admin/crud/form', {
       title: `Add ${config.title}`,
       resource,
@@ -234,9 +291,16 @@ async function store(req, res, next) {
   try {
     const resource = req.params.resource;
     const config = getConfig(resource);
-    const payload = await config.payload(req.body, req);
-    const record = await config.model.create(payload);
-    if (config.afterSave) await config.afterSave(record, req.body);
+    if (!policy.canManageResource(req.session.user, resource, 'store')) {
+      req.flash('error', 'You do not have permission to create that resource.');
+      return res.redirect(`/admin/${resource}`);
+    }
+    await models.sequelize.transaction(async (transaction) => {
+      const payload = await config.payload(req.body, req, null, transaction);
+      if (resource === 'users') await ensureUserMutationAllowed(req, payload);
+      const record = await config.model.create(payload, { transaction });
+      if (config.afterSave) await config.afterSave(record, req.body, transaction);
+    });
     req.flash('success', `${config.title} saved.`);
     return res.redirect(`/admin/${resource}`);
   } catch (error) {
@@ -250,6 +314,10 @@ async function edit(req, res, next) {
     const config = getConfig(resource);
     const record = await config.model.findByPk(req.params.id, { include: config.include || [] });
     if (!record) return res.status(404).render('errors/404', { title: 'Not Found' });
+    if (!policy.canManageResource(req.session.user, resource, 'edit', record)) {
+      req.flash('error', 'You do not have permission to edit that resource.');
+      return res.redirect(`/admin/${resource}`);
+    }
     return res.render('admin/crud/form', {
       title: `Edit ${config.title}`,
       resource,
@@ -268,8 +336,19 @@ async function update(req, res, next) {
     const config = getConfig(resource);
     const record = await config.model.findByPk(req.params.id);
     if (!record) return res.status(404).render('errors/404', { title: 'Not Found' });
-    await record.update(await config.payload(req.body, req));
-    if (config.afterSave) await config.afterSave(record, req.body);
+    if (!policy.canManageResource(req.session.user, resource, 'update', record)) {
+      req.flash('error', 'You do not have permission to update that resource.');
+      return res.redirect(`/admin/${resource}`);
+    }
+    await models.sequelize.transaction(async (transaction) => {
+      const payload = await config.payload(req.body, req, record, transaction);
+      if (resource === 'users') {
+        await ensureNotLastSuperAdmin(record);
+        await ensureUserMutationAllowed(req, payload, record);
+      }
+      await record.update(payload, { transaction });
+      if (config.afterSave) await config.afterSave(record, req.body, transaction);
+    });
     req.flash('success', `${config.title} updated.`);
     return res.redirect(`/admin/${resource}`);
   } catch (error) {
@@ -282,6 +361,17 @@ async function destroy(req, res, next) {
     const resource = req.params.resource;
     const config = getConfig(resource);
     const record = await config.model.findByPk(req.params.id);
+    if (record && !policy.canManageResource(req.session.user, resource, 'destroy', record)) {
+      req.flash('error', 'You do not have permission to delete that resource.');
+      return res.redirect(`/admin/${resource}`);
+    }
+    if (resource === 'users') {
+      if (Number(record.id) === Number(req.session.user.id)) {
+        req.flash('error', 'You cannot delete your own account.');
+        return res.redirect(`/admin/${resource}`);
+      }
+      await ensureNotLastSuperAdmin(record);
+    }
     if (record) await record.destroy();
     req.flash('success', `${config.title} deleted.`);
     return res.redirect(`/admin/${resource}`);

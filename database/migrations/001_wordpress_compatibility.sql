@@ -14,14 +14,7 @@ ALTER TABLE pages
 
 UPDATE pages SET created_by = author_id WHERE created_by IS NULL AND author_id IS NOT NULL;
 
--- Run these primary key conversions only once on schemas that still use composite primary keys.
-ALTER TABLE role_permissions DROP PRIMARY KEY;
-ALTER TABLE role_permissions ADD COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;
-ALTER TABLE role_permissions ADD UNIQUE KEY uq_role_permissions_pair (role_id, permission_id);
-
-ALTER TABLE post_tags DROP PRIMARY KEY;
-ALTER TABLE post_tags ADD COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;
-ALTER TABLE post_tags ADD UNIQUE KEY uq_post_tags_pair (post_id, tag_id);
+-- Join table primary keys are intentionally left unchanged to avoid foreign key rebuild failures.
 
 ALTER TABLE menus
   ADD COLUMN IF NOT EXISTS status ENUM('active','inactive') NOT NULL DEFAULT 'active' AFTER location;

@@ -1,0 +1,30 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <div class="card">
+      <div class="card-header professional-card-header"><span>Two-Factor Authentication</span><a href="/admin/profile">Back to profile</a></div>
+      <div class="card-body">
+        <% if (user.two_factor_enabled) { %>
+          <p>Two-factor authentication is enabled for your account.</p>
+          <form method="post" action="/admin/profile/2fa/disable" data-confirm="Disable two-factor authentication?">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn-outline-danger">Disable 2FA</button>
+          </form>
+        <% } else { %>
+          <p>Scan this QR code with an authenticator app, then enter the current code.</p>
+          <% if (qrCode) { %><img class="mb-3 border rounded" src="<%= qrCode %>" alt="2FA QR code"><% } %>
+          <p class="small text-muted">Manual secret: <code><%= secret %></code></p>
+          <form method="post" action="/admin/profile/2fa/enable">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="mb-3"><label class="form-label">Authenticator Code</label><input class="form-control" name="token" inputmode="numeric" required></div>
+            <button class="btn btn-primary">Enable 2FA</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

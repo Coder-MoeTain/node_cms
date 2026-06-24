@@ -26,7 +26,8 @@ INSERT IGNORE INTO permissions (id, name, slug) VALUES
 (16, 'Manage Roles', 'manage_roles'),
 (17, 'Manage Comments', 'manage_comments'),
 (18, 'Manage Settings', 'manage_settings'),
-(19, 'Manage Security', 'manage_security');
+(19, 'Manage Security', 'manage_security'),
+(20, 'Manage WAF', 'manage_waf');
 
 INSERT IGNORE INTO role_permissions (role_id, permission_id)
 SELECT 1, id FROM permissions;

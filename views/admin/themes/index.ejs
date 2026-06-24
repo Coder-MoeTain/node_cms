@@ -4,6 +4,10 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content">
     <%- include('../partials/flash') %>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div><h1>Themes</h1><p class="text-muted mb-0">Discover installed themes and customize the active theme.</p></div>
+      <a class="btn btn-outline-primary" href="/admin/themes/editor">Open Theme Editor</a>
+    </div>
     <div class="row g-3 mb-3">
       <% themes.forEach(function(theme) { %>
         <div class="col-md-4">

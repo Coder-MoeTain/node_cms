@@ -1,0 +1,26 @@
+<%- include('../../partials/head') %>
+<%- include('../../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../../partials/flash') %>
+    <div class="d-flex justify-content-between align-items-center mb-3"><h2>Create Custom WAF Rule</h2><a class="btn btn-outline-secondary" href="/admin/waf/rules">Back</a></div>
+    <form class="card" method="post" action="/admin/waf/rules">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card-body row g-3">
+        <div class="col-md-6"><label class="form-label">Name</label><input class="form-control" name="name" required></div>
+        <div class="col-md-6"><label class="form-label">Rule key</label><input class="form-control" name="rule_key" placeholder="auto generated if blank"></div>
+        <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="2"></textarea></div>
+        <div class="col-md-3"><label class="form-label">Category</label><select class="form-select" name="category"><% categories.forEach(function(category) { %><option value="<%= category %>" <%= category === 'custom' ? 'selected' : '' %>><%= category %></option><% }) %></select></div>
+        <div class="col-md-3"><label class="form-label">Target</label><select class="form-select" name="target"><% targets.forEach(function(target) { %><option value="<%= target %>"><%= target %></option><% }) %></select></div>
+        <div class="col-md-3"><label class="form-label">Action</label><select class="form-select" name="action"><% actions.forEach(function(action) { %><option value="<%= action %>"><%= action %></option><% }) %></select></div>
+        <div class="col-md-3"><label class="form-label">Severity</label><select class="form-select" name="severity"><% severities.forEach(function(severity) { %><option value="<%= severity %>"><%= severity %></option><% }) %></select></div>
+        <div class="col-md-3"><label class="form-label">Score</label><input class="form-control" type="number" min="1" max="100" name="score" value="10"></div>
+        <div class="col-md-3 d-flex align-items-end"><label class="form-check"><input class="form-check-input" type="checkbox" name="status" checked> Enabled</label></div>
+        <div class="col-12"><label class="form-label">Regex pattern</label><textarea class="form-control font-monospace" name="pattern" rows="4" required></textarea><div class="form-text">Invalid regex patterns are rejected and never loaded into the middleware.</div></div>
+      </div>
+      <div class="card-footer d-flex justify-content-end"><button class="btn btn-primary">Create Rule</button></div>
+    </form>
+  </main>
+</div>
+<%- include('../../partials/footer') %>

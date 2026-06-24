@@ -1,8 +1,18 @@
+const logger = require('../utils/logger');
+
 function errorHandler(error, req, res, next) {
   if (res.headersSent) return next(error);
 
   const status = error.code === 'EBADCSRFTOKEN' ? 403 : error.status || 500;
-  console.error(error);
+  logger.error('request_error', {
+    message: error.message,
+    stack: error.stack,
+    status,
+    code: error.code,
+    path: req.originalUrl,
+    method: req.method,
+    ip: req.ip
+  });
 
   if (req.originalUrl.startsWith('/api')) {
     return res.status(status).json({ message: error.message || 'Server error' });
