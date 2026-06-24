@@ -8,13 +8,17 @@ const {
 } = require('../models');
 const {
   getClientIp,
-  sanitizeLogData,
+  normalizeRequestData,
   calculateRiskScore,
-  matchRule,
-  isAdminRoute,
+  matchRuleAgainstRequest,
   shouldSkipWaf,
   createRequestId,
-  flattenInputs
+  getActionForRiskScore,
+  buildSafeLogPayload,
+  createWafBlockResponse,
+  isExpiredIpListItem,
+  getRouteType,
+  isDangerousUploadFilename
 } = require('../utils/wafHelper');
 
 const cache = {
@@ -32,15 +36,21 @@ const DEFAULT_SETTINGS = {
   block_command_injection: true,
   block_bad_bots: true,
   block_scanners: true,
-  max_risk_score: 50,
-  log_all_requests: false,
-  log_blocked_only: true,
+  block_cms_probes: true,
   admin_protection_enabled: true,
   public_protection_enabled: true,
+  max_risk_score_public: 50,
+  max_risk_score_admin: 40,
+  max_risk_score: 50,
+  log_all_suspicious: true,
+  log_all_requests: false,
+  log_blocked_only: true,
   auto_block_enabled: true,
   auto_block_threshold: 5,
+  auto_block_window_minutes: 10,
   auto_block_duration_minutes: 60,
-  trusted_proxy_enabled: false
+  trusted_proxy_enabled: false,
+  waf_response_message: 'Request blocked by Web Application Firewall.'
 };
 
 const categorySettingMap = {
@@ -49,13 +59,21 @@ const categorySettingMap = {
   path_traversal: 'block_path_traversal',
   command_injection: 'block_command_injection',
   bad_bot: 'block_bad_bots',
-  scanner: 'block_scanners'
+  scanner: 'block_scanners',
+  cms_probe: 'block_cms_probes',
+  file_attack: 'block_cms_probes'
 };
 
 function castSetting(value, type) {
   if (type === 'boolean') return value === true || value === 'true' || value === '1';
   if (type === 'number') return Number(value);
   return value;
+}
+
+function clearWafCache() {
+  cache.loadedAt = 0;
+  cache.settings = null;
+  cache.rules = null;
 }
 
 async function loadWafConfig() {
@@ -71,18 +89,35 @@ async function loadWafConfig() {
     settings[row.setting_key] = castSetting(row.setting_value, row.setting_type);
   });
 
+  if (!settings.max_risk_score_public && settings.max_risk_score) {
+    settings.max_risk_score_public = settings.max_risk_score;
+  }
+  if (!settings.max_risk_score_admin) {
+    settings.max_risk_score_admin = Math.max(20, Number(settings.max_risk_score_public || 50) - 10);
+  }
+
   cache.settings = settings;
-  cache.rules = rules;
+  cache.rules = rules.filter((rule) => {
+    if (rule.pattern_type === 'regex' || !rule.pattern_type) {
+      try {
+        // eslint-disable-next-line no-new
+        new RegExp(rule.pattern, 'i');
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+    return true;
+  });
   cache.loadedAt = Date.now();
   return cache;
 }
 
 function routeLimitFor(req) {
-  if (req.path === '/admin/login') return { routeKey: 'admin_login', max: 8, windowMs: 15 * 60 * 1000 };
-  if (isAdminRoute(req)) return { routeKey: 'admin', max: 180, windowMs: 15 * 60 * 1000 };
-  if (req.path === '/search' || req.path === '/contact' || /\/post\/\d+\/comment$/.test(req.path)) {
-    return { routeKey: `strict:${req.path}`, max: 40, windowMs: 15 * 60 * 1000 };
-  }
+  const routeType = getRouteType(req);
+  if (routeType === 'admin_login') return { routeKey: 'admin_login', max: 8, windowMs: 15 * 60 * 1000 };
+  if (routeType === 'admin') return { routeKey: 'admin', max: 180, windowMs: 15 * 60 * 1000 };
+  if (routeType === 'public_mutation') return { routeKey: `strict:${req.path}`, max: 40, windowMs: 15 * 60 * 1000 };
   return { routeKey: 'public', max: 300, windowMs: 15 * 60 * 1000 };
 }
 
@@ -117,105 +152,96 @@ async function checkWafRateLimit(req, ipAddress) {
   return { exceeded: requestCount > limit.max, routeKey: limit.routeKey, blockedUntil: updates.blocked_until };
 }
 
-function buildInspectionTargets(req) {
-  const skipRichText = Boolean(req.session?.user) && isAdminRoute(req);
-  return [
-    { target: 'url', key: 'url', value: req.originalUrl || req.url },
-    ...flattenInputs(req.query, {}, 'query').map((entry) => ({ target: 'query', ...entry })),
-    ...flattenInputs(req.body, { skipRichText }, 'body').map((entry) => ({ target: 'body', ...entry })),
-    ...flattenInputs(req.headers, {}, 'headers').map((entry) => ({ target: 'headers', ...entry })),
-    { target: 'user_agent', key: 'user-agent', value: req.get('user-agent') || '' },
-    { target: 'ip', key: 'ip', value: getClientIp(req) }
-  ];
-}
-
-function ruleAppliesToTarget(rule, target) {
-  return rule.target === 'all' || rule.target === target;
-}
-
 function ruleEnabledBySettings(rule, settings) {
   const settingKey = categorySettingMap[rule.category];
   return settingKey ? Boolean(settings[settingKey]) : true;
 }
 
 function matchRequest(req, rules, settings) {
-  const targets = buildInspectionTargets(req);
+  const normalizedRequest = normalizeRequestData(req);
   const matches = [];
 
   for (const rule of rules) {
     if (!ruleEnabledBySettings(rule, settings)) continue;
-    for (const target of targets) {
-      if (!ruleAppliesToTarget(rule, target.target)) continue;
-      if (matchRule(target.value, rule)) {
-        matches.push({ rule, target });
-        break;
+    const match = matchRuleAgainstRequest(rule, normalizedRequest);
+    if (match) matches.push(match);
+  }
+
+  if (normalizedRequest.files.length) {
+    normalizedRequest.files.forEach((file) => {
+      if (isDangerousUploadFilename(file.name)) {
+        matches.push({
+          rule: {
+            id: null,
+            name: 'Dangerous upload filename',
+            category: 'file_attack',
+            severity: 'critical',
+            action: 'block',
+            score: 60
+          },
+          target: { target: 'file_name', key: file.field, value: file.name }
+        });
       }
-    }
+    });
   }
 
   return matches;
 }
 
-async function logWafEvent(req, details) {
-  const primary = details.matches?.[0];
-  return WafLog.create({
-    request_id: details.requestId,
-    ip_address: details.ipAddress,
-    method: req.method,
-    url: req.originalUrl || req.url,
-    user_agent: req.get('user-agent') || '',
-    headers_snapshot: sanitizeLogData(req.headers || {}),
-    query_snapshot: sanitizeLogData(req.query || {}),
-    body_snapshot: sanitizeLogData(req.body || {}),
-    matched_rule_id: primary?.rule?.id || null,
-    matched_rule_name: primary?.rule?.name || details.ruleName || null,
-    category: primary?.rule?.category || details.category || null,
-    severity: primary?.rule?.severity || details.severity || null,
-    action_taken: details.actionTaken,
-    risk_score: details.riskScore || 0,
-    country: null,
-    referer: req.get('referer') || null,
-    is_admin_route: isAdminRoute(req),
-    user_id: req.session?.user?.id || null
-  });
+async function logWafEvent(req, payload) {
+  return WafLog.create(payload);
 }
 
 async function applyAutoBlock(ipAddress, settings, userId = null) {
   if (!settings.auto_block_enabled) return;
 
-  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+  const windowMinutes = Number(settings.auto_block_window_minutes || 10);
+  const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
   const [criticalCount, highCount] = await Promise.all([
-    WafLog.count({ where: { ip_address: ipAddress, severity: 'critical', created_at: { [Op.gte]: tenMinutesAgo } } }),
-    WafLog.count({ where: { ip_address: ipAddress, severity: 'high', created_at: { [Op.gte]: tenMinutesAgo } } })
+    WafLog.count({ where: { ip_address: ipAddress, severity: 'critical', created_at: { [Op.gte]: windowStart } } }),
+    WafLog.count({ where: { ip_address: ipAddress, severity: 'high', created_at: { [Op.gte]: windowStart } } })
   ]);
   const threshold = Number(settings.auto_block_threshold || 5);
   if (criticalCount < threshold && highCount < threshold * 2) return;
 
+  const whitelist = await WafIpList.findOne({
+    where: {
+      ip_address: ipAddress,
+      list_type: 'whitelist',
+      status: true,
+      [Op.or]: [{ expires_at: null }, { expires_at: { [Op.gt]: new Date() } }]
+    }
+  });
+  if (whitelist) return;
+
   const expiresAt = new Date(Date.now() + Number(settings.auto_block_duration_minutes || 60) * 60 * 1000);
+  const reason = `Auto-blocked by WAF after ${criticalCount} critical and ${highCount} high events in ${windowMinutes} minutes.`;
   await WafIpList.findOrCreate({
     where: { ip_address: ipAddress, list_type: 'temporary_block' },
     defaults: {
-      reason: `Auto-blocked by WAF after ${criticalCount} critical and ${highCount} high events in 10 minutes.`,
+      reason,
       expires_at: expiresAt,
       status: true,
       created_by: userId
     }
   }).then(async ([row, created]) => {
-    if (!created) {
-      await row.update({
-        reason: `Auto-blocked by WAF after ${criticalCount} critical and ${highCount} high events in 10 minutes.`,
-        expires_at: expiresAt,
-        status: true
-      });
-    }
+    if (!created) await row.update({ reason, expires_at: expiresAt, status: true });
   });
 }
 
-function blockResponse(req, res, message = 'Request blocked by Web Application Firewall.') {
-  if (req.accepts('json') && !req.accepts('html')) {
-    return res.status(403).json({ message });
-  }
-  return res.status(403).send(message);
+async function applyTemporaryBlock(ipAddress, settings, userId, reason) {
+  const expiresAt = new Date(Date.now() + Number(settings.auto_block_duration_minutes || 60) * 60 * 1000);
+  await WafIpList.findOrCreate({
+    where: { ip_address: ipAddress, list_type: 'temporary_block' },
+    defaults: {
+      reason: reason || 'Temporary block triggered by WAF rule.',
+      expires_at: expiresAt,
+      status: true,
+      created_by: userId
+    }
+  }).then(async ([row, created]) => {
+    if (!created) await row.update({ reason, expires_at: expiresAt, status: true });
+  });
 }
 
 async function wafMiddleware(req, res, next) {
@@ -226,73 +252,77 @@ async function wafMiddleware(req, res, next) {
     if (shouldSkipWaf(req)) return next();
 
     const { settings, rules } = await loadWafConfig();
-    if (!settings.waf_enabled) return next();
+    if (!settings.waf_enabled || settings.waf_mode === 'disabled') return next();
 
-    const adminRoute = isAdminRoute(req);
+    const adminRoute = req.path === '/admin' || req.path.startsWith('/admin/');
     if (adminRoute && !settings.admin_protection_enabled) return next();
     if (!adminRoute && !settings.public_protection_enabled) return next();
 
-    const ipAddress = getClientIp(req);
+    const ipAddress = getClientIp(req, settings.trusted_proxy_enabled);
     const activeIpRows = await WafIpList.findAll({
       where: {
         ip_address: ipAddress,
         status: true,
         [Op.or]: [{ expires_at: null }, { expires_at: { [Op.gt]: new Date() } }]
       }
-    });
+    }).then((rows) => rows.filter((row) => !isExpiredIpListItem(row)));
 
     if (activeIpRows.some((row) => row.list_type === 'whitelist')) return next();
 
     const blockedRow = activeIpRows.find((row) => row.list_type === 'blacklist' || row.list_type === 'temporary_block');
     if (blockedRow) {
-      await logWafEvent(req, {
-        requestId,
-        ipAddress,
-        actionTaken: 'block',
-        category: blockedRow.list_type,
-        severity: 'critical',
-        riskScore: 100,
-        ruleName: blockedRow.reason || blockedRow.list_type
-      });
-      return blockResponse(req, res, 'Your IP address is blocked.');
+      const payload = buildSafeLogPayload(req, [], 'block', 100);
+      payload.matched_rule_name = blockedRow.reason || blockedRow.list_type;
+      payload.category = blockedRow.list_type;
+      payload.severity = 'critical';
+      await logWafEvent(req, payload);
+      if (settings.waf_mode === 'block') {
+        return createWafBlockResponse(req, res, settings.waf_response_message || 'Your IP address is blocked.');
+      }
+      return next();
     }
 
     const rateLimit = await checkWafRateLimit(req, ipAddress);
     if (rateLimit.exceeded) {
-      await logWafEvent(req, {
-        requestId,
-        ipAddress,
-        actionTaken: 'rate_limit',
-        category: adminRoute ? 'brute_force' : 'spam',
-        severity: adminRoute ? 'high' : 'medium',
-        riskScore: adminRoute ? 60 : 35,
-        ruleName: `WAF dynamic rate limit: ${rateLimit.routeKey}`
-      });
-      return blockResponse(req, res, 'Too many requests. Try again later.');
+      const payload = buildSafeLogPayload(req, [], 'rate_limit', adminRoute ? 60 : 35);
+      payload.matched_rule_name = `WAF dynamic rate limit: ${rateLimit.routeKey}`;
+      payload.category = adminRoute ? 'brute_force' : 'spam';
+      payload.severity = adminRoute ? 'high' : 'medium';
+      await logWafEvent(req, payload);
+      if (settings.waf_mode === 'block') {
+        return createWafBlockResponse(req, res, 'Too many requests. Try again later.');
+      }
+      return next();
     }
 
     const matches = matchRequest(req, rules, settings);
-    const riskScore = calculateRiskScore(matches);
-    const maxRiskScore = Number(settings.max_risk_score || 50);
-    const effectiveMaxRiskScore = adminRoute ? Math.max(20, maxRiskScore - 10) : maxRiskScore;
-    const shouldBlock = settings.waf_mode === 'block' && matches.some((match) => match.rule.action === 'block') && riskScore >= effectiveMaxRiskScore;
-    const actionTaken = shouldBlock ? 'block' : matches.length ? 'log' : 'allow';
+    const riskScore = calculateRiskScore(matches, adminRoute);
+    const actionTaken = getActionForRiskScore(riskScore, settings, adminRoute, matches);
+    const shouldLog = Boolean(
+      matches.length
+      || settings.log_all_requests
+      || (settings.log_all_suspicious && matches.length)
+      || (settings.log_blocked_only && ['block', 'rate_limit', 'temporary_block'].includes(actionTaken))
+    );
 
-    if (matches.length || settings.log_all_requests || (settings.log_blocked_only && shouldBlock)) {
-      await logWafEvent(req, {
-        requestId,
-        ipAddress,
-        matches,
-        actionTaken,
-        riskScore
-      });
+    if (shouldLog) {
+      const payload = buildSafeLogPayload(req, matches, actionTaken === 'allow' && matches.length ? 'log' : actionTaken, riskScore);
+      await logWafEvent(req, payload);
     }
 
     if (matches.length) {
       await applyAutoBlock(ipAddress, settings, req.session?.user?.id || null);
     }
 
-    if (shouldBlock) return blockResponse(req, res);
+    if (actionTaken === 'temporary_block' && settings.waf_mode === 'block') {
+      await applyTemporaryBlock(ipAddress, settings, req.session?.user?.id || null, 'Temporary block triggered by WAF rule match.');
+      return createWafBlockResponse(req, res, settings.waf_response_message);
+    }
+
+    if (['block', 'rate_limit'].includes(actionTaken) && settings.waf_mode === 'block') {
+      return createWafBlockResponse(req, res, settings.waf_response_message);
+    }
+
     return next();
   } catch (error) {
     console.error('WAF middleware failed:', error.message);
@@ -300,4 +330,4 @@ async function wafMiddleware(req, res, next) {
   }
 }
 
-module.exports = { wafMiddleware, loadWafConfig };
+module.exports = { wafMiddleware, loadWafConfig, clearWafCache };

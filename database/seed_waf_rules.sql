@@ -23,7 +23,11 @@ INSERT INTO waf_rules (name, rule_key, description, category, pattern, target, a
 ('Scanner User Agent', 'scanner_user_agent', 'Detects common scanner user agents.', 'scanner', '(sqlmap|nikto|nmap|masscan|dirbuster|gobuster|ffuf|wpscan|acunetix|nessus|openvas|burpsuite)', 'user_agent', 'block', 'critical', TRUE, 60),
 ('Suspicious Dotfile Request', 'file_dotfile_request', 'Detects requests for hidden config repositories.', 'file_attack', '(\\.env|\\.git)(/|$)', 'url', 'block', 'critical', TRUE, 60),
 ('Suspicious PHP Config Request', 'file_php_config_request', 'Detects common PHP config and info probes.', 'file_attack', '(wp-config\\.php|phpinfo\\.php|config\\.php)$', 'url', 'block', 'high', TRUE, 35),
-('Suspicious Database Backup Request', 'file_database_backup_request', 'Detects common database backup file probes.', 'file_attack', '(backup\\.sql|database\\.sql)$', 'url', 'block', 'critical', TRUE, 50)
+('Suspicious Database Backup Request', 'file_database_backup_request', 'Detects common database backup file probes.', 'file_attack', '(backup\\.sql|database\\.sql)$', 'url', 'block', 'critical', TRUE, 50),
+('CMS Adminer Probe', 'cms_adminer_probe', 'Detects adminer.php probes.', 'cms_probe', 'adminer\\.php', 'url', 'block', 'critical', TRUE, 50),
+('Dangerous PHP Upload', 'file_php_upload', 'Detects dangerous PHP upload filenames.', 'file_attack', '\\.(php|phtml)$', 'file_name', 'block', 'critical', TRUE, 60),
+('Dangerous Executable Upload', 'file_exe_upload', 'Detects executable upload filenames.', 'file_attack', '\\.(exe|bat|cmd|sh)$', 'file_name', 'block', 'critical', TRUE, 60),
+('Dangerous Script Upload', 'file_script_upload', 'Detects server script upload filenames.', 'file_attack', '\\.(jsp|asp|aspx)$', 'file_name', 'block', 'critical', TRUE, 60)
 ON DUPLICATE KEY UPDATE
 name = VALUES(name),
 description = VALUES(description),

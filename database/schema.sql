@@ -330,3 +330,95 @@ CREATE TABLE activity_logs (
   INDEX idx_activity_logs_user_created (user_id, created_at),
   CONSTRAINT fk_activity_logs_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+CREATE TABLE waf_rules (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(160) NOT NULL,
+  rule_key VARCHAR(160) NOT NULL UNIQUE,
+  description TEXT NULL,
+  category ENUM('sql_injection','xss','command_injection','path_traversal','file_attack','bad_bot','scanner','brute_force','spam','cms_probe','custom') NOT NULL DEFAULT 'custom',
+  pattern TEXT NOT NULL,
+  pattern_type ENUM('regex','contains','equals') NOT NULL DEFAULT 'regex',
+  target ENUM('url','query','body','headers','user_agent','ip','file_name','all') NOT NULL DEFAULT 'all',
+  action ENUM('log','block','rate_limit','temporary_block','challenge') NOT NULL DEFAULT 'block',
+  severity ENUM('low','medium','high','critical') NOT NULL DEFAULT 'medium',
+  status BOOLEAN NOT NULL DEFAULT TRUE,
+  is_system BOOLEAN NOT NULL DEFAULT FALSE,
+  score INT UNSIGNED NOT NULL DEFAULT 10,
+  created_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_waf_rules_category (category),
+  INDEX idx_waf_rules_status (status)
+) ENGINE=InnoDB;
+
+CREATE TABLE waf_logs (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  request_id VARCHAR(64) NOT NULL,
+  ip_address VARCHAR(80) NOT NULL,
+  method VARCHAR(12) NOT NULL,
+  url TEXT NOT NULL,
+  route_type VARCHAR(40) NULL,
+  user_agent TEXT NULL,
+  headers_snapshot JSON NULL,
+  query_snapshot JSON NULL,
+  body_snapshot JSON NULL,
+  file_snapshot JSON NULL,
+  matched_rule_id INT UNSIGNED NULL,
+  matched_rule_name VARCHAR(160) NULL,
+  category VARCHAR(80) NULL,
+  severity VARCHAR(20) NULL,
+  action_taken VARCHAR(40) NOT NULL DEFAULT 'log',
+  risk_score INT UNSIGNED NOT NULL DEFAULT 0,
+  country VARCHAR(80) NULL,
+  referer TEXT NULL,
+  is_admin_route BOOLEAN NOT NULL DEFAULT FALSE,
+  user_id INT UNSIGNED NULL,
+  response_status INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_waf_logs_created (created_at),
+  INDEX idx_waf_logs_ip (ip_address),
+  INDEX idx_waf_logs_category (category),
+  INDEX idx_waf_logs_action (action_taken),
+  INDEX idx_waf_logs_severity (severity)
+) ENGINE=InnoDB;
+
+CREATE TABLE waf_ip_lists (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  ip_address VARCHAR(80) NOT NULL,
+  list_type ENUM('blacklist','whitelist','temporary_block') NOT NULL,
+  reason VARCHAR(255) NULL,
+  expires_at DATETIME NULL,
+  status BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  UNIQUE KEY uq_waf_ip_list (ip_address, list_type),
+  INDEX idx_waf_ip_status (ip_address, status),
+  INDEX idx_waf_ip_expiry (expires_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE waf_settings (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  setting_key VARCHAR(120) NOT NULL UNIQUE,
+  setting_value TEXT NOT NULL,
+  setting_type ENUM('boolean','string','number') NOT NULL DEFAULT 'string',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE waf_rate_limits (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  ip_address VARCHAR(80) NOT NULL,
+  route_key VARCHAR(180) NOT NULL,
+  request_count INT UNSIGNED NOT NULL DEFAULT 0,
+  first_request_at DATETIME NOT NULL,
+  last_request_at DATETIME NOT NULL,
+  blocked_until DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_waf_rate_limit (ip_address, route_key),
+  INDEX idx_waf_rate_blocked (blocked_until)
+) ENGINE=InnoDB;

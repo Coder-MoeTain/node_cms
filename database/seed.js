@@ -53,15 +53,21 @@ const wafSettings = {
   block_command_injection: ['true', 'boolean'],
   block_bad_bots: ['true', 'boolean'],
   block_scanners: ['true', 'boolean'],
+  block_cms_probes: ['true', 'boolean'],
+  max_risk_score_public: ['50', 'number'],
+  max_risk_score_admin: ['40', 'number'],
   max_risk_score: ['50', 'number'],
+  log_all_suspicious: ['true', 'boolean'],
   log_all_requests: ['false', 'boolean'],
   log_blocked_only: ['true', 'boolean'],
   admin_protection_enabled: ['true', 'boolean'],
   public_protection_enabled: ['true', 'boolean'],
   auto_block_enabled: ['true', 'boolean'],
   auto_block_threshold: ['5', 'number'],
+  auto_block_window_minutes: ['10', 'number'],
   auto_block_duration_minutes: ['60', 'number'],
-  trusted_proxy_enabled: ['false', 'boolean']
+  trusted_proxy_enabled: ['false', 'boolean'],
+  waf_response_message: ['Request blocked by Web Application Firewall.', 'string']
 };
 
 const wafRules = [
@@ -89,7 +95,11 @@ const wafRules = [
   ['Scanner User Agent', 'scanner_user_agent', 'Detects common scanner user agents.', 'scanner', '(sqlmap|nikto|nmap|masscan|dirbuster|gobuster|ffuf|wpscan|acunetix|nessus|openvas|burpsuite)', 'user_agent', 'block', 'critical', 60],
   ['Suspicious Dotfile Request', 'file_dotfile_request', 'Detects requests for hidden config repositories.', 'file_attack', '(\\.env|\\.git)(/|$)', 'url', 'block', 'critical', 60],
   ['Suspicious PHP Config Request', 'file_php_config_request', 'Detects common PHP config and info probes.', 'file_attack', '(wp-config\\.php|phpinfo\\.php|config\\.php)$', 'url', 'block', 'high', 35],
-  ['Suspicious Database Backup Request', 'file_database_backup_request', 'Detects common database backup file probes.', 'file_attack', '(backup\\.sql|database\\.sql)$', 'url', 'block', 'critical', 50]
+  ['Suspicious Database Backup Request', 'file_database_backup_request', 'Detects common database backup file probes.', 'file_attack', '(backup\\.sql|database\\.sql)$', 'url', 'block', 'critical', 50],
+  ['CMS Adminer Probe', 'cms_adminer_probe', 'Detects adminer.php probes.', 'cms_probe', 'adminer\\.php', 'url', 'block', 'critical', 50],
+  ['Dangerous PHP Upload', 'file_php_upload', 'Detects dangerous PHP upload filenames.', 'file_attack', '\\.(php|phtml)$', 'file_name', 'block', 'critical', 60],
+  ['Dangerous Executable Upload', 'file_exe_upload', 'Detects executable upload filenames.', 'file_attack', '\\.(exe|bat|cmd|sh)$', 'file_name', 'block', 'critical', 60],
+  ['Dangerous Script Upload', 'file_script_upload', 'Detects server script upload filenames.', 'file_attack', '\\.(jsp|asp|aspx)$', 'file_name', 'block', 'critical', 60]
 ];
 
 const roles = [
@@ -274,7 +284,19 @@ async function seed() {
   for (const [name, rule_key, description, category, pattern, target, action, severity, score] of wafRules) {
     await WafRule.findOrCreate({
       where: { rule_key },
-      defaults: { name, description, category, pattern, target, action, severity, score, status: true }
+      defaults: {
+        name,
+        description,
+        category,
+        pattern,
+        pattern_type: 'regex',
+        target,
+        action,
+        severity,
+        score,
+        status: true,
+        is_system: true
+      }
     });
   }
 

@@ -8,7 +8,9 @@ function ensureToken(req) {
 }
 
 function getSubmittedToken(req) {
-  return req.body?._csrf || req.query?._csrf || req.get('csrf-token') || req.get('x-csrf-token');
+  // Multipart uploads are parsed by Multer on the route, so body _csrf is not available
+  // when this middleware runs. Pass the token in the query string or a header instead.
+  return req.query?._csrf || req.body?._csrf || req.get('csrf-token') || req.get('x-csrf-token');
 }
 
 function csrfProtection(req, res, next) {

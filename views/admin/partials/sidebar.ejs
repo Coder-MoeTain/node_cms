@@ -1,62 +1,103 @@
-<aside class="admin-sidebar">
+<aside class="admin-sidebar" id="adminSidebar" aria-label="Admin menu">
   <% const isActive = (path) => currentPath === path || (path !== '/admin' && currentPath.startsWith(path)); %>
   <% const isAnyActive = (paths) => paths.some((path) => isActive(path)); %>
-  <a class="brand" href="/admin">
-    <span class="brand-mark"><i class="bi bi-stars"></i></span>
-    <span><strong>NodePress</strong><small>Mission CMS</small></span>
-  </a>
   <nav class="nav flex-column admin-nav">
     <% if (can('view_dashboard')) { %>
-      <a class="nav-link primary-link <%= isActive('/admin') ? 'active' : '' %>" href="/admin"><i class="bi bi-speedometer2"></i> Dashboard</a>
+      <a class="nav-link <%= isActive('/admin') && currentPath === '/admin' ? 'active' : '' %>" href="/admin"><i class="bi bi-house-door"></i> Dashboard</a>
     <% } %>
 
-    <% const publishActive = isAnyActive(['/admin/posts','/admin/pages','/admin/categories','/admin/tags','/admin/media']); %>
-    <% if (canAny(['manage_posts','create_posts','edit_posts','manage_pages','manage_categories','manage_tags','manage_media'])) { %>
+    <% const postsActive = isAnyActive(['/admin/posts','/admin/categories','/admin/tags']); %>
+    <% if (canAny(['manage_posts','create_posts','edit_posts','manage_categories','manage_tags'])) { %>
       <div class="nav-menu">
-        <button class="nav-menu-toggle <%= publishActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarPublish" aria-expanded="<%= publishActive ? 'true' : 'false' %>">
-          <span><i class="bi bi-pencil-square"></i> Content</span><i class="bi bi-chevron-down"></i>
+        <button class="nav-menu-toggle <%= postsActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarPosts" aria-expanded="<%= postsActive ? 'true' : 'false' %>">
+          <span><i class="bi bi-file-richtext"></i> Posts</span><i class="bi bi-chevron-down"></i>
         </button>
-        <div id="sidebarPublish" class="collapse <%= publishActive ? 'show' : '' %>">
+        <div id="sidebarPosts" class="collapse <%= postsActive ? 'show' : '' %>">
           <div class="nav-submenu">
-            <% if (canAny(['manage_posts','create_posts','edit_posts'])) { %><a class="nav-link <%= isActive('/admin/posts') ? 'active' : '' %>" href="/admin/posts"><i class="bi bi-file-richtext"></i> Posts</a><% } %>
-            <% if (can('manage_pages')) { %><a class="nav-link <%= isActive('/admin/pages') ? 'active' : '' %>" href="/admin/pages"><i class="bi bi-files"></i> Pages</a><% } %>
-            <% if (can('manage_categories')) { %><a class="nav-link <%= isActive('/admin/categories') ? 'active' : '' %>" href="/admin/categories"><i class="bi bi-folder"></i> Categories</a><% } %>
-            <% if (can('manage_tags')) { %><a class="nav-link <%= isActive('/admin/tags') ? 'active' : '' %>" href="/admin/tags"><i class="bi bi-tags"></i> Tags</a><% } %>
-            <% if (can('manage_media')) { %><a class="nav-link <%= isActive('/admin/media') ? 'active' : '' %>" href="/admin/media"><i class="bi bi-images"></i> Media</a><% } %>
+            <% if (canAny(['manage_posts','create_posts','edit_posts'])) { %><a class="nav-link <%= isActive('/admin/posts') && !currentPath.includes('/create') ? 'active' : '' %>" href="/admin/posts">All Posts</a><% } %>
+            <% if (canManageResource('posts', 'create')) { %><a class="nav-link <%= currentPath === '/admin/posts/create' ? 'active' : '' %>" href="/admin/posts/create">Add New</a><% } %>
+            <% if (can('manage_categories')) { %><a class="nav-link <%= isActive('/admin/categories') ? 'active' : '' %>" href="/admin/categories">Categories</a><% } %>
+            <% if (can('manage_tags')) { %><a class="nav-link <%= isActive('/admin/tags') ? 'active' : '' %>" href="/admin/tags">Tags</a><% } %>
           </div>
         </div>
       </div>
     <% } %>
 
-    <% const engageActive = isAnyActive(['/admin/comments','/admin/messages']); %>
-    <% if (canAny(['manage_comments','manage_messages','manage_settings'])) { %>
+    <% if (can('manage_media')) { %>
       <div class="nav-menu">
-        <button class="nav-menu-toggle <%= engageActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarEngage" aria-expanded="<%= engageActive ? 'true' : 'false' %>">
-          <span><i class="bi bi-chat-square-dots"></i> Engage</span><i class="bi bi-chevron-down"></i>
+        <button class="nav-menu-toggle <%= isActive('/admin/media') ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMedia" aria-expanded="<%= isActive('/admin/media') ? 'true' : 'false' %>">
+          <span><i class="bi bi-images"></i> Media</span><i class="bi bi-chevron-down"></i>
         </button>
-        <div id="sidebarEngage" class="collapse <%= engageActive ? 'show' : '' %>">
+        <div id="sidebarMedia" class="collapse <%= isActive('/admin/media') ? 'show' : '' %>">
           <div class="nav-submenu">
-            <% if (can('manage_comments')) { %><a class="nav-link <%= isActive('/admin/comments') ? 'active' : '' %>" href="/admin/comments"><i class="bi bi-chat-dots"></i> Comments</a><% } %>
-            <% if (canAny(['manage_messages','manage_settings'])) { %><a class="nav-link <%= isActive('/admin/messages') ? 'active' : '' %>" href="/admin/messages"><i class="bi bi-envelope"></i> Messages</a><% } %>
+            <a class="nav-link <%= isActive('/admin/media') ? 'active' : '' %>" href="/admin/media">Library</a>
+            <a class="nav-link" href="/admin/media#upload">Add New</a>
           </div>
         </div>
       </div>
     <% } %>
 
-    <% const experienceActive = isAnyActive(['/admin/menus','/admin/menu-items','/admin/sliders','/admin/banners','/admin/themes','/admin/plugins']); %>
-    <% if (canAny(['manage_menus','manage_sliders','manage_banners','manage_themes','manage_plugins'])) { %>
+    <% if (can('manage_pages')) { %>
       <div class="nav-menu">
-        <button class="nav-menu-toggle <%= experienceActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarExperience" aria-expanded="<%= experienceActive ? 'true' : 'false' %>">
-          <span><i class="bi bi-grid"></i> Experience</span><i class="bi bi-chevron-down"></i>
+        <button class="nav-menu-toggle <%= isActive('/admin/pages') ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarPages" aria-expanded="<%= isActive('/admin/pages') ? 'true' : 'false' %>">
+          <span><i class="bi bi-files"></i> Pages</span><i class="bi bi-chevron-down"></i>
         </button>
-        <div id="sidebarExperience" class="collapse <%= experienceActive ? 'show' : '' %>">
+        <div id="sidebarPages" class="collapse <%= isActive('/admin/pages') ? 'show' : '' %>">
           <div class="nav-submenu">
-            <% if (can('manage_menus')) { %><a class="nav-link <%= isActive('/admin/menus') ? 'active' : '' %>" href="/admin/menus"><i class="bi bi-list"></i> Menus</a><% } %>
-            <% if (can('manage_menus')) { %><a class="nav-link <%= isActive('/admin/menu-items') ? 'active' : '' %>" href="/admin/menu-items"><i class="bi bi-menu-button-wide"></i> Menu Items</a><% } %>
-            <% if (can('manage_sliders')) { %><a class="nav-link <%= isActive('/admin/sliders') ? 'active' : '' %>" href="/admin/sliders"><i class="bi bi-sliders"></i> Sliders</a><% } %>
-            <% if (can('manage_banners')) { %><a class="nav-link <%= isActive('/admin/banners') ? 'active' : '' %>" href="/admin/banners"><i class="bi bi-badge-ad"></i> Banners</a><% } %>
-            <% if (can('manage_themes')) { %><a class="nav-link <%= isActive('/admin/themes') ? 'active' : '' %>" href="/admin/themes"><i class="bi bi-palette"></i> Themes</a><% } %>
-            <% if (can('manage_plugins')) { %><a class="nav-link <%= isActive('/admin/plugins') ? 'active' : '' %>" href="/admin/plugins"><i class="bi bi-plug"></i> Plugins</a><% } %>
+            <a class="nav-link <%= isActive('/admin/pages') && !currentPath.includes('/create') ? 'active' : '' %>" href="/admin/pages">All Pages</a>
+            <a class="nav-link <%= currentPath === '/admin/pages/create' ? 'active' : '' %>" href="/admin/pages/create">Add New</a>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (can('manage_comments')) { %>
+      <a class="nav-link <%= isActive('/admin/comments') ? 'active' : '' %>" href="/admin/comments"><i class="bi bi-chat-dots"></i> Comments</a>
+    <% } %>
+
+    <% const appearanceActive = isAnyActive(['/admin/themes','/admin/menus','/admin/menu-items','/admin/sliders','/admin/banners']); %>
+    <% if (canAny(['manage_themes','manage_menus','manage_sliders','manage_banners'])) { %>
+      <div class="nav-menu">
+        <button class="nav-menu-toggle <%= appearanceActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarAppearance" aria-expanded="<%= appearanceActive ? 'true' : 'false' %>">
+          <span><i class="bi bi-palette"></i> Appearance</span><i class="bi bi-chevron-down"></i>
+        </button>
+        <div id="sidebarAppearance" class="collapse <%= appearanceActive ? 'show' : '' %>">
+          <div class="nav-submenu">
+            <% if (can('manage_themes')) { %><a class="nav-link <%= isActive('/admin/themes') ? 'active' : '' %>" href="/admin/themes">Themes</a><% } %>
+            <% if (can('manage_menus')) { %><a class="nav-link <%= isActive('/admin/menus') ? 'active' : '' %>" href="/admin/menus">Menus</a><% } %>
+            <% if (can('manage_sliders')) { %><a class="nav-link <%= isActive('/admin/sliders') ? 'active' : '' %>" href="/admin/sliders">Sliders</a><% } %>
+            <% if (can('manage_banners')) { %><a class="nav-link <%= isActive('/admin/banners') ? 'active' : '' %>" href="/admin/banners">Banners</a><% } %>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <% const usersActive = isAnyActive(['/admin/users','/admin/roles']); %>
+    <% if (canAny(['manage_users','manage_roles'])) { %>
+      <div class="nav-menu">
+        <button class="nav-menu-toggle <%= usersActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarUsers" aria-expanded="<%= usersActive ? 'true' : 'false' %>">
+          <span><i class="bi bi-people"></i> Users</span><i class="bi bi-chevron-down"></i>
+        </button>
+        <div id="sidebarUsers" class="collapse <%= usersActive ? 'show' : '' %>">
+          <div class="nav-submenu">
+            <% if (can('manage_users')) { %><a class="nav-link <%= isActive('/admin/users') && !currentPath.includes('/create') ? 'active' : '' %>" href="/admin/users">All Users</a><% } %>
+            <% if (canManageResource('users', 'create')) { %><a class="nav-link <%= currentPath === '/admin/users/create' ? 'active' : '' %>" href="/admin/users/create">Add New</a><% } %>
+            <% if (can('manage_roles')) { %><a class="nav-link <%= isActive('/admin/roles') ? 'active' : '' %>" href="/admin/roles">Roles &amp; Permissions</a><% } %>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <% const toolsActive = isAnyActive(['/admin/messages','/admin/security']); %>
+    <% if (canAny(['manage_messages','manage_security','manage_settings'])) { %>
+      <div class="nav-menu">
+        <button class="nav-menu-toggle <%= toolsActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarTools" aria-expanded="<%= toolsActive ? 'true' : 'false' %>">
+          <span><i class="bi bi-tools"></i> Tools</span><i class="bi bi-chevron-down"></i>
+        </button>
+        <div id="sidebarTools" class="collapse <%= toolsActive ? 'show' : '' %>">
+          <div class="nav-submenu">
+            <% if (canAny(['manage_messages','manage_settings'])) { %><a class="nav-link <%= isActive('/admin/messages') ? 'active' : '' %>" href="/admin/messages">Messages</a><% } %>
+            <% if (can('manage_security')) { %><a class="nav-link <%= isActive('/admin/security') ? 'active' : '' %>" href="/admin/security">Backup &amp; Logs</a><% } %>
           </div>
         </div>
       </div>
@@ -70,33 +111,30 @@
         </button>
         <div id="sidebarSecurity" class="collapse <%= securityActive ? 'show' : '' %>">
           <div class="nav-submenu">
-            <% if (can('manage_security')) { %><a class="nav-link <%= isActive('/admin/security') ? 'active' : '' %>" href="/admin/security"><i class="bi bi-shield-check"></i> Center</a><% } %>
-            <a class="nav-link <%= currentPath === '/admin/waf' ? 'active' : '' %>" href="/admin/waf"><i class="bi bi-bricks"></i> WAF Dashboard</a>
-            <a class="nav-link <%= isActive('/admin/waf/settings') ? 'active' : '' %>" href="/admin/waf/settings"><i class="bi bi-sliders2"></i> Settings</a>
-            <a class="nav-link <%= isActive('/admin/waf/rules') ? 'active' : '' %>" href="/admin/waf/rules"><i class="bi bi-list-check"></i> Rules</a>
-            <a class="nav-link <%= isActive('/admin/waf/logs') ? 'active' : '' %>" href="/admin/waf/logs"><i class="bi bi-journal-text"></i> Logs</a>
-            <a class="nav-link <%= isActive('/admin/waf/ip-lists') ? 'active' : '' %>" href="/admin/waf/ip-lists"><i class="bi bi-ban"></i> IP Lists</a>
+            <% if (can('manage_security')) { %><a class="nav-link <%= currentPath === '/admin/security' ? 'active' : '' %>" href="/admin/security">Security Settings</a><% } %>
+            <a class="nav-link <%= currentPath === '/admin/waf' ? 'active' : '' %>" href="/admin/waf">WAF Dashboard</a>
+            <a class="nav-link <%= isActive('/admin/waf/settings') ? 'active' : '' %>" href="/admin/waf/settings">WAF Settings</a>
+            <a class="nav-link <%= isActive('/admin/waf/rules') ? 'active' : '' %>" href="/admin/waf/rules">WAF Rules</a>
+            <a class="nav-link <%= isActive('/admin/waf/logs') ? 'active' : '' %>" href="/admin/waf/logs">WAF Logs</a>
+            <a class="nav-link <%= isActive('/admin/waf/ip-lists') ? 'active' : '' %>" href="/admin/waf/ip-lists">WAF IP Lists</a>
           </div>
         </div>
       </div>
     <% } %>
 
-    <% const systemActive = isAnyActive(['/admin/users','/admin/roles','/admin/settings']); %>
-    <% if (canAny(['manage_users','manage_roles','manage_settings'])) { %>
+    <% if (canAny(['manage_settings','manage_plugins'])) { %>
       <div class="nav-menu">
-        <button class="nav-menu-toggle <%= systemActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarSystem" aria-expanded="<%= systemActive ? 'true' : 'false' %>">
-          <span><i class="bi bi-gear"></i> System</span><i class="bi bi-chevron-down"></i>
+        <button class="nav-menu-toggle <%= isAnyActive(['/admin/settings','/admin/plugins']) ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarSettings" aria-expanded="<%= isAnyActive(['/admin/settings','/admin/plugins']) ? 'true' : 'false' %>">
+          <span><i class="bi bi-gear"></i> Settings</span><i class="bi bi-chevron-down"></i>
         </button>
-        <div id="sidebarSystem" class="collapse <%= systemActive ? 'show' : '' %>">
+        <div id="sidebarSettings" class="collapse <%= isAnyActive(['/admin/settings','/admin/plugins']) ? 'show' : '' %>">
           <div class="nav-submenu">
-            <% if (can('manage_users')) { %><a class="nav-link <%= isActive('/admin/users') ? 'active' : '' %>" href="/admin/users"><i class="bi bi-people"></i> Users</a><% } %>
-            <% if (can('manage_roles')) { %><a class="nav-link <%= isActive('/admin/roles') ? 'active' : '' %>" href="/admin/roles"><i class="bi bi-person-lock"></i> Roles</a><% } %>
-            <% if (can('manage_settings')) { %><a class="nav-link <%= isActive('/admin/settings') ? 'active' : '' %>" href="/admin/settings"><i class="bi bi-sliders"></i> Site Settings</a><% } %>
+            <% if (can('manage_settings')) { %><a class="nav-link <%= isActive('/admin/settings') ? 'active' : '' %>" href="/admin/settings">General</a><% } %>
+            <% if (can('manage_plugins')) { %><a class="nav-link <%= isActive('/admin/plugins') ? 'active' : '' %>" href="/admin/plugins">Plugins</a><% } %>
           </div>
         </div>
       </div>
     <% } %>
-
-    <a class="nav-link external-link" href="/" target="_blank"><i class="bi bi-box-arrow-up-right"></i> View Site</a>
   </nav>
 </aside>
+<div class="sidebar-overlay" data-sidebar-overlay></div>

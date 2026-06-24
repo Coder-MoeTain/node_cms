@@ -1,85 +1,106 @@
 <%- include('partials/head') %>
 <%- include('partials/sidebar') %>
-<div class="admin-main admin-dashboard-page">
+<div class="admin-main">
   <%- include('partials/topbar') %>
-  <main class="admin-content admin-dashboard">
+  <main class="admin-content" id="np-main-content">
     <%- include('partials/flash') %>
-    <section class="dashboard-hero">
-      <div>
-        <span class="dashboard-eyebrow">Mission Status</span>
-        <h2>Content command center</h2>
-        <p>Monitor publishing, users, media, messages, security, and site activity from one control surface.</p>
-      </div>
-      <% if (canManageResource('posts', 'create')) { %><a class="btn btn-primary" href="/admin/posts/create"><i class="bi bi-plus-lg"></i> New Post</a><% } %>
-    </section>
-    <div class="row g-3">
-      <% const statIcons = { posts: 'bi-file-richtext', publishedPosts: 'bi-send-check', draftPosts: 'bi-pencil-square', pages: 'bi-files', users: 'bi-people', categories: 'bi-folder', media: 'bi-images', comments: 'bi-chat-dots' }; %>
-      <% const statLabels = { publishedPosts: 'published posts', draftPosts: 'draft posts' }; %>
-      <% Object.entries(stats).forEach(function(entry) { %>
-        <div class="col-6 col-lg-3">
-          <div class="card stat-card">
-            <div class="card-body">
-              <span class="stat-icon"><i class="bi <%= statIcons[entry[0]] || 'bi-activity' %>"></i></span>
-              <span class="stat-label text-capitalize"><%= statLabels[entry[0]] || entry[0] %></span>
-              <h2><%= entry[1] %></h2>
-            </div>
+    <div class="np-page-header">
+      <h1>Dashboard</h1>
+      <% if (canManageResource('posts', 'create')) { %><a class="np-btn np-btn-primary" href="/admin/posts/create"><i class="bi bi-plus-lg"></i> Add New Post</a><% } %>
+    </div>
+
+    <div class="row dashboard-widgets">
+      <div class="col-lg-8">
+        <div class="np-widget">
+          <div class="np-widget-header"><span>At a Glance</span></div>
+          <div class="np-widget-body dashboard-at-glance">
+            <div><a href="/admin/posts"><%= stats.posts %></a><span>Posts</span></div>
+            <div><a href="/admin/pages"><%= stats.pages %></a><span>Pages</span></div>
+            <div><a href="/admin/comments"><%= stats.comments %></a><span>Comments</span></div>
+            <div><a href="/admin/media"><%= stats.media %></a><span>Media</span></div>
+            <div><a href="/admin/categories"><%= stats.categories %></a><span>Categories</span></div>
+            <div><span class="np-badge np-badge-info"><%= siteHealth.activeTheme || 'Classic' %></span><span>Theme</span></div>
           </div>
         </div>
-      <% }) %>
-    </div>
-    <div class="row g-3 mt-2">
-      <div class="col-lg-7">
-        <div class="card">
-          <div class="card-header professional-card-header"><span>Recent Posts</span><a href="/admin/posts">View all</a></div>
-          <div class="table-responsive">
-            <table class="table align-middle mb-0">
+
+        <div class="np-widget">
+          <div class="np-widget-header"><span>Recent Posts</span><a href="/admin/posts">See all</a></div>
+          <div class="np-widget-body p-0">
+            <table class="np-list-table mb-0">
+              <thead><tr><th>Title</th><th>Status</th><th>Date</th></tr></thead>
               <tbody>
                 <% recentPosts.forEach(function(post) { %>
-                  <tr><td><strong><%= post.title %></strong></td><td><span class="status-pill status-<%= post.status %>"><%= post.status %></span></td><td><a class="table-action" href="/admin/posts/<%= post.id %>/edit">Edit</a></td></tr>
+                  <tr>
+                    <td>
+                      <a class="row-title" href="/admin/posts/<%= post.id %>/edit"><%= post.title %></a>
+                      <div class="row-actions">
+                        <a href="/admin/posts/<%= post.id %>/edit">Edit</a>
+                        <% if (post.status === 'published') { %><span>|</span><a href="/post/<%= post.slug %>" target="_blank">View</a><% } %>
+                      </div>
+                    </td>
+                    <td><span class="np-badge np-badge-<%= post.status === 'published' ? 'success' : (post.status === 'draft' ? 'info' : 'muted') %>"><%= post.status %></span></td>
+                    <td><%= post.created_at ? post.created_at.toLocaleDateString() : '' %></td>
+                  </tr>
                 <% }) %>
+                <% if (!recentPosts.length) { %><tr><td colspan="3" class="text-muted">No posts yet.</td></tr><% } %>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="card mt-3">
-          <div class="card-header professional-card-header"><span>Recent Comments</span><% if (can('manage_comments')) { %><a href="/admin/comments">Moderate</a><% } %></div>
-          <ul class="list-group list-group-flush">
-            <% recentComments.forEach(function(comment) { %>
-              <li class="list-group-item">
-                <div class="d-flex justify-content-between gap-3">
-                  <div>
-                    <strong><%= comment.name %></strong>
-                    <small class="text-muted d-block"><%= comment.Post ? comment.Post.title : 'Deleted post' %></small>
-                  </div>
-                  <span class="status-pill status-<%= comment.status %>"><%= comment.status %></span>
-                </div>
-              </li>
-            <% }) %>
-          </ul>
+
+        <div class="np-widget">
+          <div class="np-widget-header"><span>Activity</span></div>
+          <div class="np-widget-body">
+            <h6 class="mb-2">Recent Comments</h6>
+            <ul class="list-unstyled mb-3">
+              <% recentComments.slice(0, 5).forEach(function(comment) { %>
+                <li class="mb-2"><strong><%= comment.name %></strong> on <%= comment.Post ? comment.Post.title : 'Deleted post' %> <span class="np-badge np-badge-muted"><%= comment.status %></span></li>
+              <% }) %>
+              <% if (!recentComments.length) { %><li class="text-muted">No comments yet.</li><% } %>
+            </ul>
+            <h6 class="mb-2">Recent Activity</h6>
+            <ul class="list-unstyled mb-0">
+              <% recentActivity.slice(0, 5).forEach(function(log) { %>
+                <li class="mb-1 text-muted"><%= log.action %> — <%= log.User ? log.User.name : 'System' %></li>
+              <% }) %>
+            </ul>
+          </div>
         </div>
       </div>
-      <div class="col-lg-5">
-        <div class="card mb-3 insight-card"><div class="card-body"><span class="stat-icon"><i class="bi bi-graph-up-arrow"></i></span><h5>Website Traffic Summary</h5><p class="mb-0">Traffic counters can be connected to analytics; post views are tracked in the CMS.</p></div></div>
-        <div class="card">
-          <div class="card-header professional-card-header"><span>Recent Login Activity</span><% if (can('manage_security')) { %><a href="/admin/security">Security</a><% } %></div>
-          <ul class="list-group list-group-flush">
-            <% recentLogins.forEach(function(login) { %>
-              <li class="list-group-item d-flex justify-content-between"><span><%= login.email || login.ip_address %></span><span class="status-pill <%= login.success ? 'status-published' : 'status-private' %>"><%= login.success ? 'success' : 'failed' %></span></li>
-            <% }) %>
-          </ul>
+
+      <div class="col-lg-4">
+        <% if (canManageResource('posts', 'create')) { %>
+        <div class="np-widget">
+          <div class="np-widget-header"><span>Quick Draft</span></div>
+          <div class="np-widget-body">
+            <form method="post" action="/admin/quick-draft">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="mb-2"><input class="form-control" name="title" placeholder="Title" required></div>
+              <div class="mb-2"><textarea class="form-control" name="content" rows="4" placeholder="Content"></textarea></div>
+              <button class="np-btn np-btn-primary" type="submit">Save Draft</button>
+            </form>
+          </div>
         </div>
-        <div class="card mt-3">
-          <div class="card-header professional-card-header"><span>Recent Activity Logs</span><% if (can('manage_security')) { %><a href="/admin/security">View logs</a><% } %></div>
-          <ul class="list-group list-group-flush">
-            <% recentActivity.forEach(function(log) { %>
-              <li class="list-group-item">
-                <strong><%= log.action %></strong>
-                <small class="text-muted d-block"><%= log.User ? log.User.name : 'System' %> · <%= log.entity_type || log.module || 'admin' %></small>
-              </li>
-            <% }) %>
-          </ul>
+        <% } %>
+
+        <div class="np-widget">
+          <div class="np-widget-header"><span>Site Health</span></div>
+          <div class="np-widget-body">
+            <div class="health-item"><span>Environment</span><span class="np-badge np-badge-info"><%= siteHealth.env %></span></div>
+            <div class="health-item"><span>Database</span><span class="np-badge np-badge-<%= siteHealth.database ? 'success' : 'danger' %>"><%= siteHealth.database ? 'Connected' : 'Error' %></span></div>
+            <div class="health-item"><span>Uploads folder</span><span class="np-badge np-badge-<%= siteHealth.uploadsWritable ? 'success' : 'warning' %>"><%= siteHealth.uploadsWritable ? 'Writable' : 'Check permissions' %></span></div>
+            <div class="health-item"><span>WAF</span><span class="np-badge np-badge-muted"><%= siteHealth.wafMode %></span></div>
+            <div class="health-item"><span>Security alerts</span><span class="np-badge np-badge-<%= securityAlerts > 0 ? 'warning' : 'success' %>"><%= securityAlerts %> failed logins</span></div>
+          </div>
         </div>
-        <div class="alert alert-warning mt-3 security-alert"><i class="bi bi-shield-exclamation"></i> Security alerts: <strong><%= securityAlerts %></strong> failed login attempts recorded.</div>
+
+        <div class="np-widget">
+          <div class="np-widget-header"><span>Security Summary</span><% if (can('manage_security')) { %><a href="/admin/security">Manage</a><% } %></div>
+          <div class="np-widget-body">
+            <div class="health-item"><span>Unread messages</span><strong><%= messages %></strong></div>
+            <div class="health-item"><span>Recent login failures</span><strong><%= recentLogins.filter(function(l){ return !l.success; }).length %></strong></div>
+          </div>
+        </div>
       </div>
     </div>
   </main>

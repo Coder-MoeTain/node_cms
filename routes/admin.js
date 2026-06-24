@@ -6,6 +6,17 @@ const { loginLimiter } = require('../middleware/security');
 const { activityLogMiddleware } = require('../middleware/activityLog');
 const upload = require('../middleware/upload');
 
+const crudImageUpload = upload.image.fields([
+  { name: 'featured_image_file', maxCount: 1 },
+  { name: 'image_file', maxCount: 1 }
+]);
+
+const brandingImageUpload = upload.image.fields([
+  { name: 'site_logo_file', maxCount: 1 },
+  { name: 'favicon_file', maxCount: 1 },
+  { name: 'logo_file', maxCount: 1 }
+]);
+
 const auth = require('../controllers/admin/authController');
 const dashboard = require('../controllers/admin/dashboardController');
 const crud = require('../controllers/admin/crudController');
@@ -33,6 +44,7 @@ router.post('/profile/2fa/disable', requireAuth, auth.disableTwoFactor);
 router.use(requireAuth, activityLogMiddleware('admin'));
 
 router.get('/', requireAuth, can('view_dashboard'), dashboard.dashboard);
+router.post('/quick-draft', requireAuth, canAny(['manage_posts', 'create_posts']), dashboard.quickDraft);
 
 router.get('/media', requireAuth, can('manage_media'), media.index);
 router.post('/media/upload', requireAuth, can('manage_media'), upload.array('files', 20), media.upload);
@@ -48,11 +60,11 @@ router.put('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugin
 
 router.get('/settings/media-gallery', requireAuth, can('manage_settings'), settings.mediaGallery);
 router.get('/settings', requireAuth, can('manage_settings'), settings.settings);
-router.put('/settings', requireAuth, can('manage_settings'), settings.updateSettings);
+router.put('/settings', requireAuth, can('manage_settings'), brandingImageUpload, settings.updateSettings);
 router.get('/themes', requireAuth, can('manage_themes'), settings.themes);
 router.get('/themes/editor', requireAuth, can('manage_themes'), settings.themeEditor);
 router.post('/themes/activate', requireAuth, can('manage_themes'), settings.activateTheme);
-router.put('/theme-settings', requireAuth, can('manage_themes'), settings.updateThemeSettings);
+router.put('/theme-settings', requireAuth, can('manage_themes'), brandingImageUpload, settings.updateThemeSettings);
 
 router.get('/security', requireAuth, can('manage_security'), security.index);
 router.put('/security/settings', requireAuth, can('manage_security'), security.updateSettings);
@@ -76,6 +88,7 @@ router.get('/waf/logs', requireAuth, wafPermission, waf.logs);
 router.get('/waf/logs/:id', requireAuth, wafPermission, waf.logDetail);
 router.post('/waf/logs/:id/delete', requireAuth, wafPermission, waf.deleteLog);
 router.post('/waf/logs/delete-old', requireAuth, wafPermission, waf.deleteOldLogs);
+router.get('/waf/logs/export/csv', requireAuth, wafPermission, waf.exportLogsCsv);
 router.get('/waf/ip-lists', requireAuth, wafPermission, waf.ipLists);
 router.post('/waf/ip-lists', requireAuth, wafPermission, waf.addIpList);
 router.post('/waf/ip-lists/:id/delete', requireAuth, wafPermission, waf.removeIpList);
@@ -101,9 +114,9 @@ function resourcePermission(req, res, next) {
 
 router.get('/:resource', requireAuth, resourcePermission, crud.index);
 router.get('/:resource/create', requireAuth, resourcePermission, crud.create);
-router.post('/:resource', requireAuth, resourcePermission, upload.image.single('featured_image_file'), crud.store);
+router.post('/:resource', requireAuth, resourcePermission, crudImageUpload, crud.store);
 router.get('/:resource/:id/edit', requireAuth, resourcePermission, crud.edit);
-router.put('/:resource/:id', requireAuth, resourcePermission, upload.image.single('featured_image_file'), crud.update);
+router.put('/:resource/:id', requireAuth, resourcePermission, crudImageUpload, crud.update);
 router.delete('/:resource/:id', requireAuth, resourcePermission, crud.destroy);
 
 module.exports = router;

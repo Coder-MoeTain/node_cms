@@ -1,27 +1,28 @@
 <%- include('../partials/head') %>
-<main class="auth-page">
-  <div class="auth-card shadow">
-    <h1 class="h3 mb-3">NodePress Admin</h1>
+<main class="auth-page" id="np-main-content">
+  <div class="auth-card">
+    <h1>Log In</h1>
+    <p class="text-muted mb-3">NodePress CMS Admin</p>
     <%- include('../partials/flash') %>
     <form method="post" action="/admin/login">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input class="form-control" name="email" type="email" value="admin@example.com" required>
+        <label class="form-label" for="login-email">Email</label>
+        <input class="form-control" id="login-email" name="email" type="email" autocomplete="username" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input class="form-control" name="password" type="password" required>
+        <label class="form-label" for="login-password">Password</label>
+        <input class="form-control" id="login-password" name="password" type="password" autocomplete="current-password" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">Two-Factor Code</label>
-        <input class="form-control" name="totp" inputmode="numeric" autocomplete="one-time-code" placeholder="Required if enabled">
+        <label class="form-label" for="login-totp">Two-Factor Code</label>
+        <input class="form-control" id="login-totp" name="totp" inputmode="numeric" autocomplete="one-time-code" placeholder="If enabled on your account">
       </div>
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <label class="form-check"><input class="form-check-input" type="checkbox" name="remember"> Remember me</label>
-        <a href="/admin/forgot-password">Forgot password?</a>
+        <label class="form-check"><input class="form-check-input" type="checkbox" name="remember"> Remember Me</label>
+        <a href="/admin/forgot-password">Lost your password?</a>
       </div>
-      <button class="btn btn-primary w-100">Login</button>
+      <button class="np-btn np-btn-primary w-100" type="submit">Log In</button>
     </form>
   </div>
 </main>

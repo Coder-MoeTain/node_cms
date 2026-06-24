@@ -21,6 +21,9 @@
       <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">Mode</span><h3><span class="badge <%= settings.waf_mode === 'block' ? 'text-bg-danger' : 'text-bg-warning' %>"><%= settings.waf_mode || 'monitor' %></span></h3></div></div></div>
       <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">Blocked Today</span><h3><%= blockedToday %></h3></div></div></div>
       <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">Active Blocks</span><h3><%= activeBlocks %></h3></div></div></div>
+      <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">Logged Today</span><h3><%= loggedToday %></h3></div></div></div>
+      <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">System Rules</span><h3><%= systemRuleCount %></h3></div></div></div>
+      <div class="col-md-3"><div class="card stat-card"><div class="card-body"><span class="stat-label">Custom Rules</span><h3><%= customRuleCount %></h3></div></div></div>
     </div>
 
     <div class="row g-3">

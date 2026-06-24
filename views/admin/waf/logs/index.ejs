@@ -6,7 +6,10 @@
     <%- include('../../partials/flash') %>
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
       <div><h2 class="mb-1">WAF Logs</h2><p class="text-muted mb-0">Review blocked, rate-limited, and monitored request events.</p></div>
-      <form class="d-flex gap-2" method="post" action="/admin/waf/logs/delete-old" onsubmit="return confirm('Delete old WAF logs?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input class="form-control" style="width:100px" type="number" min="1" name="days" value="30"><button class="btn btn-outline-danger">Delete Old</button></form>
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="/admin/waf/logs/export/csv?<%= new URLSearchParams(filters || {}).toString() %>">Export CSV</a>
+        <form class="d-flex gap-2" method="post" action="/admin/waf/logs/delete-old" onsubmit="return confirm('Delete old WAF logs?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input class="form-control" style="width:100px" type="number" min="1" name="days" value="30"><button class="btn btn-outline-danger">Delete Old</button></form>
+      </div>
     </div>
     <form class="card card-body mb-3" method="get" action="/admin/waf/logs">
       <div class="row g-2">

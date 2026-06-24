@@ -4,7 +4,7 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content">
     <%- include('../partials/flash') %>
-    <form class="card" method="post" action="/admin/theme-settings?_method=PUT">
+    <form class="card" method="post" action="/admin/theme-settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="card-header professional-card-header">
         <span>Theme Editor</span>
@@ -19,8 +19,8 @@
           <div class="col-md-4"><label class="form-label">Font Family</label><input class="form-control" name="font_family" value="<%= themeSetting.font_family || 'Inter, Arial, sans-serif' %>"></div>
           <div class="col-md-4"><label class="form-label">Sidebar Position</label><select class="form-select" name="sidebar_position"><% ['right','left','none'].forEach(function(value) { %><option value="<%= value %>" <%= themeSetting.sidebar_position === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
           <div class="col-md-4"><label class="form-label">Blog Layout</label><select class="form-select" name="blog_layout"><% ['grid','list','masonry'].forEach(function(value) { %><option value="<%= value %>" <%= themeSetting.blog_layout === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
-          <div class="col-md-6"><label class="form-label">Logo URL</label><input class="form-control media-preview-input" name="logo" value="<%= themeSetting.logo || '' %>"></div>
-          <div class="col-md-6"><label class="form-label">Favicon URL</label><input class="form-control media-preview-input" name="favicon" value="<%= themeSetting.favicon || '' %>"></div>
+          <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Logo', name: 'logo', fileName: 'logo_file', value: themeSetting.logo || '' }) %></div>
+          <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Favicon', name: 'favicon', fileName: 'favicon_file', value: themeSetting.favicon || '' }) %></div>
           <div class="col-md-6"><label class="form-label">Header Layout</label><input class="form-control" name="header_layout" value="<%= themeSetting.header_layout || 'default' %>"></div>
           <div class="col-md-6"><label class="form-label">Footer Layout</label><input class="form-control" name="footer_layout" value="<%= themeSetting.footer_layout || 'default' %>"></div>
           <div class="col-md-6"><label class="form-label">Site Layout</label><select class="form-select" name="site_layout"><% ['wide','boxed'].forEach(function(value) { %><option value="<%= value %>" <%= themeSetting.site_layout === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
@@ -31,4 +31,5 @@
     </form>
   </main>
 </div>
+<%- include('../partials/media-modal') %>
 <%- include('../partials/footer') %>

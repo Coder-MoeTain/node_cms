@@ -2,37 +2,49 @@
 <%- include('../partials/sidebar') %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
-  <main class="admin-content">
+  <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="card mb-3">
-      <div class="card-body">
-        <form method="post" action="/admin/media/upload" enctype="multipart/form-data">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <label class="form-label">Upload images, videos, PDFs, or docs</label>
-          <input class="form-control" type="file" name="files" multiple data-preview-file>
-          <div class="upload-preview mt-3"></div>
-          <button class="btn btn-primary mt-3">Upload</button>
-        </form>
+    <div class="media-library-toolbar">
+      <div class="np-page-header mb-0"><h1>Media Library</h1></div>
+      <div class="d-flex gap-2">
+        <button class="np-btn np-btn-secondary" type="button" data-view-toggle="grid" aria-pressed="true">Grid</button>
+        <a class="np-btn np-btn-primary" href="#upload"><i class="bi bi-upload"></i> Add New</a>
       </div>
     </div>
-    <div class="row g-3">
+
+    <div class="upload-dropzone" id="upload">
+      <form method="post" action="/admin/media/upload" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <p class="mb-2"><strong>Drop files to upload</strong> or choose files</p>
+        <input class="form-control" type="file" name="files" multiple data-preview-file accept="image/*,video/*,.pdf,.doc,.docx">
+        <div class="upload-preview mt-2"></div>
+        <button class="np-btn np-btn-primary mt-3" type="submit">Upload</button>
+      </form>
+    </div>
+
+    <div class="media-grid">
       <% rows.forEach(function(file) { %>
-        <div class="col-md-3">
-          <div class="card h-100">
-            <% if (file.file_type === 'image') { %><img class="card-img-top media-thumb" src="<%= file.thumbnail_path || file.file_path %>" alt="<%= file.alt_text || file.original_name %>"><% } %>
-            <div class="card-body">
-              <h6><%= file.original_name %></h6>
-              <input class="form-control form-control-sm mb-2" value="<%= file.file_path %>" readonly onclick="this.select();navigator.clipboard.writeText(this.value)">
-              <span class="badge text-bg-secondary"><%= file.file_type %></span>
-              <a class="btn btn-sm btn-outline-primary mt-2" href="/admin/media/<%= file.id %>/edit">Edit</a>
-              <form method="post" action="/admin/media/<%= file.id %>?_method=DELETE" data-confirm="Delete this media file?">
+        <article class="media-attachment">
+          <% if (file.file_type === 'image') { %>
+            <img src="<%= file.thumbnail_path || file.file_path %>" alt="<%= file.alt_text || file.original_name %>">
+          <% } else { %>
+            <div class="media-attachment-meta d-flex align-items-center justify-content-center" style="min-height:140px"><i class="bi bi-file-earmark fs-1 text-muted"></i></div>
+          <% } %>
+          <div class="media-attachment-meta">
+            <strong class="d-block text-truncate"><%= file.original_name %></strong>
+            <span class="np-badge np-badge-muted"><%= file.file_type %></span>
+            <div class="mt-2 d-flex flex-wrap gap-1">
+              <button class="np-btn np-btn-small np-btn-secondary" type="button" onclick="navigator.clipboard.writeText('<%= file.file_path %>')">Copy URL</button>
+              <a class="np-btn np-btn-small np-btn-secondary" href="/admin/media/<%= file.id %>/edit">Edit</a>
+              <form method="post" action="/admin/media/<%= file.id %>?_method=DELETE" data-confirm="Delete this file permanently?">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <button class="btn btn-sm btn-outline-danger mt-2">Delete</button>
+                <button class="np-btn np-btn-small np-btn-danger" type="submit">Delete</button>
               </form>
             </div>
           </div>
-        </div>
+        </article>
       <% }) %>
+      <% if (!rows.length) { %><div class="empty-state w-100"><i class="bi bi-images d-block"></i><strong>No media files yet</strong></div><% } %>
     </div>
   </main>
 </div>

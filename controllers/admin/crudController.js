@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const sanitizeHtml = require('sanitize-html');
 const { Op } = require('sequelize');
 const models = require('../../models');
-const { buildMediaPayload } = require('../../utils/mediaHelper');
+const { resolveImageValue } = require('../../utils/uploadHelper');
 const { createSlug, createUniqueSlug } = require('../../utils/slugGenerator');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const policy = require('../../utils/policy');
@@ -17,14 +17,6 @@ const richTextSanitizeOptions = {
   },
   allowedIframeHostnames: ['www.youtube.com', 'youtube.com', 'player.vimeo.com']
 };
-
-async function createMediaFromUpload(file, userId, transaction = null) {
-  if (!file) return null;
-
-  const payload = await buildMediaPayload(file, userId);
-  await models.Media.create(payload, { transaction });
-  return payload.file_path;
-}
 
 function normalizeArray(value) {
   if (!value) return [];
@@ -89,7 +81,6 @@ const configs = {
     include: [{ model: models.Category }, { model: models.User, as: 'author' }, models.Tag],
     formData: async () => ({ categories: await models.Category.findAll(), tags: await models.Tag.findAll(), users: await models.User.findAll() }),
     payload: async (body, req, record = null, transaction = null) => {
-      const uploadedFeaturedImage = await createMediaFromUpload(req.file, req.session.user.id, transaction);
       const status = allowedStatus(body, req);
       const canAssignAuthor = policy.can(req.session.user, 'manage_posts');
       return {
@@ -97,7 +88,12 @@ const configs = {
         slug: await createUniqueSlug(models.Post, body.slug || body.title, 'post', record?.id),
         content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
         excerpt: sanitizePlainText(body.excerpt, 1000),
-        featured_image: uploadedFeaturedImage || sanitizePlainText(body.featured_image, 255),
+        featured_image: await resolveImageValue(req, {
+          fileField: 'featured_image_file',
+          pathField: 'featured_image',
+          record,
+          transaction
+        }),
         video_url: sanitizePlainText(body.video_url, 500),
         status,
         category_id: body.category_id || null,
@@ -134,7 +130,13 @@ const configs = {
     permission: 'manage_categories',
     searchFields: ['name', 'slug'],
     formData: async () => ({ categories: await models.Category.findAll() }),
-    payload: async (body, req, record = null) => ({ name: sanitizePlainText(body.name, 120), slug: await createUniqueSlug(models.Category, body.slug || body.name, 'category', record?.id), description: sanitizePlainText(body.description, 1000), parent_id: body.parent_id || null, image: sanitizePlainText(body.image, 255) })
+    payload: async (body, req, record = null, transaction = null) => ({
+      name: sanitizePlainText(body.name, 120),
+      slug: await createUniqueSlug(models.Category, body.slug || body.name, 'category', record?.id),
+      description: sanitizePlainText(body.description, 1000),
+      parent_id: body.parent_id || null,
+      image: await resolveImageValue(req, { fileField: 'image_file', pathField: 'image', record, transaction })
+    })
   },
   tags: {
     model: models.Tag,
@@ -148,14 +150,30 @@ const configs = {
     title: 'Banners',
     permission: 'manage_banners',
     searchFields: ['title', 'subtitle'],
-    payload: (body) => ({ title: sanitizePlainText(body.title, 180), subtitle: sanitizePlainText(body.subtitle, 500), image: sanitizePlainText(body.image, 255), button_text: sanitizePlainText(body.button_text, 80), button_link: sanitizePlainText(body.button_link, 255), display_order: body.display_order || 0, active: body.active === 'on' })
+    payload: async (body, req, record = null, transaction = null) => ({
+      title: sanitizePlainText(body.title, 180),
+      subtitle: sanitizePlainText(body.subtitle, 500),
+      image: await resolveImageValue(req, { fileField: 'image_file', pathField: 'image', record, transaction }),
+      button_text: sanitizePlainText(body.button_text, 80),
+      button_link: sanitizePlainText(body.button_link, 255),
+      display_order: body.display_order || 0,
+      active: body.active === 'on'
+    })
   },
   sliders: {
     model: models.Slider,
     title: 'Sliders',
     permission: 'manage_sliders',
     searchFields: ['title', 'description'],
-    payload: (body) => ({ title: sanitizePlainText(body.title, 180), description: sanitizePlainText(body.description, 500), image: sanitizePlainText(body.image, 255), button_text: sanitizePlainText(body.button_text, 80), button_url: sanitizePlainText(body.button_url, 255), display_order: body.display_order || 0, active: body.active === 'on' })
+    payload: async (body, req, record = null, transaction = null) => ({
+      title: sanitizePlainText(body.title, 180),
+      description: sanitizePlainText(body.description, 500),
+      image: await resolveImageValue(req, { fileField: 'image_file', pathField: 'image', record, transaction }),
+      button_text: sanitizePlainText(body.button_text, 80),
+      button_url: sanitizePlainText(body.button_url, 255),
+      display_order: body.display_order || 0,
+      active: body.active === 'on'
+    })
   },
   menus: {
     model: models.Menu,

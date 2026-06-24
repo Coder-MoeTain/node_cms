@@ -1,5 +1,6 @@
 const { SiteSetting, Theme, ThemeSetting, Media } = require('../../models');
 const themeLoader = require('../../utils/themeLoader');
+const { resolveImageValue } = require('../../utils/uploadHelper');
 
 const defaultSettings = {
   site_logo: { value: '', group: 'branding' },
@@ -18,12 +19,31 @@ async function settings(req, res, next) {
   }
 }
 
+const brandingImageFields = {
+  site_logo: 'site_logo_file',
+  favicon: 'favicon_file'
+};
+
 async function updateSettings(req, res, next) {
   try {
     for (const [key, value] of Object.entries(req.body)) {
-      if (key !== '_csrf' && key !== '_method') {
-        await SiteSetting.upsert({ key, value: Array.isArray(value) ? value.join(',') : value, group: 'general' });
+      if (key === '_csrf' || key === '_method' || key.endsWith('_file') || key.startsWith('remove_')) continue;
+
+      let finalValue = Array.isArray(value) ? value.join(',') : value;
+      if (brandingImageFields[key]) {
+        const existing = await SiteSetting.findOne({ where: { key } });
+        finalValue = await resolveImageValue(req, {
+          fileField: brandingImageFields[key],
+          pathField: key,
+          record: existing || { [key]: finalValue }
+        });
       }
+
+      await SiteSetting.upsert({
+        key,
+        value: finalValue,
+        group: brandingImageFields[key] ? 'branding' : 'general'
+      });
     }
     req.flash('success', 'Settings updated.');
     return res.redirect('/admin/settings');
@@ -45,6 +65,7 @@ async function mediaGallery(req, res, next) {
         id: item.id,
         originalName: item.original_name,
         filePath: item.file_path,
+        thumbnailPath: item.thumbnail_path,
         fileType: item.file_type,
         mimeType: item.mime_type,
         fileSize: item.file_size,
@@ -86,6 +107,10 @@ async function activateTheme(req, res, next) {
 async function updateThemeSettings(req, res, next) {
   try {
     const [setting] = await ThemeSetting.findOrCreate({ where: { active: true }, defaults: { theme_name: 'classic-blog' } });
+    const [logo, favicon] = await Promise.all([
+      resolveImageValue(req, { fileField: 'logo_file', pathField: 'logo', record: setting }),
+      resolveImageValue(req, { fileField: 'favicon_file', pathField: 'favicon', record: setting })
+    ]);
     await setting.update({
       primary_color: req.body.primary_color,
       secondary_color: req.body.secondary_color,
@@ -98,8 +123,8 @@ async function updateThemeSettings(req, res, next) {
       blog_layout: req.body.blog_layout,
       site_layout: req.body.site_layout,
       dark_mode: req.body.dark_mode === 'on',
-      logo: req.body.logo,
-      favicon: req.body.favicon
+      logo,
+      favicon
     });
     req.flash('success', 'Theme settings updated.');
     return res.redirect('/admin/themes');

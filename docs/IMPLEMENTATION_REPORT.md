@@ -540,3 +540,54 @@ Deploy on Ubuntu:
 Current upgraded level: `8.5/10`
 
 This is now a strong WordPress-like CMS foundation. The remaining path to `10/10` is plugin architecture, full theme engine, complete tested RBAC policies, advanced security hardening, CI/tests, and production operations.
+
+## WAF Module (Added)
+
+### Security analysis summary
+
+| Item | Detail |
+|------|--------|
+| Middleware order | Helmet/CORS/rate-limit/BlockedIp → static → body parse → session → CSRF → site context → **WAF** → routes |
+| WAF integration point | After CSRF and body parsing so URL, query, body, headers, and session context are available |
+| Reused systems | `BlockedIp`, `LoginAttempt`, `ActivityLog`, existing rate limiters, RBAC permissions |
+| WAF-specific systems | `WafRule`, `WafLog`, `WafIpList`, `WafSetting`, `WafRateLimit` |
+
+### Files added
+
+- `models/WafRule.js`, `WafLog.js`, `WafIpList.js`, `WafSetting.js`, `WafRateLimit.js`
+- `middleware/waf.js`
+- `utils/wafHelper.js`
+- `controllers/admin/wafController.js`
+- `views/admin/waf/*`
+- `database/migrations/006_waf_system.sql`, `007_waf_enhancements.sql`
+- `database/seed_waf_rules.sql`
+- `views/errors/403.ejs`
+- `tests/waf.test.js`
+- `docs/SECURITY.md`
+
+### Files updated
+
+- `server.js`, `routes/admin.js`, `models/index.js`
+- `database/schema.sql`, `database/seed.js`, `database/seed_waf_rules.sql`
+- `views/admin/partials/sidebar.ejs`
+- `README.md`
+
+### How to run
+
+```bash
+npm install
+npm run migrate
+npm run db:sync
+npm run seed
+npm run dev
+npm test
+```
+
+### How to verify WAF
+
+1. Login as admin (`admin@example.com` / `Admin@12345`)
+2. Open `/admin/waf/settings` — confirm WAF enabled, mode = monitor
+3. Trigger test probe: `GET /?q=1%20OR%201%3D1`
+4. Review `/admin/waf/logs`
+5. Switch to block mode and confirm 403 response
+6. Run `npm test -- tests/waf.test.js`

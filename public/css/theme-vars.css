@@ -1,0 +1,28 @@
+:root {
+  --np-admin-bg: #f0f0f1;
+  --np-sidebar-bg: #1d2327;
+  --np-sidebar-hover: #2c3338;
+  --np-sidebar-active: #2271b1;
+  --np-sidebar-text: #f0f0f1;
+  --np-sidebar-muted: #a7aaad;
+  --np-topbar-bg: #1d2327;
+  --np-topbar-text: #f0f0f1;
+  --np-card-bg: #ffffff;
+  --np-border: #c3c4c7;
+  --np-border-light: #dcdcde;
+  --np-text: #1d2327;
+  --np-text-secondary: #50575e;
+  --np-text-muted: #646970;
+  --np-primary: #2271b1;
+  --np-primary-hover: #135e96;
+  --np-focus: #72aee6;
+  --np-success: #008a20;
+  --np-warning: #dba617;
+  --np-error: #d63638;
+  --np-info: #2271b1;
+  --np-sidebar-width: 160px;
+  --np-topbar-height: 32px;
+  --np-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --np-radius: 0;
+  --np-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}

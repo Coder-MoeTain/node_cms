@@ -403,6 +403,47 @@ Production recommendations:
 - Put uploads behind safe server rules.
 - Configure regular database backups.
 
+## Web Application Firewall (WAF)
+
+NodePress includes a defensive WAF integrated with the admin security panel.
+
+### Quick start
+
+```bash
+npm run migrate
+npm run seed
+npm run dev
+```
+
+Open **Admin → Security → WAF Dashboard** at `/admin/waf`.
+
+### Modes
+
+- **Monitor** — log suspicious traffic without blocking (recommended first)
+- **Block** — block requests that exceed the risk threshold
+- **Disabled** — turn off WAF inspection
+
+### Admin pages
+
+| Page | URL |
+|------|-----|
+| WAF Dashboard | `/admin/waf` |
+| WAF Settings | `/admin/waf/settings` |
+| WAF Rules | `/admin/waf/rules` |
+| WAF Logs | `/admin/waf/logs` |
+| WAF IP Lists | `/admin/waf/ip-lists` |
+
+Requires `manage_waf` or `manage_security` permission.
+
+### Verify WAF
+
+1. Set mode to **monitor** in WAF Settings.
+2. Visit `/?q=1%20UNION%20SELECT%201` — check `/admin/waf/logs` for a logged event.
+3. Switch to **block** mode and repeat — request should return 403.
+4. Confirm normal posts, pages, and media uploads still work.
+
+Full documentation: [docs/SECURITY.md](docs/SECURITY.md)
+
 ## Deployment
 
 ### Ubuntu + Nginx + PM2

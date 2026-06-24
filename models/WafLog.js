@@ -7,10 +7,12 @@ module.exports = (sequelize) =>
     ip_address: { type: DataTypes.STRING(80), allowNull: false },
     method: { type: DataTypes.STRING(12), allowNull: false },
     url: { type: DataTypes.TEXT, allowNull: false },
+    route_type: DataTypes.STRING(40),
     user_agent: DataTypes.TEXT,
     headers_snapshot: DataTypes.JSON,
     query_snapshot: DataTypes.JSON,
     body_snapshot: DataTypes.JSON,
+    file_snapshot: DataTypes.JSON,
     matched_rule_id: DataTypes.INTEGER.UNSIGNED,
     matched_rule_name: DataTypes.STRING(160),
     category: DataTypes.STRING(80),
@@ -20,7 +22,8 @@ module.exports = (sequelize) =>
     country: DataTypes.STRING(80),
     referer: DataTypes.TEXT,
     is_admin_route: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-    user_id: DataTypes.INTEGER.UNSIGNED
+    user_id: DataTypes.INTEGER.UNSIGNED,
+    response_status: DataTypes.INTEGER.UNSIGNED
   }, {
     tableName: 'waf_logs',
     paranoid: false,

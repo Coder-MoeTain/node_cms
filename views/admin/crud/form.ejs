@@ -10,49 +10,75 @@
 %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
-  <main class="admin-content">
+  <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <form class="card" method="post" action="<%= action %>" enctype="multipart/form-data">
+    <form method="post" action="<%= action %>" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="card-body">
+      <div>
         <% if (['posts','pages'].includes(resource)) { %>
-          <div class="mb-3"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= val('title') %>" required></div>
-          <div class="mb-3"><label class="form-label">Slug</label><input class="form-control" name="slug" value="<%= val('slug') %>"></div>
-          <div class="mb-3"><label class="form-label">Content</label><textarea class="form-control rich-editor" name="content" rows="14"><%- val('content') %></textarea></div>
-          <div class="mb-3"><label class="form-label">Excerpt</label><textarea class="form-control" name="excerpt" rows="3"><%= val('excerpt') %></textarea></div>
-          <div class="row g-3">
-            <div class="col-md-4"><label class="form-label">Status</label><select class="form-select" name="status"><% ['draft','published','private','scheduled'].forEach(function(status) { if (status !== 'published' || can('publish_posts')) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status %></option><% } }) %></select></div>
-            <div class="col-md-4"><label class="form-label">Publish Date</label><input class="form-control" name="published_at" type="datetime-local"></div>
-            <% if (resource === 'posts') { %>
-              <div class="col-md-4"><label class="form-label">Category</label><select class="form-select" name="category_id"><option value="">None</option><% (extra.categories || []).forEach(function(category) { %><option value="<%= category.id %>" <%= String(val('category_id')) === String(category.id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select></div>
-            <% } %>
+          <div class="np-page-header mb-3">
+            <h1><%= isEdit ? 'Edit' : 'Add New' %> <%= resource === 'posts' ? 'Post' : 'Page' %></h1>
           </div>
-          <% if (resource === 'posts') { %>
-            <div class="row g-3 mt-1">
-              <div class="col-md-6">
-                <label class="form-label">Featured Image URL</label>
-                <input class="form-control media-preview-input" name="featured_image" value="<%= val('featured_image') %>" placeholder="/uploads/2026-06/image.jpg">
-                <div class="form-text">Paste a Media Library URL or upload a new image below.</div>
+          <div class="editor-layout">
+            <div class="editor-main">
+              <input class="np-editor-title" name="title" value="<%= val('title') %>" placeholder="Add title" required data-slug-source>
+              <div class="np-permalink">Permalink: <a href="#" data-permalink-preview data-base="<%= resource === 'pages' ? '/page/' : '/post/' %>"><%= resource === 'pages' ? '/page/' : '/post/' %><%= val('slug') || 'sample-post' %></a></div>
+              <input type="hidden" name="slug" value="<%= val('slug') %>" data-slug-target>
+              <div class="mb-3"><textarea class="form-control rich-editor" name="content" rows="14"><%- val('content') %></textarea></div>
+              <div class="np-metabox">
+                <div class="np-metabox-header" data-metabox-toggle aria-expanded="true">Excerpt</div>
+                <div class="np-metabox-body"><textarea class="form-control" name="excerpt" rows="3" placeholder="Optional excerpt"><%= val('excerpt') %></textarea><p class="np-help-text">Excerpts are optional hand-crafted summaries.</p></div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Upload Featured Image</label>
-                <input class="form-control" name="featured_image_file" type="file" accept="image/*">
-                <% if (val('featured_image')) { %>
-                  <img class="img-fluid rounded mt-2" style="max-height: 140px; object-fit: cover;" src="<%= val('featured_image') %>" alt="Current featured image">
-                <% } %>
+              <div class="np-metabox">
+                <div class="np-metabox-header" data-metabox-toggle aria-expanded="true">SEO</div>
+                <div class="np-metabox-body">
+                  <div class="mb-2"><label class="form-label">SEO Title</label><input class="form-control" name="seo_title" value="<%= val('seo_title') %>"></div>
+                  <div><label class="form-label">Meta Description</label><input class="form-control" name="seo_description" value="<%= val('seo_description') %>"></div>
+                </div>
               </div>
-              <div class="col-md-6"><label class="form-label">Video URL (YouTube/Vimeo/embed)</label><input class="form-control" name="video_url" value="<%= val('video_url') %>"></div>
-              <div class="col-md-6"><label class="form-label">Open Graph Image</label><input class="form-control" name="og_image" value="<%= val('og_image') %>"></div>
-              <% if (can('manage_posts')) { %>
-                <div class="col-md-6"><label class="form-label">Author</label><select class="form-select" name="author_id"><% (extra.users || []).forEach(function(user) { %><option value="<%= user.id %>" <%= String(val('author_id')) === String(user.id) ? 'selected' : '' %>><%= user.name %></option><% }) %></select></div>
-              <% } %>
-              <div class="col-12"><label class="form-label">Tags</label><select class="form-select" name="tags" multiple><% (extra.tags || []).forEach(function(tag) { %><option value="<%= tag.id %>" <%= selectedTags.includes(String(tag.id)) ? 'selected' : '' %>><%= tag.name %></option><% }) %></select></div>
-              <div class="col-12"><label class="form-check"><input class="form-check-input" name="allow_comments" type="checkbox" <%= val('allow_comments', true) ? 'checked' : '' %>> Enable comments</label></div>
             </div>
-          <% } %>
-          <div class="row g-3 mt-1">
-            <div class="col-md-6"><label class="form-label">SEO Title</label><input class="form-control" name="seo_title" value="<%= val('seo_title') %>"></div>
-            <div class="col-md-6"><label class="form-label">SEO Description</label><input class="form-control" name="seo_description" value="<%= val('seo_description') %>"></div>
+            <aside class="editor-sidebar">
+              <div class="np-metabox">
+                <div class="np-metabox-header">Publish</div>
+                <div class="np-metabox-body">
+                  <div class="mb-2"><label class="form-label">Status</label><select class="form-select" name="status"><% ['draft','published','private','scheduled'].forEach(function(status) { if (status !== 'published' || can('publish_posts')) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status.charAt(0).toUpperCase() + status.slice(1) %></option><% } }) %></select></div>
+                  <div class="mb-3"><label class="form-label">Publish</label><input class="form-control" name="published_at" type="datetime-local"></div>
+                  <div class="d-flex flex-wrap gap-2">
+                    <button class="np-btn np-btn-primary" type="submit"><%= isEdit ? 'Update' : 'Publish' %></button>
+                    <a class="np-btn np-btn-secondary" href="/admin/<%= resource %>">Cancel</a>
+                  </div>
+                </div>
+              </div>
+              <% if (resource === 'posts') { %>
+                <div class="np-metabox">
+                  <div class="np-metabox-header">Categories</div>
+                  <div class="np-metabox-body"><select class="form-select" name="category_id"><option value="">Uncategorized</option><% (extra.categories || []).forEach(function(category) { %><option value="<%= category.id %>" <%= String(val('category_id')) === String(category.id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select></div>
+                </div>
+                <div class="np-metabox">
+                  <div class="np-metabox-header">Tags</div>
+                  <div class="np-metabox-body"><select class="form-select" name="tags" multiple size="5"><% (extra.tags || []).forEach(function(tag) { %><option value="<%= tag.id %>" <%= selectedTags.includes(String(tag.id)) ? 'selected' : '' %>><%= tag.name %></option><% }) %></select></div>
+                </div>
+                <div class="np-metabox">
+                  <div class="np-metabox-header">Featured Image</div>
+                  <div class="np-metabox-body">
+                    <%- include('../partials/image-upload-field', { label: 'Featured Image', name: 'featured_image', fileName: 'featured_image_file', value: val('featured_image') }) %>
+                  </div>
+                </div>
+                <div class="np-metabox">
+                  <div class="np-metabox-header">Video &amp; Discussion</div>
+                  <div class="np-metabox-body">
+                    <div class="mb-2"><label class="form-label">Video URL</label><input class="form-control" name="video_url" value="<%= val('video_url') %>"></div>
+                    <label class="form-check"><input class="form-check-input" name="allow_comments" type="checkbox" <%= val('allow_comments', true) ? 'checked' : '' %>> Allow comments</label>
+                  </div>
+                </div>
+                <% if (can('manage_posts')) { %>
+                <div class="np-metabox">
+                  <div class="np-metabox-header">Author</div>
+                  <div class="np-metabox-body"><select class="form-select" name="author_id"><% (extra.users || []).forEach(function(user) { %><option value="<%= user.id %>" <%= String(val('author_id')) === String(user.id) ? 'selected' : '' %>><%= user.name %></option><% }) %></select></div>
+                </div>
+                <% } %>
+              <% } %>
+            </aside>
           </div>
         <% } else if (['categories','tags','roles'].includes(resource)) { %>
           <div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= val('name') %>" required></div>
@@ -60,7 +86,7 @@
           <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" name="description"><%= val('description') %></textarea></div>
           <% if (resource === 'categories') { %>
             <div class="mb-3"><label class="form-label">Parent Category</label><select class="form-select" name="parent_id"><option value="">None</option><% (extra.categories || []).forEach(function(category) { if (category.id !== record.id) { %><option value="<%= category.id %>" <%= String(val('parent_id')) === String(category.id) ? 'selected' : '' %>><%= category.name %></option><% } }) %></select></div>
-            <div class="mb-3"><label class="form-label">Category Image URL</label><input class="form-control" name="image" value="<%= val('image') %>"></div>
+            <%- include('../partials/image-upload-field', { label: 'Category Image', name: 'image', fileName: 'image_file', value: val('image') }) %>
           <% } %>
           <% if (resource === 'roles') { %>
             <label class="form-label">Permissions</label>
@@ -100,7 +126,7 @@
           <div class="row g-3">
             <div class="col-md-6"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= val('title') %>" required></div>
             <div class="col-md-6"><label class="form-label"><%= resource === 'banners' ? 'Subtitle' : 'Description' %></label><input class="form-control" name="<%= resource === 'banners' ? 'subtitle' : 'description' %>" value="<%= resource === 'banners' ? val('subtitle') : val('description') %>"></div>
-            <div class="col-md-6"><label class="form-label">Image URL</label><input class="form-control media-preview-input" name="image" value="<%= val('image') %>"></div>
+            <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Image', name: 'image', fileName: 'image_file', value: val('image') }) %></div>
             <div class="col-md-3"><label class="form-label">Button Text</label><input class="form-control" name="button_text" value="<%= val('button_text') %>"></div>
             <div class="col-md-3"><label class="form-label">Button URL</label><input class="form-control" name="<%= resource === 'banners' ? 'button_link' : 'button_url' %>" value="<%= resource === 'banners' ? val('button_link') : val('button_url') %>"></div>
             <div class="col-md-3"><label class="form-label">Order</label><input class="form-control" name="display_order" type="number" value="<%= val('display_order', 0) %>"></div>
@@ -117,11 +143,14 @@
           <a class="btn btn-outline-primary mt-3" href="mailto:<%= record.email %>?subject=Re: <%= record.subject %>">Reply by email</a>
         <% } %>
       </div>
+      <% if (!['posts','pages'].includes(resource)) { %>
       <div class="card-footer d-flex justify-content-between">
-        <a class="btn btn-outline-secondary" href="/admin/<%= resource %>">Cancel</a>
-        <button class="btn btn-primary">Save</button>
+        <a class="np-btn np-btn-secondary" href="/admin/<%= resource %>">Cancel</a>
+        <button class="np-btn np-btn-primary" type="submit">Save</button>
       </div>
+      <% } %>
     </form>
   </main>
 </div>
+<% if (['posts','pages','categories','banners','sliders'].includes(resource)) { %><%- include('../partials/media-modal') %><% } %>
 <%- include('../partials/footer') %>

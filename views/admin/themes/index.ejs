@@ -26,7 +26,7 @@
         </div>
       <% }) %>
     </div>
-    <form class="card" method="post" action="/admin/theme-settings?_method=PUT">
+    <form class="card" method="post" action="/admin/theme-settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="card-header">Layout & Color Settings</div>
       <div class="card-body row g-3">
@@ -40,12 +40,13 @@
         <div class="col-md-4"><label class="form-label">Header Style</label><input class="form-control" name="header_layout" value="<%= themeSetting.header_layout || 'standard' %>"></div>
         <div class="col-md-4"><label class="form-label">Footer Style</label><input class="form-control" name="footer_layout" value="<%= themeSetting.footer_layout || 'four-columns' %>"></div>
         <div class="col-md-4"><label class="form-label">Sidebar Position</label><select class="form-select" name="sidebar_position"><option value="right">Right</option><option value="left" <%= themeSetting.sidebar_position === 'left' ? 'selected' : '' %>>Left</option><option value="none" <%= themeSetting.sidebar_position === 'none' ? 'selected' : '' %>>None</option></select></div>
-        <div class="col-md-6"><label class="form-label">Logo URL</label><input class="form-control" name="logo" value="<%= themeSetting.logo || '' %>"></div>
-        <div class="col-md-6"><label class="form-label">Favicon URL</label><input class="form-control" name="favicon" value="<%= themeSetting.favicon || '' %>"></div>
+        <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Logo', name: 'logo', fileName: 'logo_file', value: themeSetting.logo || '' }) %></div>
+        <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Favicon', name: 'favicon', fileName: 'favicon_file', value: themeSetting.favicon || '' }) %></div>
         <div class="col-12"><label class="form-check"><input class="form-check-input" name="dark_mode" type="checkbox" <%= themeSetting.dark_mode ? 'checked' : '' %>> Enable dark mode</label></div>
       </div>
       <div class="card-footer"><button class="btn btn-primary">Save Theme Settings</button></div>
     </form>
   </main>
 </div>
+<%- include('../partials/media-modal') %>
 <%- include('../partials/footer') %>

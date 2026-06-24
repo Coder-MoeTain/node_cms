@@ -1,21 +1,29 @@
 <header class="admin-topbar">
-  <div class="topbar-title">
-    <button class="btn btn-sm btn-outline-secondary d-lg-none sidebar-toggle" data-sidebar-toggle><i class="bi bi-list"></i></button>
-    <div>
-      <span class="topbar-kicker">Admin Console</span>
-      <h1><%= title %></h1>
-    </div>
+  <div class="topbar-left">
+    <button class="topbar-icon-button d-lg-none" data-sidebar-toggle type="button" aria-label="Open menu"><i class="bi bi-list"></i></button>
+    <a class="topbar-brand" href="/admin"><i class="bi bi-grid-1x2-fill"></i> NodePress</a>
+    <a class="topbar-link d-none d-md-inline-flex" href="/" target="_blank"><i class="bi bi-box-arrow-up-right"></i> View Site</a>
+    <% if (canManageResource('posts', 'create')) { %>
+      <a class="topbar-link d-none d-md-inline-flex" href="/admin/posts/create"><i class="bi bi-plus-lg"></i> New Post</a>
+    <% } %>
   </div>
-  <div class="topbar-actions">
-    <a class="topbar-icon-button" href="/" target="_blank" title="View site"><i class="bi bi-globe2"></i></a>
-    <button class="topbar-icon-button" data-theme-toggle type="button" title="Toggle theme"><i class="bi bi-moon-stars"></i></button>
-    <a href="/admin/profile" class="user-chip text-decoration-none">
-      <span class="user-avatar"><%= currentUser && currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'A' %></span>
-      <span><%= currentUser ? currentUser.name : 'Admin' %></span>
-    </a>
-    <form action="/admin/logout" method="post">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <button class="btn btn-sm btn-danger btn-logout"><i class="bi bi-box-arrow-right"></i> Logout</button>
-    </form>
+  <div class="topbar-right">
+    <% if (typeof unreadMessages !== 'undefined' && unreadMessages > 0) { %>
+      <a class="topbar-link" href="/admin/messages" title="Unread messages"><i class="bi bi-envelope"></i><span class="badge-count"><%= unreadMessages %></span></a>
+    <% } %>
+    <div class="user-menu" data-user-menu>
+      <button class="user-chip" type="button" aria-haspopup="true" aria-expanded="false">
+        <span class="user-avatar"><%= currentUser && currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'A' %></span>
+        <span class="d-none d-sm-inline"><%= currentUser ? currentUser.name : 'Admin' %></span>
+        <i class="bi bi-chevron-down"></i>
+      </button>
+      <div class="user-dropdown">
+        <a href="/admin/profile">Profile</a>
+        <form action="/admin/logout" method="post">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit">Log Out</button>
+        </form>
+      </div>
+    </div>
   </div>
 </header>

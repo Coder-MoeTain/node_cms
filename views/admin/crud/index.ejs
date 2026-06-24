@@ -2,68 +2,92 @@
 <%- include('../partials/sidebar') %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
-  <main class="admin-content">
+  <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
+    <% const resourceLabel = title.replace(/^Manage /i, ''); %>
+    <div class="np-page-header">
+      <h1><%= resourceLabel %></h1>
+      <% if (!['comments','messages'].includes(resource) && canManageResource(resource, 'create')) { %>
+        <a class="np-btn np-btn-primary" href="/admin/<%= resource %>/create"><i class="bi bi-plus-lg"></i> Add New</a>
+      <% } %>
+    </div>
+
+    <% if (resource === 'posts') { %>
+      <ul class="np-subsub list-unstyled">
+        <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/posts">All <span class="text-muted">(<%= pagination.total || rows.length %>)</span></a></li>
+        <% ['published','draft','private','scheduled'].forEach(function(status) { %>
+          <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/posts?status=<%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></a></li>
+        <% }) %>
+      </ul>
+    <% } %>
+
     <div class="list-toolbar">
       <form class="admin-search" method="get">
-        <i class="bi bi-search"></i>
-        <input class="form-control" name="q" placeholder="Search <%= title.toLowerCase() %>..." value="<%= query %>">
+        <input class="form-control" name="q" placeholder="Search <%= resourceLabel.toLowerCase() %>..." value="<%= query %>" aria-label="Search">
         <% if (resource === 'posts') { %>
-          <select class="form-select" name="status">
-            <option value="">All statuses</option>
-            <% ['draft','published','private','scheduled'].forEach(function(status) { %>
-              <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>><%= status %></option>
-            <% }) %>
-          </select>
-          <select class="form-select" name="category_id">
+          <input type="hidden" name="status" value="<%= filters.status || '' %>">
+          <select class="form-select" name="category_id" aria-label="Filter by category">
             <option value="">All categories</option>
             <% (extra.categories || []).forEach(function(category) { %>
               <option value="<%= category.id %>" <%= String(filters.category_id) === String(category.id) ? 'selected' : '' %>><%= category.name %></option>
             <% }) %>
           </select>
         <% } %>
-        <button class="btn btn-outline-primary">Search</button>
+        <button class="np-btn np-btn-secondary" type="submit">Search</button>
       </form>
-      <% if (!['comments','messages'].includes(resource) && canManageResource(resource, 'create')) { %><a class="btn btn-primary" href="/admin/<%= resource %>/create"><i class="bi bi-plus-lg"></i> Add New</a><% } %>
     </div>
-    <div class="card">
-      <div class="table-responsive">
-        <table class="table admin-table align-middle mb-0">
-          <thead><tr><th>ID</th><th>Title/Name</th><th>Status</th><th>Created</th><th class="text-end">Actions</th></tr></thead>
-          <tbody>
-            <% rows.forEach(function(row) { %>
-              <tr>
-                <td><%= row.id %></td>
-                <td><strong><%= row.title || row.name || row.subject || row.email %></strong><br><small class="text-muted"><%= row.slug || row.url || '' %></small></td>
-                <td><span class="status-pill status-<%= row.status || (row.active ? 'published' : 'draft') %>"><%= row.status || (row.active ? 'active' : 'inactive') %></span></td>
-                <td><%= row.created_at ? row.created_at.toISOString().slice(0,10) : '' %></td>
-                <td class="text-end">
-                  <% if (canManageResource(resource, 'edit', row)) { %>
-                    <a class="btn btn-sm btn-outline-primary" href="/admin/<%= resource %>/<%= row.id %>/edit"><i class="bi bi-pencil"></i> Edit</a>
-                  <% } %>
+
+    <div class="np-list-table-wrap">
+      <table class="np-list-table admin-table">
+        <thead>
+          <tr>
+            <th style="width:28px"><input type="checkbox" aria-label="Select all" disabled></th>
+            <th>Title</th>
+            <th>Status</th>
+            <% if (resource === 'posts') { %><th>Category</th><% } %>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(row) { %>
+            <tr>
+              <td><input type="checkbox" aria-label="Select item" disabled></td>
+              <td>
+                <a class="row-title" href="/admin/<%= resource %>/<%= row.id %>/edit"><%= row.title || row.name || row.subject || row.email %></a>
+                <div class="row-actions">
+                  <% if (canManageResource(resource, 'edit', row)) { %><a href="/admin/<%= resource %>/<%= row.id %>/edit">Edit</a><% } %>
                   <% if (canManageResource(resource, 'destroy', row)) { %>
-                    <form class="d-inline" method="post" action="/admin/<%= resource %>/<%= row.id %>?_method=DELETE" data-confirm="Delete this item?">
+                    <span>|</span>
+                    <form class="d-inline" method="post" action="/admin/<%= resource %>/<%= row.id %>?_method=DELETE" data-confirm="Move this item to trash?">
                       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
+                      <button class="delete-link border-0 bg-transparent p-0" type="submit">Trash</button>
                     </form>
                   <% } %>
-                </td>
-              </tr>
-            <% }) %>
-            <% if (!rows.length) { %>
-              <tr><td colspan="5"><div class="empty-state"><i class="bi bi-inbox"></i><strong>No records found</strong><span>Try another search or create a new item.</span></div></td></tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
+                  <% if (row.slug && row.status === 'published') { %><span>|</span><a href="/<%= resource === 'pages' ? 'page' : 'post' %>/<%= row.slug %>" target="_blank">View</a><% } %>
+                </div>
+                <% if (row.slug) { %><div class="text-muted small"><%= row.slug %></div><% } %>
+              </td>
+              <td><span class="np-badge np-badge-<%= (row.status === 'published' || row.active) ? 'success' : 'muted' %>"><%= row.status || (row.active ? 'active' : 'inactive') %></span></td>
+              <% if (resource === 'posts') { %><td><%= row.Category ? row.Category.name : '—' %></td><% } %>
+              <td><%= row.created_at ? row.created_at.toLocaleDateString() : '' %></td>
+            </tr>
+          <% }) %>
+          <% if (!rows.length) { %>
+            <tr><td colspan="<%= resource === 'posts' ? 5 : 4 %>"><div class="empty-state"><i class="bi bi-inbox d-block"></i><strong>No items found</strong><p class="mb-0">Try another search or create a new item.</p></div></td></tr>
+          <% } %>
+        </tbody>
+      </table>
     </div>
-    <nav class="mt-3">
-      <ul class="pagination">
-        <% for (let i = 1; i <= pagination.pages; i++) { %>
-          <li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?page=<%= i %>&q=<%= query %>&status=<%= filters.status %>&category_id=<%= filters.category_id %>"><%= i %></a></li>
-        <% } %>
-      </ul>
-    </nav>
+
+    <% if (pagination.pages > 1) { %>
+      <nav class="mt-3" aria-label="Pagination">
+        <ul class="pagination pagination-sm">
+          <% for (let i = 1; i <= pagination.pages; i++) { %>
+            <li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?page=<%= i %>&q=<%= encodeURIComponent(query || '') %>&status=<%= filters.status || '' %>&category_id=<%= filters.category_id || '' %>"><%= i %></a></li>
+          <% } %>
+        </ul>
+      </nav>
+    <% } %>
   </main>
 </div>
 <%- include('../partials/footer') %>

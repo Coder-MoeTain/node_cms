@@ -8,6 +8,9 @@
       <div><h2 class="mb-1">WAF Settings</h2><p class="text-muted mb-0">Configure protection mode, categories, logging, and auto-blocking.</p></div>
       <a class="btn btn-outline-secondary" href="/admin/waf">Dashboard</a>
     </div>
+    <div class="alert alert-info">
+      <strong>Monitor mode</strong> logs suspicious requests without blocking. Use it for 24–48 hours before switching to <strong>block mode</strong>.
+    </div>
     <form class="card" method="post" action="/admin/waf/settings">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="card-body">
@@ -18,28 +21,32 @@
           <div class="col-md-4">
             <label class="form-label">Mode</label>
             <select class="form-select" name="waf_mode">
+              <option value="disabled" <%= settings.waf_mode === 'disabled' ? 'selected' : '' %>>Disabled</option>
               <option value="monitor" <%= settings.waf_mode === 'monitor' ? 'selected' : '' %>>Monitor only</option>
               <option value="block" <%= settings.waf_mode === 'block' ? 'selected' : '' %>>Block matched requests</option>
             </select>
           </div>
-          <div class="col-md-4"><label class="form-label">Max risk score to block</label><input class="form-control" type="number" min="1" max="100" name="max_risk_score" value="<%= settings.max_risk_score || 50 %>"></div>
+          <div class="col-md-4"><label class="form-label">Max risk score (public)</label><input class="form-control" type="number" min="1" max="100" name="max_risk_score_public" value="<%= settings.max_risk_score_public || settings.max_risk_score || 50 %>"></div>
+          <div class="col-md-4"><label class="form-label">Max risk score (admin)</label><input class="form-control" type="number" min="1" max="100" name="max_risk_score_admin" value="<%= settings.max_risk_score_admin || 40 %>"></div>
+          <div class="col-md-8"><label class="form-label">Blocked response message</label><input class="form-control" name="waf_response_message" value="<%= settings.waf_response_message || 'Request blocked by Web Application Firewall.' %>"></div>
           <div class="col-md-4"><label class="form-check mt-4"><input class="form-check-input" type="checkbox" name="trusted_proxy_enabled" <%= settings.trusted_proxy_enabled === 'true' ? 'checked' : '' %>> Trust configured proxy IP chain</label></div>
         </div>
         <hr>
         <h5>Protection Categories</h5>
         <div class="row g-2">
-          <% [['block_sql_injection','SQL injection'],['block_xss','XSS'],['block_path_traversal','Path traversal'],['block_command_injection','Command injection'],['block_bad_bots','Bad bots'],['block_scanners','Scanners']].forEach(function(item) { %>
+          <% [['block_sql_injection','SQL injection'],['block_xss','XSS'],['block_path_traversal','Path traversal'],['block_command_injection','Command injection'],['block_bad_bots','Bad bots'],['block_scanners','Scanners'],['block_cms_probes','CMS probes / sensitive files']].forEach(function(item) { %>
             <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="<%= item[0] %>" <%= settings[item[0]] === 'true' ? 'checked' : '' %>> <%= item[1] %></label></div>
           <% }) %>
         </div>
         <hr>
         <h5>Logging and Auto Block</h5>
         <div class="row g-3">
+          <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="log_all_suspicious" <%= settings.log_all_suspicious === 'true' ? 'checked' : '' %>> Log all suspicious requests</label></div>
           <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="log_all_requests" <%= settings.log_all_requests === 'true' ? 'checked' : '' %>> Log all dynamic requests</label></div>
-          <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="log_blocked_only" <%= settings.log_blocked_only === 'true' ? 'checked' : '' %>> Keep blocked-only logging preference</label></div>
           <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="auto_block_enabled" <%= settings.auto_block_enabled === 'true' ? 'checked' : '' %>> Enable auto block</label></div>
           <div class="col-md-4"><label class="form-label">Auto block threshold</label><input class="form-control" type="number" min="1" name="auto_block_threshold" value="<%= settings.auto_block_threshold || 5 %>"></div>
-          <div class="col-md-4"><label class="form-label">Auto block duration minutes</label><input class="form-control" type="number" min="1" name="auto_block_duration_minutes" value="<%= settings.auto_block_duration_minutes || 60 %>"></div>
+          <div class="col-md-4"><label class="form-label">Auto block window (minutes)</label><input class="form-control" type="number" min="1" name="auto_block_window_minutes" value="<%= settings.auto_block_window_minutes || 10 %>"></div>
+          <div class="col-md-4"><label class="form-label">Auto block duration (minutes)</label><input class="form-control" type="number" min="1" name="auto_block_duration_minutes" value="<%= settings.auto_block_duration_minutes || 60 %>"></div>
         </div>
       </div>
       <div class="card-footer d-flex justify-content-end"><button class="btn btn-primary">Save Settings</button></div>

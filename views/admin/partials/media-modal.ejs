@@ -1,0 +1,25 @@
+<div class="modal fade" id="mediaGalleryModal" tabindex="-1" aria-labelledby="mediaGalleryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content media-gallery-modal">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="mediaGalleryModalLabel">Media Library</h5>
+          <small class="text-muted">Select an image from your library.</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="media-gallery-toolbar">
+          <span class="text-muted">Choose an attachment</span>
+          <a class="np-btn np-btn-secondary np-btn-small" href="/admin/media" target="_blank"><i class="bi bi-upload"></i> Upload New</a>
+        </div>
+        <div class="media-gallery-grid" data-media-gallery-grid>
+          <div class="media-gallery-empty">Loading media...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="np-btn np-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
