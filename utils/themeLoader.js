@@ -199,6 +199,13 @@ async function resolvePartial(partial) {
   const chain = active ? resolveThemeChain(active.manifest.slug) : [];
   const resolved = partialExistsInChain(chain, partial);
   if (resolved) return toViewPath(resolved);
+
+  const publicPartial = path.join(defaultPublicRoot, 'partials', `${partial}.ejs`);
+  if (fs.existsSync(publicPartial)) return `public/partials/${partial}`;
+
+  const publicRoot = path.join(defaultPublicRoot, `${partial}.ejs`);
+  if (fs.existsSync(publicRoot)) return `public/${partial}`;
+
   return `public/partials/${partial}`;
 }
 

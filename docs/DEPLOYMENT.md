@@ -16,8 +16,35 @@ The app listens on port 3000. MySQL data and uploads are stored in Docker volume
 ```bash
 npm ci --omit=dev
 npm run migrate
-pm2 start ecosystem.config.js
+npm run pm2:start:prod
+npm run health
 ```
+
+For zero-downtime reload after deploy:
+
+```bash
+npm run migrate
+npm run pm2:reload
+npm run health
+```
+
+## PM2
+
+The `ecosystem.config.js` file configures cluster mode, log rotation, memory limits, and graceful shutdown.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `WEB_CONCURRENCY` | `1` | PM2 cluster instances (use sticky sessions or shared session store when > 1) |
+| `LOG_TO_FILE` | `true` in production | Write PM2 logs to `./logs/` |
+| `LOG_LEVEL` | `info` | Winston log level |
+
+Always start production with the production env profile:
+
+```bash
+pm2 start ecosystem.config.js --env production
+```
+
+The app sends `process.send('ready')` when listening so PM2 `wait_ready` works correctly.
 
 ## Required Environment
 
@@ -30,8 +57,11 @@ pm2 start ecosystem.config.js
 
 ## Health Checks
 
-- `GET /health` checks process health.
-- `GET /ready` checks database readiness.
+- `GET /health` — process liveness (always 200 when running).
+- `GET /ready` — database connectivity (503 when DB is unavailable).
+- `npm run health` — CLI probe for both endpoints (used by Docker HEALTHCHECK).
+
+Use `/ready` for load balancer and orchestrator readiness probes.
 
 ## Nginx Example
 
@@ -62,4 +92,4 @@ server {
 1. Stop PM2: `pm2 stop nodepress-cms`.
 2. Restore the previous release directory.
 3. Restore database backup if a migration changed schema.
-4. Start PM2: `pm2 start ecosystem.config.js`.
+4. Start PM2: `npm run pm2:start:prod`.

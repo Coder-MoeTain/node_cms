@@ -1,5 +1,5 @@
-<%- include('partials/head') %>
-<%- include('partials/header') %>
+<%- include(themePartial('head')) %>
+<%- include(themePartial('header')) %>
 <% if (isPortal) { %>
 <main class="container portal-page portal-main py-4" id="main-content">
   <nav class="portal-breadcrumb" aria-label="Breadcrumb">
@@ -12,11 +12,11 @@
         <% if (posts.length) { %>
           <ul class="portal-post-list portal-post-list-page">
             <% posts.forEach(function(post) { %>
-              <li><%- include('partials/portal-post-item', { post, showExcerpt: true }) %></li>
+              <li><%- include(themePartial('portal-post-item'), { post, showExcerpt: true }) %></li>
             <% }) %>
           </ul>
         <% } else { %>
-          <%- include('partials/portal-empty', { icon: 'journal-text', message: 'No published posts yet.' }) %>
+          <%- include(themePartial('portal-empty'), { icon: 'journal-text', message: 'No published posts yet.' }) %>
         <% } %>
       </div>
       <% if (pagination && pagination.pages > 1) { %>
@@ -29,7 +29,7 @@
         </nav>
       <% } %>
     </section>
-    <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include('partials/sidebar') %></div><% } %>
+    <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include(themePartial('sidebar')) %></div><% } %>
   </div>
 </main>
 <% } else { %>
@@ -46,7 +46,7 @@
         <div class="row g-4">
           <% posts.forEach(function(post) { %>
             <div class="col-md-6">
-              <%- include('partials/post-card', { post }) %>
+              <%- include(themePartial('post-card'), { post }) %>
             </div>
           <% }) %>
         </div>
@@ -63,8 +63,8 @@
         </nav>
       <% } %>
     </section>
-    <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include('partials/standard-sidebar') %></div><% } %>
+    <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include(themePartial('standard-sidebar')) %></div><% } %>
   </div>
 </main>
 <% } %>
-<%- include('partials/footer') %>
+<%- include(themePartial('footer')) %>

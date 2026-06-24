@@ -145,8 +145,34 @@ async function updateThemeSettings(req, res, next) {
       custom_css: req.body.custom_css || '',
       custom_js: req.body.custom_js || ''
     });
+    delete req.session.customizerDraft;
     req.flash('success', 'Theme settings updated.');
-    return res.redirect('/admin/themes');
+    return res.redirect('/admin/themes/customize');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function previewThemeDraft(req, res, next) {
+  try {
+    req.session.customizerDraft = {
+      primary_color: req.body.primary_color,
+      secondary_color: req.body.secondary_color,
+      background_color: req.body.background_color,
+      text_color: req.body.text_color,
+      font_family: req.body.font_family,
+      header_layout: req.body.header_layout,
+      footer_layout: req.body.footer_layout,
+      sidebar_position: req.body.sidebar_position,
+      blog_layout: req.body.blog_layout,
+      site_layout: req.body.site_layout,
+      dark_mode: req.body.dark_mode === 'on' || req.body.dark_mode === true,
+      logo: req.body.logo || '',
+      favicon: req.body.favicon || '',
+      custom_css: req.body.custom_css || '',
+      custom_js: req.body.custom_js || ''
+    };
+    return res.json({ ok: true });
   } catch (error) {
     return next(error);
   }
@@ -221,4 +247,15 @@ async function uninstallTheme(req, res, next) {
   }
 }
 
-module.exports = { settings, updateSettings, mediaGallery, themes, activateTheme, updateThemeSettings, themeEditor, uploadTheme, uninstallTheme };
+module.exports = {
+  settings,
+  updateSettings,
+  mediaGallery,
+  themes,
+  activateTheme,
+  updateThemeSettings,
+  previewThemeDraft,
+  themeEditor,
+  uploadTheme,
+  uninstallTheme
+};

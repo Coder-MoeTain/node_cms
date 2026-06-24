@@ -1,5 +1,5 @@
-<%- include('partials/head') %>
-<%- include('partials/header') %>
+<%- include(themePartial('head')) %>
+<%- include(themePartial('header')) %>
 <% if (page.featured_image) { %>
   <figure class="post-hero">
     <img src="<%= page.featured_image %>" alt="<%= page.title %>">
@@ -18,8 +18,8 @@
       </div>
     </article>
     <% if (activeTheme.sidebar_position !== 'none') { %>
-      <div class="col-lg-4"><%- include('partials/sidebar') %></div>
+      <div class="col-lg-4"><%- include(themePartial('sidebar')) %></div>
     <% } %>
   </div>
 </main>
-<%- include('partials/footer') %>
+<%- include(themePartial('footer')) %>

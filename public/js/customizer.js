@@ -184,7 +184,11 @@
       if (preview) preview.classList.toggle('is-hidden', mode === 'iframe');
       if (iframe) {
         iframe.classList.toggle('is-active', mode === 'iframe');
-        if (mode === 'iframe') iframe.src = iframe.src.split('?')[0] + '?customizer_preview=1&t=' + Date.now();
+        if (mode === 'iframe') {
+          syncPreviewDraft().then(() => {
+            iframe.src = iframe.src.split('?')[0] + '?customizer_preview=1&t=' + Date.now();
+          });
+        }
       }
     });
   });
@@ -211,6 +215,70 @@
 
   document.querySelector('[name="logo"]')?.addEventListener('change', syncIdentityPreviews);
   document.querySelector('[name="favicon"]')?.addEventListener('change', syncIdentityPreviews);
+
+  function buildCustomizerDraftPayload() {
+    const cssField = form.querySelector('#custom_css');
+    const link = form.querySelector('[data-preview-link]')?.value || form.querySelector('[data-preview-primary]')?.value;
+    const button = form.querySelector('[data-preview-button-color]')?.value || form.querySelector('[data-preview-primary]')?.value;
+    const accent = form.querySelector('[data-preview-accent]')?.value || '#d71920';
+    const card = form.querySelector('[data-preview-card]')?.value || '#ffffff';
+    const footer = form.querySelector('[data-preview-footer]')?.value || '#0b2f47';
+    const muted = form.querySelector('[data-preview-muted]')?.value || '#6b7280';
+    const border = '#d7dde5';
+    let css = (cssField?.value || '')
+      .replace(/\/\* np-theme-vars \*\/[\s\S]*?\}\s*/g, '')
+      .replace(/\/\* np-portal-config \*\/[\s\S]*?(?=\n\n|$)/g, '')
+      .trim();
+    const vars = `/* np-theme-vars */\n:root { --site-link: ${link}; --site-button: ${button}; --site-accent: ${accent}; --site-card: ${card}; --site-footer-bg: ${footer}; --site-muted: ${muted}; --site-border: ${border}; }`;
+    const portalBlock = `/* np-portal-config */\n${JSON.stringify(buildPortalConfig(), null, 2)}`;
+    const customCss = [vars, portalBlock, css].filter(Boolean).join('\n\n');
+    const fontSelectEl = document.querySelector('[data-font-select]');
+    const fontCustomEl = document.querySelector('[data-font-custom]');
+    const fontFamily = fontSelectEl?.value === '__custom__' ? fontCustomEl?.value : fontSelectEl?.value;
+    return {
+      primary_color: form.querySelector('[data-preview-primary]')?.value,
+      secondary_color: form.querySelector('[data-preview-secondary]')?.value,
+      background_color: form.querySelector('[data-preview-bg]')?.value,
+      text_color: form.querySelector('[data-preview-text]')?.value,
+      font_family: fontFamily,
+      header_layout: form.querySelector('[name="header_layout"]')?.value || form.querySelector('[data-portal-header-layout]')?.value,
+      footer_layout: form.querySelector('[name="footer_layout"]')?.value,
+      sidebar_position: form.querySelector('[name="sidebar_position"]')?.value,
+      blog_layout: form.querySelector('[name="blog_layout"]')?.value,
+      site_layout: form.querySelector('[name="site_layout"]')?.value,
+      dark_mode: form.querySelector('[name="dark_mode"]')?.checked || false,
+      logo: form.querySelector('[name="logo"]')?.value || '',
+      favicon: form.querySelector('[name="favicon"]')?.value || '',
+      custom_css: customCss,
+      custom_js: form.querySelector('[name="custom_js"]')?.value || ''
+    };
+  }
+
+  let previewTimer;
+  async function syncPreviewDraft() {
+    const csrf = form.querySelector('[name="_csrf"]')?.value;
+    if (!csrf) return;
+    try {
+      await fetch('/admin/theme-settings/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+        body: JSON.stringify(buildCustomizerDraftPayload())
+      });
+      if (iframe?.classList.contains('is-active')) {
+        iframe.src = iframe.src.split('?')[0] + '?customizer_preview=1&t=' + Date.now();
+      }
+    } catch {
+      // Preview sync is best-effort; saved settings remain authoritative.
+    }
+  }
+
+  function schedulePreviewDraft() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(syncPreviewDraft, 400);
+  }
+
+  form.addEventListener('input', schedulePreviewDraft);
+  form.addEventListener('change', schedulePreviewDraft);
 
   form.addEventListener('submit', () => {
     const cssField = form.querySelector('#custom_css');

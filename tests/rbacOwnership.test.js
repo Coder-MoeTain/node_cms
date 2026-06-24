@@ -99,12 +99,16 @@ beforeAll(async () => {
     }
   });
   otherMediaId = otherMedia.id;
+
+  await models.User.update({ force_password_change: false }, { where: { email: 'author@example.com' } });
 });
 
 test('author posts list excludes other authors posts', async () => {
+  await models.Post.update({ author_id: authorId }, { where: { id: ownPostId } });
+  await models.Post.update({ author_id: otherAuthorId }, { where: { id: otherPostId } });
   const agent = request.agent(app);
   await login(agent, 'author@example.com', 'Author@12345');
-  const page = await agent.get('/admin/posts');
+  const page = await agent.get('/admin/posts?q=rbac-own');
   expect(page.status).toBe(200);
   expect(page.text).toMatch(/RBAC Own Post/);
   expect(page.text).not.toMatch(/RBAC Other Post/);

@@ -114,9 +114,24 @@ async function start() {
     await sequelize.authenticate();
     await sessionStore.sync();
     await pluginLoader.loadActivePlugins(app);
-    app.listen(appConfig.port, () => {
+    const server = app.listen(appConfig.port, () => {
       console.log(`${appConfig.name} running at ${appConfig.url}`);
+      if (typeof process.send === 'function') process.send('ready');
     });
+
+    const shutdown = async (signal) => {
+      console.log(`${signal} received, shutting down gracefully`);
+      server.close(async () => {
+        try {
+          await sequelize.close();
+        } finally {
+          process.exit(0);
+        }
+      });
+      setTimeout(() => process.exit(1), 10000).unref();
+    };
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
   } catch (error) {
     console.error('Unable to start NodePress CMS:', error);
     process.exit(1);

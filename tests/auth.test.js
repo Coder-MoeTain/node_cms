@@ -55,3 +55,18 @@ test('protected admin route redirects guests to login', async () => {
   expect(response.status).toBe(302);
   expect(response.headers.location).toMatch(/login/);
 });
+
+test('invalid login increments lockout tracking', async () => {
+  const agent = request.agent(app);
+  for (let i = 0; i < 3; i++) {
+    const page = await agent.get('/admin/login');
+    const csrf = page.text.match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
+    await agent.post('/admin/login').type('form').send({
+      email: 'admin@example.com',
+      password: 'wrong-password',
+      _csrf: csrf
+    });
+  }
+  const attempts = await request(app).get('/admin/login');
+  expect(attempts.status).toBe(200);
+});

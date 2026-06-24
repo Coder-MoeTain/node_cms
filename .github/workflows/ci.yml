@@ -78,5 +78,12 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: docker build -t nodepress-cms:ci .
+      - name: Build and smoke test with Docker Compose
+        env:
+          SESSION_SECRET: ci-docker-session-secret-change-me
+          DB_PASSWORD: rootsecret
+        run: |
+          docker compose up -d --build --wait --timeout 180
+          curl -fsS http://127.0.0.1:3000/health
+          curl -fsS http://127.0.0.1:3000/ready
+          docker compose down -v
