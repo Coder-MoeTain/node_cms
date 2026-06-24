@@ -27,7 +27,7 @@
   align-items: center;
   color: #f8fafc;
   display: flex;
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   gap: .7rem;
   letter-spacing: -.03em;
@@ -213,28 +213,10 @@
 }
 
 .topbar-title h1 {
-  font-size: 1.35rem;
-  font-weight: 900;
-  letter-spacing: -.03em;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
   margin: 0;
-}
-
-.admin-dashboard-page .topbar-kicker {
-  font-size: calc(.72rem - 3pt);
-}
-
-.admin-dashboard-page .topbar-title h1 {
-  font-size: calc(1.35rem - 3pt);
-}
-
-.admin-dashboard-page .topbar-actions,
-.admin-dashboard-page .topbar-actions .btn,
-.admin-dashboard-page .user-chip {
-  font-size: calc(1rem - 3pt);
-}
-
-.admin-dashboard-page .user-avatar {
-  font-size: calc(.85rem - 3pt);
 }
 
 .topbar-actions {
@@ -339,7 +321,7 @@
   justify-content: space-between;
   margin-bottom: 1.25rem;
   overflow: hidden;
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
   position: relative;
 }
 
@@ -349,7 +331,7 @@
 .admin-dashboard .table,
 .admin-dashboard .list-group-item,
 .admin-dashboard .alert {
-  font-size: calc(1rem - 3pt);
+  font-size: .875rem;
 }
 
 .dashboard-hero::after {
@@ -370,16 +352,16 @@
 
 .dashboard-eyebrow {
   color: #7dd3fc;
-  font-size: calc(.75rem - 3pt);
+  font-size: .65rem;
   font-weight: 900;
   letter-spacing: .18em;
   text-transform: uppercase;
 }
 
 .dashboard-hero h2 {
-  font-size: calc(2rem - 3pt);
-  font-weight: 900;
-  letter-spacing: -.05em;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
   margin: .25rem 0;
 }
 
@@ -394,13 +376,13 @@
 }
 
 .stat-card .card-body {
-  min-height: 132px;
+  min-height: 108px;
 }
 
 .stat-card h2 {
   color: #0f172a;
-  font-size: calc(2rem - 3pt);
-  font-weight: 900;
+  font-size: 1.15rem;
+  font-weight: 800;
   margin: 0;
 }
 
@@ -411,16 +393,16 @@
   border-radius: .9rem;
   color: #2563eb;
   display: inline-flex;
-  height: 42px;
+  height: 34px;
   justify-content: center;
-  margin-bottom: .8rem;
-  width: 42px;
+  margin-bottom: .6rem;
+  width: 34px;
 }
 
 .stat-label {
   color: #64748b;
   display: block;
-  font-size: calc(.78rem - 3pt);
+  font-size: .68rem;
   font-weight: 900;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -435,7 +417,7 @@
 .professional-card-header a,
 .table-action {
   color: #2563eb;
-  font-size: calc(.85rem - 3pt);
+  font-size: .78rem;
   font-weight: 800;
   text-decoration: none;
 }
@@ -443,7 +425,7 @@
 .status-pill {
   border-radius: 999px;
   display: inline-flex;
-  font-size: calc(.72rem - 3pt);
+  font-size: .68rem;
   font-weight: 900;
   letter-spacing: .08em;
   padding: .35rem .65rem;
@@ -482,11 +464,11 @@
 }
 
 .insight-card h5 {
-  font-size: calc(1.25rem - 3pt);
+  font-size: 1rem;
 }
 
 .admin-dashboard small {
-  font-size: calc(.875em - 3pt);
+  font-size: .75rem;
 }
 
 .security-alert {
@@ -562,12 +544,12 @@
 
 .empty-state i {
   color: #38bdf8;
-  font-size: 2rem;
+  font-size: 1.1rem;
 }
 
 .empty-state strong {
   color: #0f172a;
-  font-size: 1.1rem;
+  font-size: .95rem;
 }
 
 .auth-page {

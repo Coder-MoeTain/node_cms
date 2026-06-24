@@ -107,6 +107,8 @@ The public website uses dynamic menus, hero sliders, banners, blog cards, sideba
 
 The admin area includes dashboard stats, content management, media uploads, user roles, theme controls, security settings, and site configuration.
 
+Recent UI update: the Admin Console dashboard typography was reduced by `3pt` for the dashboard topbar and dashboard content. The change is scoped with `admin-dashboard-page` and `admin-dashboard` classes in `views/admin/dashboard.ejs`, with the matching font-size rules in `public/css/admin.css`.
+
 ## Tech Stack
 
 | Layer | Technology |
