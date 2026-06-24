@@ -72,8 +72,14 @@ async function loadSiteContext(req, res, next) {
       return date.toLocaleDateString(res.locals.locale || undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     };
     const engine = res.locals.translationEngine;
-    const siteMenus = menus.reduce((map, menu) => ({ ...map, [menu.location]: buildMenuTree(menu.items || []) }), {});
+    const siteMenus = menus.reduce((map, menu) => {
+      const tree = buildMenuTree(menu.items || []);
+      map[menu.location] = tree;
+      if (menu.slug) map[menu.slug] = tree;
+      return map;
+    }, {});
     res.locals.siteMenus = await translateMenus(engine, siteMenus);
+    res.locals.quickServiceItems = res.locals.siteMenus['quick-services'] || [];
     res.locals.sidebarCategories = await translateCategories(engine, categories);
     res.locals.recentPosts = await translatePosts(engine, recentPosts);
     res.locals.popularPosts = await translatePosts(engine, popularPosts);

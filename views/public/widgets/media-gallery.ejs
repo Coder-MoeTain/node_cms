@@ -1,48 +1,37 @@
 <% const items = (mediaItems || []).slice(0, 4); const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
+<% if (items.length) { %>
 <section class="portal-section portal-media-gallery" id="portal-media" aria-label="Photos and videos">
   <div class="container py-4">
     <div class="portal-section-head portal-section-head-inline">
       <div>
         <h2 class="portal-section-title">Photos &amp; Videos</h2>
-        <p class="portal-section-subtitle">Media from the NodePress library</p>
+        <p class="portal-section-subtitle">Media from the site library</p>
       </div>
       <a class="portal-view-all" href="/blog">Explore more</a>
     </div>
-    <% if (items.length) { %>
-      <div class="row g-3 portal-media-grid">
-        <% items.forEach(function(item) { %>
-          <div class="col-6 col-md-3">
-            <article class="portal-media-card portal-card-<%= cardStyle %>">
-              <a href="<%= item.file_path %>" target="_blank" rel="noopener" class="portal-media-thumb-wrap">
-                <span class="portal-media-badge portal-media-badge-<%= item.file_type === 'video' ? 'video' : 'image' %>"><%= item.file_type === 'video' ? 'Video' : 'Photo' %></span>
-                <% if (item.file_type === 'image') { %>
-                  <img src="<%= item.thumbnail_path || item.file_path %>" alt="<%= item.alt_text || item.original_name %>" loading="lazy">
-                <% } else { %>
-                  <div class="portal-media-video">
-                    <i class="bi bi-play-circle" aria-hidden="true"></i>
-                    <span><%= item.original_name %></span>
-                  </div>
-                <% } %>
-              </a>
-              <div class="portal-media-meta">
-                <span class="portal-media-caption text-truncate d-block"><%= item.caption || item.original_name %></span>
-                <span class="portal-media-type"><%= item.file_type %></span>
-              </div>
-            </article>
-          </div>
-        <% }) %>
-      </div>
-    <% } else { %>
-      <div class="row g-3 portal-media-grid">
-        <% for (let i = 0; i < 4; i++) { %>
-          <div class="col-6 col-md-3">
-            <article class="portal-media-card portal-card-<%= cardStyle %> portal-media-placeholder">
-              <div class="portal-media-video"><i class="bi bi-image" aria-hidden="true"></i><span>Media placeholder</span></div>
-              <div class="portal-media-meta"><span class="portal-media-type">Upload in Media Library</span></div>
-            </article>
-          </div>
-        <% } %>
-      </div>
-    <% } %>
+    <div class="row g-3 portal-media-grid">
+      <% items.forEach(function(item) { %>
+        <div class="col-6 col-md-3">
+          <article class="portal-media-card portal-card-<%= cardStyle %>">
+            <a href="<%= item.file_path %>" target="_blank" rel="noopener" class="portal-media-thumb-wrap">
+              <span class="portal-media-badge portal-media-badge-<%= item.file_type === 'video' ? 'video' : 'image' %>"><%= item.file_type === 'video' ? 'Video' : 'Photo' %></span>
+              <% if (item.file_type === 'image') { %>
+                <img src="<%= item.thumbnail_path || item.file_path %>" alt="<%= item.alt_text || item.original_name %>" loading="lazy">
+              <% } else { %>
+                <div class="portal-media-video">
+                  <i class="bi bi-play-circle" aria-hidden="true"></i>
+                  <span><%= item.original_name %></span>
+                </div>
+              <% } %>
+            </a>
+            <div class="portal-media-meta">
+              <span class="portal-media-caption text-truncate d-block"><%= item.caption || item.original_name %></span>
+              <span class="portal-media-type"><%= item.file_type %></span>
+            </div>
+          </article>
+        </div>
+      <% }) %>
+    </div>
   </div>
 </section>
+<% } %>

@@ -62,6 +62,9 @@ async function extractZipArchive(zipPath, targetRoot, manifestName) {
 
     const manifest = JSON.parse(fs.readFileSync(found.manifestPath, 'utf8'));
     if (!manifest.slug || !manifest.name) throw new Error('Manifest must include name and slug.');
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(manifest.slug)) {
+      throw new Error(`Invalid slug "${manifest.slug}". Use lowercase letters, numbers, and hyphens.`);
+    }
 
     const finalDir = path.join(targetRoot, manifest.slug);
     if (fs.existsSync(finalDir)) {

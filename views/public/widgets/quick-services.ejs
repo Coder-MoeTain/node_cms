@@ -1,13 +1,28 @@
 <section class="portal-section portal-quick-services portal-mnp-services" id="portal-quick-services" aria-label="Quick services">
   <div class="container py-4">
     <% const isMnp = themePreset === 'myanmar-portal';
-       const services = [
+       const menuItems = (typeof quickServiceItems !== 'undefined' && quickServiceItems.length)
+         ? quickServiceItems
+         : ((siteMenus && siteMenus['quick-services']) || []);
+       const fallbackServices = [
         { icon: 'bi-building', title: 'Government Websites', desc: 'Official ministries and agencies', url: '/blog', tone: 'blue' },
         { icon: 'bi-ui-checks', title: 'Forms', desc: 'Downloadable application forms', url: '/search?q=forms', tone: 'green' },
         { icon: 'bi-folder2-open', title: 'Documents', desc: 'Policies and publications', url: '/category/documents', tone: 'purple' },
-        { icon: 'bi-calendar-event', title: 'Upcoming Public Holidays', desc: 'National holiday calendar', url: '/page/public-holidays', tone: 'orange' },
+        { icon: 'bi-calendar-event', title: 'Public Holidays', desc: 'National holiday calendar', url: '/page/public-holidays', tone: 'orange' },
         { icon: 'bi-phone', title: 'Mobile App Gallery', desc: 'Official mobile applications', url: '#portal-mobile-app', tone: 'teal' }
       ];
+       const tones = ['blue', 'green', 'purple', 'orange', 'teal', 'red'];
+       const services = menuItems.length
+         ? menuItems.map(function(item, index) {
+             return {
+               icon: item.icon || 'bi-link-45deg',
+               title: item.title,
+               desc: item.description || '',
+               url: item.url || '#',
+               tone: tones[index % tones.length]
+             };
+           })
+         : fallbackServices;
       const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered';
     %>
     <% if (!isMnp) { %>
@@ -24,7 +39,7 @@
               <i class="bi <%= item.icon %>"></i>
             </span>
             <strong class="portal-service-title portal-mnp-service-title"><%= item.title %></strong>
-            <% if (!isMnp) { %><span class="portal-service-desc"><%= item.desc || '' %></span><% } %>
+            <% if (!isMnp && item.desc) { %><span class="portal-service-desc"><%= item.desc %></span><% } %>
           </a>
         </div>
       <% }) %>

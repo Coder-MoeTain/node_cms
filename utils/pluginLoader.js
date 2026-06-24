@@ -19,6 +19,9 @@ function validateManifest(manifest) {
       throw new Error(`Plugin manifest is missing ${key}.`);
     }
   }
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(manifest.slug)) {
+    throw new Error(`Plugin slug "${manifest.slug}" must be lowercase alphanumeric with hyphens.`);
+  }
   return manifest;
 }
 
@@ -155,6 +158,39 @@ function listRegisteredHooks() {
   return [...hooks.keys()];
 }
 
+async function invokePluginLifecycle(slug, event, app = null) {
+  const entryPath = path.join(pluginsRoot, slug, 'index.js');
+  if (!fs.existsSync(entryPath)) return;
+  delete require.cache[require.resolve(entryPath)];
+  const plugin = require(entryPath);
+  if (typeof plugin[event] === 'function') {
+    await plugin[event]({ app, manifest: getManifestBySlug(slug) });
+  }
+}
+
+function getManifestBySlug(slug) {
+  const item = discoverPluginManifests().find((plugin) => plugin.manifest.slug === slug);
+  return item?.manifest || null;
+}
+
+async function getPluginManagerStats() {
+  const discovered = discoverPluginManifests();
+  const rows = await Plugin.findAll();
+  const active = rows.filter((row) => row.active).length;
+  return {
+    total: discovered.length,
+    active,
+    inactive: discovered.length - active,
+    hooks: listRegisteredHooks().length
+  };
+}
+
+async function deactivatePlugin(slug, app = null) {
+  await invokePluginLifecycle(slug, 'onDeactivate', app);
+  await Plugin.update({ active: false }, { where: { slug } });
+  await loadActivePlugins(app);
+}
+
 function removePluginDirectory(slug) {
   const dir = path.join(pluginsRoot, slug);
   if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
@@ -166,7 +202,11 @@ module.exports = {
   syncInstalledPlugins,
   runPluginMigrations,
   loadActivePlugins,
+  deactivatePlugin,
   getActivePlugins,
+  getPluginManagerStats,
+  getManifestBySlug,
+  invokePluginLifecycle,
   registerHook,
   applyHook,
   collectHook,

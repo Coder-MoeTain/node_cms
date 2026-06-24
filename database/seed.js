@@ -267,6 +267,25 @@ async function seed({ closeConnection = false } = {}) {
     });
   }
 
+  const [quickServicesMenu] = await Menu.findOrCreate({
+    where: { slug: 'quick-services' },
+    defaults: { name: 'Quick Services', location: 'header' }
+  });
+  const quickServiceItems = [
+    ['Government Websites', '/blog', 1],
+    ['Forms', '/search?q=forms', 2],
+    ['Documents', '/category/documents', 3],
+    ['Public Holidays', '/page/public-holidays', 4],
+    ['Mobile Apps', '#portal-mobile-app', 5],
+    ['Contact', '/contact', 6]
+  ];
+  for (const [title, url, display_order] of quickServiceItems) {
+    await MenuItem.findOrCreate({
+      where: { menu_id: quickServicesMenu.id, title },
+      defaults: { menu_id: quickServicesMenu.id, title, url, display_order, active: true }
+    });
+  }
+
   await Banner.findOrCreate({
     where: { title: 'Build and publish faster' },
     defaults: {
@@ -321,7 +340,10 @@ async function seed({ closeConnection = false } = {}) {
     facebook_link: '#',
     youtube_link: '#',
     telegram_link: '#',
-    linkedin_link: '#'
+    linkedin_link: '#',
+    emergency_phone: '+1 (555) 010-9911',
+    emergency_email: 'emergency@example.com',
+    emergency_hours: '24/7'
   };
   for (const [key, value] of Object.entries(settings)) {
     const group = PORTAL_SETTING_DEFINITIONS[key]?.group || 'general';

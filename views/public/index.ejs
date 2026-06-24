@@ -49,6 +49,8 @@
 
 <% if (hp.quickLinks || hp.quickServices) { %><%- include('widgets/quick-services') %><% } %>
 
+<% if (hp.emergency) { %><%- include('widgets/emergency-contacts') %><% } %>
+
 <div class="container portal-home-grid py-4">
   <div class="row g-4">
     <% if (hp.latestNews) { %>
