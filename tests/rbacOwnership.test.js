@@ -145,7 +145,28 @@ test('author cannot publish own post without publish_posts', async () => {
   expect(post.status).toBe('draft');
 });
 
-test('author cannot delete own post without delete_posts', async () => {
+test('author can delete own draft post', async () => {
+  const draftPost = await models.Post.create({
+    title: 'RBAC Delete Draft',
+    slug: `rbac-delete-draft-${Date.now()}`,
+    content: '<p>Delete me</p>',
+    status: 'draft',
+    author_id: authorId
+  });
+  const agent = request.agent(app);
+  await login(agent, 'author@example.com', 'Author@12345');
+  const csrf = await getCsrf(agent, '/admin');
+  const response = await agent
+    .delete(`/admin/posts/${draftPost.id}`)
+    .type('form')
+    .send({ _csrf: csrf });
+  expect(response.status).toBe(302);
+  const post = await models.Post.findByPk(draftPost.id);
+  expect(post).toBeNull();
+});
+
+test('author cannot delete own published post without delete_posts', async () => {
+  await models.Post.update({ status: 'published', author_id: authorId }, { where: { id: ownPostId } });
   const agent = request.agent(app);
   await login(agent, 'author@example.com', 'Author@12345');
   const csrf = await getCsrf(agent, '/admin');
@@ -156,6 +177,7 @@ test('author cannot delete own post without delete_posts', async () => {
   expect([302, 403]).toContain(response.status);
   const post = await models.Post.findByPk(ownPostId);
   expect(post).toBeTruthy();
+  await models.Post.update({ status: 'draft' }, { where: { id: ownPostId } });
 });
 
 test('author can edit own media but not others', async () => {

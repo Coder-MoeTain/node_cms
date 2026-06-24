@@ -1,9 +1,11 @@
 const request = require('supertest');
 const themeLoader = require('../utils/themeLoader');
+const themeManager = require('../utils/themeManager');
 const { app, models } = require('../server');
 const { login, getCsrf } = require('./helpers');
 
 beforeAll(async () => {
+  await themeLoader.syncInstalledThemes();
   await models.User.update({ force_password_change: false }, { where: { email: 'admin@example.com' } });
 });
 
@@ -18,6 +20,14 @@ test('resolveThemeChain walks multiple parent levels', () => {
   expect(chain).toContain('classic-blog');
 });
 
+test('admin can view theme detail page', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const page = await agent.get('/admin/themes/classic-blog');
+  expect(page.status).toBe(200);
+  expect(page.text).toMatch(/Templates/i);
+});
+
 test('admin can view themes page with template metadata', async () => {
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');
@@ -28,6 +38,7 @@ test('admin can view themes page with template metadata', async () => {
 });
 
 test('admin can activate a theme', async () => {
+  await themeLoader.syncInstalledThemes();
   const theme = await models.Theme.findOne({ where: { slug: 'classic-blog' } });
   expect(theme).toBeTruthy();
   const agent = request.agent(app);
@@ -35,16 +46,21 @@ test('admin can activate a theme', async () => {
   const csrfPage = await agent.get('/admin/themes');
   const csrf = csrfPage.text.match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
   const response = await agent.post('/admin/themes/activate').type('form').send({
-    theme_id: theme.id,
+    theme_id: String(theme.id),
     _csrf: csrf
   });
   expect(response.status).toBe(302);
-  await theme.reload();
-  expect(theme.active).toBe(true);
+  const active = await models.Theme.findOne({ where: { slug: 'classic-blog' } });
+  expect(active?.active).toBe(true);
 });
 
 test('active theme cannot be uninstalled', async () => {
-  const active = await models.Theme.findOne({ where: { active: true } });
+  let active = await models.Theme.findOne({ where: { active: true } });
+  if (!active) {
+    const theme = await models.Theme.findOne({ where: { slug: 'classic-blog' } });
+    await themeManager.activateTheme(theme.id);
+    active = await models.Theme.findOne({ where: { active: true } });
+  }
   expect(active).toBeTruthy();
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');

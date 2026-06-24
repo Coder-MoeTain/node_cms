@@ -5,6 +5,59 @@ const pluginLoader = require('../../utils/pluginLoader');
 const { resolvePluginSettings, seedPluginDefaults } = require('../../utils/pluginSettings');
 const { extractZipArchive } = require('../../utils/packageArchive');
 
+async function show(req, res, next) {
+  try {
+    const plugin = await Plugin.findOne({
+      where: { slug: req.params.slug },
+      include: [
+        { model: PluginSetting, as: 'settings' },
+        { model: PluginMigration, as: 'migrations' }
+      ]
+    });
+    if (!plugin) return res.status(404).render('errors/404', { title: 'Plugin Not Found' });
+
+    const diskManifest = pluginLoader.getManifestBySlug(plugin.slug);
+    const migrationsDir = path.join(pluginLoader.pluginsRoot, plugin.slug, 'migrations');
+    const pendingMigrations = fs.existsSync(migrationsDir)
+      ? fs.readdirSync(migrationsDir).filter((file) => file.endsWith('.sql')).sort()
+          .filter((file) => !(plugin.migrations || []).some((row) => row.migration === file))
+      : [];
+    const activationErrors = pluginLoader.getActivationErrors();
+    const registeredHooks = pluginLoader.listRegisteredHooks();
+    const manifestHooks = (plugin.manifest?.hooks || []);
+
+    return res.render('admin/plugins/show', {
+      title: plugin.name,
+      plugin,
+      diskManifest,
+      pendingMigrations,
+      registeredHooks,
+      manifestHooks,
+      activationError: activationErrors.get(plugin.slug) || null,
+      isActive: plugin.active
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function runMigrations(req, res, next) {
+  try {
+    const slug = req.params.slug;
+    const plugin = await Plugin.findOne({ where: { slug } });
+    if (!plugin) {
+      req.flash('error', 'Plugin not found.');
+      return res.redirect('/admin/plugins');
+    }
+    const ran = await pluginLoader.runPluginMigrations(slug);
+    req.flash('success', ran.length ? `Ran ${ran.length} migration(s): ${ran.join(', ')}` : 'No pending migrations.');
+    return res.redirect(`/admin/plugins/${slug}`);
+  } catch (error) {
+    req.flash('error', error.message || 'Migration failed.');
+    return res.redirect(`/admin/plugins/${req.params.slug}`);
+  }
+}
+
 async function index(req, res, next) {
   try {
     await pluginLoader.syncInstalledPlugins();
@@ -165,4 +218,4 @@ async function updateSettings(req, res, next) {
   }
 }
 
-module.exports = { index, upload, activate, deactivate, uninstall, settings, updateSettings };
+module.exports = { index, show, upload, activate, deactivate, uninstall, settings, updateSettings, runMigrations };

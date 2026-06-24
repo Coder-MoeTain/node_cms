@@ -3,9 +3,9 @@ const path = require('path');
 const { Plugin, PluginMigration } = require('../models');
 const sequelize = require('../config/database');
 const { seedPluginDefaults } = require('./pluginSettings');
+const hookManager = require('./hookManager');
 
 const pluginsRoot = path.join(process.cwd(), 'plugins');
-const hooks = new Map();
 let activePlugins = [];
 let lastActivationErrors = new Map();
 
@@ -34,7 +34,12 @@ function discoverPluginManifests() {
       const pluginPath = path.join(pluginsRoot, entry.name);
       const manifestPath = path.join(pluginPath, 'plugin.json');
       if (!fs.existsSync(manifestPath)) return null;
-      return { path: pluginPath, manifest: validateManifest(readJson(manifestPath)) };
+      try {
+        return { path: pluginPath, manifest: validateManifest(readJson(manifestPath)) };
+      } catch (error) {
+        console.warn(`Skipping invalid plugin "${entry.name}": ${error.message}`);
+        return null;
+      }
     })
     .filter(Boolean);
 }
@@ -104,33 +109,8 @@ async function runPluginMigrations(pluginSlug) {
   return ran;
 }
 
-function registerHook(name, handler, priority = 10) {
-  const list = hooks.get(name) || [];
-  list.push({ handler, priority });
-  list.sort((a, b) => a.priority - b.priority);
-  hooks.set(name, list);
-}
-
-async function applyHook(name, payload, context = {}) {
-  let result = payload;
-  for (const item of hooks.get(name) || []) {
-    result = await item.handler(result, context);
-  }
-  return result;
-}
-
-async function collectHook(name, context = {}) {
-  const output = [];
-  for (const item of hooks.get(name) || []) {
-    const value = await item.handler(context);
-    if (Array.isArray(value)) output.push(...value);
-    else if (value) output.push(value);
-  }
-  return output;
-}
-
 async function loadActivePlugins(app = null) {
-  hooks.clear();
+  hookManager.clear();
   lastActivationErrors = new Map();
   const discovered = await syncInstalledPlugins();
   const activeRows = await Plugin.findAll({ where: { active: true } });
@@ -145,14 +125,16 @@ async function loadActivePlugins(app = null) {
     }
     try {
       await runPluginMigrations(row.slug);
-      const entryPath = path.join(item.path, 'index.js');
+      const mainFile = item.manifest.main || 'index.js';
+      const entryPath = path.join(item.path, mainFile);
       if (!fs.existsSync(entryPath)) {
-        throw new Error('Plugin entry file index.js is missing.');
+        throw new Error(`Plugin entry file ${mainFile} is missing.`);
       }
       delete require.cache[require.resolve(entryPath)];
       const plugin = require(entryPath);
+      const hooks = hookManager.createPluginApi(row.slug);
       if (typeof plugin.register === 'function') {
-        await plugin.register({ app, hooks: { register: registerHook }, manifest: item.manifest });
+        await plugin.register({ app, hooks, manifest: item.manifest });
       }
       activePlugins.push({ ...item, row });
     } catch (error) {
@@ -185,16 +167,18 @@ async function activatePlugin(slug, app = null) {
 }
 
 function listRegisteredHooks() {
-  return [...hooks.keys()];
+  return hookManager.listRegisteredHooks();
 }
 
 async function invokePluginLifecycle(slug, event, app = null) {
-  const entryPath = path.join(pluginsRoot, slug, 'index.js');
+  const manifest = getManifestBySlug(slug);
+  const mainFile = manifest?.main || 'index.js';
+  const entryPath = path.join(pluginsRoot, slug, mainFile);
   if (!fs.existsSync(entryPath)) return;
   delete require.cache[require.resolve(entryPath)];
   const plugin = require(entryPath);
   if (typeof plugin[event] === 'function') {
-    await plugin[event]({ app, manifest: getManifestBySlug(slug) });
+    await plugin[event]({ app, manifest });
   }
 }
 
@@ -226,6 +210,10 @@ function removePluginDirectory(slug) {
   if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
 }
 
+function registerHook(name, handler, priority = 10) {
+  return hookManager.registerLegacy(name, handler, priority);
+}
+
 module.exports = {
   pluginsRoot,
   discoverPluginManifests,
@@ -241,8 +229,13 @@ module.exports = {
   getManifestBySlug,
   invokePluginLifecycle,
   registerHook,
-  applyHook,
-  collectHook,
+  applyHook: hookManager.applyFilters,
+  collectHook: hookManager.collect,
+  addAction: hookManager.addAction,
+  doAction: hookManager.doAction,
+  addFilter: hookManager.addFilter,
+  applyFilters: hookManager.applyFilters,
   listRegisteredHooks,
-  removePluginDirectory
+  removePluginDirectory,
+  hookManager
 };

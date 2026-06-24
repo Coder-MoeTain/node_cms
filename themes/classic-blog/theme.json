@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "author": "NodePress",
   "description": "A balanced classic blog layout — the default NodePress starter theme.",
+  "parent": null,
   "layouts": ["default", "sidebar-left", "sidebar-right"],
-  "templates": ["home", "blog", "post", "page", "archive", "search"],
-  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "templates": ["home", "blog", "post", "page", "archive", "search", "contact", "error"],
+  "supports": ["logo", "favicon", "menus", "widgets", "customColors", "darkMode", "customCss"],
   "screenshot": "/themes/classic-blog/screenshot.svg",
   "defaults": {
     "preset": "classic-blue",

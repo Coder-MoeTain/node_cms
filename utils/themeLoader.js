@@ -22,6 +22,16 @@ const BASE_THEME_DEFAULTS = {
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
+const TEMPLATE_ALIASES = {
+  category: 'archive',
+  tag: 'archive',
+  '404': 'error'
+};
+
+function normalizeTemplateName(template) {
+  return TEMPLATE_ALIASES[template] || template;
+}
+
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
@@ -56,7 +66,12 @@ function discoverThemes() {
       const themePath = path.join(themesRoot, entry.name);
       const manifestPath = path.join(themePath, 'theme.json');
       if (!fs.existsSync(manifestPath)) return null;
-      return { path: themePath, manifest: validateManifest(readJson(manifestPath)) };
+      try {
+        return { path: themePath, manifest: validateManifest(readJson(manifestPath)) };
+      } catch (error) {
+        console.warn(`Skipping invalid theme "${entry.name}": ${error.message}`);
+        return null;
+      }
     })
     .filter(Boolean);
 }
@@ -95,6 +110,19 @@ function listPartialFiles(themePath) {
     .map((file) => file.replace(/\.ejs$/, ''));
 }
 
+function walkAssets(dir, slug, prefix = 'assets', list = []) {
+  if (!fs.existsSync(dir)) return list;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const rel = `${prefix}/${entry.name}`;
+    if (entry.isDirectory()) {
+      walkAssets(path.join(dir, entry.name), slug, rel, list);
+    } else {
+      list.push(`/themes/${slug}/${rel.replace(/\\/g, '/')}`);
+    }
+  }
+  return list;
+}
+
 function discoverThemeAssets(slug) {
   const chain = resolveThemeChain(slug);
   const templates = new Set();
@@ -104,12 +132,7 @@ function discoverThemeAssets(slug) {
   for (const theme of chain) {
     listTemplateFiles(theme.path).forEach((name) => templates.add(name));
     listPartialFiles(theme.path).forEach((name) => partials.add(name));
-    const assetsDir = path.join(theme.path, 'assets');
-    if (fs.existsSync(assetsDir)) {
-      fs.readdirSync(assetsDir).forEach((file) => {
-        assets.push(`/themes/${theme.manifest.slug}/assets/${file}`);
-      });
-    }
+    walkAssets(path.join(theme.path, 'assets'), theme.manifest.slug, 'assets', assets);
   }
 
   const manifest = getManifestBySlug(slug);
@@ -132,7 +155,8 @@ async function syncInstalledThemes() {
     if (manifest.parent) {
       const parentExists = fs.existsSync(path.join(themesRoot, manifest.parent, 'theme.json'));
       if (!parentExists) {
-        throw new Error(`Theme "${manifest.slug}" requires parent "${manifest.parent}" which is not installed.`);
+        console.warn(`Theme "${manifest.slug}" requires parent "${manifest.parent}" which is not installed.`);
+        continue;
       }
     }
     await Theme.findOrCreate({
@@ -184,13 +208,14 @@ function toViewPath(absolutePath) {
 }
 
 async function resolveTemplate(template) {
+  const normalized = normalizeTemplateName(template);
   const active = await getActiveThemeManifest();
   const chain = active ? resolveThemeChain(active.manifest.slug) : [];
-  const resolved = templateExistsInChain(chain, template);
+  const resolved = templateExistsInChain(chain, normalized);
   if (resolved) return toViewPath(resolved);
 
-  const publicTemplate = path.join(defaultPublicRoot, `${template}.ejs`);
-  if (fs.existsSync(publicTemplate)) return `public/${template}`;
+  const publicTemplate = path.join(defaultPublicRoot, `${normalized}.ejs`);
+  if (fs.existsSync(publicTemplate)) return `public/${normalized}`;
   return 'errors/404';
 }
 
@@ -264,6 +289,7 @@ module.exports = {
   BASE_THEME_DEFAULTS,
   SLUG_PATTERN,
   discoverThemes,
+  getThemeBySlug,
   discoverThemeAssets,
   resolveThemeChain,
   syncInstalledThemes,
@@ -277,5 +303,7 @@ module.exports = {
   getChildThemeSlugs,
   listTemplateFiles,
   listPartialFiles,
-  validateManifest
+  validateManifest,
+  normalizeTemplateName,
+  TEMPLATE_ALIASES
 };

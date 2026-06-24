@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post, Media, Plugin } = require('../models');
 const pluginLoader = require('../utils/pluginLoader');
 const themeLoader = require('../utils/themeLoader');
@@ -68,6 +70,9 @@ async function loadSiteContext(req, res, next) {
     res.locals.siteSettings = settings.reduce((map, row) => ({ ...map, [row.key]: row.value }), {});
     const themePlain = applyCustomizerPreview(req, theme ? theme.get({ plain: true }) : {});
     res.locals.activeTheme = themePlain;
+    const themeSlug = themePlain.theme_name || 'classic-blog';
+    const themeCssPath = path.join(process.cwd(), 'themes', themeSlug, 'assets', 'css', 'theme.css');
+    res.locals.themeStylesheet = fs.existsSync(themeCssPath) ? `/themes/${themeSlug}/assets/css/theme.css` : null;
     res.locals.portalConfig = resolvePortalConfig(themePlain);
     res.locals.themePreset = resolveThemePreset(themePlain, res.locals.portalConfig);
     res.locals.themeVars = parseThemeVars(themePlain.custom_css || '');

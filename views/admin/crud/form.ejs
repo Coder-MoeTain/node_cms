@@ -61,7 +61,7 @@
                 <div class="np-metabox-body">
                   <div class="publish-status-row mb-2">
                     <span class="publish-label">Status:</span>
-                    <select class="form-select form-select-sm" name="status" data-status-select><% ['draft','published','private','scheduled'].forEach(function(status) { if (status !== 'published' || can('publish_posts')) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status.charAt(0).toUpperCase() + status.slice(1) %></option><% } }) %></select>
+                    <select class="form-select form-select-sm" name="status" data-status-select><% ['draft','published','private','scheduled'].forEach(function(status) { const canUseStatus = resource === 'pages' ? can('manage_pages') : (status === 'draft' || canPublishPost(isEdit ? record : null)); if (canUseStatus) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status.charAt(0).toUpperCase() + status.slice(1) %></option><% } }) %></select>
                   </div>
                   <div class="publish-status-row mb-3">
                     <span class="publish-label">Publish:</span>

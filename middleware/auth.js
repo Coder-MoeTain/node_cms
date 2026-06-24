@@ -1,5 +1,6 @@
 const appConfig = require('../config/app');
 const { User, Role, Permission } = require('../models');
+const policy = require('../utils/policy');
 
 async function refreshSessionUser(req) {
   const user = await User.findByPk(req.session.user.id, {
@@ -45,6 +46,11 @@ async function requireAuth(req, res, next) {
     if (req.session.user.forcePasswordChange && !req.path.startsWith('/profile') && req.path !== '/logout') {
       req.flash('error', 'Please update your password before continuing.');
       return res.redirect('/admin/profile');
+    }
+
+    if (!policy.canAccessAdmin(req.session.user, req.path)) {
+      req.flash('error', 'Your account does not have access to the admin area.');
+      return res.redirect(req.session.user.role === 'subscriber' ? '/' : '/admin/profile');
     }
 
     req.session.lastActivity = Date.now();

@@ -23,12 +23,13 @@ async function upload(req, res, next) {
     const files = req.files || (req.file ? [req.file] : []);
     let uploaded = 0;
     for (const file of files) {
-      const allowed = await pluginLoader.applyHook('beforeMediaUpload', file, {
+      const allowed = await pluginLoader.applyFilters('beforeMediaUpload', file, {
         req,
         user: req.session.user
       });
       if (!allowed) continue;
-      await Media.create(await buildMediaPayload(allowed, req.session.user.id));
+      const mediaRecord = await Media.create(await buildMediaPayload(allowed, req.session.user.id));
+      await pluginLoader.doAction('afterMediaUpload', mediaRecord, { req, user: req.session.user, file: allowed });
       uploaded += 1;
     }
     if (!uploaded && files.length) {
@@ -70,7 +71,7 @@ async function update(req, res, next) {
       description: req.body.description
     };
     if (req.file) {
-      const allowed = await pluginLoader.applyHook('beforeMediaUpload', req.file, {
+      const allowed = await pluginLoader.applyFilters('beforeMediaUpload', req.file, {
         req,
         user: req.session.user
       });
@@ -82,6 +83,9 @@ async function update(req, res, next) {
       Object.assign(payload, await buildMediaPayload(allowed, req.session.user.id));
     }
     await media.update(payload);
+    if (req.file) {
+      await pluginLoader.doAction('afterMediaUpload', media, { req, user: req.session.user, file: req.file, replaced: true });
+    }
     req.flash('success', 'Media updated.');
     return res.redirect(`/admin/media/${media.id}/edit`);
   } catch (error) {

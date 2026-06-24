@@ -83,6 +83,13 @@ app.use((req, res, next) => {
   res.locals.can = (permission) => policy.can(req.session.user, permission);
   res.locals.canAny = (permissions) => policy.hasAnyPermission(req.session.user, permissions);
   res.locals.canManageResource = (resource, action, record = null) => policy.canManageResource(req.session.user, resource, action, record);
+  res.locals.canEditPost = (post) => policy.canEditPost(req.session.user, post);
+  res.locals.canDeletePost = (post) => policy.canDeletePost(req.session.user, post);
+  res.locals.canPublishPost = (post) => policy.canPublishPost(req.session.user, post);
+  res.locals.canManagePlugin = (plugin) => policy.canManagePlugin(req.session.user, plugin);
+  res.locals.canManageTheme = (theme) => policy.canManageTheme(req.session.user, theme);
+  res.locals.canManageUser = (targetUser) => policy.canManageUser(req.session.user, targetUser);
+  res.locals.isSuperAdmin = () => policy.isSuperAdmin(req.session.user);
   res.locals.currentPath = req.originalUrl || req.path;
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
@@ -92,6 +99,14 @@ app.use((req, res, next) => {
 app.use(localeMiddleware);
 app.use(portalVisitMiddleware);
 app.use(loadSiteContext);
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/admin') && req.session?.user) {
+    res.locals.pluginAdminMenuItems = await pluginLoader.collectHook('adminMenuItems', { req, res });
+  } else {
+    res.locals.pluginAdminMenuItems = [];
+  }
+  next();
+});
 app.use(pluginHooks);
 app.use(wafMiddleware);
 app.use((req, res, next) => {

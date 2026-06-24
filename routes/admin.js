@@ -24,6 +24,7 @@ const crud = require('../controllers/admin/crudController');
 const media = require('../controllers/admin/mediaController');
 const plugins = require('../controllers/admin/pluginController');
 const settings = require('../controllers/admin/settingsController');
+const themes = require('../controllers/admin/themeController');
 const security = require('../controllers/admin/securityController');
 const database = require('../controllers/admin/databaseController');
 const waf = require('../controllers/admin/wafController');
@@ -56,6 +57,8 @@ router.delete('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']
 
 router.get('/plugins', requireAuth, can('manage_plugins'), plugins.index);
 router.post('/plugins/upload', requireAuth, can('manage_plugins'), zipUpload.single('archive'), plugins.upload);
+router.get('/plugins/:slug', requireAuth, can('manage_plugins'), plugins.show);
+router.post('/plugins/:slug/migrate', requireAuth, can('manage_plugins'), plugins.runMigrations);
 router.post('/plugins/:slug/activate', requireAuth, can('manage_plugins'), plugins.activate);
 router.post('/plugins/:slug/deactivate', requireAuth, can('manage_plugins'), plugins.deactivate);
 router.post('/plugins/:slug/uninstall', requireAuth, can('manage_plugins'), plugins.uninstall);
@@ -70,14 +73,17 @@ router.delete('/settings/database/backup/:filename', requireAuth, canAny(['manag
 router.post('/settings/database/reset', requireAuth, canAny(['manage_settings', 'manage_security']), database.resetDatabase);
 router.get('/settings', requireAuth, can('manage_settings'), settings.settings);
 router.put('/settings', requireAuth, can('manage_settings'), brandingImageUpload, settings.updateSettings);
-router.get('/themes', requireAuth, can('manage_themes'), settings.themes);
-router.post('/themes/upload', requireAuth, can('manage_themes'), zipUpload.single('archive'), settings.uploadTheme);
-router.post('/themes/:slug/uninstall', requireAuth, can('manage_themes'), settings.uninstallTheme);
-router.get('/themes/customize', requireAuth, can('manage_themes'), settings.themeEditor);
+router.get('/themes', requireAuth, can('manage_themes'), themes.index);
+router.post('/themes/upload', requireAuth, can('manage_themes'), zipUpload.single('archive'), themes.upload);
+router.get('/themes/customize', requireAuth, can('manage_themes'), themes.customize);
+router.get('/themes/customize/preview', requireAuth, can('manage_themes'), themes.previewTheme);
 router.get('/themes/editor', requireAuth, can('manage_themes'), (req, res) => res.redirect('/admin/themes/customize'));
-router.post('/themes/activate', requireAuth, can('manage_themes'), settings.activateTheme);
-router.put('/theme-settings', requireAuth, can('manage_themes'), brandingImageUpload, settings.updateThemeSettings);
-router.post('/theme-settings/preview', requireAuth, can('manage_themes'), settings.previewThemeDraft);
+router.post('/themes/activate', requireAuth, can('manage_themes'), themes.activate);
+router.post('/themes/reset', requireAuth, can('manage_themes'), themes.resetSettings);
+router.put('/theme-settings', requireAuth, can('manage_themes'), brandingImageUpload, themes.updateSettings);
+router.post('/theme-settings/preview', requireAuth, can('manage_themes'), themes.previewDraft);
+router.get('/themes/:slug', requireAuth, can('manage_themes'), themes.show);
+router.post('/themes/:slug/uninstall', requireAuth, can('manage_themes'), themes.uninstall);
 
 router.get('/security', requireAuth, can('manage_security'), security.index);
 router.put('/security/settings', requireAuth, can('manage_security'), security.updateSettings);

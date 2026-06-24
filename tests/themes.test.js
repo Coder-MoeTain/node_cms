@@ -1,4 +1,5 @@
 const themeLoader = require('../utils/themeLoader');
+const themeManager = require('../utils/themeManager');
 
 test('discoverThemes finds bundled themes', () => {
   const themes = themeLoader.discoverThemes();
@@ -15,6 +16,11 @@ test('government-portal theme includes portal config', () => {
   const defaults = themeLoader.buildThemeSettingDefaults('government-portal');
   expect(defaults.header_layout).toBe('portal');
   expect(defaults.custom_css).toContain('np-portal-config');
+});
+
+test('resolveTemplate maps category to archive fallback', async () => {
+  const template = await themeManager.resolveTemplate('category');
+  expect(template).toMatch(/archive|home/);
 });
 
 test('resolveTemplate falls back to public views', async () => {

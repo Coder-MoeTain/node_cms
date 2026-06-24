@@ -1,4 +1,5 @@
 const { Op } = require('sequelize');
+const pluginLoader = require('../utils/pluginLoader');
 const {
   WafRule,
   WafLog,
@@ -312,7 +313,26 @@ async function wafMiddleware(req, res, next) {
 
     const matches = matchRequest(req, rules, settings);
     const riskScore = calculateRiskScore(matches, adminRoute);
-    const actionTaken = getActionForRiskScore(riskScore, settings, adminRoute, matches);
+    let actionTaken = getActionForRiskScore(riskScore, settings, adminRoute, matches);
+    let wafDecision = await pluginLoader.applyFilters('beforeWafDecision', {
+      actionTaken,
+      matches,
+      riskScore,
+      settings,
+      adminRoute,
+      ipAddress,
+      block: ['block', 'rate_limit', 'temporary_block'].includes(actionTaken) && settings.waf_mode === 'block'
+    }, { req, res });
+    if (wafDecision === false || wafDecision === null) {
+      return next();
+    }
+    if (wafDecision && typeof wafDecision === 'object') {
+      actionTaken = wafDecision.actionTaken || actionTaken;
+    }
+    const shouldBlock = wafDecision?.block !== false
+      && ['block', 'rate_limit', 'temporary_block'].includes(actionTaken)
+      && settings.waf_mode === 'block';
+
     const shouldLog = Boolean(
       matches.length
       || settings.log_all_requests
@@ -322,19 +342,20 @@ async function wafMiddleware(req, res, next) {
 
     if (shouldLog) {
       const payload = buildSafeLogPayload(req, matches, actionTaken === 'allow' && matches.length ? 'log' : actionTaken, riskScore);
-      await logWafEvent(req, payload);
+      const logRow = await logWafEvent(req, payload);
+      await pluginLoader.doAction('afterWafLog', { ...payload, id: logRow?.id }, { req, res });
     }
 
     if (matches.length) {
       await applyAutoBlock(ipAddress, settings, req.session?.user?.id || null);
     }
 
-    if (actionTaken === 'temporary_block' && settings.waf_mode === 'block') {
+    if (actionTaken === 'temporary_block' && shouldBlock) {
       await applyTemporaryBlock(ipAddress, settings, req.session?.user?.id || null, 'Temporary block triggered by WAF rule match.');
       return createWafBlockResponse(req, res, settings.waf_response_message);
     }
 
-    if (['block', 'rate_limit'].includes(actionTaken) && settings.waf_mode === 'block') {
+    if (['block', 'rate_limit'].includes(actionTaken) && shouldBlock) {
       return createWafBlockResponse(req, res, settings.waf_response_message);
     }
 

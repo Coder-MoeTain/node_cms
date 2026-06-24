@@ -6,8 +6,8 @@
   "description": "News-oriented layout with centered header and list-style article feed.",
   "parent": "classic-blog",
   "layouts": ["default", "full-width", "sidebar-right"],
-  "templates": ["home", "blog", "post", "page", "archive", "search"],
-  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "templates": ["home", "blog", "post", "page", "archive", "search", "contact", "error"],
+  "supports": ["logo", "favicon", "menus", "widgets", "customColors", "darkMode", "customCss"],
   "screenshot": "/themes/modern-news/screenshot.svg",
   "defaults": {
     "preset": "modern-indigo",
