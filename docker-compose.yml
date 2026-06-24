@@ -1,0 +1,43 @@
+services:
+  db:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootsecret}
+      MYSQL_DATABASE: ${DB_NAME:-nodepress_cms}
+    volumes:
+      - nodepress_mysql:/var/lib/mysql
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DB_PASSWORD:-rootsecret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-nodepress_cms}
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootsecret}
+      SESSION_SECRET: ${SESSION_SECRET:-change-this-in-production}
+      TRUST_PROXY: "true"
+      API_KEY: ${API_KEY:-}
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - nodepress_uploads:/app/public/uploads
+
+volumes:
+  nodepress_mysql:
+  nodepress_uploads:

@@ -30,6 +30,7 @@ const permissions = [
   'manage_categories',
   'manage_tags',
   'manage_media',
+  'upload_media',
   'manage_menus',
   'manage_banners',
   'manage_sliders',
@@ -121,7 +122,7 @@ const roles = [
       'manage_comments'
     ]
   ],
-  ['Author', 'author', ['view_dashboard', 'create_posts', 'edit_posts', 'manage_media']],
+  ['Author', 'author', ['view_dashboard', 'create_posts', 'edit_posts', 'upload_media']],
   ['Subscriber', 'subscriber', []]
 ];
 
@@ -139,10 +140,12 @@ async function seed() {
   }
 
   let superAdminRole;
+  let authorRole;
   for (const [name, slug, rolePermissions] of roles) {
     const [role] = await Role.findOrCreate({ where: { slug }, defaults: { name } });
     await role.setPermissions(rolePermissions.map((permission) => permissionRows[permission]));
     if (slug === 'super-admin') superAdminRole = role;
+    if (slug === 'author') authorRole = role;
   }
 
   await User.findOrCreate({
@@ -156,6 +159,19 @@ async function seed() {
       status: 'active'
     }
   });
+
+  if (authorRole) {
+    await User.findOrCreate({
+      where: { email: 'author@example.com' },
+      defaults: {
+        name: 'Author User',
+        email: 'author@example.com',
+        password: await bcrypt.hash('Author@12345', 12),
+        role_id: authorRole.id,
+        status: 'active'
+      }
+    });
+  }
 
   const [category] = await Category.findOrCreate({
     where: { slug: 'news' },
@@ -301,6 +317,7 @@ async function seed() {
   }
 
   console.log('Seed complete. Login with admin@example.com / Admin@12345');
+  console.log('Author account: author@example.com / Author@12345');
   await sequelize.close();
 }
 

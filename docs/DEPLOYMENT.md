@@ -1,5 +1,16 @@
 # NodePress CMS Deployment
 
+## Docker
+
+```bash
+cp .env.example .env   # set SESSION_SECRET and DB_PASSWORD
+docker compose up -d --build
+docker compose exec app npm run migrate
+docker compose exec app npm run seed
+```
+
+The app listens on port 3000. MySQL data and uploads are stored in Docker volumes.
+
 ## Production Commands
 
 ```bash

@@ -52,11 +52,17 @@
 }
 
 .admin-sidebar .nav-link i,
-.nav-menu-toggle i:first-child {
+.nav-menu-toggle span i {
   color: var(--np-sidebar-muted);
+  display: inline-block;
+  flex-shrink: 0;
   font-size: 16px;
+  text-align: center;
   width: 20px;
 }
+
+.admin-sidebar .nav-link.active i,
+.nav-menu-toggle.active span i { color: #fff; }
 
 .admin-sidebar .nav-link:hover,
 .nav-menu-toggle:hover {
@@ -70,9 +76,6 @@
   border-left-color: #72aee6;
   color: #fff;
 }
-
-.admin-sidebar .nav-link.active i,
-.nav-menu-toggle.active i { color: #fff; }
 
 .nav-menu-toggle {
   justify-content: space-between;

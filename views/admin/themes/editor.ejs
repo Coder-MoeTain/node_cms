@@ -2,32 +2,69 @@
 <%- include('../partials/sidebar') %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
-  <main class="admin-content">
+  <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <form class="card" method="post" action="/admin/theme-settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
+    <div class="np-page-header">
+      <h1>Customize</h1>
+      <a class="np-btn np-btn-secondary" href="/admin/themes">Installed Themes</a>
+    </div>
+    <%- include('../partials/settings-nav') %>
+
+    <form method="post" action="/admin/theme-settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data" data-theme-customizer>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="card-header professional-card-header">
-        <span>Theme Editor</span>
-        <a href="/admin/themes">Installed Themes</a>
+      <div class="theme-preset-grid" role="group" aria-label="Color presets">
+        <% const presets = [
+          { id: 'wordpress-blue', label: 'WordPress Blue', primary: '#2271b1', secondary: '#50575e', bg: '#ffffff', text: '#1d2327' },
+          { id: 'modern-indigo', label: 'Modern Indigo', primary: '#4f46e5', secondary: '#6366f1', bg: '#ffffff', text: '#1e1b4b' },
+          { id: 'clean-green', label: 'Clean Green', primary: '#008a20', secondary: '#50575e', bg: '#ffffff', text: '#1d2327' },
+          { id: 'dark-slate', label: 'Dark Slate', primary: '#38bdf8', secondary: '#64748b', bg: '#0f172a', text: '#f8fafc' },
+          { id: 'warm-orange', label: 'Warm Orange', primary: '#d97706', secondary: '#78716c', bg: '#fffbeb', text: '#292524' },
+          { id: 'minimal-gray', label: 'Minimal Gray', primary: '#50575e', secondary: '#646970', bg: '#f6f7f7', text: '#1d2327' }
+        ]; %>
+        <% presets.forEach(function(preset) { %>
+          <button class="theme-preset-btn" type="button" data-theme-preset="<%= preset.id %>" data-primary="<%= preset.primary %>" data-secondary="<%= preset.secondary %>" data-bg="<%= preset.bg %>" data-text="<%= preset.text %>"><%= preset.label %></button>
+        <% }) %>
       </div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-3"><label class="form-label">Primary Color</label><input class="form-control" name="primary_color" value="<%= themeSetting.primary_color || '#0d6efd' %>"></div>
-          <div class="col-md-3"><label class="form-label">Secondary Color</label><input class="form-control" name="secondary_color" value="<%= themeSetting.secondary_color || '#6c757d' %>"></div>
-          <div class="col-md-3"><label class="form-label">Background</label><input class="form-control" name="background_color" value="<%= themeSetting.background_color || '#ffffff' %>"></div>
-          <div class="col-md-3"><label class="form-label">Text Color</label><input class="form-control" name="text_color" value="<%= themeSetting.text_color || '#212529' %>"></div>
-          <div class="col-md-4"><label class="form-label">Font Family</label><input class="form-control" name="font_family" value="<%= themeSetting.font_family || 'Inter, Arial, sans-serif' %>"></div>
-          <div class="col-md-4"><label class="form-label">Sidebar Position</label><select class="form-select" name="sidebar_position"><% ['right','left','none'].forEach(function(value) { %><option value="<%= value %>" <%= themeSetting.sidebar_position === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
-          <div class="col-md-4"><label class="form-label">Blog Layout</label><select class="form-select" name="blog_layout"><% ['grid','list','masonry'].forEach(function(value) { %><option value="<%= value %>" <%= themeSetting.blog_layout === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
-          <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Logo', name: 'logo', fileName: 'logo_file', value: themeSetting.logo || '' }) %></div>
-          <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Favicon', name: 'favicon', fileName: 'favicon_file', value: themeSetting.favicon || '' }) %></div>
-          <div class="col-md-6"><label class="form-label">Header Layout</label><input class="form-control" name="header_layout" value="<%= themeSetting.header_layout || 'default' %>"></div>
-          <div class="col-md-6"><label class="form-label">Footer Layout</label><input class="form-control" name="footer_layout" value="<%= themeSetting.footer_layout || 'default' %>"></div>
-          <div class="col-md-6"><label class="form-label">Site Layout</label><select class="form-select" name="site_layout"><% ['wide','boxed'].forEach(function(value) { %><option value="<%= value %>" <%= themeSetting.site_layout === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
-          <div class="col-md-6 d-flex align-items-end"><label class="form-check"><input class="form-check-input" name="dark_mode" type="checkbox" <%= themeSetting.dark_mode ? 'checked' : '' %>> Enable dark mode</label></div>
+
+      <div class="theme-customizer">
+        <div>
+          <div class="np-widget">
+            <div class="np-widget-header"><span>Site Identity &amp; Colors</span></div>
+            <div class="np-widget-body">
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label" for="primary_color">Primary Color</label><input class="form-control" id="primary_color" name="primary_color" type="color" value="<%= themeSetting.primary_color || '#2271b1' %>" data-preview-primary></div>
+                <div class="col-md-6"><label class="form-label" for="secondary_color">Secondary Color</label><input class="form-control" id="secondary_color" name="secondary_color" type="color" value="<%= themeSetting.secondary_color || '#50575e' %>" data-preview-secondary></div>
+                <div class="col-md-6"><label class="form-label" for="background_color">Background</label><input class="form-control" id="background_color" name="background_color" type="color" value="<%= themeSetting.background_color || '#ffffff' %>" data-preview-bg></div>
+                <div class="col-md-6"><label class="form-label" for="text_color">Text Color</label><input class="form-control" id="text_color" name="text_color" type="color" value="<%= themeSetting.text_color || '#1d2327' %>" data-preview-text></div>
+                <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Logo', name: 'logo', fileName: 'logo_file', value: themeSetting.logo || '' }) %></div>
+                <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Favicon', name: 'favicon', fileName: 'favicon_file', value: themeSetting.favicon || '' }) %></div>
+                <div class="col-md-4"><label class="form-label" for="font_family">Font Family</label><input class="form-control" id="font_family" name="font_family" value="<%= themeSetting.font_family || 'Georgia, serif' %>"></div>
+                <div class="col-md-4"><label class="form-label" for="sidebar_position">Sidebar Position</label><select class="form-select" id="sidebar_position" name="sidebar_position"><% ['right','left','none'].forEach(function(value) { %><option value="<%= value %>" <%= themeSetting.sidebar_position === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
+                <div class="col-md-4"><label class="form-label" for="blog_layout">Blog Layout</label><select class="form-select" id="blog_layout" name="blog_layout"><% ['grid','list','masonry'].forEach(function(value) { %><option value="<%= value %>" <%= themeSetting.blog_layout === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
+                <div class="col-md-6"><label class="form-label" for="header_layout">Header Layout</label><select class="form-select" id="header_layout" name="header_layout"><% ['standard','centered','minimal'].forEach(function(value) { %><option value="<%= value %>" <%= (themeSetting.header_layout || 'standard') === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
+                <div class="col-md-6"><label class="form-label" for="footer_layout">Footer Layout</label><select class="form-select" id="footer_layout" name="footer_layout"><% ['four-columns','simple','minimal'].forEach(function(value) { %><option value="<%= value %>" <%= (themeSetting.footer_layout || 'four-columns') === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
+                <div class="col-md-6"><label class="form-label" for="site_layout">Site Layout</label><select class="form-select" id="site_layout" name="site_layout"><option value="full-width" <%= ['full-width','wide'].includes(themeSetting.site_layout) ? 'selected' : '' %>>Full width</option><option value="boxed" <%= themeSetting.site_layout === 'boxed' ? 'selected' : '' %>>Boxed</option></select></div>
+                <div class="col-md-6 d-flex align-items-end"><label class="form-check"><input class="form-check-input" name="dark_mode" type="checkbox" <%= themeSetting.dark_mode ? 'checked' : '' %>> Enable dark mode</label></div>
+                <div class="col-12"><label class="form-label" for="custom_css">Additional CSS</label><textarea class="form-control font-monospace" id="custom_css" name="custom_css" rows="6" placeholder="/* Custom site styles */"><%= themeSetting.custom_css || '' %></textarea></div>
+                <div class="col-12"><label class="form-label" for="custom_js">Additional JavaScript</label><textarea class="form-control font-monospace" id="custom_js" name="custom_js" rows="6" placeholder="// Custom site scripts (no &lt;script&gt; tags)"><%= themeSetting.custom_js || '' %></textarea></div>
+              </div>
+            </div>
+          </div>
+          <p><button class="np-btn np-btn-primary" type="submit">Save Changes</button></p>
         </div>
+
+        <aside class="theme-preview-panel" aria-label="Theme preview">
+          <h2 class="h6 mb-3">Live Preview</h2>
+          <div class="theme-preview-site" data-theme-preview>
+            <div class="theme-preview-header" data-preview-header>NodePress Site</div>
+            <div class="theme-preview-body">
+              <h2 data-preview-heading>Sample Blog Post</h2>
+              <p data-preview-copy>This preview updates as you change colors. Your public site uses these theme settings.</p>
+              <button class="np-btn np-btn-primary" type="button" data-preview-button>Read more</button>
+            </div>
+          </div>
+        </aside>
       </div>
-      <div class="card-footer"><button class="btn btn-primary">Save Theme Settings</button></div>
     </form>
   </main>
 </div>

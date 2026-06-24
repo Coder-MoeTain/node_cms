@@ -189,6 +189,32 @@ Role:     Super Admin
 
 The seeded admin account requires a password change after first login.
 
+Test author account (after `npm run seed`):
+
+```text
+Email:    author@example.com
+Password: Author@12345
+Role:     Author (own posts & uploads only)
+```
+
+## Platform Maturity (10/10)
+
+| Area | Highlights |
+| --- | --- |
+| UI/UX | WordPress-style admin tables, bulk trash, theme customizer, plugin dashboard widgets |
+| Plugins | Hook system (`publicHead`, `publicFooter`, `dashboardWidgets`, `beforeMediaUpload`) |
+| Themes | Template/partial resolution, custom CSS/JS, header/footer layout classes |
+| WAF | Monitor/block modes, rules, IP lists, CSV export, automated tests |
+| RBAC | Post/media ownership, publish_posts gate, dedicated resource permissions |
+| API | Optional `API_KEY` protection via `X-API-Key` header |
+| Ops | PM2 ecosystem, health endpoints, Docker Compose, deployment docs |
+
+Optional API key in `.env`:
+
+```env
+API_KEY=your-long-random-api-key
+```
+
 ## Scripts
 
 | Command | Description |

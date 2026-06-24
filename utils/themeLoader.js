@@ -79,10 +79,47 @@ async function resolveTemplate(template) {
   return 'errors/404';
 }
 
+function partialExists(theme, partial) {
+  if (!theme) return null;
+  const candidate = path.join(theme.path, 'partials', `${partial}.ejs`);
+  return fs.existsSync(candidate) ? candidate : null;
+}
+
+async function resolvePartial(partial) {
+  const active = await getActiveThemeManifest();
+  const activePartial = partialExists(active, partial);
+  if (activePartial) {
+    return path.relative(process.cwd(), activePartial).replace(/\\/g, '/').replace(/\.ejs$/, '');
+  }
+
+  if (active?.manifest.parent) {
+    const parent = discoverThemes().find((theme) => theme.manifest.slug === active.manifest.parent);
+    const parentPartial = partialExists(parent, partial);
+    if (parentPartial) {
+      return path.relative(process.cwd(), parentPartial).replace(/\\/g, '/').replace(/\.ejs$/, '');
+    }
+  }
+
+  return `public/partials/${partial}`;
+}
+
+function getLayoutClasses(themeSetting = {}) {
+  return [
+    themeSetting.dark_mode ? 'theme-dark' : '',
+    themeSetting.site_layout === 'boxed' ? 'boxed-layout' : '',
+    `header-layout-${themeSetting.header_layout || 'standard'}`,
+    `footer-layout-${themeSetting.footer_layout || 'four-columns'}`,
+    `sidebar-${themeSetting.sidebar_position || 'right'}`,
+    `blog-layout-${themeSetting.blog_layout || 'grid'}`
+  ].filter(Boolean).join(' ');
+}
+
 module.exports = {
   themesRoot,
   discoverThemes,
   syncInstalledThemes,
   getActiveThemeManifest,
-  resolveTemplate
+  resolveTemplate,
+  resolvePartial,
+  getLayoutClasses
 };

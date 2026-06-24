@@ -1,0 +1,6 @@
+<nav class="settings-nav" aria-label="Settings sections">
+  <a class="<%= currentPath === '/admin/settings' ? 'active' : '' %>" href="/admin/settings">General</a>
+  <a class="<%= currentPath === '/admin/themes' ? 'active' : '' %>" href="/admin/themes">Appearance</a>
+  <a class="<%= currentPath === '/admin/themes/editor' ? 'active' : '' %>" href="/admin/themes/editor">Customize</a>
+  <a class="<%= currentPath.startsWith('/admin/security') ? 'active' : '' %>" href="/admin/security">Security</a>
+</nav>

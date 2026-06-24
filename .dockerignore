@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.github
+.env
+.env.*
+!.env.example
+public/uploads/*
+!public/uploads/.gitkeep
+coverage
+*.md
+!README.md
+tests
+.cursor
+mcps

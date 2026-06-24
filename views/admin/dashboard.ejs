@@ -101,6 +101,13 @@
             <div class="health-item"><span>Recent login failures</span><strong><%= recentLogins.filter(function(l){ return !l.success; }).length %></strong></div>
           </div>
         </div>
+
+        <% (pluginWidgets || []).forEach(function(widget) { %>
+          <div class="np-widget np-plugin-widget">
+            <div class="np-widget-header"><span><%= widget.title || 'Plugin' %></span></div>
+            <div class="np-widget-body"><%= widget.body || '' %></div>
+          </div>
+        <% }) %>
       </div>
     </div>
   </main>

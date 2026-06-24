@@ -391,11 +391,55 @@ async function destroy(req, res, next) {
       await ensureNotLastSuperAdmin(record);
     }
     if (record) await record.destroy();
-    req.flash('success', `${config.title} deleted.`);
+    req.flash('success', `${config.title} moved to trash.`);
     return res.redirect(`/admin/${resource}`);
   } catch (error) {
     return next(error);
   }
 }
 
-module.exports = { configs, index, create, store, edit, update, destroy };
+function normalizeBulkIds(body) {
+  if (!body.ids) return [];
+  return Array.isArray(body.ids) ? body.ids : [body.ids];
+}
+
+async function bulkDestroy(req, res, next) {
+  try {
+    const resource = req.params.resource;
+    const config = getConfig(resource);
+    const action = req.body.action || 'trash';
+    if (action !== 'trash') {
+      req.flash('error', 'Unsupported bulk action.');
+      return res.redirect(`/admin/${resource}`);
+    }
+
+    const ids = normalizeBulkIds(req.body).map((id) => Number(id)).filter(Boolean);
+    if (!ids.length) {
+      req.flash('error', 'No items selected.');
+      return res.redirect(`/admin/${resource}`);
+    }
+
+    const records = await config.model.findAll({ where: { id: ids } });
+    let removed = 0;
+    for (const record of records) {
+      if (!policy.canManageResource(req.session.user, resource, 'bulk', record)) continue;
+      if (resource === 'users') {
+        if (Number(record.id) === Number(req.session.user.id)) continue;
+        try {
+          await ensureNotLastSuperAdmin(record);
+        } catch (error) {
+          continue;
+        }
+      }
+      await record.destroy();
+      removed += 1;
+    }
+
+    req.flash('success', removed ? `${removed} item(s) moved to trash.` : 'No items could be trashed with your permissions.');
+    return res.redirect(`/admin/${resource}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { configs, index, create, store, edit, update, destroy, bulkDestroy };

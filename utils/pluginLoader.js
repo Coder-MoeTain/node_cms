@@ -109,6 +109,10 @@ function getActivePlugins() {
   return activePlugins;
 }
 
+function listRegisteredHooks() {
+  return [...hooks.keys()];
+}
+
 module.exports = {
   pluginsRoot,
   discoverPluginManifests,
@@ -117,5 +121,6 @@ module.exports = {
   getActivePlugins,
   registerHook,
   applyHook,
-  collectHook
+  collectHook,
+  listRegisteredHooks
 };

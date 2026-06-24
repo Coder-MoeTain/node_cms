@@ -14,6 +14,7 @@ const {
   WafSetting
 } = require('../../models');
 const { createUniqueSlug } = require('../../utils/slugGenerator');
+const pluginLoader = require('../../utils/pluginLoader');
 
 async function dashboard(req, res, next) {
   try {
@@ -71,6 +72,7 @@ async function dashboard(req, res, next) {
       recentActivity,
       messages,
       securityAlerts,
+      pluginWidgets: await pluginLoader.collectHook('dashboardWidgets', { req, res, stats: { posts, publishedPosts, draftPosts, pages, categories, users, media, comments } }),
       siteHealth: {
         env: process.env.NODE_ENV || 'development',
         database: true,

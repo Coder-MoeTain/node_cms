@@ -1,44 +1,75 @@
 <%- include('partials/head') %>
 <%- include('partials/header') %>
-<main class="container py-4">
-  <nav class="small mb-3"><a href="/">Home</a> / <a href="/blog">Blog</a> / <%= post.title %></nav>
-  <div class="row g-4">
-    <article class="col-lg-8">
-      <h1><%= post.title %></h1>
-      <div class="text-muted mb-3">By <%= post.author ? post.author.name : 'Author' %> in <%= post.Category ? post.Category.name : 'Uncategorized' %></div>
-      <% if (post.featured_image) { %><img class="img-fluid rounded mb-3" src="<%= post.featured_image %>" alt="<%= post.title %>"><% } %>
-      <% if (post.video_url) { %><div class="ratio ratio-16x9 mb-3"><iframe src="<%= post.video_url %>" allowfullscreen></iframe></div><% } %>
-      <div class="content"><%- post.content %></div>
-      <div class="mt-3"><% (post.Tags || []).forEach(function(tag) { %><a class="badge text-bg-secondary text-decoration-none me-1" href="/tag/<%= tag.slug %>"><%= tag.name %></a><% }) %></div>
+<main class="container py-4" id="main-content">
+  <nav class="breadcrumb-nav small mb-3" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">/</span> <a href="/blog">Blog</a> <span aria-hidden="true">/</span> <span aria-current="page"><%= post.title %></span></nav>
+  <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
+    <article class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
+      <header class="entry-header mb-3">
+        <h1 class="entry-title"><%= post.title %></h1>
+        <div class="entry-meta text-muted">
+          <time datetime="<%= post.published_at || post.created_at %>"><%= (post.published_at || post.created_at).toLocaleDateString() %></time>
+          · By <%= post.author ? post.author.name : 'Author' %>
+          <% if (post.Category) { %> · <a href="/category/<%= post.Category.slug %>"><%= post.Category.name %></a><% } %>
+        </div>
+      </header>
+      <% if (post.featured_image) { %><img class="img-fluid entry-image mb-3" src="<%= post.featured_image %>" alt="<%= post.title %>"><% } %>
+      <% if (post.video_url) { %><div class="ratio ratio-16x9 mb-3"><iframe src="<%= post.video_url %>" title="Video" allowfullscreen></iframe></div><% } %>
+      <div class="entry-content content"><%- post.content %></div>
+      <% if ((post.Tags || []).length) { %>
+        <div class="entry-tags mt-3"><% (post.Tags || []).forEach(function(tag) { %><a class="np-badge np-badge-muted text-decoration-none me-1" href="/tag/<%= tag.slug %>"><%= tag.name %></a><% }) %></div>
+      <% } %>
+
+      <% if (post.author) { %>
+        <aside class="post-author-box" aria-label="About the author">
+          <strong>About <%= post.author.name %></strong>
+          <p class="mb-0 text-muted">Author at <%= siteSettings.site_title || 'NodePress CMS' %></p>
+        </aside>
+      <% } %>
+
+      <% if (prevPost || nextPost) { %>
+        <nav class="post-nav-links" aria-label="Post navigation">
+          <div><% if (prevPost) { %><span class="text-muted small d-block">Previous</span><a href="/post/<%= prevPost.slug %>">← <%= prevPost.title %></a><% } %></div>
+          <div class="text-end"><% if (nextPost) { %><span class="text-muted small d-block">Next</span><a href="/post/<%= nextPost.slug %>"><%= nextPost.title %> →</a><% } %></div>
+        </nav>
+      <% } %>
+
       <% if (relatedPosts && relatedPosts.length) { %>
         <section class="mt-5">
-          <div class="section-heading mb-3"><span class="eyebrow">Related Mission Logs</span><h2>Related Posts</h2></div>
+          <h2 class="h4 mb-3">Related Posts</h2>
           <div class="row g-3">
-            <% relatedPosts.forEach(function(post) { %>
-              <div class="col-md-4"><%- include('partials/post-card', { post }) %></div>
+            <% relatedPosts.forEach(function(item) { %>
+              <div class="col-md-4"><%- include('partials/post-card', { post: item }) %></div>
             <% }) %>
           </div>
         </section>
       <% } %>
+
       <% if (post.allow_comments) { %>
-        <section class="mt-5">
-          <h3>Comments</h3>
-          <% (post.comments || []).forEach(function(comment) { %><div class="border rounded p-3 mb-2"><strong><%= comment.name %></strong><p class="mb-0"><%= comment.content %></p></div><% }) %>
-          <form class="card card-body mt-3" method="post" action="/post/<%= post.id %>/comment">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <h4>Leave a comment</h4>
-            <div class="row g-3">
-              <div class="col-md-6"><input class="form-control" name="name" placeholder="Name" required></div>
-              <div class="col-md-6"><input class="form-control" name="email" type="email" placeholder="Email" required></div>
-              <div class="col-12"><input class="form-control" name="website" placeholder="Website"></div>
-              <div class="col-12"><textarea class="form-control" name="content" placeholder="Comment" required></textarea></div>
+        <section class="mt-5" id="comments">
+          <h2 class="h4">Comments</h2>
+          <% (post.comments || []).forEach(function(comment) { %>
+            <div class="comment-item border rounded p-3 mb-2">
+              <strong><%= comment.name %></strong>
+              <p class="mb-0"><%= comment.content %></p>
             </div>
-            <button class="btn btn-primary mt-3">Submit Comment</button>
+          <% }) %>
+          <form class="np-card mt-3" method="post" action="/post/<%= post.id %>/comment">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="np-card-body">
+              <h3 class="h5">Leave a Reply</h3>
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label" for="comment-name">Name</label><input class="form-control" id="comment-name" name="name" required></div>
+                <div class="col-md-6"><label class="form-label" for="comment-email">Email</label><input class="form-control" id="comment-email" name="email" type="email" required></div>
+                <div class="col-12"><label class="form-label" for="comment-website">Website</label><input class="form-control" id="comment-website" name="website"></div>
+                <div class="col-12"><label class="form-label" for="comment-content">Comment</label><textarea class="form-control" id="comment-content" name="content" rows="4" required></textarea></div>
+              </div>
+              <button class="np-btn np-btn-primary mt-3" type="submit">Post Comment</button>
+            </div>
           </form>
         </section>
       <% } %>
     </article>
-    <div class="col-lg-4"><%- include('partials/sidebar') %></div>
+    <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include('partials/sidebar') %></div><% } %>
   </div>
 </main>
 <%- include('partials/footer') %>

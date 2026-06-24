@@ -21,6 +21,19 @@
       </ul>
     <% } %>
 
+    <div class="np-tablenav">
+      <div class="tablenav-actions">
+        <select class="form-select form-select-sm" aria-label="Bulk actions" data-bulk-action disabled>
+          <option value="">Bulk actions</option>
+          <option value="delete">Move to Trash</option>
+        </select>
+        <button class="np-btn np-btn-secondary np-btn-small" type="button" data-bulk-apply disabled>Apply</button>
+      </div>
+      <div class="np-tablenav-pages">
+        <% if (pagination.total) { %><%= pagination.total %> item<%= pagination.total === 1 ? '' : 's' %><% } %>
+      </div>
+    </div>
+
     <div class="list-toolbar">
       <form class="admin-search" method="get">
         <input class="form-control" name="q" placeholder="Search <%= resourceLabel.toLowerCase() %>..." value="<%= query %>" aria-label="Search">
@@ -41,7 +54,7 @@
       <table class="np-list-table admin-table">
         <thead>
           <tr>
-            <th style="width:28px"><input type="checkbox" aria-label="Select all" disabled></th>
+            <th style="width:28px"><input type="checkbox" aria-label="Select all" data-select-all></th>
             <th>Title</th>
             <th>Status</th>
             <% if (resource === 'posts') { %><th>Category</th><% } %>
@@ -51,7 +64,7 @@
         <tbody>
           <% rows.forEach(function(row) { %>
             <tr>
-              <td><input type="checkbox" aria-label="Select item" disabled></td>
+              <td><input type="checkbox" class="row-select" aria-label="Select item" value="<%= row.id %>"></td>
               <td>
                 <a class="row-title" href="/admin/<%= resource %>/<%= row.id %>/edit"><%= row.title || row.name || row.subject || row.email %></a>
                 <div class="row-actions">
@@ -88,6 +101,11 @@
         </ul>
       </nav>
     <% } %>
+
+    <form id="bulk-form" method="post" action="/admin/<%= resource %>/bulk" class="d-none" aria-hidden="true">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="action" value="trash" data-bulk-form-action>
+    </form>
   </main>
 </div>
 <%- include('../partials/footer') %>

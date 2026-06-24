@@ -16,7 +16,8 @@ const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  message: 'Too many API requests. Try again later.'
 });
 
 const publicMutationLimiter = rateLimit({
@@ -45,7 +46,6 @@ function applySecurityMiddleware(app) {
     })
   );
   app.use(cors({ origin: appConfig.corsOrigin, credentials: true }));
-  app.use(apiLimiter);
   app.use(async (req, res, next) => {
     try {
       const blocked = await BlockedIp.findOne({ where: { ip_address: req.ip, active: true } });
@@ -57,4 +57,4 @@ function applySecurityMiddleware(app) {
   });
 }
 
-module.exports = { applySecurityMiddleware, loginLimiter, publicMutationLimiter };
+module.exports = { applySecurityMiddleware, loginLimiter, apiLimiter, publicMutationLimiter };

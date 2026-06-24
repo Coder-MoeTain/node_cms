@@ -16,5 +16,7 @@ module.exports = (sequelize) =>
     dark_mode: { type: DataTypes.BOOLEAN, defaultValue: false },
     logo: DataTypes.STRING(255),
     favicon: DataTypes.STRING(255),
+    custom_css: DataTypes.TEXT('medium'),
+    custom_js: DataTypes.TEXT('medium'),
     active: { type: DataTypes.BOOLEAN, defaultValue: true }
   }, { tableName: 'theme_settings' });

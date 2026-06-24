@@ -25,4 +25,51 @@
   --np-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   --np-radius: 0;
   --np-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+  --site-primary: var(--np-primary);
+  --site-secondary: #50575e;
+  --site-bg: #ffffff;
+  --site-text: #1d2327;
+  --site-header-bg: #ffffff;
+  --site-footer-bg: #1d2327;
+  --site-link: var(--np-primary);
+  --site-button: var(--np-primary);
+}
+
+[data-theme-preset="wordpress-blue"] {
+  --np-primary: #2271b1;
+  --np-primary-hover: #135e96;
+  --np-sidebar-active: #2271b1;
+}
+
+[data-theme-preset="modern-indigo"] {
+  --np-primary: #4f46e5;
+  --np-primary-hover: #4338ca;
+  --np-sidebar-active: #4f46e5;
+}
+
+[data-theme-preset="clean-green"] {
+  --np-primary: #008a20;
+  --np-primary-hover: #006b18;
+  --np-sidebar-active: #008a20;
+}
+
+[data-theme-preset="dark-slate"] {
+  --np-sidebar-bg: #0f172a;
+  --np-sidebar-hover: #1e293b;
+  --np-topbar-bg: #0f172a;
+  --np-primary: #38bdf8;
+  --np-primary-hover: #0ea5e9;
+  --np-sidebar-active: #0369a1;
+}
+
+[data-theme-preset="warm-orange"] {
+  --np-primary: #d97706;
+  --np-primary-hover: #b45309;
+  --np-sidebar-active: #d97706;
+}
+
+[data-theme-preset="minimal-gray"] {
+  --np-primary: #50575e;
+  --np-primary-hover: #3c434a;
+  --np-sidebar-active: #50575e;
 }

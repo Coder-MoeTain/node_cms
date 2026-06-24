@@ -1,39 +1,40 @@
-<%- include('../partials/head') %>
-<%- include('../partials/sidebar') %>
-<div class="admin-main">
-  <%- include('../partials/topbar') %>
-  <main class="admin-content" id="np-main-content">
-    <%- include('../partials/flash') %>
-    <div class="np-page-header"><h1>General Settings</h1></div>
-    <form method="post" action="/admin/settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="np-list-table-wrap">
-        <table class="np-form-table">
-          <tbody>
-            <% rows.forEach(function(row) { %>
-              <tr>
-                <th scope="row"><label for="setting-<%= row.key %>"><%= row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }) %></label></th>
-                <td>
-                  <% if (['site_logo','favicon'].includes(row.key)) { %>
-                    <%- include('../partials/image-upload-field', {
-                      label: row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }),
-                      name: row.key,
-                      fileName: row.key + '_file',
-                      value: row.value
-                    }) %>
-                    <p class="np-help-text">Upload an image or choose one from the Media Library.</p>
-                  <% } else { %>
-                    <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" value="<%= row.value %>">
-                  <% } %>
-                </td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-      <p class="mt-3"><button class="np-btn np-btn-primary" type="submit">Save Changes</button></p>
-    </form>
-  </main>
-</div>
-<%- include('../partials/media-modal') %>
-<%- include('../partials/footer') %>
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header"><h1>General Settings</h1></div>
+    <%- include('../partials/settings-nav') %>
+    <form method="post" action="/admin/settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="np-list-table-wrap">
+        <table class="np-form-table">
+          <tbody>
+            <% rows.forEach(function(row) { %>
+              <tr>
+                <th scope="row"><label for="setting-<%= row.key %>"><%= row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }) %></label></th>
+                <td>
+                  <% if (['site_logo','favicon'].includes(row.key)) { %>
+                    <%- include('../partials/image-upload-field', {
+                      label: row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }),
+                      name: row.key,
+                      fileName: row.key + '_file',
+                      value: row.value
+                    }) %>
+                    <p class="np-help-text">Upload an image or choose one from the Media Library.</p>
+                  <% } else { %>
+                    <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" value="<%= row.value %>">
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-3"><button class="np-btn np-btn-primary" type="submit">Save Changes</button></p>
+    </form>
+  </main>
+</div>
+<%- include('../partials/media-modal') %>
+<%- include('../partials/footer') %>

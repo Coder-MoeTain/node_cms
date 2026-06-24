@@ -10,9 +10,10 @@ const morgan = require('morgan');
 const expressLayouts = require('express-ejs-layouts');
 
 const appConfig = require('./config/app');
+const pkg = require('./package.json');
 const sequelize = require('./config/database');
 const models = require('./models');
-const { applySecurityMiddleware } = require('./middleware/security');
+const { applySecurityMiddleware, apiLimiter } = require('./middleware/security');
 const { csrfProtection } = require('./middleware/csrf');
 const { loadSiteContext } = require('./middleware/siteContext');
 const { wafMiddleware } = require('./middleware/waf');
@@ -25,6 +26,7 @@ const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
 const apiRoutes = require('./routes/api');
 const healthRoutes = require('./routes/health');
+const { apiAuth } = require('./middleware/apiAuth');
 
 const app = express();
 const sessionStore = new SequelizeStore({ db: sequelize });
@@ -42,6 +44,7 @@ app.use(compression());
 app.use(morgan(appConfig.env === 'development' ? 'dev' : 'combined'));
 applySecurityMiddleware(app);
 app.use('/vendor/tinymce', express.static(path.join(__dirname, 'node_modules', 'tinymce')));
+app.use('/vendor/bootstrap-icons', express.static(path.join(__dirname, 'node_modules', 'bootstrap-icons')));
 app.use('/themes', express.static(path.join(__dirname, 'themes')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -71,6 +74,7 @@ app.use(flash());
 app.use(csrfProtection);
 app.use((req, res, next) => {
   res.locals.csrfToken = req.csrfToken();
+  res.locals.npVersion = pkg.version;
   res.locals.currentUser = req.session.user || null;
   res.locals.can = (permission) => policy.can(req.session.user, permission);
   res.locals.canAny = (permissions) => policy.hasAnyPermission(req.session.user, permissions);
@@ -91,7 +95,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/admin', adminRoutes);
-app.use('/api', apiRoutes);
+app.use('/api', apiLimiter, apiAuth, apiRoutes);
 app.use('/', publicRoutes);
 
 app.use(notFoundMiddleware);

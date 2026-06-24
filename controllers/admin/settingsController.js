@@ -124,7 +124,9 @@ async function updateThemeSettings(req, res, next) {
       site_layout: req.body.site_layout,
       dark_mode: req.body.dark_mode === 'on',
       logo,
-      favicon
+      favicon,
+      custom_css: req.body.custom_css || '',
+      custom_js: req.body.custom_js || ''
     });
     req.flash('success', 'Theme settings updated.');
     return res.redirect('/admin/themes');

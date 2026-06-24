@@ -113,12 +113,26 @@ async function loadWafConfig() {
   return cache;
 }
 
+const appConfig = require('../config/app');
+
+function isLocalRequest(req) {
+  const ip = req.ip || '';
+  return ip === '127.0.0.1'
+    || ip === '::1'
+    || ip === '::ffff:127.0.0.1'
+    || ip.startsWith('::ffff:127.0.0.1');
+}
+
 function routeLimitFor(req) {
   const routeType = getRouteType(req);
+  const isDev = appConfig.env === 'development' || appConfig.env === 'test';
+  if (isDev && isLocalRequest(req)) {
+    return { routeKey: routeType, max: 10000, windowMs: 15 * 60 * 1000 };
+  }
   if (routeType === 'admin_login') return { routeKey: 'admin_login', max: 8, windowMs: 15 * 60 * 1000 };
-  if (routeType === 'admin') return { routeKey: 'admin', max: 180, windowMs: 15 * 60 * 1000 };
-  if (routeType === 'public_mutation') return { routeKey: `strict:${req.path}`, max: 40, windowMs: 15 * 60 * 1000 };
-  return { routeKey: 'public', max: 300, windowMs: 15 * 60 * 1000 };
+  if (routeType === 'admin') return { routeKey: 'admin', max: 600, windowMs: 15 * 60 * 1000 };
+  if (routeType === 'public_mutation') return { routeKey: `strict:${req.path}`, max: 60, windowMs: 15 * 60 * 1000 };
+  return { routeKey: 'public', max: 1000, windowMs: 15 * 60 * 1000 };
 }
 
 async function checkWafRateLimit(req, ipAddress) {
@@ -145,11 +159,12 @@ async function checkWafRateLimit(req, ipAddress) {
 
   const requestCount = Number(row.request_count) + 1;
   const updates = { request_count: requestCount, last_request_at: now };
-  if (requestCount > limit.max) {
-    updates.blocked_until = new Date(now.getTime() + limit.windowMs);
+  const exceeded = requestCount > limit.max;
+  if (exceeded) {
+    updates.blocked_until = new Date(now.getTime() + Math.min(limit.windowMs, 5 * 60 * 1000));
   }
   await row.update(updates);
-  return { exceeded: requestCount > limit.max, routeKey: limit.routeKey, blockedUntil: updates.blocked_until };
+  return { exceeded, routeKey: limit.routeKey, blockedUntil: updates.blocked_until };
 }
 
 function ruleEnabledBySettings(rule, settings) {

@@ -61,21 +61,35 @@ async function post(req, res, next) {
     });
     if (!row) return res.status(404).render('errors/404', { title: 'Post Not Found' });
     await row.increment('views_count');
-    const relatedPosts = await Post.findAll({
-      where: {
-        id: { [Op.ne]: row.id },
-        status: 'published',
-        ...(row.category_id ? { category_id: row.category_id } : {})
-      },
-      include: publishedPostInclude,
-      limit: 3,
-      order: [['published_at', 'DESC']]
-    });
+    const [relatedPosts, prevPost, nextPost] = await Promise.all([
+      Post.findAll({
+        where: {
+          id: { [Op.ne]: row.id },
+          status: 'published',
+          ...(row.category_id ? { category_id: row.category_id } : {})
+        },
+        include: publishedPostInclude,
+        limit: 3,
+        order: [['published_at', 'DESC']]
+      }),
+      Post.findOne({
+        where: { status: 'published', published_at: { [Op.lt]: row.published_at || row.created_at } },
+        order: [['published_at', 'DESC']],
+        attributes: ['title', 'slug']
+      }),
+      Post.findOne({
+        where: { status: 'published', published_at: { [Op.gt]: row.published_at || row.created_at } },
+        order: [['published_at', 'ASC']],
+        attributes: ['title', 'slug']
+      })
+    ]);
     return renderTheme(res, 'post', {
       title: row.title,
       seo: meta(row.seo_title || row.title, row.seo_description || row.excerpt, row.og_image || row.featured_image),
       post: row,
       relatedPosts,
+      prevPost,
+      nextPost,
       schema: postSchema(row, `${req.protocol}://${req.get('host')}${req.originalUrl}`)
     });
   } catch (error) {

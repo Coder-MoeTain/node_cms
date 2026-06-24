@@ -7,12 +7,20 @@
   const val = (name, fallback = '') => record[name] == null ? fallback : record[name];
   const selectedTags = record.Tags ? record.Tags.map((tag) => String(tag.id)) : [];
   const selectedPermissions = record.Permissions ? record.Permissions.map((permission) => String(permission.id)) : [];
+  let publishedAtValue = '';
+  if (record.published_at) {
+    const d = new Date(record.published_at);
+    publishedAtValue = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+  const previewUrl = isEdit && val('slug') && val('status') === 'published'
+    ? `/${resource === 'pages' ? 'page' : 'post'}/${val('slug')}`
+    : '';
 %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <form method="post" action="<%= action %>" enctype="multipart/form-data">
+    <form method="post" action="<%= action %>" enctype="multipart/form-data" data-editor-form>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div>
         <% if (['posts','pages'].includes(resource)) { %>
@@ -22,7 +30,17 @@
           <div class="editor-layout">
             <div class="editor-main">
               <input class="np-editor-title" name="title" value="<%= val('title') %>" placeholder="Add title" required data-slug-source>
-              <div class="np-permalink">Permalink: <a href="#" data-permalink-preview data-base="<%= resource === 'pages' ? '/page/' : '/post/' %>"><%= resource === 'pages' ? '/page/' : '/post/' %><%= val('slug') || 'sample-post' %></a></div>
+              <div class="np-permalink" data-permalink-wrap>
+                <span>Permalink:</span>
+                <span data-permalink-display><%= resource === 'pages' ? '/page/' : '/post/' %><%= val('slug') || 'sample-post' %></span>
+                <button class="np-btn np-btn-link np-btn-small" type="button" data-permalink-edit>Edit</button>
+                <span class="permalink-edit d-none" data-permalink-editor>
+                  <span><%= resource === 'pages' ? '/page/' : '/post/' %></span>
+                  <input class="form-control form-control-sm d-inline-block" style="width:220px" type="text" data-permalink-input value="<%= val('slug') %>">
+                  <button class="np-btn np-btn-link np-btn-small" type="button" data-permalink-save>OK</button>
+                  <button class="np-btn np-btn-link np-btn-small" type="button" data-permalink-cancel>Cancel</button>
+                </span>
+              </div>
               <input type="hidden" name="slug" value="<%= val('slug') %>" data-slug-target>
               <div class="mb-3"><textarea class="form-control rich-editor" name="content" rows="14"><%- val('content') %></textarea></div>
               <div class="np-metabox">
@@ -42,10 +60,12 @@
                 <div class="np-metabox-header">Publish</div>
                 <div class="np-metabox-body">
                   <div class="mb-2"><label class="form-label">Status</label><select class="form-select" name="status"><% ['draft','published','private','scheduled'].forEach(function(status) { if (status !== 'published' || can('publish_posts')) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status.charAt(0).toUpperCase() + status.slice(1) %></option><% } }) %></select></div>
-                  <div class="mb-3"><label class="form-label">Publish</label><input class="form-control" name="published_at" type="datetime-local"></div>
+                  <div class="mb-3"><label class="form-label">Publish</label><input class="form-control" name="published_at" type="datetime-local" value="<%= publishedAtValue %>"></div>
                   <div class="d-flex flex-wrap gap-2">
+                    <button class="np-btn np-btn-secondary" type="submit" data-save-draft>Save Draft</button>
+                    <% if (previewUrl) { %><a class="np-btn np-btn-secondary" href="<%= previewUrl %>" target="_blank" rel="noopener">Preview</a><% } %>
                     <button class="np-btn np-btn-primary" type="submit"><%= isEdit ? 'Update' : 'Publish' %></button>
-                    <a class="np-btn np-btn-secondary" href="/admin/<%= resource %>">Cancel</a>
+                    <a class="np-btn np-btn-link" href="/admin/<%= resource %>">Cancel</a>
                   </div>
                 </div>
               </div>

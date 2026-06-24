@@ -46,11 +46,11 @@ router.use(requireAuth, activityLogMiddleware('admin'));
 router.get('/', requireAuth, can('view_dashboard'), dashboard.dashboard);
 router.post('/quick-draft', requireAuth, canAny(['manage_posts', 'create_posts']), dashboard.quickDraft);
 
-router.get('/media', requireAuth, can('manage_media'), media.index);
-router.post('/media/upload', requireAuth, can('manage_media'), upload.array('files', 20), media.upload);
-router.get('/media/:id/edit', requireAuth, can('manage_media'), media.edit);
-router.put('/media/:id', requireAuth, can('manage_media'), upload.single('file'), media.update);
-router.delete('/media/:id', requireAuth, can('manage_media'), media.destroy);
+router.get('/media', requireAuth, canAny(['manage_media', 'upload_media']), media.index);
+router.post('/media/upload', requireAuth, canAny(['manage_media', 'upload_media']), upload.array('files', 20), media.upload);
+router.get('/media/:id/edit', requireAuth, canAny(['manage_media', 'upload_media']), media.edit);
+router.put('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), upload.single('file'), media.update);
+router.delete('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), media.destroy);
 
 router.get('/plugins', requireAuth, can('manage_plugins'), plugins.index);
 router.post('/plugins/:slug/activate', requireAuth, can('manage_plugins'), plugins.activate);
@@ -99,7 +99,7 @@ function resourcePermission(req, res, next) {
   try {
     const actionMap = {
       GET: req.path.endsWith('/create') ? 'create' : req.path.endsWith('/edit') ? 'edit' : 'index',
-      POST: 'store',
+      POST: req.path.endsWith('/bulk') ? 'bulk' : 'store',
       PUT: 'update',
       DELETE: 'destroy'
     };
@@ -113,6 +113,7 @@ function resourcePermission(req, res, next) {
 }
 
 router.get('/:resource', requireAuth, resourcePermission, crud.index);
+router.post('/:resource/bulk', requireAuth, resourcePermission, crud.bulkDestroy);
 router.get('/:resource/create', requireAuth, resourcePermission, crud.create);
 router.post('/:resource', requireAuth, resourcePermission, crudImageUpload, crud.store);
 router.get('/:resource/:id/edit', requireAuth, resourcePermission, crud.edit);

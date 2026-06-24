@@ -12,5 +12,6 @@ module.exports = {
   adminSessionTimeoutMinutes: Number(process.env.ADMIN_SESSION_TIMEOUT_MINUTES || 60),
   trustProxy: process.env.TRUST_PROXY === 'true' ? 1 : false,
   corsOrigin: process.env.CORS_ORIGIN || process.env.APP_URL || 'http://localhost:3000',
-  uploadsQuarantine: process.env.UPLOADS_QUARANTINE === 'true'
+  uploadsQuarantine: process.env.UPLOADS_QUARANTINE === 'true',
+  apiKey: process.env.API_KEY || ''
 };

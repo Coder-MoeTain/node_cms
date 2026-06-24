@@ -193,3 +193,96 @@ document.querySelectorAll('[data-open-media-gallery]').forEach((button) => {
     loadMediaGallery();
   });
 });
+
+document.querySelectorAll('[data-copy-url]').forEach((button) => {
+  button.addEventListener('click', () => {
+    navigator.clipboard.writeText(button.dataset.copyUrl || '');
+    button.textContent = 'Copied';
+    setTimeout(() => { button.textContent = 'Copy URL'; }, 1500);
+  });
+});
+
+document.querySelectorAll('.toast.show').forEach((toast) => {
+  setTimeout(() => toast.classList.remove('show'), 4000);
+});
+
+const selectAll = document.querySelector('[data-select-all]');
+const rowChecks = () => [...document.querySelectorAll('.row-select')];
+selectAll?.addEventListener('change', () => {
+  rowChecks().forEach((box) => { box.checked = selectAll.checked; });
+  updateBulkState();
+});
+rowChecks().forEach((box) => box.addEventListener('change', updateBulkState));
+
+function updateBulkState() {
+  const selected = rowChecks().filter((box) => box.checked);
+  const bulkAction = document.querySelector('[data-bulk-action]');
+  const bulkApply = document.querySelector('[data-bulk-apply]');
+  const enabled = selected.length > 0;
+  if (bulkAction) bulkAction.disabled = !enabled;
+  if (bulkApply) bulkApply.disabled = !enabled;
+}
+
+document.querySelector('[data-bulk-apply]')?.addEventListener('click', () => {
+  const action = document.querySelector('[data-bulk-action]')?.value;
+  const selected = rowChecks().filter((box) => box.checked);
+  if (!action || !selected.length) return;
+  if (action === 'delete' && confirm(`Move ${selected.length} item(s) to trash?`)) {
+    const form = document.getElementById('bulk-form');
+    if (form) {
+      form.querySelectorAll('input[name="ids"]').forEach((input) => input.remove());
+      selected.forEach((box) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ids';
+        input.value = box.value;
+        form.appendChild(input);
+      });
+      form.submit();
+      return;
+    }
+    selected.forEach((box) => {
+      const rowForm = box.closest('tr')?.querySelector('form[data-confirm]');
+      if (rowForm) rowForm.requestSubmit();
+    });
+  }
+});
+
+function syncThemePreview() {
+  const preview = document.querySelector('[data-theme-preview]');
+  if (!preview) return;
+  const primary = document.querySelector('[data-preview-primary]')?.value || '#2271b1';
+  const secondary = document.querySelector('[data-preview-secondary]')?.value || '#50575e';
+  const bg = document.querySelector('[data-preview-bg]')?.value || '#ffffff';
+  const text = document.querySelector('[data-preview-text]')?.value || '#1d2327';
+  preview.style.setProperty('--preview-primary', primary);
+  preview.style.setProperty('--preview-secondary', secondary);
+  preview.style.setProperty('--preview-bg', bg);
+  preview.style.setProperty('--preview-text', text);
+  preview.querySelector('[data-preview-header]')?.style.setProperty('background', primary);
+  preview.querySelector('[data-preview-heading]')?.style.setProperty('color', primary);
+  preview.querySelector('[data-preview-button]')?.style.setProperty('background', primary);
+  preview.querySelector('[data-preview-button]')?.style.setProperty('border-color', primary);
+}
+
+document.querySelectorAll('[data-preview-primary], [data-preview-secondary], [data-preview-bg], [data-preview-text]').forEach((input) => {
+  input.addEventListener('input', syncThemePreview);
+});
+
+document.querySelectorAll('[data-theme-preset]').forEach((button) => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('[data-theme-preset]').forEach((item) => item.classList.remove('active'));
+    button.classList.add('active');
+    const primary = document.querySelector('[data-preview-primary]');
+    const secondary = document.querySelector('[data-preview-secondary]');
+    const bg = document.querySelector('[data-preview-bg]');
+    const text = document.querySelector('[data-preview-text]');
+    if (primary) primary.value = button.dataset.primary;
+    if (secondary) secondary.value = button.dataset.secondary;
+    if (bg) bg.value = button.dataset.bg;
+    if (text) text.value = button.dataset.text;
+    syncThemePreview();
+  });
+});
+
+syncThemePreview();

@@ -2,12 +2,13 @@
 <%- include('../partials/sidebar') %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
-  <main class="admin-content">
+  <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <div><h1>Themes</h1><p class="text-muted mb-0">Discover installed themes and customize the active theme.</p></div>
-      <a class="btn btn-outline-primary" href="/admin/themes/editor">Open Theme Editor</a>
+    <div class="np-page-header">
+      <h1>Themes</h1>
+      <a class="np-btn np-btn-secondary" href="/admin/themes/editor">Customize</a>
     </div>
+    <%- include('../partials/settings-nav') %>
     <div class="row g-3 mb-3">
       <% themes.forEach(function(theme) { %>
         <div class="col-md-4">
@@ -44,7 +45,7 @@
         <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Favicon', name: 'favicon', fileName: 'favicon_file', value: themeSetting.favicon || '' }) %></div>
         <div class="col-12"><label class="form-check"><input class="form-check-input" name="dark_mode" type="checkbox" <%= themeSetting.dark_mode ? 'checked' : '' %>> Enable dark mode</label></div>
       </div>
-      <div class="card-footer"><button class="btn btn-primary">Save Theme Settings</button></div>
+      <div class="card-footer"><button class="np-btn np-btn-primary" type="submit">Save Theme Settings</button></div>
     </form>
   </main>
 </div>
