@@ -1,12 +1,34 @@
-# NodePress CMS
+<p align="center">
+  <img src="docs/assets/nodepress-cover.svg" alt="NodePress CMS cover" width="100%">
+</p>
 
-![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white)
-![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-![Sequelize](https://img.shields.io/badge/ORM-Sequelize-52B0E7?style=for-the-badge&logo=sequelize&logoColor=white)
-![Bootstrap](https://img.shields.io/badge/UI-Bootstrap_5-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-black?style=for-the-badge)
+<h1 align="center">NodePress CMS</h1>
 
-A WordPress-inspired blog and content management system built with Node.js, Express, MySQL, Sequelize, EJS, and Bootstrap 5. NodePress CMS includes a modern space-agency inspired public theme, admin dashboard, media library, role permissions, security controls, theme settings, dynamic menus, comments, SEO helpers, and translation buttons.
+<p align="center">
+  A WordPress-inspired publishing platform built with Node.js, Express, MySQL, Sequelize, EJS, Bootstrap 5, and a modern space-agency inspired interface.
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a>
+  ·
+  <a href="#highlights">Features</a>
+  ·
+  <a href="#project-structure">Structure</a>
+  ·
+  <a href="#deployment">Deployment</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
+  <img src="https://img.shields.io/badge/ORM-Sequelize-52B0E7?style=for-the-badge&logo=sequelize&logoColor=white" alt="Sequelize">
+  <img src="https://img.shields.io/badge/UI-Bootstrap_5-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white" alt="Bootstrap">
+  <img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="License">
+</p>
+
+---
+
+NodePress CMS is a complete blog and content management system with a public website, admin dashboard, media library, theme settings, role permissions, SEO helpers, security tools, comments, dynamic menus, and flag-only translation controls.
 
 ## Preview
 
@@ -15,24 +37,38 @@ Public Site  -> http://localhost:3000
 Admin Panel  -> http://localhost:3000/admin/login
 ```
 
-> Add screenshots here when publishing to GitHub:
->
-> `docs/screenshots/home.png`
-> `docs/screenshots/admin-dashboard.png`
-> `docs/screenshots/post-editor.png`
+<p align="center">
+  <img src="docs/assets/public-preview.svg" alt="NodePress public website preview" width="49%">
+  <img src="docs/assets/admin-preview.svg" alt="NodePress admin dashboard preview" width="49%">
+</p>
 
 ## Highlights
 
-- Modern public website with home, blog, post detail, category, tag, search, contact, sitemap, and robots.txt pages.
-- WordPress-like admin panel with dashboard, posts, pages, categories, tags, media, menus, banners, sliders, themes, users, roles, settings, and security tools.
-- Rich post editor powered by self-hosted TinyMCE.
-- Media uploads with Multer and file validation for images, videos, PDFs, and docs.
-- Role-based access control with Super Admin, Admin, Editor, Author, and Subscriber roles.
-- Theme customization with logo, favicon, colors, layouts, dark mode, sidebar placement, and blog layout settings.
-- Dynamic header/footer/sidebar menus with nested menu support.
-- Comments moderation, contact messages, SEO metadata, Open Graph image, breadcrumbs-ready layout, sitemap, and robots.txt.
-- Security features: bcrypt, sessions, Helmet, CSRF, rate limiting, blocked IPs, login attempts, activity logs, upload validation, and maintenance mode.
-- Flag-only translation buttons for Myanmar, Chinese, English, and Russian via Google Translate.
+| Area | What You Get |
+| --- | --- |
+| Public Website | Home, blog, post detail, category, tag, search, contact, sitemap, and robots.txt pages |
+| Admin Panel | Dashboard, posts, pages, media, menus, banners, sliders, themes, users, roles, settings, and security tools |
+| Publishing | Drafts, publishing, private posts, scheduled dates, SEO fields, featured images, video embeds, tags, categories |
+| Design System | Space-agency inspired frontend, modern admin dashboard, dynamic logo, favicon, colors, layout, dark mode |
+| Media Library | Upload images, videos, PDFs, docs, copy URLs, and reuse assets in posts and pages |
+| Security | Sessions, bcrypt, Helmet, CSRF, rate limiting, upload validation, blocked IPs, login attempts, activity logs |
+| Internationalization | Flag-only translation buttons for Myanmar, Chinese, English, and Russian |
+
+## Visual Experience
+
+NodePress ships with a polished public theme and a matching admin interface.
+
+<p align="center">
+  <img src="docs/assets/public-preview.svg" alt="Public website mockup" width="82%">
+</p>
+
+The public website uses dynamic menus, hero sliders, banners, blog cards, sidebar widgets, footer menus, logo settings, and translation controls.
+
+<p align="center">
+  <img src="docs/assets/admin-preview.svg" alt="Admin dashboard mockup" width="82%">
+</p>
+
+The admin area includes dashboard stats, content management, media uploads, user roles, theme controls, security settings, and site configuration.
 
 ## Tech Stack
 
