@@ -9,17 +9,11 @@
     </div>
     <%- include('../partials/settings-nav') %>
 
-    <div class="np-widget">
-      <div class="np-widget-header"><span>Database Backup</span></div>
+    <div class="np-widget mb-3">
+      <div class="np-widget-header"><span>Database</span></div>
       <div class="np-widget-body d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div>
-          <p class="mb-1"><strong>Create a MySQL backup</strong></p>
-          <p class="np-help-text mb-0">Backups are saved in <code>database/backups</code>. The server must have <code>mysqldump</code> in PATH.</p>
-        </div>
-        <form method="post" action="/admin/security/backup-database">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button class="np-btn np-btn-primary" type="submit"><i class="bi bi-database-down"></i> Backup Database</button>
-        </form>
+        <p class="np-help-text mb-0">Create backups, restore snapshots, or reset the database from <strong>Settings → Database</strong>.</p>
+        <a class="np-btn np-btn-secondary" href="/admin/settings/database"><i class="bi bi-database"></i> Open Database Tools</a>
       </div>
     </div>
 

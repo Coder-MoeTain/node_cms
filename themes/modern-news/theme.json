@@ -3,10 +3,22 @@
   "slug": "modern-news",
   "version": "1.0.0",
   "author": "NodePress",
-  "description": "A news-oriented child theme that inherits Classic Blog templates.",
+  "description": "News-oriented layout with centered header and list-style article feed.",
   "parent": "classic-blog",
   "layouts": ["default", "full-width", "sidebar-right"],
   "templates": ["home", "blog", "post", "page", "archive", "search"],
   "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
-  "screenshot": "/themes/modern-news/screenshot.svg"
+  "screenshot": "/themes/modern-news/screenshot.svg",
+  "defaults": {
+    "preset": "modern-indigo",
+    "primary_color": "#4f46e5",
+    "secondary_color": "#6366f1",
+    "background_color": "#ffffff",
+    "text_color": "#1e1b4b",
+    "header_layout": "centered",
+    "footer_layout": "four-columns",
+    "sidebar_position": "right",
+    "blog_layout": "list",
+    "site_layout": "full-width"
+  }
 }

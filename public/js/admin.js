@@ -94,12 +94,12 @@ if (window.tinymce) {
   tinymce.init({
     selector: '.rich-editor',
     license_key: 'gpl',
+    base_url: '/vendor/tinymce',
+    suffix: '.min',
     height: 420,
     menubar: false,
     plugins: 'link image media table lists code autoresize',
-    toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code',
-    content_css: false,
-    skin: false
+    toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code'
   });
 }
 

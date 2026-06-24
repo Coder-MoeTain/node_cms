@@ -1,0 +1,25 @@
+{
+  "name": "Dark Elegant",
+  "slug": "dark-elegant",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "Sophisticated dark theme with slate backgrounds and sky-blue accents.",
+  "parent": "classic-blog",
+  "layouts": ["default", "full-width"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "darkMode"],
+  "screenshot": "/themes/dark-elegant/screenshot.svg",
+  "defaults": {
+    "preset": "dark-slate",
+    "primary_color": "#38bdf8",
+    "secondary_color": "#64748b",
+    "background_color": "#0f172a",
+    "text_color": "#f8fafc",
+    "header_layout": "minimal",
+    "footer_layout": "minimal",
+    "sidebar_position": "none",
+    "blog_layout": "grid",
+    "site_layout": "full-width",
+    "dark_mode": true
+  }
+}

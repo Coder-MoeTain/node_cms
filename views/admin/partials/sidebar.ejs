@@ -76,6 +76,10 @@
       </div>
     <% } %>
 
+    <% if (can('manage_plugins')) { %>
+      <a class="nav-link <%= isActive('/admin/plugins') ? 'active' : '' %>" href="/admin/plugins"><i class="bi bi-plug"></i> Plugins</a>
+    <% } %>
+
     <% const usersActive = isAnyActive(['/admin/users','/admin/roles']); %>
     <% if (canAny(['manage_users','manage_roles'])) { %>
       <div class="nav-menu">
@@ -92,7 +96,7 @@
       </div>
     <% } %>
 
-    <% const toolsActive = isAnyActive(['/admin/messages','/admin/security']); %>
+    <% const toolsActive = isAnyActive(['/admin/messages','/admin/security','/admin/settings/database']); %>
     <% if (canAny(['manage_messages','manage_security','manage_settings'])) { %>
       <div class="nav-menu">
         <button class="nav-menu-toggle <%= toolsActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarTools" aria-expanded="<%= toolsActive ? 'true' : 'false' %>">
@@ -101,6 +105,7 @@
         <div id="sidebarTools" class="collapse <%= toolsActive ? 'show' : '' %>">
           <div class="nav-submenu">
             <% if (canAny(['manage_messages','manage_settings'])) { %><a class="nav-link <%= isActive('/admin/messages') ? 'active' : '' %>" href="/admin/messages">Messages</a><% } %>
+            <% if (canAny(['manage_settings','manage_security'])) { %><a class="nav-link <%= isActive('/admin/settings/database') ? 'active' : '' %>" href="/admin/settings/database">Database</a><% } %>
             <% if (can('manage_security')) { %><a class="nav-link <%= isActive('/admin/security') ? 'active' : '' %>" href="/admin/security">Backup &amp; Logs</a><% } %>
           </div>
         </div>
@@ -126,15 +131,15 @@
       </div>
     <% } %>
 
-    <% if (canAny(['manage_settings','manage_plugins'])) { %>
+    <% if (can('manage_settings')) { %>
       <div class="nav-menu">
-        <button class="nav-menu-toggle <%= isAnyActive(['/admin/settings','/admin/plugins']) ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarSettings" aria-expanded="<%= isAnyActive(['/admin/settings','/admin/plugins']) ? 'true' : 'false' %>">
+        <button class="nav-menu-toggle <%= isAnyActive(['/admin/settings','/admin/settings/database']) ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarSettings" aria-expanded="<%= isAnyActive(['/admin/settings','/admin/settings/database']) ? 'true' : 'false' %>">
           <span><i class="bi bi-gear"></i> Settings</span><i class="bi bi-chevron-down"></i>
         </button>
-        <div id="sidebarSettings" class="collapse <%= isAnyActive(['/admin/settings','/admin/plugins']) ? 'show' : '' %>">
+        <div id="sidebarSettings" class="collapse <%= isAnyActive(['/admin/settings','/admin/settings/database']) ? 'show' : '' %>">
           <div class="nav-submenu">
-            <% if (can('manage_settings')) { %><a class="nav-link <%= isActive('/admin/settings') ? 'active' : '' %>" href="/admin/settings">General</a><% } %>
-            <% if (can('manage_plugins')) { %><a class="nav-link <%= isActive('/admin/plugins') ? 'active' : '' %>" href="/admin/plugins">Plugins</a><% } %>
+            <a class="nav-link <%= isActive('/admin/settings') && currentPath !== '/admin/settings/database' ? 'active' : '' %>" href="/admin/settings">General</a>
+            <% if (canAny(['manage_settings','manage_security'])) { %><a class="nav-link <%= isActive('/admin/settings/database') ? 'active' : '' %>" href="/admin/settings/database">Database</a><% } %>
           </div>
         </div>
       </div>

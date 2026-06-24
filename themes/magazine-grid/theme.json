@@ -1,0 +1,24 @@
+{
+  "name": "Magazine Grid",
+  "slug": "magazine-grid",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "Magazine-style masonry grid with warm tones and full-width hero sections.",
+  "parent": "classic-blog",
+  "layouts": ["default", "full-width"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "screenshot": "/themes/magazine-grid/screenshot.svg",
+  "defaults": {
+    "preset": "warm-orange",
+    "primary_color": "#d97706",
+    "secondary_color": "#78716c",
+    "background_color": "#fffbeb",
+    "text_color": "#292524",
+    "header_layout": "centered",
+    "footer_layout": "simple",
+    "sidebar_position": "none",
+    "blog_layout": "masonry",
+    "site_layout": "full-width"
+  }
+}

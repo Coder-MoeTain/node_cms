@@ -1,0 +1,1 @@
+Education Campus uses navy and gold academic colors with a left-sidebar layout for departments and news.

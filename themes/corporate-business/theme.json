@@ -1,0 +1,24 @@
+{
+  "name": "Corporate Business",
+  "slug": "corporate-business",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "Professional corporate theme with classic sidebar and trustworthy green accents.",
+  "parent": "classic-blog",
+  "layouts": ["default", "sidebar-right", "full-width"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "screenshot": "/themes/corporate-business/screenshot.svg",
+  "defaults": {
+    "preset": "clean-green",
+    "primary_color": "#008a20",
+    "secondary_color": "#50575e",
+    "background_color": "#ffffff",
+    "text_color": "#1d2327",
+    "header_layout": "standard",
+    "footer_layout": "four-columns",
+    "sidebar_position": "right",
+    "blog_layout": "grid",
+    "site_layout": "full-width"
+  }
+}

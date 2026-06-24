@@ -1,0 +1,24 @@
+{
+  "name": "Creative Studio",
+  "slug": "creative-studio",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "Bold creative agency theme with purple-pink palette and masonry showcase layout.",
+  "parent": "classic-blog",
+  "layouts": ["default", "full-width"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "screenshot": "/themes/creative-studio/screenshot.svg",
+  "defaults": {
+    "preset": "modern-indigo",
+    "primary_color": "#7c3aed",
+    "secondary_color": "#ec4899",
+    "background_color": "#faf5ff",
+    "text_color": "#1e1b4b",
+    "header_layout": "centered",
+    "footer_layout": "simple",
+    "sidebar_position": "none",
+    "blog_layout": "masonry",
+    "site_layout": "full-width"
+  }
+}

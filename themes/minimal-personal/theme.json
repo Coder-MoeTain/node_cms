@@ -3,10 +3,22 @@
   "slug": "minimal-personal",
   "version": "1.0.0",
   "author": "NodePress",
-  "description": "A minimalist child theme for personal publishing.",
+  "description": "Clean minimalist theme for personal blogs and portfolios.",
   "parent": "classic-blog",
   "layouts": ["default", "full-width"],
   "templates": ["home", "blog", "post", "page", "archive", "search"],
   "supports": ["logo", "favicon", "colors", "menus", "darkMode"],
-  "screenshot": "/themes/minimal-personal/screenshot.svg"
+  "screenshot": "/themes/minimal-personal/screenshot.svg",
+  "defaults": {
+    "preset": "minimal-gray",
+    "primary_color": "#50575e",
+    "secondary_color": "#646970",
+    "background_color": "#f6f7f7",
+    "text_color": "#1d2327",
+    "header_layout": "minimal",
+    "footer_layout": "minimal",
+    "sidebar_position": "none",
+    "blog_layout": "list",
+    "site_layout": "full-width"
+  }
 }

@@ -17,6 +17,7 @@ const {
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { meta, postSchema, websiteSchema } = require('../../utils/seoHelper');
 const appConfig = require('../../config/app');
+const pluginLoader = require('../../utils/pluginLoader');
 const themeLoader = require('../../utils/themeLoader');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
@@ -303,7 +304,7 @@ async function comment(req, res, next) {
       req.flash('error', 'Comments are closed.');
       return res.redirect('back');
     }
-    await Comment.create({
+    const commentPayload = {
       post_id: postRow.id,
       name: req.body.name,
       email: req.body.email,
@@ -312,7 +313,13 @@ async function comment(req, res, next) {
       ip_address: req.ip,
       user_agent: req.get('user-agent'),
       status: 'pending'
-    });
+    };
+    const allowed = await pluginLoader.applyHook('beforeCommentCreate', commentPayload, { req, res, post: postRow });
+    if (!allowed) {
+      req.flash('error', 'Your comment was flagged as spam.');
+      return res.redirect('back');
+    }
+    await Comment.create(allowed);
     req.flash('success', 'Comment submitted for moderation.');
     return res.redirect(`/post/${postRow.slug}`);
   } catch (error) {

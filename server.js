@@ -16,6 +16,7 @@ const models = require('./models');
 const { applySecurityMiddleware, apiLimiter } = require('./middleware/security');
 const { csrfProtection } = require('./middleware/csrf');
 const { loadSiteContext } = require('./middleware/siteContext');
+const pluginHooks = require('./middleware/pluginHooks');
 const { wafMiddleware } = require('./middleware/waf');
 const errorHandler = require('./middleware/errorHandler');
 const notFoundMiddleware = require('./middleware/notFound');
@@ -29,7 +30,7 @@ const healthRoutes = require('./routes/health');
 const { apiAuth } = require('./middleware/apiAuth');
 
 const app = express();
-const sessionStore = new SequelizeStore({ db: sequelize });
+const sessionStore = new SequelizeStore({ db: sequelize, tableName: 'sessions' });
 
 if (appConfig.env === 'production' && appConfig.sessionSecret === 'change-this-long-random-secret') {
   throw new Error('SESSION_SECRET must be set to a strong value in production.');
@@ -44,6 +45,7 @@ app.use(compression());
 app.use(morgan(appConfig.env === 'development' ? 'dev' : 'combined'));
 applySecurityMiddleware(app);
 app.use('/vendor/tinymce', express.static(path.join(__dirname, 'node_modules', 'tinymce')));
+app.use('/vendor/bootstrap', express.static(path.join(__dirname, 'node_modules', 'bootstrap', 'dist')));
 app.use('/vendor/bootstrap-icons', express.static(path.join(__dirname, 'node_modules', 'bootstrap-icons')));
 app.use('/themes', express.static(path.join(__dirname, 'themes')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
@@ -86,6 +88,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(loadSiteContext);
+app.use(pluginHooks);
 app.use(wafMiddleware);
 app.use((req, res, next) => {
   if (!req.path.startsWith('/admin') && res.locals.siteSettings.maintenance_mode === 'true') {

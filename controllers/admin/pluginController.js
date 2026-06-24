@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { Plugin, PluginSetting, PluginMigration } = require('../../models');
 const pluginLoader = require('../../utils/pluginLoader');
+const { resolvePluginSettings, seedPluginDefaults } = require('../../utils/pluginSettings');
 const { extractZipArchive } = require('../../utils/packageArchive');
 
 async function index(req, res, next) {
@@ -34,7 +35,9 @@ async function upload(req, res, next) {
 async function activate(req, res, next) {
   try {
     const slug = req.params.slug;
+    const plugin = await Plugin.findOne({ where: { slug } });
     await pluginLoader.runPluginMigrations(slug);
+    if (plugin) await seedPluginDefaults(plugin, plugin.manifest || {});
     await Plugin.update({ active: true }, { where: { slug } });
     await pluginLoader.loadActivePlugins(req.app);
     req.flash('success', 'Plugin activated.');
@@ -86,8 +89,9 @@ async function settings(req, res, next) {
     if (!plugin) return res.status(404).render('errors/404', { title: 'Plugin Not Found' });
 
     const manifest = plugin.manifest || {};
-    const settingsMap = {};
-    (plugin.settings || []).forEach((setting) => { settingsMap[setting.key] = setting.value; });
+    const storedMap = {};
+    (plugin.settings || []).forEach((setting) => { storedMap[setting.key] = setting.value; });
+    const settingsMap = resolvePluginSettings(storedMap, manifest);
 
     const fields = (manifest.settings || []).length
       ? manifest.settings
@@ -111,15 +115,29 @@ async function updateSettings(req, res, next) {
   try {
     const plugin = await Plugin.findOne({ where: { slug: req.params.slug } });
     if (!plugin) return res.status(404).render('errors/404', { title: 'Plugin Not Found' });
-    for (const [key, value] of Object.entries(req.body)) {
-      if (['_csrf', '_method'].includes(key)) continue;
+
+    const manifest = plugin.manifest || {};
+    const fields = manifest.settings || [];
+
+    for (const field of fields) {
+      if (!field.key) continue;
+      let value;
+      if (field.type === 'checkbox') {
+        value = req.body[field.key] === 'on' ? 'true' : 'false';
+      } else {
+        value = req.body[field.key];
+        if (value === undefined) continue;
+        if (Array.isArray(value)) value = value.join(',');
+      }
       await PluginSetting.upsert({
         plugin_id: plugin.id,
-        key,
-        value: Array.isArray(value) ? value.join(',') : value,
-        value_type: 'string'
+        key: field.key,
+        value: String(value ?? ''),
+        value_type: field.type === 'checkbox' ? 'boolean' : 'string'
       });
     }
+
+    if (plugin.active) await pluginLoader.loadActivePlugins(req.app);
     req.flash('success', 'Plugin settings saved.');
     return res.redirect(`/admin/plugins/${plugin.slug}/settings`);
   } catch (error) {

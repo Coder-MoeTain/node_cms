@@ -69,6 +69,7 @@
   --site-button-hover: var(--portal-primary-dark);
 }
 
+[data-theme-preset="classic-blue"],
 [data-theme-preset="wordpress-blue"] {
   --np-primary: #2271b1;
   --np-primary-hover: #135e96;

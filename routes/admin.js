@@ -25,6 +25,7 @@ const media = require('../controllers/admin/mediaController');
 const plugins = require('../controllers/admin/pluginController');
 const settings = require('../controllers/admin/settingsController');
 const security = require('../controllers/admin/securityController');
+const database = require('../controllers/admin/databaseController');
 const waf = require('../controllers/admin/wafController');
 
 const router = express.Router();
@@ -62,6 +63,11 @@ router.get('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugin
 router.put('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.updateSettings);
 
 router.get('/settings/media-gallery', requireAuth, can('manage_settings'), settings.mediaGallery);
+router.get('/settings/database', requireAuth, canAny(['manage_settings', 'manage_security']), database.index);
+router.post('/settings/database/backup', requireAuth, canAny(['manage_settings', 'manage_security']), database.createBackup);
+router.post('/settings/database/restore/:filename', requireAuth, canAny(['manage_settings', 'manage_security']), database.restoreBackup);
+router.delete('/settings/database/backup/:filename', requireAuth, canAny(['manage_settings', 'manage_security']), database.destroyBackup);
+router.post('/settings/database/reset', requireAuth, canAny(['manage_settings', 'manage_security']), database.resetDatabase);
 router.get('/settings', requireAuth, can('manage_settings'), settings.settings);
 router.put('/settings', requireAuth, can('manage_settings'), brandingImageUpload, settings.updateSettings);
 router.get('/themes', requireAuth, can('manage_themes'), settings.themes);

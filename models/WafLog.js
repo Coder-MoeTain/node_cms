@@ -22,7 +22,7 @@ module.exports = (sequelize) =>
     country: DataTypes.STRING(80),
     referer: DataTypes.TEXT,
     is_admin_route: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-    user_id: DataTypes.INTEGER.UNSIGNED,
+    user_id: DataTypes.INTEGER,
     response_status: DataTypes.INTEGER.UNSIGNED
   }, {
     tableName: 'waf_logs',

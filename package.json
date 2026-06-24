@@ -36,6 +36,7 @@
   "license": "MIT",
   "dependencies": {
     "bcrypt": "latest",
+    "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.13.1",
     "compression": "latest",
     "connect-flash": "latest",

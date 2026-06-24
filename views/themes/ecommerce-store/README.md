@@ -1,0 +1,1 @@
+E-Commerce Store features a boxed retail layout, monochrome styling, and product-grid blog presentation.

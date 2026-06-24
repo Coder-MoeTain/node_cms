@@ -1,83 +1,80 @@
-<% const cfg = portalConfig || {}; const hp = cfg.homepage || {}; const isMnp = themePreset === 'myanmar-portal'; %>
-<% if (hp.hero && sliders && sliders.length) { %>
-  <section class="portal-hero <%= isMnp ? 'portal-hero-mnp' : '' %>" id="portal-hero" aria-label="Featured slider">
-    <div id="homeSlider" class="carousel slide portal-hero-carousel" data-portal-carousel data-bs-ride="carousel">
-      <% if (sliders.length > 1) { %>
-        <div class="carousel-indicators portal-carousel-indicators">
-          <% sliders.forEach(function(slide, index) { %>
-            <button type="button" data-bs-target="#homeSlider" data-bs-slide-to="<%= index %>" class="<%= index === 0 ? 'active' : '' %>" aria-label="Slide <%= index + 1 %>" <%= index === 0 ? 'aria-current="true"' : '' %>></button>
-          <% }) %>
-        </div>
-      <% } %>
-      <div class="carousel-inner">
-        <% sliders.forEach(function(slide, index) { %>
-          <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-            <div class="hero-slide portal-hero-slide" style="<%= slide.image ? `--hero-image: url(${slide.image})` : '' %>">
-              <div class="portal-hero-shade" aria-hidden="true"></div>
-              <div class="container hero-content portal-hero-content">
-                <h1><%= slide.title %></h1>
-                <% if (slide.description) { %><p><%= slide.description %></p><% } %>
-                <% if (slide.button_text && slide.button_url) { %>
-                  <a class="site-btn portal-btn" href="<%= slide.button_url %>"><%= slide.button_text %></a>
-                <% } %>
-              </div>
-            </div>
-          </div>
-        <% }) %>
-      </div>
-      <% if (sliders.length > 1) { %>
-        <button class="carousel-control-prev portal-carousel-control" type="button" data-bs-target="#homeSlider" data-bs-slide="prev" aria-label="Previous slide"><span class="carousel-control-prev-icon"></span></button>
-        <button class="carousel-control-next portal-carousel-control" type="button" data-bs-target="#homeSlider" data-bs-slide="next" aria-label="Next slide"><span class="carousel-control-next-icon"></span></button>
-      <% } %>
-    </div>
-  </section>
-<% } else if (hp.hero) { %>
-  <section class="portal-hero portal-hero-fallback <%= isMnp ? 'portal-hero-mnp' : '' %>" id="portal-hero" aria-label="Welcome banner">
-    <div class="portal-hero-fallback-inner">
-      <div class="container portal-hero-content text-center">
-        <span class="portal-hero-badge">NodePress Portal</span>
-        <h1><%= siteSettings.site_title || 'NodePress CMS' %></h1>
-        <p><%= siteSettings.site_tagline || 'Your gateway to news, services, documents, and citizen information.' %></p>
-        <div class="portal-hero-actions">
-          <a class="site-btn portal-btn" href="/category/news">Latest news</a>
-          <a class="site-btn portal-btn portal-btn-outline" href="/contact">Contact us</a>
-        </div>
-      </div>
-    </div>
-  </section>
-<% } %>
-
-<% if (isMnp) { %><%- include('widgets/mnp-covid-strip') %><% } %>
-
-<% if (hp.quickLinks || hp.quickServices) { %><%- include('widgets/quick-services') %><% } %>
-<% if (hp.emergency) { %><%- include('widgets/emergency-contacts') %><% } %>
-
-<div class="container portal-home-grid py-4">
-  <div class="row g-4">
-    <% if (hp.latestNews) { %>
-      <div class="col-lg-6"><%- include('widgets/latest-news', { posts: latestNews || posts }) %></div>
-    <% } %>
-    <% if (hp.announcements) { %>
-      <div class="col-lg-6"><%- include('widgets/announcements', { posts: announcements || posts }) %></div>
-    <% } %>
-  </div>
-</div>
-
-<% if (hp.tendersJobs) { %><%- include('widgets/tenders-jobs', { tenderPosts: tenderPosts || [], jobPosts: jobPosts || [] }) %><% } %>
-
-<% if (hp.mobileApp) { %><%- include('widgets/mobile-app') %><% } %>
-
-<% if (hp.mediaGallery) { %><%- include('widgets/media-gallery', { mediaItems: mediaItems || [] }) %><% } %>
-
-<div class="container portal-home-grid pb-4">
-  <div class="row g-4">
-    <% if (hp.hotNews) { %>
-      <div class="col-lg-8"><%- include('widgets/hot-news', { posts: hotPosts || popularPosts || posts }) %></div>
-    <% } %>
-    <% if (hp.subscribe) { %>
-      <div class="col-lg-4"><%- include('widgets/subscribe') %></div>
-    <% } %>
-  </div>
-</div>
-
-<% if (hp.statistics) { %><%- include('widgets/stat-counters') %><% } %>
+<% const cfg = portalConfig || {}; const hp = cfg.homepage || {}; const isMnp = themePreset === 'myanmar-portal'; %>
+<% if (hp.hero && sliders && sliders.length) { %>
+  <section class="portal-hero <%= isMnp ? 'portal-hero-mnp' : '' %>" id="portal-hero" aria-label="Featured slider">
+    <div id="homeSlider" class="carousel slide portal-hero-carousel" data-portal-carousel data-bs-ride="carousel">
+      <% if (sliders.length > 1) { %>
+        <div class="carousel-indicators portal-carousel-indicators">
+          <% sliders.forEach(function(slide, index) { %>
+            <button type="button" data-bs-target="#homeSlider" data-bs-slide-to="<%= index %>" class="<%= index === 0 ? 'active' : '' %>" aria-label="Slide <%= index + 1 %>" <%= index === 0 ? 'aria-current="true"' : '' %>></button>
+          <% }) %>
+        </div>
+      <% } %>
+      <div class="carousel-inner">
+        <% sliders.forEach(function(slide, index) { %>
+          <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+            <div class="hero-slide portal-hero-slide" style="<%= slide.image ? `--hero-image: url(${slide.image})` : '' %>">
+              <div class="portal-hero-shade" aria-hidden="true"></div>
+              <div class="container hero-content portal-hero-content">
+                <h1><%= slide.title %></h1>
+                <% if (slide.description) { %><p><%= slide.description %></p><% } %>
+                <% if (slide.button_text && slide.button_url) { %>
+                  <a class="site-btn portal-btn" href="<%= slide.button_url %>"><%= slide.button_text %></a>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+      <% if (sliders.length > 1) { %>
+        <button class="carousel-control-prev portal-carousel-control" type="button" data-bs-target="#homeSlider" data-bs-slide="prev" aria-label="Previous slide"><span class="carousel-control-prev-icon"></span></button>
+        <button class="carousel-control-next portal-carousel-control" type="button" data-bs-target="#homeSlider" data-bs-slide="next" aria-label="Next slide"><span class="carousel-control-next-icon"></span></button>
+      <% } %>
+    </div>
+  </section>
+<% } else if (hp.hero) { %>
+  <section class="portal-hero portal-hero-fallback <%= isMnp ? 'portal-hero-mnp' : '' %>" id="portal-hero" aria-label="Welcome banner">
+    <div class="portal-hero-fallback-inner">
+      <div class="container portal-hero-content text-center">
+        <span class="portal-hero-badge">NodePress Portal</span>
+        <h1><%= siteSettings.site_title || 'NodePress CMS' %></h1>
+        <p><%= siteSettings.site_tagline || 'Your gateway to news, services, documents, and citizen information.' %></p>
+        <div class="portal-hero-actions">
+          <a class="site-btn portal-btn" href="/category/news">Latest news</a>
+          <a class="site-btn portal-btn portal-btn-outline" href="/contact">Contact us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<% if (hp.quickLinks || hp.quickServices) { %><%- include('widgets/quick-services') %><% } %>
+
+<div class="container portal-home-grid py-4">
+  <div class="row g-4">
+    <% if (hp.latestNews) { %>
+      <div class="col-lg-6"><%- include('widgets/latest-news', { posts: latestNews || posts }) %></div>
+    <% } %>
+    <% if (hp.announcements) { %>
+      <div class="col-lg-6"><%- include('widgets/announcements', { posts: announcements || posts }) %></div>
+    <% } %>
+  </div>
+</div>
+
+<% if (hp.tendersJobs) { %><%- include('widgets/tenders-jobs', { tenderPosts: tenderPosts || [], jobPosts: jobPosts || [] }) %><% } %>
+
+<% if (hp.mobileApp) { %><%- include('widgets/mobile-app') %><% } %>
+
+<% if (hp.mediaGallery) { %><%- include('widgets/media-gallery', { mediaItems: mediaItems || [] }) %><% } %>
+
+<div class="container portal-home-grid pb-4">
+  <div class="row g-4">
+    <% if (hp.hotNews) { %>
+      <div class="col-lg-8"><%- include('widgets/hot-news', { posts: hotPosts || popularPosts || posts }) %></div>
+    <% } %>
+    <% if (hp.subscribe) { %>
+      <div class="col-lg-4"><%- include('widgets/subscribe') %></div>
+    <% } %>
+  </div>
+</div>
+
+<% if (hp.statistics) { %><%- include('widgets/stat-counters') %><% } %>

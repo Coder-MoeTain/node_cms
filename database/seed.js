@@ -18,6 +18,7 @@ const {
   WafSetting,
   WafRule
 } = require('../models');
+const themeLoader = require('../utils/themeLoader');
 
 const permissions = [
   'view_dashboard',
@@ -126,9 +127,8 @@ const roles = [
   ['Subscriber', 'subscriber', []]
 ];
 
-async function seed() {
+async function seed({ closeConnection = false } = {}) {
   await sequelize.authenticate();
-  await sequelize.sync({ alter: true });
 
   const permissionRows = {};
   for (const slug of permissions) {
@@ -292,29 +292,30 @@ async function seed() {
     }
   });
 
-  const themes = [
-    ['Classic Blog Theme', 'classic-blog'],
-    ['Modern News Theme', 'modern-news'],
-    ['Minimal Personal Blog Theme', 'minimal-personal']
-  ];
-  for (const [name, slug] of themes) {
-    await Theme.findOrCreate({ where: { slug }, defaults: { name, active: slug === 'classic-blog' } });
+  const themes = themeLoader.discoverThemes();
+  for (const item of themes) {
+    const manifest = item.manifest;
+    await Theme.findOrCreate({
+      where: { slug: manifest.slug },
+      defaults: {
+        name: manifest.name,
+        description: manifest.description,
+        preview_image: manifest.screenshot || `/themes/${manifest.slug}/screenshot.svg`,
+        manifest,
+        parent_slug: manifest.parent || null,
+        active: manifest.slug === 'government-portal'
+      }
+    });
+    await ThemeSetting.findOrCreate({
+      where: { theme_name: manifest.slug },
+      defaults: themeLoader.buildThemeSettingDefaults(manifest.slug)
+    });
   }
 
-  await ThemeSetting.findOrCreate({ where: { theme_name: 'classic-blog' }, defaults: { active: true } });
-
-  const { buildPortalConfigBlock, MYANMAR_PORTAL_DEFAULTS } = require('../utils/portalConfig');
-  const portalCss = buildPortalConfigBlock(MYANMAR_PORTAL_DEFAULTS);
-  await ThemeSetting.update({
-    theme_name: 'classic-blog',
-    active: true,
-    header_layout: 'portal',
-    primary_color: '#006ba6',
-    secondary_color: '#ffcc00',
-    background_color: '#e8edf2',
-    text_color: '#1f2933',
-    custom_css: portalCss
-  }, { where: { theme_name: 'classic-blog' } });
+  await Theme.update({ active: false }, { where: {} });
+  await Theme.update({ active: true }, { where: { slug: 'government-portal' } });
+  await ThemeSetting.update({ active: false }, { where: {} });
+  await ThemeSetting.update({ active: true }, { where: { theme_name: 'government-portal' } });
 
   const { PORTAL_SETTING_DEFINITIONS } = require('../utils/portalSettings');
   const settings = {
@@ -371,10 +372,14 @@ async function seed() {
 
   console.log('Seed complete. Login with admin@example.com / Admin@12345');
   console.log('Author account: author@example.com / Author@12345');
-  await sequelize.close();
+  if (closeConnection) await sequelize.close();
 }
 
-seed().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (require.main === module) {
+  seed({ closeConnection: true }).catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
+
+module.exports = { seed };

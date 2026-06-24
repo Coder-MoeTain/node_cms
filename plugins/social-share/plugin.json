@@ -1,0 +1,16 @@
+{
+  "name": "Social Share",
+  "slug": "social-share",
+  "version": "1.2.0",
+  "description": "Add share buttons for blog posts on major social networks and email.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins"],
+  "settings": [
+    { "section": "Display", "key": "enabled", "label": "Show share buttons", "type": "checkbox", "default": "true", "description": "Display share links on single post pages." },
+    { "section": "Display", "key": "show_labels", "label": "Show network labels", "type": "checkbox", "default": "true", "description": "Show full network names instead of initials only." },
+    { "section": "Display", "key": "position", "label": "Button position", "type": "select", "default": "footer", "options": [{ "value": "footer", "label": "Below post content" }, { "value": "floating", "label": "Sticky footer bar" }], "description": "Where share buttons appear on post pages." },
+    { "section": "Display", "key": "button_style", "label": "Button style", "type": "select", "default": "pill", "options": [{ "value": "pill", "label": "Pill" }, { "value": "square", "label": "Square" }, { "value": "minimal", "label": "Minimal" }], "description": "Visual style for share buttons." },
+    { "section": "Networks", "key": "networks", "label": "Enabled networks", "type": "text", "default": "facebook,twitter,linkedin,email", "description": "Comma-separated: facebook, twitter, linkedin, email, telegram." },
+    { "section": "Networks", "key": "twitter_via", "label": "X/Twitter via handle", "type": "text", "default": "", "placeholder": "@yoursite", "description": "Optional @username appended to shared tweets." }
+  ]
+}

@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) =>
   sequelize.define('WafRule', {
+    id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING(160), allowNull: false },
     rule_key: { type: DataTypes.STRING(160), allowNull: false, unique: true },
     description: DataTypes.TEXT,

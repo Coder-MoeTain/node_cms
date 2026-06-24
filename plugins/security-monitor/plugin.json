@@ -1,10 +1,15 @@
 {
-  "name": "Security Monitor",
+  "name": "Upload Security",
   "slug": "security-monitor",
-  "version": "1.0.0",
-  "description": "Adds security dashboard hooks and upload monitoring extension points.",
+  "version": "1.3.0",
+  "description": "Block dangerous file uploads, enforce MIME allowlists, and limit upload sizes.",
   "author": "NodePress",
-  "permissions": ["manage_plugins", "manage_security"],
-  "adminMenu": true,
-  "settingsPage": true
+  "permissions": ["manage_plugins"],
+  "settings": [
+    { "section": "Upload Protection", "key": "block_executables", "label": "Block executable uploads", "type": "checkbox", "default": "true", "description": "Reject .exe, .bat, .cmd, .sh, .php, and .phtml files." },
+    { "section": "Upload Protection", "key": "max_upload_mb", "label": "Max upload size (MB)", "type": "number", "default": "10", "min": 1, "max": 100, "placeholder": "10", "description": "Reject uploads larger than this size." },
+    { "section": "Upload Protection", "key": "block_double_extension", "label": "Block double extensions", "type": "checkbox", "default": "true", "description": "Reject filenames like image.php.jpg or document.exe.png." },
+    { "section": "Upload Protection", "key": "allowed_mime_types", "label": "Allowed MIME types", "type": "text", "default": "image/jpeg,image/png,image/webp,image/gif,application/pdf", "description": "Comma-separated list. Leave empty to allow all non-blocked types." },
+    { "section": "Monitoring", "key": "log_blocked_uploads", "label": "Track blocked uploads", "type": "checkbox", "default": "true", "description": "Count blocked upload attempts in the dashboard widget." }
+  ]
 }
