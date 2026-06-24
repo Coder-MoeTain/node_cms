@@ -1,5 +1,3 @@
-USE nodepress_cms;
-
 -- Non-destructive compatibility migration for WordPress-like field names requested in the upgrade spec.
 -- Existing application fields are preserved; these aliases make future migration/import work safer.
 

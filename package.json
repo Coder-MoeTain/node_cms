@@ -29,7 +29,7 @@
     "pm2:stop": "pm2 stop nodepress-cms",
     "validate": "npm run lint && npm run migrate:status && npm run test",
     "check": "npm run validate && npm audit --audit-level=high",
-    "predeploy": "npm run migrate && npm run test"
+    "predeploy": "npm run test:ci"
   },
   "keywords": [
     "cms",
@@ -75,6 +75,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "adm-zip": "^0.5.17",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.1",
     "globals": "^16.5.0",

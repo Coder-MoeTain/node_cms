@@ -4,4 +4,6 @@ npm-debug.log*
 public/uploads/*
 !public/uploads/.gitkeep
 database/backups/
+coverage/
+tmp/
 .DS_Store

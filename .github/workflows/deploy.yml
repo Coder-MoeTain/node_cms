@@ -47,7 +47,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run predeploy
+      - run: node database/ensureDatabase.js
+      - run: npm run db:sync
+      - run: npm run test:ci
 
   deploy:
     runs-on: ubuntu-latest

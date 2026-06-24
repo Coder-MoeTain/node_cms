@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const request = require('supertest');
 const { app, models, sequelize } = require('../server');
 const pluginLoader = require('../utils/pluginLoader');
 const { login, getCsrf } = require('./helpers');
+const { createZipArchive, pluginFixtureFiles } = require('./helpers/zipFixtures');
 
 const TEST_PLUGIN_SLUG = 'lifecycle-test-plugin';
 
@@ -130,4 +132,47 @@ test('active plugin cannot be uninstalled', async () => {
   expect(response.status).toBe(302);
   const stillThere = await models.Plugin.findOne({ where: { slug: 'seo-booster' } });
   expect(stillThere).toBeTruthy();
+});
+
+const HTTP_PLUGIN_SLUG = 'http-upload-plugin';
+
+async function cleanupHttpPlugin() {
+  await models.Plugin.update({ active: false }, { where: { slug: HTTP_PLUGIN_SLUG } });
+  const plugin = await models.Plugin.findOne({ where: { slug: HTTP_PLUGIN_SLUG } });
+  if (plugin) {
+    await models.PluginSetting.destroy({ where: { plugin_id: plugin.id }, force: true });
+    await plugin.destroy({ force: true });
+  }
+  pluginLoader.removePluginDirectory(HTTP_PLUGIN_SLUG);
+  delete global.__http_upload_pluginInstall;
+}
+
+test('admin can upload a plugin zip and trigger onInstall lifecycle', async () => {
+  await cleanupHttpPlugin();
+  const zipPath = path.join(os.tmpdir(), `${HTTP_PLUGIN_SLUG}-${Date.now()}.zip`);
+  createZipArchive(pluginFixtureFiles(HTTP_PLUGIN_SLUG, { name: 'HTTP Upload Plugin' }), zipPath);
+
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/plugins');
+  const response = await agent
+    .post('/admin/plugins/upload')
+    .set('x-csrf-token', csrf)
+    .attach('archive', zipPath);
+
+  expect(response.status).toBe(302);
+  const row = await models.Plugin.findOne({ where: { slug: HTTP_PLUGIN_SLUG } });
+  expect(row).toBeTruthy();
+  expect(global.__http_upload_pluginInstall).toBe(true);
+  await cleanupHttpPlugin();
+});
+
+test('activated lifecycle plugin renders public footer hook', async () => {
+  installTestPlugin();
+  await pluginLoader.syncInstalledPlugins();
+  await pluginLoader.activatePlugin(TEST_PLUGIN_SLUG, app);
+
+  const page = await request(app).get('/');
+  expect(page.status).toBe(200);
+  expect(page.text).toContain('<!-- lifecycle-test-active -->');
 });
