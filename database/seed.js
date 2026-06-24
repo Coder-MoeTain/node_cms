@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const { Op } = require('sequelize');
 const {
   sequelize,
   Role,
@@ -229,11 +230,10 @@ async function seed({ closeConnection = false } = {}) {
   const [headerMenu] = await Menu.findOrCreate({ where: { slug: 'main-menu' }, defaults: { name: 'Main Menu' } });
   const menuItems = [
     ['Home', '/', 1],
-    ['News', '/category/news', 2],
-    ['Announcements', '/category/announcements', 3],
-    ['Services', '/category/services', 4],
-    ['Documents', '/category/documents', 5],
-    ['Contact', '/contact', 6]
+    ['Announcements', '/category/announcements', 2],
+    ['Services', '/category/services', 3],
+    ['Documents', '/category/documents', 4],
+    ['Contact', '/contact', 5]
   ];
   for (const [title, url, display_order] of menuItems) {
     await MenuItem.findOrCreate({
@@ -241,17 +241,12 @@ async function seed({ closeConnection = false } = {}) {
       defaults: { menu_id: headerMenu.id, title, url, display_order }
     });
   }
-  const blogMenuItem = await MenuItem.findOne({ where: { menu_id: headerMenu.id, title: 'News' } });
-  if (blogMenuItem) {
-    await MenuItem.findOrCreate({
-      where: { menu_id: headerMenu.id, title: 'Tenders' },
-      defaults: { menu_id: headerMenu.id, parent_id: blogMenuItem.id, title: 'Tenders', url: '/category/tenders', display_order: 1 }
-    });
-    await MenuItem.findOrCreate({
-      where: { menu_id: headerMenu.id, title: 'Jobs' },
-      defaults: { menu_id: headerMenu.id, parent_id: blogMenuItem.id, title: 'Jobs', url: '/category/jobs', display_order: 2 }
-    });
-  }
+  await MenuItem.destroy({
+    where: {
+      menu_id: headerMenu.id,
+      title: { [Op.in]: ['News', 'Tenders', 'Jobs'] }
+    }
+  });
 
   const [footerMenu] = await Menu.findOrCreate({
     where: { slug: 'footer-menu' },
@@ -275,7 +270,7 @@ async function seed({ closeConnection = false } = {}) {
   await Banner.findOrCreate({
     where: { title: 'Build and publish faster' },
     defaults: {
-      subtitle: 'A WordPress-like CMS powered by Node.js and MySQL.',
+      subtitle: 'A modern publishing platform powered by Node.js and MySQL.',
       button_text: 'Read Blog',
       button_link: '/blog',
       display_order: 1

@@ -32,6 +32,7 @@ const WafLog = require('./WafLog')(sequelize);
 const WafIpList = require('./WafIpList')(sequelize);
 const WafSetting = require('./WafSetting')(sequelize);
 const WafRateLimit = require('./WafRateLimit')(sequelize);
+const TranslationCache = require('./TranslationCache')(sequelize);
 
 Role.belongsToMany(Permission, { through: 'role_permissions', foreignKey: 'role_id', otherKey: 'permission_id' });
 Permission.belongsToMany(Role, { through: 'role_permissions', foreignKey: 'permission_id', otherKey: 'role_id' });
@@ -116,5 +117,6 @@ module.exports = {
   WafLog,
   WafIpList,
   WafSetting,
-  WafRateLimit
+  WafRateLimit,
+  TranslationCache
 };

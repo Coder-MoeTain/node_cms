@@ -57,8 +57,8 @@
         <p class="portal-footer-apps">Official NodePress mobile experiences — configure app store links in site settings.</p>
         <% if (portalConfig.homepage && portalConfig.homepage.statistics) { %>
         <div class="portal-footer-stats mt-3">
-          <span><strong><%= siteSettings.stat_visitors || '85K' %></strong> visitors</span>
-          <span><strong><%= siteSettings.stat_users || '1.2K' %></strong> users</span>
+          <span><strong><%= (portalStats && portalStats.visitors != null ? portalStats.visitors.toLocaleString('en-US') : '0') %></strong> visitors</span>
+          <span><strong><%= (portalStats && portalStats.registeredUsers != null ? portalStats.registeredUsers.toLocaleString('en-US') : '0') %></strong> users</span>
         </div>
         <% } %>
       </div>
@@ -122,10 +122,8 @@
   </div>
 </footer>
 <% } %>
-<div id="google_translate_element" class="translate-engine" aria-hidden="true"></div>
 <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="/js/site.js"></script>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
 <% if (activeTheme.custom_js) { %><script id="theme-custom-js"><%- activeTheme.custom_js %></script><% } %>
 <% (pluginPublicFooter || []).forEach(function(snippet) { %><%- snippet %><% }) %>
 </body>

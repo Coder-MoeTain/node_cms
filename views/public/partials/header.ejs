@@ -28,12 +28,6 @@
        { title: 'Finance', url: '/search?q=finance' },
        { title: 'Sports', url: '/search?q=sports' }
      ]},
-     { title: 'News & Media', url: '/category/news', children: [
-       { title: 'Latest News', url: '/category/news' },
-       { title: 'Announcements', url: '/category/announcements' },
-       { title: 'Photos & Videos', url: '/#portal-media' },
-       { title: 'Archives', url: '/blog' }
-     ]},
      { title: 'Services', url: '/category/services', children: [
        { title: 'Online Services', url: '/blog' },
        { title: 'Forms', url: '/search?q=forms' },
@@ -75,10 +69,7 @@
         </div>
         <% } %>
         <% if (hdr.showLanguageSwitcher) { %>
-        <div class="portal-lang-links" role="group" aria-label="Language">
-          <button type="button" class="portal-lang-link language-option" data-lang="my" data-label="Myanmar">မြန်မာ</button>
-          <button type="button" class="portal-lang-link language-option active" data-lang="en" data-label="English">English</button>
-        </div>
+        <%- include('language-switcher', { langSwitcherVariant: 'portal' }) %>
         <% } %>
         <% if (hdr.showLoginLinks) { %>
         <a class="portal-utility-link" href="/admin/login">Login</a>
@@ -185,19 +176,7 @@
         <input class="form-control form-control-sm nav-search" id="nav-search" name="q" placeholder="Search..." aria-label="Search">
         <button class="nav-search-button" type="submit">Search</button>
       </form>
-      <div class="dropdown language-switcher">
-        <button class="language-toggle dropdown-toggle" type="button" id="languageMenu" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Choose language">
-          <i class="bi bi-globe2" aria-hidden="true"></i>
-          <span class="language-current">English</span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end language-menu" aria-labelledby="languageMenu">
-          <li class="language-menu-label">Language</li>
-          <li><button type="button" class="dropdown-item language-option" data-lang="en" data-label="English"><span class="language-option-text"><span class="language-code">EN</span> English</span><i class="bi bi-check2 language-check" aria-hidden="true"></i></button></li>
-          <li><button type="button" class="dropdown-item language-option" data-lang="my" data-label="Myanmar"><span class="language-option-text"><span class="language-code">MY</span> Myanmar</span><i class="bi bi-check2 language-check" aria-hidden="true"></i></button></li>
-          <li><button type="button" class="dropdown-item language-option" data-lang="zh-CN" data-label="Chinese"><span class="language-option-text"><span class="language-code">ZH</span> Chinese</span><i class="bi bi-check2 language-check" aria-hidden="true"></i></button></li>
-          <li><button type="button" class="dropdown-item language-option" data-lang="ru" data-label="Russian"><span class="language-option-text"><span class="language-code">RU</span> Russian</span><i class="bi bi-check2 language-check" aria-hidden="true"></i></button></li>
-        </ul>
-      </div>
+      <%- include('language-switcher', { langSwitcherVariant: 'dropdown' }) %>
     </div>
   </div>
 </nav>

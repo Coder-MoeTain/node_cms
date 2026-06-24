@@ -1,7 +1,7 @@
 {
   "name": "nodepress-cms",
   "version": "1.0.0",
-  "description": "A WordPress-like blog CMS built with Node.js, Express, MySQL, Sequelize, EJS, and Bootstrap 5.",
+  "description": "A modern blog and portal CMS built with Node.js, Express, MySQL, Sequelize, EJS, and Bootstrap 5.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -26,7 +26,7 @@
   "keywords": [
     "cms",
     "blog",
-    "wordpress",
+    "portal",
     "express",
     "mysql",
     "sequelize",

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme-preset="<%= themePreset || 'classic-blue' %>">
+<html lang="<%= typeof locale !== 'undefined' ? locale : 'en' %>" data-theme-preset="<%= themePreset || 'classic-blue' %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="/css/components.css">
   <link rel="stylesheet" href="/css/ui-modern.css">
   <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/css/language-switcher.css">
   <% const isPortalLayout = typeof isPortal !== 'undefined' && isPortal; %>
   <% if (isPortalLayout) { %>
   <link rel="stylesheet" href="/css/portal.css">

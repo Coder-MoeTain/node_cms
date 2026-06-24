@@ -21,7 +21,7 @@ describe('portalConfig', () => {
     expect(config.header.layout).toBe('portal');
     expect(config.nav.megaMenu).toBe(true);
     expect(config.homepage.statistics).toBe(false);
-    expect(config.homepage.sectionNav).toBe(true);
+    expect(config.homepage.sectionNav).toBe(false);
   });
 
   test('stripManagedBlocks removes portal config and theme vars', () => {

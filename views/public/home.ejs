@@ -6,9 +6,6 @@
     <% if (portalConfig.homepage && portalConfig.homepage.announcementTicker && themePreset !== 'myanmar-portal') { %>
       <%- include('partials/portal-ticker') %>
     <% } %>
-    <% if (portalConfig.homepage && portalConfig.homepage.sectionNav) { %>
-      <%- include('partials/portal-section-nav') %>
-    <% } %>
     <%- include('home-portal') %>
   <% } else { %>
     <% if (sliders.length) { %>

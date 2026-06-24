@@ -3,6 +3,7 @@
 ```bash
 npm install
 npm run db:sync
+npm run migrate
 npm run seed
 npm run dev
 npm test
@@ -53,7 +54,7 @@ Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment 
 
 ---
 
-NodePress CMS is a complete blog and content management system with a public website, admin dashboard, media library, theme settings, role permissions, SEO helpers, security tools, comments, dynamic menus, and flag-only translation controls.
+NodePress CMS is a complete blog and content management system with a public website, admin dashboard, media library, theme settings, role permissions, SEO helpers, security tools, comments, dynamic menus, a government portal theme, live portal statistics, and a built-in server-side translation engine for English, Myanmar, Chinese, and Russian.
 
 For the repository audit, missing-feature analysis, security review, and exact file-by-file upgrade notes, see [`docs/UPGRADE_ANALYSIS.md`](docs/UPGRADE_ANALYSIS.md). For the step-by-step implementation report and testing checklist, see [`docs/IMPLEMENTATION_REPORT.md`](docs/IMPLEMENTATION_REPORT.md).
 
@@ -79,7 +80,8 @@ Admin Panel  -> http://localhost:3000/admin/login
 | Design System | Space-agency inspired frontend, modern admin dashboard, dynamic logo, favicon, colors, layout, dark mode |
 | Media Library | Upload images, videos, PDFs, docs, copy URLs, and reuse assets in posts and pages |
 | Security | Sessions, bcrypt, Helmet, CSRF, rate limiting, upload validation, blocked IPs, login attempts, activity logs |
-| Internationalization | Flag-only translation buttons for Myanmar, Chinese, English, and Russian |
+| Internationalization | Server-side translation engine (en, my, zh-CN, ru) with glossary files and database cache — no Google Translate |
+| Portal Statistics | Live homepage stat counters (users, visitors, discussions, polls, blogs, events, mobile apps) from database activity |
 
 ## Maturity Level
 
@@ -99,7 +101,7 @@ NodePress ships with a polished public theme and a matching admin interface.
   <img src="docs/assets/public-preview.svg" alt="Public website mockup" width="82%">
 </p>
 
-The public website uses dynamic menus, hero sliders, banners, blog cards, sidebar widgets, footer menus, logo settings, and translation controls.
+The public website uses dynamic menus, hero sliders, banners, blog cards, sidebar widgets, footer menus, logo settings, language switcher, and live portal statistics on the government portal theme.
 
 <p align="center">
   <img src="docs/assets/admin-preview.svg" alt="Admin dashboard mockup" width="82%">
@@ -164,12 +166,15 @@ ADMIN_SESSION_TIMEOUT_MINUTES=60
 CREATE DATABASE nodepress_cms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-### 4. Sync and seed
+### 4. Sync, migrate, and seed
 
 ```bash
 npm run db:sync
+npm run migrate
 npm run seed
 ```
+
+`npm run migrate` applies incremental SQL migrations (WAF, translation cache, and other upgrades). Use it on existing databases after pulling updates.
 
 ### 5. Run
 
@@ -222,7 +227,12 @@ API_KEY=your-long-random-api-key
 | `npm start` | Run the app with Node |
 | `npm run dev` | Run the app with Nodemon |
 | `npm run db:sync` | Sync Sequelize models to MySQL |
+| `npm run migrate` | Run pending SQL migrations |
 | `npm run seed` | Seed roles, permissions, settings, menus, themes, and default admin |
+| `npm test` | Run Jest test suite |
+| `npm run lint` | Run ESLint |
+| `npm run backup` | Create database and uploads backup |
+| `npm run health` | Check application health |
 
 ## Web Application Firewall
 
@@ -279,12 +289,13 @@ mysql -u root -p nodepress_cms < database/seed_waf_rules.sql
 nodepress-cms/
 ├── config/              App and database config
 ├── controllers/         Admin and public controllers
-├── database/            schema.sql, seed.sql, sync and seed scripts
-├── middleware/          Auth, permissions, upload, security, errors
+├── data/glossaries/     Translation glossary files (en-my, en-zh, en-ru)
+├── database/            schema.sql, migrations, sync and seed scripts
+├── middleware/          Auth, locale, portal visit tracking, security, WAF
 ├── models/              Sequelize models and associations
 ├── public/              CSS, JS, uploads
 ├── routes/              Admin, public, and API routes
-├── utils/               Slug, file, SEO, pagination helpers
+├── utils/               Slug, SEO, translation engine, portal stats helpers
 ├── views/               EJS admin/public/theme/error views
 ├── .env                 Environment variables
 ├── package.json
@@ -304,6 +315,37 @@ nodepress-cms/
 - About, contact, privacy, terms, and custom pages
 - Sidebar widgets for recent posts, popular posts, and categories
 - SEO-friendly URLs, sitemap, robots.txt, canonical URLs, and schema output
+- Government portal homepage with quick services, tenders/jobs, media gallery, and statistics
+- Language switcher with server-rendered translations (no third-party translation widgets)
+
+### Translation (i18n)
+
+NodePress uses an **internal translation engine** instead of Google Translate:
+
+- **Languages:** English (default), Myanmar (`my`), Chinese (`zh-CN`), Russian (`ru`)
+- **Cookie:** `np_lang` stores the visitor's language choice
+- **Engine:** `utils/translationEngine.js` — glossary-based phrase and word matching with HTML-aware translation
+- **Glossaries:** `data/glossaries/en-my.json`, `en-zh.json`, `en-ru.json` (extend these to add terms)
+- **Cache:** `translation_cache` table stores translated strings for performance
+- **Scope:** Menus, posts, pages, categories, banners, sliders, and site settings are translated on the server before render
+
+To add or improve translations, edit the JSON glossary files under `data/glossaries/`. Run `npm run migrate` to create the translation cache table on existing installs.
+
+### Portal Statistics
+
+The government portal theme shows **live statistics** on the homepage (Government Directory & Statistics section). Each stat is a clickable link:
+
+| Stat | Data source |
+| --- | --- |
+| Registered users | Active users in the database |
+| Visitors | Post view totals + daily unique portal sessions |
+| Discussions | Approved comments |
+| Polls & Survey | Contact messages and posts matching poll/survey keywords |
+| Blogs | Published post count |
+| Upcoming Events | Published or scheduled posts with a future date |
+| Mobile App Gallery | App store links, app-related pages, and mobile media files |
+
+Visitor sessions are tracked once per day per session via `middleware/portalVisit.js` and stored in the `portal_visit_count` site setting.
 
 ### Admin Panel
 
@@ -396,8 +438,16 @@ Schema and seed files are included:
 ```text
 database/schema.sql
 database/seed.sql
+database/migrations/
 database/sync.js
 database/seed.js
+database/migrate.js
+```
+
+Run migrations after upgrades:
+
+```bash
+npm run migrate
 ```
 
 Manual import:
@@ -564,11 +614,11 @@ Check that `public/uploads` exists and the server process can write to it.
 - Admin EJS templates: `views/admin`
 - CRUD resources: `controllers/admin/crudController.js`
 - Models and relations: `models/`
+- Translation glossaries: `data/glossaries/`
+- Translation engine: `utils/translationEngine.js`
+- Portal stats: `utils/portalStats.js`
 - Default seed data: `database/seed.js`
 
 ## License
 
 MIT License. Use, modify, and deploy freely.
-#   n o d e _ c m s 
- 
- 

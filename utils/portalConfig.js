@@ -62,7 +62,7 @@ const MYANMAR_PORTAL_DEFAULTS = {
     statistics: true,
     mobileApp: true,
     quickServices: true,
-    sectionNav: true,
+    sectionNav: false,
     announcementTicker: true
   },
   widgets: {

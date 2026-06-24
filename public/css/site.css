@@ -313,45 +313,6 @@ a:hover {
   }
 }
 
-.translate-engine {
-  clip: rect(0, 0, 0, 0);
-  height: 1px;
-  overflow: hidden;
-  position: absolute;
-  width: 1px;
-  z-index: -1;
-}
-
-.translate-engine .goog-te-gadget {
-  display: block !important;
-  visibility: hidden;
-  position: absolute;
-  left: -9999px;
-  width: 200px;
-}
-
-.goog-te-banner-frame,
-.goog-te-balloon-frame,
-.goog-te-menu-frame,
-#goog-gt-tt {
-  display: none !important;
-}
-
-body {
-  top: 0 !important;
-}
-
-.goog-te-gadget {
-  font-size: 0 !important;
-}
-
-.goog-te-gadget .goog-te-combo {
-  font-size: 13px !important;
-  visibility: hidden;
-  position: absolute;
-  left: -9999px;
-}
-
 .hero-slide {
   align-items: center;
   background-color: #1d2327;
@@ -1429,8 +1390,11 @@ body {
   background: var(--site-card, #fff);
   border: 1px solid var(--site-border, var(--portal-border));
   border-radius: 8px;
+  color: inherit;
+  display: block;
   padding: 16px 12px;
   text-align: center;
+  text-decoration: none;
   transition: box-shadow 0.18s ease, transform 0.18s ease;
 }
 

@@ -2,23 +2,15 @@
   <div class="container py-4">
     <div class="portal-section-head mb-3">
       <h2 class="portal-section-title">Government Directory &amp; Statistics</h2>
-      <p class="portal-section-subtitle">Portal activity overview — configure values in site settings</p>
+      <p class="portal-section-subtitle">Live portal metrics updated from site activity</p>
     </div>
     <div class="portal-stat-grid portal-card-<%= (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered' %>">
-      <% const stats = [
-        { label: 'Registered users', value: siteSettings.stat_users || '1,240' },
-        { label: 'Visitors', value: siteSettings.stat_visitors || '85,420' },
-        { label: 'Discussions', value: siteSettings.stat_discussions || '320' },
-        { label: 'Polls & Survey', value: siteSettings.stat_polls || '48' },
-        { label: 'Blogs', value: siteSettings.stat_blogs || (recentPosts && recentPosts.length ? recentPosts.length : '12') },
-        { label: 'Upcoming Events', value: siteSettings.stat_events || '6' },
-        { label: 'Mobile App Gallery', value: siteSettings.stat_apps || '8' }
-      ]; %>
+      <% const stats = (portalStats && portalStats.items) || []; %>
       <% stats.forEach(function(stat) { %>
-        <div class="portal-stat-item">
+        <a class="portal-stat-item" href="<%= stat.url %>">
           <span class="portal-stat-value"><%= stat.value %></span>
           <span class="portal-stat-label"><%= stat.label %></span>
-        </div>
+        </a>
       <% }) %>
     </div>
   </div>
