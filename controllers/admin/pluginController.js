@@ -8,8 +8,17 @@ const { extractZipArchive } = require('../../utils/packageArchive');
 async function index(req, res, next) {
   try {
     await pluginLoader.syncInstalledPlugins();
-    const plugins = await Plugin.findAll({ order: [['name', 'ASC']] });
-    return res.render('admin/plugins/index', { title: 'Plugins', plugins });
+    const [plugins, stats, registeredHooks] = await Promise.all([
+      Plugin.findAll({ order: [['name', 'ASC']] }),
+      pluginLoader.getPluginManagerStats(),
+      Promise.resolve(pluginLoader.listRegisteredHooks())
+    ]);
+    return res.render('admin/plugins/index', {
+      title: 'Plugins',
+      plugins,
+      stats,
+      registeredHooks
+    });
   } catch (error) {
     return next(error);
   }
@@ -49,8 +58,7 @@ async function activate(req, res, next) {
 
 async function deactivate(req, res, next) {
   try {
-    await Plugin.update({ active: false }, { where: { slug: req.params.slug } });
-    await pluginLoader.loadActivePlugins(req.app);
+    await pluginLoader.deactivatePlugin(req.params.slug, req.app);
     req.flash('success', 'Plugin deactivated.');
     return res.redirect('/admin/plugins');
   } catch (error) {

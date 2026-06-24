@@ -1,0 +1,100 @@
+const fs = require('fs');
+const path = require('path');
+const request = require('supertest');
+const { app, models, sequelize } = require('../server');
+const pluginLoader = require('../utils/pluginLoader');
+const { login, getCsrf } = require('./helpers');
+
+const TEST_PLUGIN_SLUG = 'lifecycle-test-plugin';
+
+function installTestPlugin() {
+  const pluginDir = path.join(pluginLoader.pluginsRoot, TEST_PLUGIN_SLUG);
+  fs.mkdirSync(pluginDir, { recursive: true });
+  fs.writeFileSync(path.join(pluginDir, 'plugin.json'), JSON.stringify({
+    name: 'Lifecycle Test Plugin',
+    slug: TEST_PLUGIN_SLUG,
+    version: '1.0.0',
+    description: 'Plugin used for admin lifecycle integration tests',
+    author: 'NodePress Tests'
+  }, null, 2));
+  fs.writeFileSync(path.join(pluginDir, 'index.js'), `module.exports = {
+  register({ hooks }) {
+    hooks.register('publicFooter', () => '<!-- lifecycle-test-active -->', 10);
+  },
+  onDeactivate() {}
+};
+`);
+  return pluginDir;
+}
+
+async function cleanupTestPlugin() {
+  await models.Plugin.update({ active: false }, { where: { slug: TEST_PLUGIN_SLUG } });
+  const testPlugin = await models.Plugin.findOne({ where: { slug: TEST_PLUGIN_SLUG } });
+  if (testPlugin) {
+    await models.PluginMigration.destroy({ where: { plugin_id: testPlugin.id }, force: true });
+    await models.PluginSetting.destroy({ where: { plugin_id: testPlugin.id }, force: true });
+    await testPlugin.destroy({ force: true });
+  }
+  await sequelize.query('DELETE FROM plugins WHERE slug = ?', { replacements: [TEST_PLUGIN_SLUG] });
+  pluginLoader.removePluginDirectory(TEST_PLUGIN_SLUG);
+  await pluginLoader.loadActivePlugins(app);
+}
+
+beforeAll(async () => {
+  await models.User.update({ force_password_change: false }, { where: { email: 'admin@example.com' } });
+  await cleanupTestPlugin();
+});
+
+afterEach(cleanupTestPlugin);
+
+test('admin can view plugin manager', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const page = await agent.get('/admin/plugins');
+  expect(page.status).toBe(200);
+  expect(page.text).toMatch(/Install Plugin/i);
+  expect(page.text).toMatch(/Registered hooks/i);
+});
+
+test('admin can activate and deactivate a plugin', async () => {
+  await pluginLoader.syncInstalledPlugins();
+  const plugin = await models.Plugin.findOne({ where: { slug: 'cookie-notice' } });
+  expect(plugin).toBeTruthy();
+
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/plugins');
+
+  const deactivate = await agent.post(`/admin/plugins/${plugin.slug}/deactivate`).type('form').send({ _csrf: csrf });
+  expect(deactivate.status).toBe(302);
+  await plugin.reload();
+  expect(plugin.active).toBe(false);
+
+  const activate = await agent.post(`/admin/plugins/${plugin.slug}/activate`).type('form').send({ _csrf: csrf });
+  expect(activate.status).toBe(302);
+  await plugin.reload();
+  expect(plugin.active).toBe(true);
+});
+
+test('plugin lifecycle registers and clears hooks', async () => {
+  installTestPlugin();
+  await pluginLoader.syncInstalledPlugins();
+  await models.Plugin.update({ active: true }, { where: { slug: TEST_PLUGIN_SLUG } });
+  await pluginLoader.loadActivePlugins(app);
+  expect(pluginLoader.listRegisteredHooks()).toContain('publicFooter');
+
+  await pluginLoader.deactivatePlugin(TEST_PLUGIN_SLUG, app);
+  const row = await models.Plugin.findOne({ where: { slug: TEST_PLUGIN_SLUG } });
+  expect(row.active).toBe(false);
+});
+
+test('active plugin cannot be uninstalled', async () => {
+  await models.Plugin.update({ active: true }, { where: { slug: 'seo-booster' } });
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/plugins');
+  const response = await agent.post('/admin/plugins/seo-booster/uninstall').type('form').send({ _csrf: csrf });
+  expect(response.status).toBe(302);
+  const stillThere = await models.Plugin.findOne({ where: { slug: 'seo-booster' } });
+  expect(stillThere).toBeTruthy();
+});

@@ -82,6 +82,17 @@ test('author cannot edit another users post', async () => {
   expect(edit.headers.location).toMatch(/posts/);
 });
 
+test('author cannot edit another users post via PUT', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'author@example.com', 'Author@12345');
+  const csrf = await getCsrf(agent, '/admin');
+  const response = await agent
+    .put(`/admin/posts/${otherPostId}`)
+    .type('form')
+    .send({ title: 'Stolen', content: '<p>Nope</p>', status: 'draft', _csrf: csrf });
+  expect([302, 403]).toContain(response.status);
+});
+
 test('author quick draft creates draft post', async () => {
   const agent = request.agent(app);
   await login(agent, 'author@example.com', 'Author@12345');

@@ -45,3 +45,14 @@ test('child theme manifest declares parent', () => {
   const child = themeLoader.discoverThemes().find((t) => t.manifest.slug === 'minimal-personal');
   expect(child?.manifest.parent).toBe('classic-blog');
 });
+
+test('discoverThemeAssets lists inheritance chain', () => {
+  const assets = themeLoader.discoverThemeAssets('minimal-personal');
+  expect(assets.chain).toContain('classic-blog');
+  expect(Array.isArray(assets.templates)).toBe(true);
+});
+
+test('validateManifest rejects invalid slug', () => {
+  expect(() => themeLoader.validateManifest({ name: 'Bad', slug: 'Bad Theme', version: '1.0.0' }))
+    .toThrow(/slug/i);
+});

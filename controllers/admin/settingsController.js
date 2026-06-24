@@ -91,7 +91,11 @@ async function themes(req, res, next) {
   try {
     await themeLoader.syncInstalledThemes();
     const [themes, themeSetting] = await Promise.all([Theme.findAll(), ThemeSetting.findOne({ where: { active: true } })]);
-    return res.render('admin/themes/index', { title: 'Themes', themes, themeSetting: themeSetting || {} });
+    const themeAssets = themes.reduce((map, theme) => {
+      map[theme.slug] = themeLoader.discoverThemeAssets(theme.slug);
+      return map;
+    }, {});
+    return res.render('admin/themes/index', { title: 'Themes', themes, themeSetting: themeSetting || {}, themeAssets });
   } catch (error) {
     return next(error);
   }
@@ -173,9 +177,11 @@ async function uploadTheme(req, res, next) {
       return res.redirect('/admin/themes');
     }
     const { manifest } = await extractZipArchive(req.file.path, themeLoader.themesRoot, 'theme.json');
+    themeLoader.validateManifest(manifest);
     if (manifest.parent) {
       const parentExists = fs.existsSync(path.join(themeLoader.themesRoot, manifest.parent, 'theme.json'));
       if (!parentExists) {
+        themeLoader.removeThemeDirectory(manifest.slug);
         req.flash('error', `Parent theme "${manifest.parent}" is not installed. Install the parent theme first.`);
         return res.redirect('/admin/themes');
       }
@@ -189,4 +195,30 @@ async function uploadTheme(req, res, next) {
   }
 }
 
-module.exports = { settings, updateSettings, mediaGallery, themes, activateTheme, updateThemeSettings, themeEditor, uploadTheme };
+async function uninstallTheme(req, res, next) {
+  try {
+    const theme = await Theme.findOne({ where: { slug: req.params.slug } });
+    if (!theme) {
+      req.flash('error', 'Theme not found.');
+      return res.redirect('/admin/themes');
+    }
+    if (theme.active) {
+      req.flash('error', 'Cannot uninstall the active theme. Activate another theme first.');
+      return res.redirect('/admin/themes');
+    }
+    const children = themeLoader.getChildThemeSlugs(theme.slug);
+    if (children.length) {
+      req.flash('error', `Cannot uninstall: child themes depend on this theme (${children.join(', ')}).`);
+      return res.redirect('/admin/themes');
+    }
+    await ThemeSetting.destroy({ where: { theme_name: theme.slug } });
+    await theme.destroy();
+    themeLoader.removeThemeDirectory(theme.slug);
+    req.flash('success', 'Theme removed.');
+    return res.redirect('/admin/themes');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { settings, updateSettings, mediaGallery, themes, activateTheme, updateThemeSettings, themeEditor, uploadTheme, uninstallTheme };

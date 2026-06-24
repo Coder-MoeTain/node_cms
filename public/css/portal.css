@@ -1088,6 +1088,34 @@ html, body.portal-layout-active {
   min-height: 100%;
 }
 
+.portal-emergency-strip {
+  align-items: center;
+  background: var(--gov-accent, #d71920);
+  border-radius: 8px;
+  color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.portal-emergency-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.portal-emergency-link {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.portal-emergency-hours {
+  opacity: 0.9;
+}
+
 .portal-emergency {
   border-top: 4px solid var(--portal-accent, #d71920);
 }

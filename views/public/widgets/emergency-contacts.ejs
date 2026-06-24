@@ -1,0 +1,17 @@
+<% const phone = siteSettings.emergency_phone || siteSettings.contact_phone || '';
+   const email = siteSettings.emergency_email || siteSettings.contact_email || '';
+   const hours = siteSettings.emergency_hours || '24/7'; %>
+<% if (phone || email) { %>
+<section class="portal-section portal-emergency" id="portal-emergency" aria-label="Emergency contacts">
+  <div class="container py-3">
+    <div class="portal-emergency-strip portal-card-<%= (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered' %>">
+      <div class="portal-emergency-label"><i class="bi bi-telephone-fill" aria-hidden="true"></i> Emergency contacts</div>
+      <div class="portal-emergency-items">
+        <% if (phone) { %><a href="tel:<%= phone.replace(/\s/g, '') %>" class="portal-emergency-link"><%= phone %></a><% } %>
+        <% if (email) { %><a href="mailto:<%= email %>" class="portal-emergency-link"><%= email %></a><% } %>
+        <span class="portal-emergency-hours"><%= hours %></span>
+      </div>
+    </div>
+  </div>
+</section>
+<% } %>

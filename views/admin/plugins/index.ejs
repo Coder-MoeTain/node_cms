@@ -11,6 +11,13 @@
       </div>
     </div>
 
+    <div class="row g-3 mb-3">
+      <div class="col-md-3"><div class="np-widget h-100"><div class="np-widget-body text-center"><div class="display-6"><%= stats.total %></div><div class="text-muted">Installed</div></div></div></div>
+      <div class="col-md-3"><div class="np-widget h-100"><div class="np-widget-body text-center"><div class="display-6 text-success"><%= stats.active %></div><div class="text-muted">Active</div></div></div></div>
+      <div class="col-md-3"><div class="np-widget h-100"><div class="np-widget-body text-center"><div class="display-6"><%= stats.inactive %></div><div class="text-muted">Inactive</div></div></div></div>
+      <div class="col-md-3"><div class="np-widget h-100"><div class="np-widget-body text-center"><div class="display-6"><%= stats.hooks %></div><div class="text-muted">Registered hooks</div></div></div></div>
+    </div>
+
     <div class="np-widget mb-3">
       <div class="np-widget-header"><span>Install Plugin</span></div>
       <div class="np-widget-body">
@@ -28,9 +35,30 @@
       </div>
     </div>
 
-    <div class="row g-3">
+    <div class="np-widget mb-3">
+      <div class="np-widget-body row g-2 align-items-end">
+        <div class="col-md-6">
+          <label class="form-label" for="plugin-search">Search plugins</label>
+          <input class="form-control" id="plugin-search" type="search" placeholder="Filter by name, slug, or author" data-plugin-filter>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="plugin-status-filter">Status</label>
+          <select class="form-select" id="plugin-status-filter" data-plugin-status>
+            <option value="all">All</option>
+            <option value="active">Active only</option>
+            <option value="inactive">Inactive only</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Runtime hooks</label>
+          <div class="form-text"><%= (registeredHooks || []).slice(0, 4).join(', ') %><% if ((registeredHooks || []).length > 4) { %> +<%= registeredHooks.length - 4 %> more<% } %></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3" id="plugin-grid">
       <% plugins.forEach(function(plugin) { %>
-        <div class="col-md-6 col-xl-4">
+        <div class="col-md-6 col-xl-4" data-plugin-card data-name="<%= (plugin.name + ' ' + plugin.slug + ' ' + (plugin.author || '')).toLowerCase() %>" data-status="<%= plugin.active ? 'active' : 'inactive' %>">
           <div class="np-widget h-100">
             <div class="np-widget-header">
               <span><%= plugin.name %></span>
@@ -39,6 +67,7 @@
             <div class="np-widget-body">
               <p class="text-muted mb-2"><%= plugin.description || 'No description provided.' %></p>
               <small class="text-muted d-block">v<%= plugin.version %> · <%= plugin.author || 'Unknown' %></small>
+              <small class="text-muted d-block"><code><%= plugin.slug %></code></small>
             </div>
             <div class="np-widget-footer d-flex flex-wrap gap-2 p-3 border-top">
               <% if (plugin.active) { %>
@@ -67,4 +96,22 @@
     </div>
   </main>
 </div>
+<script>
+  (function () {
+    const search = document.querySelector('[data-plugin-filter]');
+    const status = document.querySelector('[data-plugin-status]');
+    const cards = [...document.querySelectorAll('[data-plugin-card]')];
+    function applyFilter() {
+      const q = (search?.value || '').trim().toLowerCase();
+      const st = status?.value || 'all';
+      cards.forEach((card) => {
+        const matchesText = !q || card.dataset.name.includes(q);
+        const matchesStatus = st === 'all' || card.dataset.status === st;
+        card.classList.toggle('d-none', !(matchesText && matchesStatus));
+      });
+    }
+    search?.addEventListener('input', applyFilter);
+    status?.addEventListener('change', applyFilter);
+  }());
+</script>
 <%- include('../partials/footer') %>

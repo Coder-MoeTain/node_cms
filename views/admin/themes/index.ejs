@@ -29,6 +29,7 @@
 
     <div class="row g-3 mb-3">
       <% themes.forEach(function(theme) { %>
+        <% const assets = (themeAssets && themeAssets[theme.slug]) || { templates: [], partials: [], chain: [] }; %>
         <div class="col-md-4">
           <div class="np-widget h-100 theme-card">
             <div class="theme-preview-card">
@@ -41,12 +42,22 @@
             <div class="np-widget-body">
               <h5 class="mb-1"><%= theme.name %></h5>
               <p class="text-muted small mb-1"><%= theme.slug %><% if (theme.parent_slug) { %> · child of <%= theme.parent_slug %><% } %></p>
+              <p class="text-muted small mb-1"><%= assets.templates.length %> templates · <%= assets.partials.length %> partials</p>
+              <% if (assets.chain.length > 1) { %><p class="text-muted small mb-1">Inheritance: <%= assets.chain.join(' → ') %></p><% } %>
               <p class="text-muted small mb-3"><%= theme.description || '' %></p>
-              <form method="post" action="/admin/themes/activate">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <input type="hidden" name="theme_id" value="<%= theme.id %>">
-                <button class="np-btn np-btn-small <%= theme.active ? 'np-btn-primary' : 'np-btn-secondary' %>" type="submit" <%= theme.active ? 'disabled' : '' %>><%= theme.active ? 'Active' : 'Activate' %></button>
-              </form>
+              <div class="d-flex flex-wrap gap-2">
+                <form method="post" action="/admin/themes/activate">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="theme_id" value="<%= theme.id %>">
+                  <button class="np-btn np-btn-small <%= theme.active ? 'np-btn-primary' : 'np-btn-secondary' %>" type="submit" <%= theme.active ? 'disabled' : '' %>><%= theme.active ? 'Active' : 'Activate' %></button>
+                </form>
+                <% if (!theme.active) { %>
+                  <form method="post" action="/admin/themes/<%= theme.slug %>/uninstall" data-confirm="Remove this theme from disk?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="np-btn np-btn-small np-btn-danger" type="submit">Delete</button>
+                  </form>
+                <% } %>
+              </div>
             </div>
           </div>
         </div>
