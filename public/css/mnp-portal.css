@@ -160,56 +160,6 @@
   letter-spacing: .04em;
 }
 
-/* --- COVID strip --- */
-.portal-mnp-covid {
-  background: linear-gradient(90deg, #c41e24 0%, #e4282c 100%);
-  color: #fff;
-}
-
-.portal-mnp-covid-link {
-  align-items: center;
-  color: #fff;
-  display: flex;
-  gap: 14px;
-  padding: 10px 0;
-  text-decoration: none;
-}
-
-.portal-mnp-covid-link:hover {
-  color: var(--portal-secondary);
-}
-
-.portal-mnp-covid-icon {
-  align-items: center;
-  background: rgba(255, 255, 255, .15);
-  border-radius: 50%;
-  display: flex;
-  font-size: 1.35rem;
-  height: 44px;
-  justify-content: center;
-  width: 44px;
-}
-
-.portal-mnp-covid-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.portal-mnp-covid-text strong {
-  font-size: 0.95rem;
-  letter-spacing: .04em;
-}
-
-.portal-mnp-covid-text span {
-  font-size: 0.8rem;
-  opacity: .9;
-}
-
-.portal-mnp-covid-arrow {
-  margin-left: auto;
-}
-
 /* --- Quick service tiles --- */
 .portal-preset-myanmar-portal .portal-mnp-services {
   background: var(--portal-bg);

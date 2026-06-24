@@ -1,0 +1,16 @@
+{
+  "name": "Updraft Backup",
+  "slug": "updraft-backup",
+  "version": "1.1.0",
+  "description": "WordPress UpdraftPlus equivalent — database and uploads backup from the admin dashboard.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins"],
+  "settings": [
+    { "section": "Backup Contents", "key": "include_uploads", "label": "Include uploads folder", "type": "checkbox", "default": "true", "description": "Archive public/uploads with each backup." },
+    { "section": "Backup Contents", "key": "include_plugins", "label": "Include plugins folder", "type": "checkbox", "default": "false", "description": "Archive plugins/ directory in backup tarball." },
+    { "section": "Retention", "key": "retention_days", "label": "Retention (days)", "type": "number", "default": "14", "min": 1, "max": 365, "placeholder": "14", "description": "Delete backup files older than this many days." },
+    { "section": "Retention", "key": "max_backups", "label": "Max backup files", "type": "number", "default": "10", "min": 1, "max": 100, "placeholder": "10", "description": "Keep only the newest N database backups." },
+    { "section": "Schedule", "key": "schedule_note", "label": "Schedule note", "type": "text", "default": "Manual backups via dashboard", "description": "Reminder text for your backup routine (cron not included)." },
+    { "section": "Notifications", "key": "notify_email", "label": "Notification email", "type": "text", "default": "", "placeholder": "admin@example.com", "description": "Optional email to notify after backup completes." }
+  ]
+}

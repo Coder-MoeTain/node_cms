@@ -1,5 +1,5 @@
 const DEFAULT_PORTAL_CONFIG = {
-  preset: 'wordpress-blue',
+  preset: 'classic-blue',
   header: {
     showUtilityBar: true,
     showFontControls: true,
@@ -16,7 +16,7 @@ const DEFAULT_PORTAL_CONFIG = {
   homepage: {
     hero: true,
     quickLinks: true,
-    emergency: true,
+    emergency: false,
     latestNews: true,
     announcements: true,
     tendersJobs: true,
@@ -52,7 +52,7 @@ const MYANMAR_PORTAL_DEFAULTS = {
   homepage: {
     hero: true,
     quickLinks: true,
-    emergency: true,
+    emergency: false,
     latestNews: true,
     announcements: true,
     tendersJobs: true,
@@ -176,7 +176,8 @@ function resolvePortalConfig(theme = {}) {
 }
 
 function resolveThemePreset(theme = {}, portalConfig = {}) {
-  return portalConfig.preset || theme.theme_preset || 'wordpress-blue';
+  const preset = portalConfig.preset || theme.theme_preset || 'classic-blue';
+  return preset === 'wordpress-blue' ? 'classic-blue' : preset;
 }
 
 function buildPortalConfigBlock(config) {

@@ -634,7 +634,7 @@ body {
 
 .post-title {
   color: #0f172a;
-  font-size: clamp(1.75rem, 4vw, 2.65rem);
+  font-size: clamp(calc(1.75rem - 5pt), calc(4vw - 5pt), calc(2.65rem - 5pt));
   font-weight: 800;
   letter-spacing: -.03em;
   line-height: 1.15;

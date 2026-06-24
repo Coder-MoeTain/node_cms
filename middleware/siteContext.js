@@ -1,4 +1,4 @@
-const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post, Media } = require('../models');
+const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post, Media, Plugin } = require('../models');
 const pluginLoader = require('../utils/pluginLoader');
 const { resolvePortalConfig, resolveThemePreset, parseThemeVars } = require('../utils/portalConfig');
 
@@ -34,7 +34,7 @@ async function sidebarPostsForCategory(slug, limit = 5) {
 
 async function loadSiteContext(req, res, next) {
   try {
-    const [settings, theme, menus, categories, recentPosts, popularPosts, announcementPosts] = await Promise.all([
+    const [settings, theme, menus, categories, recentPosts, popularPosts, announcementPosts, activePlugins] = await Promise.all([
       SiteSetting.findAll(),
       ThemeSetting.findOne({ where: { active: true } }),
       Menu.findAll({
@@ -45,7 +45,8 @@ async function loadSiteContext(req, res, next) {
       Category.findAll({ limit: 20, order: [['name', 'ASC']] }),
       Post.findAll({ where: { status: 'published' }, limit: 5, order: [['published_at', 'DESC']] }),
       Post.findAll({ where: { status: 'published' }, limit: 5, order: [['views_count', 'DESC']] }),
-      sidebarPostsForCategory('announcements', 5)
+      sidebarPostsForCategory('announcements', 5),
+      Plugin.findAll({ where: { active: true }, attributes: ['slug'] })
     ]);
 
     res.locals.siteSettings = settings.reduce((map, row) => ({ ...map, [row.key]: row.value }), {});
@@ -68,6 +69,7 @@ async function loadSiteContext(req, res, next) {
     res.locals.recentPosts = recentPosts;
     res.locals.popularPosts = popularPosts;
     res.locals.announcementPosts = announcementPosts.length ? announcementPosts : recentPosts;
+    res.locals.activePluginSlugs = activePlugins.map((row) => row.slug);
     res.locals.pluginPublicHead = await pluginLoader.collectHook('publicHead', { req, res });
     res.locals.pluginPublicFooter = await pluginLoader.collectHook('publicFooter', { req, res });
     res.locals.currentPath = req.path;

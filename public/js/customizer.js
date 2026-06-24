@@ -88,7 +88,7 @@
   }
 
   function buildPortalConfig() {
-    const config = { preset: 'wordpress-blue', header: {}, nav: {}, homepage: {}, widgets: {} };
+    const config = { preset: 'classic-blue', header: {}, nav: {}, homepage: {}, widgets: {} };
     const activePreset = document.querySelector('[data-theme-preset].active');
     if (activePreset) config.preset = activePreset.dataset.themePreset || config.preset;
 

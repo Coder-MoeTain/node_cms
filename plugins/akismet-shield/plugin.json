@@ -1,0 +1,17 @@
+{
+  "name": "Spam Guard",
+  "slug": "akismet-shield",
+  "version": "1.2.0",
+  "description": "Heuristic spam filtering for comments and contact form submissions with configurable strictness.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins"],
+  "settings": [
+    { "section": "General", "key": "enabled", "label": "Enable spam filtering", "type": "checkbox", "default": "true", "description": "Screen incoming comments and contact messages for spam patterns." },
+    { "section": "General", "key": "strictness", "label": "Filter strictness", "type": "select", "default": "normal", "options": [{ "value": "relaxed", "label": "Relaxed" }, { "value": "normal", "label": "Normal" }, { "value": "strict", "label": "Strict" }], "description": "How aggressively to flag suspicious submissions." },
+    { "section": "Rules", "key": "block_links", "label": "Flag messages with 3+ links", "type": "checkbox", "default": "true", "description": "Treat link-heavy submissions as spam." },
+    { "section": "Rules", "key": "block_keywords", "label": "Flag keyword spam", "type": "checkbox", "default": "true", "description": "Use built-in and custom blocked word lists." },
+    { "section": "Rules", "key": "blocked_words", "label": "Custom blocked words", "type": "textarea", "default": "viagra,casino,crypto,forex", "placeholder": "viagra,casino,crypto", "description": "Comma-separated words that trigger spam rejection." },
+    { "section": "Rules", "key": "hold_for_moderation", "label": "Hold borderline comments", "type": "checkbox", "default": "false", "description": "Allow suspicious comments as pending instead of blocking outright." },
+    { "section": "Contact form", "key": "filter_contact", "label": "Filter contact messages", "type": "checkbox", "default": "true", "description": "Apply the same spam rules to contact form submissions." }
+  ]
+}

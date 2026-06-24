@@ -1,0 +1,24 @@
+{
+  "name": "E-Commerce Store",
+  "slug": "ecommerce-store",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "Retail storefront theme with boxed layout, product grid, and clean monochrome styling.",
+  "parent": "classic-blog",
+  "layouts": ["default", "sidebar-right", "boxed"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "screenshot": "/themes/ecommerce-store/screenshot.svg",
+  "defaults": {
+    "preset": "minimal-gray",
+    "primary_color": "#111827",
+    "secondary_color": "#6b7280",
+    "background_color": "#ffffff",
+    "text_color": "#111827",
+    "header_layout": "standard",
+    "footer_layout": "simple",
+    "sidebar_position": "right",
+    "blog_layout": "grid",
+    "site_layout": "boxed"
+  }
+}

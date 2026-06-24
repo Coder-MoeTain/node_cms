@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { Plugin, PluginMigration } = require('../models');
 const sequelize = require('../config/database');
+const { seedPluginDefaults } = require('./pluginSettings');
 
 const pluginsRoot = path.join(process.cwd(), 'plugins');
 const hooks = new Map();
@@ -56,6 +57,8 @@ async function syncInstalledPlugins() {
       manifest: item.manifest,
       installed: true
     }, { where: { slug: item.manifest.slug } });
+    const pluginRow = await Plugin.findOne({ where: { slug: item.manifest.slug } });
+    if (pluginRow) await seedPluginDefaults(pluginRow, item.manifest);
   }
   return discovered;
 }

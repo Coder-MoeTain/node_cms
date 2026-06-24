@@ -1,0 +1,1 @@
+Magazine Grid uses masonry blog layout, warm orange palette, and full-width centered header.

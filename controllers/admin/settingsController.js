@@ -104,7 +104,10 @@ async function activateTheme(req, res, next) {
     if (theme) {
       await theme.update({ active: true });
       await ThemeSetting.update({ active: false }, { where: {} });
-      await ThemeSetting.findOrCreate({ where: { theme_name: theme.slug }, defaults: { active: true } });
+      await ThemeSetting.findOrCreate({
+        where: { theme_name: theme.slug },
+        defaults: themeLoader.buildThemeSettingDefaults(theme.slug)
+      });
       await ThemeSetting.update({ active: true }, { where: { theme_name: theme.slug } });
     }
     req.flash('success', 'Theme activated.');

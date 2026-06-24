@@ -1,0 +1,15 @@
+{
+  "name": "URL Redirects",
+  "slug": "redirection",
+  "version": "1.2.0",
+  "description": "Manage permanent and temporary URL redirects for moved pages and legacy paths.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins"],
+  "settings": [
+    { "section": "General", "key": "enabled", "label": "Enable redirects", "type": "checkbox", "default": "true", "description": "Process redirect rules on incoming requests." },
+    { "section": "General", "key": "case_sensitive", "label": "Case-sensitive matching", "type": "checkbox", "default": "false", "description": "Match paths with exact letter casing." },
+    { "section": "General", "key": "default_status", "label": "Default redirect status", "type": "select", "default": "301", "options": [{ "value": "301", "label": "301 Permanent" }, { "value": "302", "label": "302 Temporary" }, { "value": "307", "label": "307 Temporary" }], "description": "HTTP status used when a rule omits status." },
+    { "section": "Rules", "key": "rules", "label": "Redirect rules (JSON)", "type": "textarea", "default": "[{\"from\":\"/old-page\",\"to\":\"/new-page\",\"status\":301}]", "rows": 10, "description": "JSON array. Each rule: from, to, optional status, optional match (exact|prefix)." },
+    { "section": "Logging", "key": "log_hits", "label": "Count redirect hits", "type": "checkbox", "default": "false", "description": "Show redirect usage in the dashboard widget." }
+  ]
+}

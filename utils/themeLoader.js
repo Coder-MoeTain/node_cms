@@ -1,9 +1,24 @@
 const fs = require('fs');
 const path = require('path');
 const { Theme, ThemeSetting } = require('../models');
+const { buildPortalConfigBlock } = require('./portalConfig');
 
 const themesRoot = path.join(process.cwd(), 'themes');
 const defaultPublicRoot = path.join(process.cwd(), 'views', 'public');
+
+const BASE_THEME_DEFAULTS = {
+  primary_color: '#2271b1',
+  secondary_color: '#50575e',
+  background_color: '#ffffff',
+  text_color: '#1d2327',
+  font_family: 'Inter, Arial, sans-serif',
+  header_layout: 'standard',
+  footer_layout: 'four-columns',
+  sidebar_position: 'right',
+  blog_layout: 'grid',
+  site_layout: 'full-width',
+  dark_mode: false
+};
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -118,11 +133,42 @@ function getLayoutClasses(themeSetting = {}) {
   ].filter(Boolean).join(' ');
 }
 
+function getManifestBySlug(slug) {
+  return discoverThemes().find((theme) => theme.manifest.slug === slug)?.manifest || null;
+}
+
+function buildThemeSettingDefaults(slug) {
+  const manifest = getManifestBySlug(slug);
+  const manifestDefaults = manifest?.defaults || {};
+  const { portal_config: portalConfig, preset, ...directDefaults } = manifestDefaults;
+
+  const settings = {
+    theme_name: slug,
+    active: true,
+    ...BASE_THEME_DEFAULTS,
+    ...directDefaults
+  };
+
+  if (portalConfig || preset) {
+    const config = portalConfig ? { ...portalConfig } : { preset };
+    if (preset && !config.preset) config.preset = preset;
+    settings.custom_css = buildPortalConfigBlock(config);
+    if (config.header?.layout === 'portal') {
+      settings.header_layout = 'portal';
+    }
+  }
+
+  return settings;
+}
+
 module.exports = {
   themesRoot,
+  BASE_THEME_DEFAULTS,
   discoverThemes,
   syncInstalledThemes,
   getActiveThemeManifest,
+  getManifestBySlug,
+  buildThemeSettingDefaults,
   resolveTemplate,
   resolvePartial,
   getLayoutClasses

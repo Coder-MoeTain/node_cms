@@ -17,21 +17,39 @@
           <% if (plugin.description) { %><p class="np-help-text mb-3"><%= plugin.description %></p><% } %>
           <table class="np-form-table np-settings-table">
             <tbody>
-              <% fields.forEach(function(field) { %>
+              <% let currentSection = null;
+                 fields.forEach(function(field) {
+                   if (field.section && field.section !== currentSection) {
+                     currentSection = field.section;
+              %>
+                <tr class="np-settings-section-row">
+                  <th colspan="2" scope="colgroup" class="pt-4 pb-2"><%= currentSection %></th>
+                </tr>
+              <%   } %>
                 <tr>
                   <th scope="row"><label for="setting-<%= field.key %>"><%= field.label || field.key %></label></th>
                   <td>
                     <% if (field.type === 'textarea') { %>
-                      <textarea class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" rows="4" placeholder="<%= field.placeholder || '' %>"><%= settingsMap[field.key] || '' %></textarea>
+                      <textarea class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" rows="<%= field.rows || 4 %>" placeholder="<%= field.placeholder || '' %>"><%= settingsMap[field.key] || '' %></textarea>
+                    <% } else if (field.type === 'select') { %>
+                      <select class="form-select" id="setting-<%= field.key %>" name="<%= field.key %>">
+                        <% (field.options || []).forEach(function(option) {
+                             const value = typeof option === 'string' ? option : option.value;
+                             const label = typeof option === 'string' ? option : option.label;
+                        %>
+                          <option value="<%= value %>" <%= String(settingsMap[field.key] || '') === String(value) ? 'selected' : '' %>><%= label %></option>
+                        <% }) %>
+                      </select>
                     <% } else if (field.type === 'checkbox') { %>
                       <label class="form-check">
                         <input class="form-check-input" id="setting-<%= field.key %>" name="<%= field.key %>" type="checkbox" value="on" <%= settingsMap[field.key] === 'on' || settingsMap[field.key] === 'true' ? 'checked' : '' %>>
                         <%= field.description || field.label %>
                       </label>
                     <% } else { %>
-                      <input class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" type="<%= field.type || 'text' %>" value="<%= settingsMap[field.key] || '' %>" placeholder="<%= field.placeholder || '' %>">
+                      <input class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" type="<%= field.type || 'text' %>" value="<%= settingsMap[field.key] || '' %>" placeholder="<%= field.placeholder || '' %>"<%= field.min !== undefined ? ' min="' + field.min + '"' : '' %><%= field.max !== undefined ? ' max="' + field.max + '"' : '' %>>
                     <% } %>
-                    <% if (field.description && field.type !== 'checkbox') { %><p class="np-help-text"><%= field.description %></p><% } %>
+                    <% if (field.description && field.type !== 'checkbox') { %><p class="np-help-text mb-0"><%= field.description %></p><% } %>
+                    <% if (field.default !== undefined) { %><p class="np-help-text mb-0"><small>Default: <code><%= field.default %></code></small></p><% } %>
                   </td>
                 </tr>
               <% }) %>

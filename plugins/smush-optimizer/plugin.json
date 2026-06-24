@@ -1,0 +1,17 @@
+{
+  "name": "Image Optimizer",
+  "slug": "smush-optimizer",
+  "version": "1.2.0",
+  "description": "Automatically resize, compress, and strip metadata from uploaded images.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins"],
+  "settings": [
+    { "section": "General", "key": "enabled", "label": "Enable optimization", "type": "checkbox", "default": "true", "description": "Process images during media upload." },
+    { "section": "Resize", "key": "max_width", "label": "Max width (px)", "type": "number", "default": "1920", "min": 320, "max": 8000, "description": "Downscale wider images to this width." },
+    { "section": "Resize", "key": "max_height", "label": "Max height (px)", "type": "number", "default": "1920", "min": 320, "max": 8000, "description": "Downscale taller images to this height." },
+    { "section": "Compression", "key": "jpeg_quality", "label": "JPEG quality", "type": "number", "default": "82", "min": 40, "max": 100, "description": "JPEG compression quality (1–100)." },
+    { "section": "Compression", "key": "webp_quality", "label": "WebP quality", "type": "number", "default": "80", "min": 40, "max": 100, "description": "WebP compression quality (1–100)." },
+    { "section": "Compression", "key": "convert_webp", "label": "Convert to WebP", "type": "checkbox", "default": "false", "description": "Save optimized uploads as WebP for smaller file sizes." },
+    { "section": "Privacy", "key": "strip_metadata", "label": "Strip EXIF metadata", "type": "checkbox", "default": "true", "description": "Remove camera and location metadata from images." }
+  ]
+}

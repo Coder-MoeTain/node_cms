@@ -1,0 +1,1 @@
+Government Portal activates the full portal layout with utility bar, mega menu, and citizen-service homepage widgets.

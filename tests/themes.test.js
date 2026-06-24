@@ -2,7 +2,19 @@ const themeLoader = require('../utils/themeLoader');
 
 test('discoverThemes finds bundled themes', () => {
   const themes = themeLoader.discoverThemes();
-  expect(themes.length).toBeGreaterThanOrEqual(3);
+  expect(themes.length).toBeGreaterThanOrEqual(10);
+});
+
+test('buildThemeSettingDefaults applies manifest colors', () => {
+  const defaults = themeLoader.buildThemeSettingDefaults('dark-elegant');
+  expect(defaults.dark_mode).toBe(true);
+  expect(defaults.primary_color).toBe('#38bdf8');
+});
+
+test('government-portal theme includes portal config', () => {
+  const defaults = themeLoader.buildThemeSettingDefaults('government-portal');
+  expect(defaults.header_layout).toBe('portal');
+  expect(defaults.custom_css).toContain('np-portal-config');
 });
 
 test('resolveTemplate falls back to public views', async () => {

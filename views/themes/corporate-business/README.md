@@ -1,0 +1,1 @@
+Corporate Business inherits Classic Blog templates with professional green accents and a standard sidebar layout.

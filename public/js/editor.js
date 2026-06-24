@@ -76,7 +76,10 @@ const editorForm = document.querySelector('[data-editor-form]');
 if (editorForm) {
   let dirty = false;
   editorForm.addEventListener('input', () => { dirty = true; });
-  editorForm.addEventListener('submit', () => { dirty = false; });
+  editorForm.addEventListener('submit', () => {
+    if (window.tinymce) tinymce.triggerSave();
+    dirty = false;
+  });
   window.addEventListener('beforeunload', (event) => {
     if (!dirty) return;
     event.preventDefault();

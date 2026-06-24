@@ -35,7 +35,7 @@ function applySecurityMiddleware(app) {
         useDefaults: true,
         directives: {
           "default-src": ["'self'"],
-          "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://translate.google.com', 'https://translate.googleapis.com', 'https://www.gstatic.com'],
+          "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://translate.google.com', 'https://translate.googleapis.com', 'https://translate-pa.googleapis.com', 'https://www.gstatic.com'],
           "style-src": ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', 'https://www.gstatic.com', 'https://translate.googleapis.com'],
           "font-src": ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com', 'data:'],
           "img-src": ["'self'", 'data:', 'https:'],

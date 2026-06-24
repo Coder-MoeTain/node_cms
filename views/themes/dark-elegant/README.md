@@ -1,0 +1,1 @@
+Dark Elegant enables dark mode with slate backgrounds, minimal header/footer, and sky-blue accents.

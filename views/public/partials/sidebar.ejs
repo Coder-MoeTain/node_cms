@@ -63,15 +63,6 @@
   </div>
 
   <div class="portal-widget portal-card-bordered">
-    <header class="portal-widget-header"><h2 class="portal-widget-title">Emergency</h2><a class="portal-view-all" href="/contact">All</a></header>
-    <div class="portal-widget-body portal-sidebar-emergency">
-      <a href="tel:<%= String(siteSettings.emergency_ambulance || '192').replace(/\s/g, '') %>"><i class="bi bi-heart-pulse" aria-hidden="true"></i> Ambulance <strong><%= siteSettings.emergency_ambulance || '192' %></strong></a>
-      <a href="tel:<%= String(siteSettings.emergency_fire || '191').replace(/\s/g, '') %>"><i class="bi bi-fire" aria-hidden="true"></i> Fire <strong><%= siteSettings.emergency_fire || '191' %></strong></a>
-      <a href="tel:<%= String(siteSettings.emergency_police || '199').replace(/\s/g, '') %>"><i class="bi bi-shield-check" aria-hidden="true"></i> Police <strong><%= siteSettings.emergency_police || '199' %></strong></a>
-    </div>
-  </div>
-
-  <div class="portal-widget portal-card-bordered">
     <header class="portal-widget-header"><h2 class="portal-widget-title">Documents</h2><a class="portal-view-all" href="/category/documents">More</a></header>
     <div class="portal-widget-body">
       <ul class="portal-sidebar-list">

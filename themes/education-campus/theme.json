@@ -1,0 +1,24 @@
+{
+  "name": "Education Campus",
+  "slug": "education-campus",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "Academic institution theme with navy and gold colors and left-sidebar navigation.",
+  "parent": "classic-blog",
+  "layouts": ["default", "sidebar-left", "sidebar-right"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "screenshot": "/themes/education-campus/screenshot.svg",
+  "defaults": {
+    "preset": "clean-green",
+    "primary_color": "#1e40af",
+    "secondary_color": "#f59e0b",
+    "background_color": "#f8fafc",
+    "text_color": "#1e293b",
+    "header_layout": "standard",
+    "footer_layout": "four-columns",
+    "sidebar_position": "left",
+    "blog_layout": "grid",
+    "site_layout": "full-width"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Cookie Consent",
+  "slug": "cookie-notice",
+  "version": "1.2.0",
+  "description": "Display a GDPR-style cookie consent banner and remember visitor preferences.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins"],
+  "settings": [
+    { "section": "Banner", "key": "enabled", "label": "Show cookie banner", "type": "checkbox", "default": "true", "description": "Display a consent bar on first visit." },
+    { "section": "Banner", "key": "message", "label": "Banner message", "type": "textarea", "default": "We use cookies to improve your experience on this site.", "rows": 3, "placeholder": "We use cookies to improve your experience." },
+    { "section": "Banner", "key": "button_text", "label": "Accept button text", "type": "text", "default": "Accept", "placeholder": "Accept" },
+    { "section": "Banner", "key": "position", "label": "Banner position", "type": "select", "default": "bottom", "options": [{ "value": "bottom", "label": "Bottom bar" }, { "value": "top", "label": "Top bar" }], "description": "Where the consent banner appears." },
+    { "section": "Privacy", "key": "policy_url", "label": "Privacy policy URL", "type": "text", "default": "/page/privacy", "placeholder": "/page/privacy" },
+    { "section": "Privacy", "key": "policy_link_text", "label": "Policy link text", "type": "text", "default": "Learn more", "placeholder": "Learn more" },
+    { "section": "Behavior", "key": "consent_days", "label": "Remember consent (days)", "type": "number", "default": "365", "min": 1, "max": 3650, "description": "How long to remember acceptance in the browser." }
+  ]
+}

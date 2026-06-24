@@ -38,8 +38,7 @@
        { title: 'Online Services', url: '/blog' },
        { title: 'Forms', url: '/search?q=forms' },
        { title: 'Documents', url: '/category/documents' },
-       { title: 'Public Holidays', url: '/page/public-holidays' },
-       { title: 'Emergency Contacts', url: '/#portal-emergency' }
+       { title: 'Public Holidays', url: '/page/public-holidays' }
      ]},
      { title: 'Contact', url: '/contact', children: [] }
    ];
@@ -67,18 +66,6 @@
   <% if (hdr.showUtilityBar) { %>
   <div class="portal-utility-bar">
     <div class="container portal-utility-inner">
-      <div class="portal-utility-left">
-        <a class="portal-utility-skip" href="#main-content">Skip to content</a>
-        <% if (hdr.showFontControls) { %>
-        <div class="portal-font-controls" role="group" aria-label="Font size">
-          <button type="button" class="portal-font-btn" data-font-scale="small" aria-label="Decrease font size">A-</button>
-          <button type="button" class="portal-font-btn active" data-font-scale="normal" aria-label="Default font size">A</button>
-          <button type="button" class="portal-font-btn" data-font-scale="large" aria-label="Increase font size">A+</button>
-        </div>
-        <% } %>
-        <span class="portal-utility-date"><%= new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></span>
-        <% if (siteSettings.site_location || siteSettings.contact_address) { %><span class="portal-utility-location"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.site_location || siteSettings.contact_address %></span><% } %>
-      </div>
       <div class="portal-utility-right">
         <% if (themePreset === 'myanmar-portal') { %>
         <div class="portal-mnp-socials" aria-label="Social media">
@@ -112,11 +99,9 @@
               <span class="portal-brand-line"><%= siteSettings.site_title || 'NodePress CMS' %></span>
               <span class="portal-brand-line portal-brand-line-gold"><%= siteSettings.site_tagline || 'Official information portal' %></span>
             </strong>
-            <span class="portal-brand-location portal-brand-location-mnp"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.site_location || siteSettings.contact_address || 'Nay Pyi Taw, MM' %></span>
           <% } else { %>
             <strong class="portal-brand-title"><%= siteSettings.site_title || 'NodePress CMS' %></strong>
             <span class="portal-brand-tagline"><%= siteSettings.site_tagline || 'Official information portal powered by NodePress' %></span>
-            <span class="portal-brand-location"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.site_location || siteSettings.contact_address || 'Nay Pyi Taw, MM' %></span>
           <% } %>
         </div>
       </a>

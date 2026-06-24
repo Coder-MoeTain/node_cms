@@ -1,0 +1,1 @@
+Creative Studio is a bold agency-style child theme with purple-pink colors and masonry showcase layout.

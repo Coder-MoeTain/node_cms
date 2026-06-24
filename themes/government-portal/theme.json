@@ -1,0 +1,59 @@
+{
+  "name": "Government Portal",
+  "slug": "government-portal",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "Official government portal with utility bar, mega menu, and citizen-service widgets.",
+  "parent": "classic-blog",
+  "layouts": ["portal", "full-width"],
+  "templates": ["home", "blog", "post", "page", "archive", "search"],
+  "supports": ["logo", "favicon", "colors", "menus", "widgets", "darkMode"],
+  "screenshot": "/themes/government-portal/screenshot.svg",
+  "defaults": {
+    "preset": "myanmar-portal",
+    "primary_color": "#006ba6",
+    "secondary_color": "#ffcc00",
+    "background_color": "#e8edf2",
+    "text_color": "#2b2b2b",
+    "header_layout": "portal",
+    "footer_layout": "four-columns",
+    "sidebar_position": "none",
+    "blog_layout": "list",
+    "site_layout": "full-width",
+    "portal_config": {
+      "preset": "myanmar-portal",
+      "header": {
+        "showUtilityBar": true,
+        "showFontControls": true,
+        "showLanguageSwitcher": true,
+        "showLoginLinks": true,
+        "showSearch": true,
+        "layout": "portal"
+      },
+      "nav": {
+        "megaMenu": true,
+        "sticky": true,
+        "style": "portal"
+      },
+      "homepage": {
+        "hero": true,
+        "quickLinks": true,
+        "emergency": false,
+        "latestNews": true,
+        "announcements": true,
+        "tendersJobs": true,
+        "mediaGallery": true,
+        "hotNews": true,
+        "subscribe": true,
+        "statistics": true,
+        "mobileApp": true,
+        "quickServices": true,
+        "sectionNav": true,
+        "announcementTicker": true
+      },
+      "widgets": {
+        "cardStyle": "shadow"
+      }
+    }
+  }
+}

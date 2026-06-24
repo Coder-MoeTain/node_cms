@@ -1,0 +1,16 @@
+{
+  "name": "Super Cache",
+  "slug": "super-cache",
+  "version": "1.1.0",
+  "description": "WordPress WP Super Cache equivalent — browser cache headers for public pages.",
+  "author": "NodePress",
+  "permissions": ["manage_plugins"],
+  "settings": [
+    { "section": "General", "key": "enabled", "label": "Enable caching headers", "type": "checkbox", "default": "true", "description": "Send Cache-Control headers on public GET requests." },
+    { "section": "General", "key": "max_age", "label": "Browser cache max-age (seconds)", "type": "number", "default": "3600", "min": 60, "placeholder": "3600", "description": "How long browsers should cache public pages." },
+    { "section": "Page Types", "key": "cache_home", "label": "Cache homepage", "type": "checkbox", "default": "true", "description": "Apply cache headers on /." },
+    { "section": "Page Types", "key": "cache_posts", "label": "Cache blog posts", "type": "checkbox", "default": "true", "description": "Apply cache headers on /post/* pages." },
+    { "section": "Page Types", "key": "cache_static", "label": "Cache static assets path", "type": "checkbox", "default": "true", "description": "Apply long cache headers on /uploads/* files." },
+    { "section": "Exclusions", "key": "exclude_paths", "label": "Excluded paths", "type": "text", "default": "/contact,/search,/admin", "description": "Comma-separated paths that should never be cached." }
+  ]
+}
