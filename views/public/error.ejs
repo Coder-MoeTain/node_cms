@@ -1,5 +1,5 @@
-<%- include('partials/head') %>
-<%- include('partials/header') %>
+<%- include(themePartial('head')) %>
+<%- include(themePartial('header')) %>
 <main id="main-content" class="portal-main portal-page container py-5">
   <div class="portal-list-panel portal-card-bordered text-center p-4 p-md-5">
     <p class="portal-error-code display-4 fw-bold mb-2" aria-hidden="true"><%= code || 404 %></p>
@@ -11,4 +11,4 @@
     </div>
   </div>
 </main>
-<%- include('partials/footer') %>
+<%- include(themePartial('footer')) %>

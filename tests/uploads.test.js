@@ -1,19 +1,9 @@
-const { isSafeEntryName } = require('../utils/packageArchive');
-
-// Mirror upload middleware rules for unit testing
-const blockedExtensions = new Set(['.exe', '.bat', '.cmd', '.sh', '.php', '.phtml', '.js', '.mjs', '.jar', '.svg', '.html', '.htm']);
-
-function isAllowedUpload(extension, mimetype) {
-  const allowedImageMimeTypes = new Map([
-    ['image/jpeg', ['.jpg', '.jpeg']],
-    ['image/png', ['.png']],
-    ['image/gif', ['.gif']],
-    ['image/webp', ['.webp']]
-  ]);
-  const ext = extension.toLowerCase();
-  if (blockedExtensions.has(ext)) return false;
-  return Boolean(allowedImageMimeTypes.get(mimetype)?.includes(ext));
-}
+const { isSafeEntryName, MAX_UNCOMPRESSED_BYTES } = require('../utils/packageArchive');
+const {
+  isAllowedUpload,
+  hasUnsafeFileName,
+  blockedExtensions
+} = require('../middleware/upload');
 
 test('package archive rejects path traversal', () => {
   expect(isSafeEntryName('../evil.php')).toBe(false);
@@ -31,4 +21,19 @@ test('allowed image types pass validation', () => {
   expect(isAllowedUpload('.png', 'image/png')).toBe(true);
   expect(isAllowedUpload('.jpg', 'image/jpeg')).toBe(true);
   expect(isAllowedUpload('.png', 'image/jpeg')).toBe(false);
+});
+
+test('unsafe file names are blocked', () => {
+  expect(hasUnsafeFileName('../secret.png')).toBe(true);
+  expect(hasUnsafeFileName('.env')).toBe(true);
+  expect(hasUnsafeFileName('photo.png')).toBe(false);
+});
+
+test('blocked extension set includes script types', () => {
+  expect(blockedExtensions.has('.php')).toBe(true);
+  expect(blockedExtensions.has('.svg')).toBe(true);
+});
+
+test('zip bomb limit constant is defined', () => {
+  expect(MAX_UNCOMPRESSED_BYTES).toBeGreaterThan(MAX_UNCOMPRESSED_BYTES / 2);
 });

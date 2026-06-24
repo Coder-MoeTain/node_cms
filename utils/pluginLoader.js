@@ -7,6 +7,7 @@ const { seedPluginDefaults } = require('./pluginSettings');
 const pluginsRoot = path.join(process.cwd(), 'plugins');
 const hooks = new Map();
 let activePlugins = [];
+let lastActivationErrors = new Map();
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -130,28 +131,57 @@ async function collectHook(name, context = {}) {
 
 async function loadActivePlugins(app = null) {
   hooks.clear();
+  lastActivationErrors = new Map();
   const discovered = await syncInstalledPlugins();
   const activeRows = await Plugin.findAll({ where: { active: true } });
   activePlugins = [];
 
   for (const row of activeRows) {
     const item = discovered.find((plugin) => plugin.manifest.slug === row.slug);
-    if (!item) continue;
-    await runPluginMigrations(row.slug);
-    const entryPath = path.join(item.path, 'index.js');
-    if (!fs.existsSync(entryPath)) continue;
-    delete require.cache[require.resolve(entryPath)];
-    const plugin = require(entryPath);
-    if (typeof plugin.register === 'function') {
-      await plugin.register({ app, hooks: { register: registerHook }, manifest: item.manifest });
+    if (!item) {
+      lastActivationErrors.set(row.slug, 'Plugin files are missing from disk.');
+      await Plugin.update({ active: false }, { where: { slug: row.slug } });
+      continue;
     }
-    activePlugins.push({ ...item, row });
+    try {
+      await runPluginMigrations(row.slug);
+      const entryPath = path.join(item.path, 'index.js');
+      if (!fs.existsSync(entryPath)) {
+        throw new Error('Plugin entry file index.js is missing.');
+      }
+      delete require.cache[require.resolve(entryPath)];
+      const plugin = require(entryPath);
+      if (typeof plugin.register === 'function') {
+        await plugin.register({ app, hooks: { register: registerHook }, manifest: item.manifest });
+      }
+      activePlugins.push({ ...item, row });
+    } catch (error) {
+      lastActivationErrors.set(row.slug, error.message || 'Plugin failed to register.');
+      await Plugin.update({ active: false }, { where: { slug: row.slug } });
+    }
   }
   return activePlugins;
 }
 
 function getActivePlugins() {
   return activePlugins;
+}
+
+function getActivationErrors() {
+  return new Map(lastActivationErrors);
+}
+
+async function activatePlugin(slug, app = null) {
+  const plugin = await Plugin.findOne({ where: { slug } });
+  if (!plugin) throw new Error('Plugin not found.');
+  await runPluginMigrations(slug);
+  if (plugin) await seedPluginDefaults(plugin, plugin.manifest || {});
+  await Plugin.update({ active: true }, { where: { slug } });
+  await invokePluginLifecycle(slug, 'onActivate', app);
+  await loadActivePlugins(app);
+  const error = lastActivationErrors.get(slug);
+  if (error) throw new Error(error);
+  return plugin;
 }
 
 function listRegisteredHooks() {
@@ -199,11 +229,14 @@ function removePluginDirectory(slug) {
 module.exports = {
   pluginsRoot,
   discoverPluginManifests,
+  validateManifest,
   syncInstalledPlugins,
   runPluginMigrations,
   loadActivePlugins,
+  activatePlugin,
   deactivatePlugin,
   getActivePlugins,
+  getActivationErrors,
   getPluginManagerStats,
   getManifestBySlug,
   invokePluginLifecycle,

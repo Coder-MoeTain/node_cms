@@ -3,6 +3,7 @@ const path = require('path');
 const unzipper = require('unzipper');
 
 const MAX_ARCHIVE_BYTES = 25 * 1024 * 1024;
+const MAX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024;
 
 function isSafeEntryName(entryName) {
   const normalized = String(entryName || '').replace(/\\/g, '/');
@@ -36,13 +37,23 @@ async function extractZipArchive(zipPath, targetRoot, manifestName) {
   fs.mkdirSync(tempDir, { recursive: true });
 
   try {
+    let totalUncompressed = 0;
     await new Promise((resolve, reject) => {
-      fs.createReadStream(zipPath)
+      const stream = fs.createReadStream(zipPath)
         .pipe(unzipper.Parse())
         .on('entry', (entry) => {
           if (!isSafeEntryName(entry.path)) {
             entry.autodrain();
             return;
+          }
+          if (entry.type === 'File') {
+            totalUncompressed += Number(entry.vars?.uncompressedSize || 0);
+            if (totalUncompressed > MAX_UNCOMPRESSED_BYTES) {
+              stream.destroy();
+              reject(new Error('Archive uncompressed size exceeds maximum allowed limit (100 MB).'));
+              entry.autodrain();
+              return;
+            }
           }
           const dest = path.join(tempDir, entry.path);
           if (entry.type === 'Directory') {
@@ -68,7 +79,13 @@ async function extractZipArchive(zipPath, targetRoot, manifestName) {
 
     const finalDir = path.join(targetRoot, manifest.slug);
     if (fs.existsSync(finalDir)) {
-      fs.rmSync(finalDir, { recursive: true, force: true });
+      const backupDir = path.join(targetRoot, `.backup-${manifest.slug}-${Date.now()}`);
+      fs.renameSync(finalDir, backupDir);
+      try {
+        fs.rmSync(backupDir, { recursive: true, force: true });
+      } catch {
+        // Best-effort cleanup of the pre-overwrite backup directory.
+      }
     }
     fs.renameSync(found.root, finalDir);
 
@@ -79,4 +96,9 @@ async function extractZipArchive(zipPath, targetRoot, manifestName) {
   }
 }
 
-module.exports = { extractZipArchive, MAX_ARCHIVE_BYTES, isSafeEntryName };
+module.exports = {
+  extractZipArchive,
+  MAX_ARCHIVE_BYTES,
+  MAX_UNCOMPRESSED_BYTES,
+  isSafeEntryName
+};

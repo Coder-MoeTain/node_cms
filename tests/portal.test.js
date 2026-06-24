@@ -1,14 +1,10 @@
 const request = require('supertest');
 const { buildPortalConfigBlock, MYANMAR_PORTAL_DEFAULTS } = require('../utils/portalConfig');
 const { app, models } = require('../server');
+const { ensurePortalTheme } = require('./helpers');
 
-beforeAll(async () => {
-  await models.ThemeSetting.update({
-    header_layout: 'portal',
-    primary_color: '#0b5f8a',
-    secondary_color: '#f4b000',
-    custom_css: buildPortalConfigBlock(MYANMAR_PORTAL_DEFAULTS)
-  }, { where: { active: true } });
+beforeEach(async () => {
+  await ensurePortalTheme(models, MYANMAR_PORTAL_DEFAULTS);
 });
 
 test('portal home includes portal chrome', async () => {

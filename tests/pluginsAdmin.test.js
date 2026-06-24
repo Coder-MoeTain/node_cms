@@ -17,11 +17,15 @@ function installTestPlugin() {
     description: 'Plugin used for admin lifecycle integration tests',
     author: 'NodePress Tests'
   }, null, 2));
-  fs.writeFileSync(path.join(pluginDir, 'index.js'), `module.exports = {
+  fs.writeFileSync(path.join(pluginDir, 'index.js'), `let activated = false;
+module.exports = {
   register({ hooks }) {
     hooks.register('publicFooter', () => '<!-- lifecycle-test-active -->', 10);
   },
-  onDeactivate() {}
+  onInstall() { global.__lifecycleInstall = true; },
+  onActivate() { activated = true; global.__lifecycleActivate = true; },
+  onDeactivate() { activated = false; },
+  onUninstall() { global.__lifecycleUninstall = true; }
 };
 `);
   return pluginDir;
@@ -86,6 +90,25 @@ test('plugin lifecycle registers and clears hooks', async () => {
   await pluginLoader.deactivatePlugin(TEST_PLUGIN_SLUG, app);
   const row = await models.Plugin.findOne({ where: { slug: TEST_PLUGIN_SLUG } });
   expect(row.active).toBe(false);
+});
+
+test('plugin lifecycle invokes install activate and uninstall hooks', async () => {
+  installTestPlugin();
+  await pluginLoader.syncInstalledPlugins();
+  await pluginLoader.invokePluginLifecycle(TEST_PLUGIN_SLUG, 'onInstall');
+  expect(global.__lifecycleInstall).toBe(true);
+
+  await pluginLoader.activatePlugin(TEST_PLUGIN_SLUG, app);
+  expect(global.__lifecycleActivate).toBe(true);
+  expect(pluginLoader.listRegisteredHooks()).toContain('publicFooter');
+
+  await pluginLoader.deactivatePlugin(TEST_PLUGIN_SLUG, app);
+  await pluginLoader.invokePluginLifecycle(TEST_PLUGIN_SLUG, 'onUninstall');
+  expect(global.__lifecycleUninstall).toBe(true);
+
+  delete global.__lifecycleInstall;
+  delete global.__lifecycleActivate;
+  delete global.__lifecycleUninstall;
 });
 
 test('active plugin cannot be uninstalled', async () => {

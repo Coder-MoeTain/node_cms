@@ -90,4 +90,4 @@
   <% if (typeof schema !== 'undefined' && schema) { %><script type="application/ld+json"><%- schema %></script><% } %>
   <% (pluginPublicHead || []).forEach(function(snippet) { %><%- snippet %><% }) %>
 </head>
-<body class="<%= activeTheme.dark_mode ? 'theme-dark' : '' %> <%= activeTheme.site_layout === 'boxed' ? 'boxed-layout' : '' %> header-layout-<%= activeTheme.header_layout || 'standard' %> footer-layout-<%= activeTheme.footer_layout || 'four-columns' %> sidebar-<%= activeTheme.sidebar_position || 'right' %> blog-layout-<%= activeTheme.blog_layout || 'grid' %> portal-preset-<%= themePreset || 'default' %> <%= isPortalLayout ? 'portal-layout-active' : 'standard-layout-active' %>">
+<body class="<%= typeof themeLayoutClasses !== 'undefined' ? themeLayoutClasses : '' %> portal-preset-<%= themePreset || 'default' %> <%= isPortalLayout ? 'portal-layout-active' : 'standard-layout-active' %><% if (typeof isCustomizerPreview !== 'undefined' && isCustomizerPreview) { %> customizer-preview-active<% } %>">

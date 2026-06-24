@@ -1,5 +1,5 @@
-<%- include('partials/head') %>
-<%- include('partials/header') %>
+<%- include(themePartial('head')) %>
+<%- include(themePartial('header')) %>
 <main class="container portal-page portal-main py-4" id="main-content">
   <nav class="portal-breadcrumb" aria-label="Breadcrumb">
     <a href="/">Home</a> <span aria-hidden="true">/</span> <span><%= heading %></span>
@@ -11,11 +11,11 @@
         <% if (posts.length) { %>
           <ul class="portal-post-list portal-post-list-page">
             <% posts.forEach(function(post) { %>
-              <li><%- include('partials/portal-post-item', { post }) %></li>
+              <li><%- include(themePartial('portal-post-item'), { post }) %></li>
             <% }) %>
           </ul>
         <% } else { %>
-          <%- include('partials/portal-empty', { icon: 'archive', message: 'No posts in this archive yet.' }) %>
+          <%- include(themePartial('portal-empty'), { icon: 'archive', message: 'No posts in this archive yet.' }) %>
         <% } %>
       </div>
       <% if (pagination && pagination.pages > 1) { %>
@@ -29,8 +29,8 @@
       <% } %>
     </section>
     <% if (activeTheme.sidebar_position !== 'none') { %>
-      <div class="col-lg-4"><%- include('partials/sidebar') %></div>
+      <div class="col-lg-4"><%- include(themePartial('sidebar')) %></div>
     <% } %>
   </div>
 </main>
-<%- include('partials/footer') %>
+<%- include(themePartial('footer')) %>

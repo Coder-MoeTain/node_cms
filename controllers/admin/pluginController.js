@@ -13,11 +13,13 @@ async function index(req, res, next) {
       pluginLoader.getPluginManagerStats(),
       Promise.resolve(pluginLoader.listRegisteredHooks())
     ]);
+    const activationErrors = pluginLoader.getActivationErrors();
     return res.render('admin/plugins/index', {
       title: 'Plugins',
       plugins,
       stats,
-      registeredHooks
+      registeredHooks,
+      activationErrors: Object.fromEntries(activationErrors)
     });
   } catch (error) {
     return next(error);
@@ -31,8 +33,13 @@ async function upload(req, res, next) {
       return res.redirect('/admin/plugins');
     }
     const { manifest } = await extractZipArchive(req.file.path, pluginLoader.pluginsRoot, 'plugin.json');
+    pluginLoader.validateManifest(manifest);
+    const isNew = !(await Plugin.findOne({ where: { slug: manifest.slug } }));
     await pluginLoader.syncInstalledPlugins();
     await pluginLoader.runPluginMigrations(manifest.slug);
+    if (isNew) {
+      await pluginLoader.invokePluginLifecycle(manifest.slug, 'onInstall', req.app);
+    }
     req.flash('success', `Plugin "${manifest.name}" installed successfully.`);
     return res.redirect('/admin/plugins');
   } catch (error) {
@@ -44,15 +51,12 @@ async function upload(req, res, next) {
 async function activate(req, res, next) {
   try {
     const slug = req.params.slug;
-    const plugin = await Plugin.findOne({ where: { slug } });
-    await pluginLoader.runPluginMigrations(slug);
-    if (plugin) await seedPluginDefaults(plugin, plugin.manifest || {});
-    await Plugin.update({ active: true }, { where: { slug } });
-    await pluginLoader.loadActivePlugins(req.app);
+    await pluginLoader.activatePlugin(slug, req.app);
     req.flash('success', 'Plugin activated.');
     return res.redirect('/admin/plugins');
   } catch (error) {
-    return next(error);
+    req.flash('error', error.message || 'Plugin activation failed.');
+    return res.redirect('/admin/plugins');
   }
 }
 
@@ -77,6 +81,7 @@ async function uninstall(req, res, next) {
       req.flash('error', 'Deactivate the plugin before uninstalling.');
       return res.redirect('/admin/plugins');
     }
+    await pluginLoader.invokePluginLifecycle(plugin.slug, 'onUninstall', req.app);
     await PluginMigration.destroy({ where: { plugin_id: plugin.id } });
     await PluginSetting.destroy({ where: { plugin_id: plugin.id } });
     await plugin.destroy();
@@ -100,9 +105,9 @@ async function settings(req, res, next) {
     const storedMap = {};
     (plugin.settings || []).forEach((setting) => { storedMap[setting.key] = setting.value; });
     const settingsMap = resolvePluginSettings(storedMap, manifest);
-
-    const fields = (manifest.settings || []).length
-      ? manifest.settings
+    const manifestFields = manifest.settings || [];
+    const fields = manifestFields.length
+      ? manifestFields
       : [
         { key: 'note', label: 'Enabled Note', type: 'text', placeholder: 'Internal note' },
         { key: 'public_snippet', label: 'Public Snippet', type: 'textarea', placeholder: 'Snippet for hooks' }
@@ -112,7 +117,8 @@ async function settings(req, res, next) {
       title: `${plugin.name} Settings`,
       plugin,
       settingsMap,
-      fields
+      fields,
+      usesManifestSettings: manifestFields.length > 0
     });
   } catch (error) {
     return next(error);
@@ -125,7 +131,13 @@ async function updateSettings(req, res, next) {
     if (!plugin) return res.status(404).render('errors/404', { title: 'Plugin Not Found' });
 
     const manifest = plugin.manifest || {};
-    const fields = manifest.settings || [];
+    const manifestFields = manifest.settings || [];
+    const fields = manifestFields.length
+      ? manifestFields
+      : [
+        { key: 'note', type: 'text' },
+        { key: 'public_snippet', type: 'textarea' }
+      ];
 
     for (const field of fields) {
       if (!field.key) continue;

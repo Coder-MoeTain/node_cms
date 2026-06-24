@@ -77,6 +77,7 @@ router.get('/themes/customize', requireAuth, can('manage_themes'), settings.them
 router.get('/themes/editor', requireAuth, can('manage_themes'), (req, res) => res.redirect('/admin/themes/customize'));
 router.post('/themes/activate', requireAuth, can('manage_themes'), settings.activateTheme);
 router.put('/theme-settings', requireAuth, can('manage_themes'), brandingImageUpload, settings.updateThemeSettings);
+router.post('/theme-settings/preview', requireAuth, can('manage_themes'), settings.previewThemeDraft);
 
 router.get('/security', requireAuth, can('manage_security'), security.index);
 router.put('/security/settings', requireAuth, can('manage_security'), security.updateSettings);

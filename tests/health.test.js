@@ -9,9 +9,16 @@ describe('health endpoints', () => {
     expect(response.body.uptime).toBeGreaterThan(0);
   });
 
-  test('GET /ready reports database status', async () => {
+  test('GET /ready reports database ok when connected', async () => {
     const response = await request(app).get('/ready');
-    expect([200, 503]).toContain(response.status);
-    expect(response.body).toHaveProperty('database');
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('ready');
+    expect(response.body.database).toBe('ok');
+  });
+
+  test('GET /health includes version metadata', async () => {
+    const response = await request(app).get('/health');
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('timestamp');
   });
 });

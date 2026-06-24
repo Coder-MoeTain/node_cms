@@ -1,5 +1,7 @@
 const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post, Media, Plugin } = require('../models');
 const pluginLoader = require('../utils/pluginLoader');
+const themeLoader = require('../utils/themeLoader');
+const { resolveThemePartials } = require('../utils/themePartials');
 const { resolvePortalConfig, resolveThemePreset, parseThemeVars } = require('../utils/portalConfig');
 const {
   translateMenus,
@@ -39,6 +41,13 @@ async function sidebarPostsForCategory(slug, limit = 5) {
   });
 }
 
+function applyCustomizerPreview(req, themePlain) {
+  if (req.query.customizer_preview !== '1' || !req.session?.user) return themePlain;
+  const draft = req.session.customizerDraft;
+  if (!draft || typeof draft !== 'object') return themePlain;
+  return { ...themePlain, ...draft };
+}
+
 async function loadSiteContext(req, res, next) {
   try {
     const [settings, theme, menus, categories, recentPosts, popularPosts, announcementPosts, activePlugins] = await Promise.all([
@@ -57,11 +66,15 @@ async function loadSiteContext(req, res, next) {
     ]);
 
     res.locals.siteSettings = settings.reduce((map, row) => ({ ...map, [row.key]: row.value }), {});
-    const themePlain = theme ? theme.get({ plain: true }) : {};
+    const themePlain = applyCustomizerPreview(req, theme ? theme.get({ plain: true }) : {});
     res.locals.activeTheme = themePlain;
     res.locals.portalConfig = resolvePortalConfig(themePlain);
     res.locals.themePreset = resolveThemePreset(themePlain, res.locals.portalConfig);
     res.locals.themeVars = parseThemeVars(themePlain.custom_css || '');
+    res.locals.themeLayoutClasses = themeLoader.getLayoutClasses(themePlain);
+    res.locals.themePartials = await resolveThemePartials();
+    res.locals.themePartial = (name) => res.locals.themePartials[name] || `public/partials/${name}`;
+    res.locals.isCustomizerPreview = req.query.customizer_preview === '1' && Boolean(req.session?.user);
     res.locals.isPortal =
       res.locals.portalConfig.header?.layout === 'portal' ||
       themePlain.header_layout === 'portal' ||
@@ -98,4 +111,4 @@ async function loadSiteContext(req, res, next) {
   }
 }
 
-module.exports = { loadSiteContext, buildMenuTree };
+module.exports = { loadSiteContext, buildMenuTree, applyCustomizerPreview };

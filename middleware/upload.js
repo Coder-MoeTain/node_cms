@@ -75,4 +75,17 @@ upload.image = multer({
   limits: { fileSize: appConfig.uploadMaxSizeMb * 1024 * 1024 }
 });
 
+function isAllowedUpload(extension, mimetype) {
+  const ext = extension.toLowerCase();
+  if (blockedExtensions.has(ext) || hasUnsafeFileName(`file${ext}`)) return false;
+  const allowedImage = allowedImageMimeTypes.get(mimetype)?.includes(ext);
+  const allowedVideo = allowedVideoMimeTypes.get(mimetype)?.includes(ext);
+  const allowedDocument = allowedMimeTypes.includes(mimetype) && ['.pdf', '.doc', '.docx'].includes(ext);
+  return Boolean(allowedImage || allowedVideo || allowedDocument);
+}
+
 module.exports = upload;
+module.exports.hasUnsafeFileName = hasUnsafeFileName;
+module.exports.isAllowedUpload = isAllowedUpload;
+module.exports.blockedExtensions = blockedExtensions;
+module.exports.blockedFileNames = blockedFileNames;

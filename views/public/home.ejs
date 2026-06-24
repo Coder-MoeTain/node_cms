@@ -1,12 +1,12 @@
-<%- include('partials/head') %>
-<%- include('partials/header') %>
+<%- include(themePartial('head')) %>
+<%- include(themePartial('header')) %>
 <main id="main-content" class="portal-main portal-home-page">
   <% const usePortalHome = (portalConfig.header && portalConfig.header.layout === 'portal') || activeTheme.header_layout === 'portal' || themePreset === 'myanmar-portal'; %>
   <% if (usePortalHome) { %>
     <% if (portalConfig.homepage && portalConfig.homepage.announcementTicker && themePreset !== 'myanmar-portal') { %>
-      <%- include('partials/portal-ticker') %>
+      <%- include(themePartial('portal-ticker')) %>
     <% } %>
-    <%- include('home-portal') %>
+    <%- include(themePartial('home-portal')) %>
   <% } else { %>
     <% if (sliders.length) { %>
       <div id="homeSlider" class="carousel slide" data-bs-ride="carousel">
@@ -35,7 +35,7 @@
       </div>
       <div class="row g-4">
         <% if (posts.length) { %>
-          <% posts.forEach(function(post) { %><div class="col-md-6 col-lg-4"><%- include('partials/post-card', { post }) %></div><% }) %>
+          <% posts.forEach(function(post) { %><div class="col-md-6 col-lg-4"><%- include(themePartial('post-card'), { post }) %></div><% }) %>
         <% } else { %>
           <div class="col-12"><div class="np-card"><div class="np-card-body text-center text-muted">No published posts yet.</div></div></div>
         <% } %>
@@ -43,4 +43,4 @@
     </section>
   <% } %>
 </main>
-<%- include('partials/footer') %>
+<%- include(themePartial('footer')) %>
