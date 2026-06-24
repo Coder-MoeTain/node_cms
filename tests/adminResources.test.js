@@ -44,6 +44,17 @@ test('super admin can view roles list', async () => {
   expect(response.status).toBe(200);
 });
 
+test('admin can view menus and banners', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const menus = await agent.get('/admin/menus');
+  expect(menus.status).toBe(200);
+  const banners = await agent.get('/admin/banners');
+  expect(banners.status).toBe(200);
+  const sliders = await agent.get('/admin/sliders');
+  expect(sliders.status).toBe(200);
+});
+
 test('admin can edit and approve a comment', async () => {
   const post = await models.Post.findOne({ where: { slug: 'comment-test-post' } });
   const comment = await models.Comment.create({

@@ -22,7 +22,7 @@ Health endpoints:
 - `GET /health`
 - `GET /ready`
 
-Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. See `.env.example`, `docs/DEPLOYMENT.md`, and `docs/BACKUP_AND_RESTORE.md`.
+Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. CI runs `db:sync`, migrations, seed data, and `test:ci` with global coverage thresholds (lines ≥ 80%, statements ≥ 77%, functions ≥ 75%, branches ≥ 55%). See `.env.example`, `docs/DEPLOYMENT.md`, `docs/DEMO.md`, and `docs/BACKUP_AND_RESTORE.md`.
 
 <p align="center">
   <img src="docs/assets/nodepress-cover.svg" alt="NodePress CMS cover" width="100%">
@@ -45,6 +45,9 @@ Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment 
 </p>
 
 <p align="center">
+  <a href="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml"><img src="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <img src="https://img.shields.io/badge/coverage-lines%20%E2%89%A580%25-brightgreen?style=flat-square" alt="Coverage threshold">
+  <img src="https://img.shields.io/badge/coverage-statements%20%E2%89%A577%25-brightgreen?style=flat-square" alt="Statements threshold">
   <img src="https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
   <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
   <img src="https://img.shields.io/badge/ORM-Sequelize-52B0E7?style=for-the-badge&logo=sequelize&logoColor=white" alt="Sequelize">
@@ -66,9 +69,23 @@ Admin Panel  -> http://localhost:3000/admin/login
 ```
 
 <p align="center">
-  <img src="docs/assets/public-preview.svg" alt="NodePress public website preview" width="49%">
-  <img src="docs/assets/admin-preview.svg" alt="NodePress admin dashboard preview" width="49%">
+  <img src="docs/assets/screenshots/public-home.png" alt="NodePress public website screenshot" width="49%">
+  <img src="docs/assets/screenshots/admin-dashboard.png" alt="NodePress admin dashboard screenshot" width="49%">
 </p>
+
+<p align="center">
+  <em>Screenshot gallery and recording steps: <a href="docs/DEMO.md">docs/DEMO.md</a></em>
+</p>
+
+### Demo video
+
+Add a walkthrough recording to `docs/assets/nodepress-demo.mp4`, then embed it in your fork or site:
+
+```html
+<video src="docs/assets/nodepress-demo.mp4" controls width="100%"></video>
+```
+
+Until then, use the screenshot gallery above and the SVG mockups below.
 
 ## Highlights
 
@@ -230,6 +247,8 @@ API_KEY=your-long-random-api-key
 | `npm run migrate` | Run pending SQL migrations |
 | `npm run seed` | Seed roles, permissions, settings, menus, themes, and default admin |
 | `npm test` | Run Jest test suite |
+| `npm run test:ci` | Run tests with coverage thresholds enforced (used in CI) |
+| `npm run test:coverage` | Run tests and write `coverage/` report |
 | `npm run lint` | Run ESLint |
 | `npm run backup` | Create database and uploads backup |
 | `npm run health` | Check application health |

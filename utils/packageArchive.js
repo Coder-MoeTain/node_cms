@@ -28,6 +28,17 @@ async function findManifestInDir(dir, manifestName) {
   return null;
 }
 
+function moveDirectory(source, destination) {
+  try {
+    fs.renameSync(source, destination);
+  } catch (error) {
+    if (!['EXDEV', 'EPERM', 'EEXIST'].includes(error.code)) throw error;
+    if (fs.existsSync(destination)) fs.rmSync(destination, { recursive: true, force: true });
+    fs.cpSync(source, destination, { recursive: true });
+    fs.rmSync(source, { recursive: true, force: true });
+  }
+}
+
 async function extractZipArchive(zipPath, targetRoot, manifestName) {
   if (!fs.existsSync(zipPath)) throw new Error('Archive file not found.');
   const stat = fs.statSync(zipPath);
@@ -38,35 +49,17 @@ async function extractZipArchive(zipPath, targetRoot, manifestName) {
 
   try {
     let totalUncompressed = 0;
-    await new Promise((resolve, reject) => {
-      const stream = fs.createReadStream(zipPath)
-        .pipe(unzipper.Parse())
-        .on('entry', (entry) => {
-          if (!isSafeEntryName(entry.path)) {
-            entry.autodrain();
-            return;
-          }
-          if (entry.type === 'File') {
-            totalUncompressed += Number(entry.vars?.uncompressedSize || 0);
-            if (totalUncompressed > MAX_UNCOMPRESSED_BYTES) {
-              stream.destroy();
-              reject(new Error('Archive uncompressed size exceeds maximum allowed limit (100 MB).'));
-              entry.autodrain();
-              return;
-            }
-          }
-          const dest = path.join(tempDir, entry.path);
-          if (entry.type === 'Directory') {
-            fs.mkdirSync(dest, { recursive: true });
-            entry.autodrain();
-            return;
-          }
-          fs.mkdirSync(path.dirname(dest), { recursive: true });
-          entry.pipe(fs.createWriteStream(dest));
-        })
-        .on('close', resolve)
-        .on('error', reject);
-    });
+    const directory = await unzipper.Open.file(zipPath);
+    for (const entry of directory.files) {
+      if (!isSafeEntryName(entry.path)) continue;
+      if (entry.type === 'File') {
+        totalUncompressed += Number(entry.uncompressedSize || 0);
+        if (totalUncompressed > MAX_UNCOMPRESSED_BYTES) {
+          throw new Error('Archive uncompressed size exceeds maximum allowed limit (100 MB).');
+        }
+      }
+    }
+    await directory.extract({ path: tempDir });
 
     const found = await findManifestInDir(tempDir, manifestName);
     if (!found) throw new Error(`${manifestName} was not found in the archive.`);
@@ -87,7 +80,7 @@ async function extractZipArchive(zipPath, targetRoot, manifestName) {
         // Best-effort cleanup of the pre-overwrite backup directory.
       }
     }
-    fs.renameSync(found.root, finalDir);
+    moveDirectory(found.root, finalDir);
 
     return { manifest, installPath: finalDir };
   } finally {

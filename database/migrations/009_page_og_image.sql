@@ -1,5 +1,3 @@
-USE nodepress_cms;
-
 ALTER TABLE pages
   ADD COLUMN IF NOT EXISTS featured_image VARCHAR(255) NULL AFTER excerpt,
   ADD COLUMN IF NOT EXISTS og_image VARCHAR(255) NULL AFTER seo_description;

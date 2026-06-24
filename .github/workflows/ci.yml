@@ -52,9 +52,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run migrate
-      - run: npm run seed
+      - run: node database/ensureDatabase.js
+      - run: npm run db:sync
       - run: npm run test:ci
+      - name: Report coverage summary
+        run: node scripts/coverage-summary.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -86,4 +88,7 @@ jobs:
           docker compose up -d --build --wait --timeout 180
           curl -fsS http://127.0.0.1:3000/health
           curl -fsS http://127.0.0.1:3000/ready
+          curl -fsS -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/ | grep -E '200|302'
+          curl -fsS -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/admin/login | grep 200
+          docker compose exec -T app node scripts/health-check.js
           docker compose down -v
