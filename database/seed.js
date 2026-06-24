@@ -18,16 +18,23 @@ const {
 } = require('../models');
 
 const permissions = [
+  'view_dashboard',
   'manage_posts',
   'create_posts',
   'edit_posts',
   'delete_posts',
   'publish_posts',
   'manage_pages',
+  'manage_categories',
+  'manage_tags',
   'manage_media',
+  'manage_menus',
+  'manage_banners',
+  'manage_sliders',
   'manage_users',
   'manage_roles',
   'manage_themes',
+  'manage_comments',
   'manage_settings',
   'manage_security'
 ];
@@ -35,8 +42,23 @@ const permissions = [
 const roles = [
   ['Super Admin', 'super-admin', permissions],
   ['Admin', 'admin', permissions.filter((permission) => permission !== 'manage_roles')],
-  ['Editor', 'editor', ['manage_posts', 'create_posts', 'edit_posts', 'publish_posts', 'manage_pages', 'manage_media']],
-  ['Author', 'author', ['create_posts', 'edit_posts', 'manage_media']],
+  [
+    'Editor',
+    'editor',
+    [
+      'view_dashboard',
+      'manage_posts',
+      'create_posts',
+      'edit_posts',
+      'publish_posts',
+      'manage_pages',
+      'manage_categories',
+      'manage_tags',
+      'manage_media',
+      'manage_comments'
+    ]
+  ],
+  ['Author', 'author', ['view_dashboard', 'create_posts', 'edit_posts', 'manage_media']],
   ['Subscriber', 'subscriber', []]
 ];
 

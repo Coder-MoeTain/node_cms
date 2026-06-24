@@ -13,13 +13,14 @@
       <a class="btn btn-primary" href="/admin/posts/create"><i class="bi bi-plus-lg"></i> New Post</a>
     </section>
     <div class="row g-3">
-      <% const statIcons = { posts: 'bi-file-richtext', pages: 'bi-files', users: 'bi-people', categories: 'bi-folder', media: 'bi-images', messages: 'bi-envelope', comments: 'bi-chat-dots' }; %>
+      <% const statIcons = { posts: 'bi-file-richtext', publishedPosts: 'bi-send-check', draftPosts: 'bi-pencil-square', pages: 'bi-files', users: 'bi-people', categories: 'bi-folder', media: 'bi-images', comments: 'bi-chat-dots' }; %>
+      <% const statLabels = { publishedPosts: 'published posts', draftPosts: 'draft posts' }; %>
       <% Object.entries(stats).forEach(function(entry) { %>
         <div class="col-6 col-lg-3">
           <div class="card stat-card">
             <div class="card-body">
               <span class="stat-icon"><i class="bi <%= statIcons[entry[0]] || 'bi-activity' %>"></i></span>
-              <span class="stat-label text-capitalize"><%= entry[0] %></span>
+              <span class="stat-label text-capitalize"><%= statLabels[entry[0]] || entry[0] %></span>
               <h2><%= entry[1] %></h2>
             </div>
           </div>
@@ -40,6 +41,22 @@
             </table>
           </div>
         </div>
+        <div class="card mt-3">
+          <div class="card-header professional-card-header"><span>Recent Comments</span><a href="/admin/comments">Moderate</a></div>
+          <ul class="list-group list-group-flush">
+            <% recentComments.forEach(function(comment) { %>
+              <li class="list-group-item">
+                <div class="d-flex justify-content-between gap-3">
+                  <div>
+                    <strong><%= comment.name %></strong>
+                    <small class="text-muted d-block"><%= comment.Post ? comment.Post.title : 'Deleted post' %></small>
+                  </div>
+                  <span class="status-pill status-<%= comment.status %>"><%= comment.status %></span>
+                </div>
+              </li>
+            <% }) %>
+          </ul>
+        </div>
       </div>
       <div class="col-lg-5">
         <div class="card mb-3 insight-card"><div class="card-body"><span class="stat-icon"><i class="bi bi-graph-up-arrow"></i></span><h5>Website Traffic Summary</h5><p class="mb-0">Traffic counters can be connected to analytics; post views are tracked in the CMS.</p></div></div>
@@ -48,6 +65,17 @@
           <ul class="list-group list-group-flush">
             <% recentLogins.forEach(function(login) { %>
               <li class="list-group-item d-flex justify-content-between"><span><%= login.email || login.ip_address %></span><span class="status-pill <%= login.success ? 'status-published' : 'status-private' %>"><%= login.success ? 'success' : 'failed' %></span></li>
+            <% }) %>
+          </ul>
+        </div>
+        <div class="card mt-3">
+          <div class="card-header professional-card-header"><span>Recent Activity Logs</span><a href="/admin/security">View logs</a></div>
+          <ul class="list-group list-group-flush">
+            <% recentActivity.forEach(function(log) { %>
+              <li class="list-group-item">
+                <strong><%= log.action %></strong>
+                <small class="text-muted d-block"><%= log.User ? log.User.name : 'System' %> · <%= log.entity_type || log.module || 'admin' %></small>
+              </li>
             <% }) %>
           </ul>
         </div>

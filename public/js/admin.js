@@ -16,6 +16,7 @@ document.querySelector('[data-theme-toggle]')?.addEventListener('click', () => {
 if (window.tinymce) {
   tinymce.init({
     selector: '.rich-editor',
+    license_key: 'gpl',
     height: 420,
     plugins: 'link image media table lists code',
     toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image media | code'

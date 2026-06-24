@@ -24,7 +24,7 @@ router.post('/reset-password', guestOnly, auth.resetPassword);
 router.get('/profile', requireAuth, auth.profile);
 router.put('/profile', requireAuth, auth.updateProfile);
 
-router.get('/', requireAuth, dashboard.dashboard);
+router.get('/', requireAuth, can('view_dashboard'), dashboard.dashboard);
 
 router.get('/media', requireAuth, can('manage_media'), media.index);
 router.post('/media/upload', requireAuth, can('manage_media'), upload.array('files', 20), media.upload);

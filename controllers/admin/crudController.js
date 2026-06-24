@@ -62,7 +62,7 @@ const configs = {
   categories: {
     model: models.Category,
     title: 'Categories',
-    permission: 'manage_posts',
+    permission: 'manage_categories',
     searchFields: ['name', 'slug'],
     formData: async () => ({ categories: await models.Category.findAll() }),
     payload: (body) => ({ name: body.name, slug: createSlug(body.slug || body.name, 'category'), description: body.description, parent_id: body.parent_id || null, image: body.image })
@@ -70,28 +70,28 @@ const configs = {
   tags: {
     model: models.Tag,
     title: 'Tags',
-    permission: 'manage_posts',
+    permission: 'manage_tags',
     searchFields: ['name', 'slug'],
     payload: (body) => ({ name: body.name, slug: createSlug(body.slug || body.name, 'tag'), description: body.description })
   },
   banners: {
     model: models.Banner,
     title: 'Banners',
-    permission: 'manage_settings',
+    permission: 'manage_banners',
     searchFields: ['title', 'subtitle'],
     payload: (body) => ({ title: body.title, subtitle: body.subtitle, image: body.image, button_text: body.button_text, button_link: body.button_link, display_order: body.display_order || 0, active: body.active === 'on' })
   },
   sliders: {
     model: models.Slider,
     title: 'Sliders',
-    permission: 'manage_settings',
+    permission: 'manage_sliders',
     searchFields: ['title', 'description'],
     payload: (body) => ({ title: body.title, description: body.description, image: body.image, button_text: body.button_text, button_url: body.button_url, display_order: body.display_order || 0, active: body.active === 'on' })
   },
   menus: {
     model: models.Menu,
     title: 'Menus',
-    permission: 'manage_settings',
+    permission: 'manage_menus',
     searchFields: ['name', 'slug'],
     include: [{ model: models.MenuItem, as: 'items' }],
     payload: (body) => ({ name: body.name, slug: createSlug(body.slug || body.name, 'menu'), location: body.location || 'header', active: body.active === 'on' })
@@ -99,7 +99,7 @@ const configs = {
   'menu-items': {
     model: models.MenuItem,
     title: 'Menu Items',
-    permission: 'manage_settings',
+    permission: 'manage_menus',
     searchFields: ['title', 'url'],
     formData: async () => ({ menus: await models.Menu.findAll(), menuItems: await models.MenuItem.findAll() }),
     payload: (body) => ({ menu_id: body.menu_id, parent_id: body.parent_id || null, title: body.title, url: body.url, item_type: body.item_type || 'custom', reference_id: body.reference_id || null, target: body.target || '_self', display_order: body.display_order || 0, active: body.active === 'on' })
@@ -130,7 +130,7 @@ const configs = {
   comments: {
     model: models.Comment,
     title: 'Comments',
-    permission: 'manage_posts',
+    permission: 'manage_comments',
     searchFields: ['name', 'email', 'content'],
     include: [models.Post],
     payload: (body) => ({ status: body.status || 'pending', content: body.content })

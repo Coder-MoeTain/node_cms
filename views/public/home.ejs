@@ -25,7 +25,13 @@
   <section class="container py-4">
     <div class="section-heading d-flex justify-content-between align-items-center mb-3"><div><span class="eyebrow">Telemetry Feed</span><h2>Latest Posts</h2></div><a href="/blog">View all</a></div>
     <div class="row g-4">
-      <% posts.forEach(function(post) { %><div class="col-md-6 col-lg-4"><%- include('partials/post-card', { post }) %></div><% }) %>
+      <% if (posts.length) { %>
+        <% posts.forEach(function(post) { %><div class="col-md-6 col-lg-4"><%- include('partials/post-card', { post }) %></div><% }) %>
+      <% } else { %>
+        <div class="col-12">
+          <div class="card card-body text-center text-muted">No published posts yet.</div>
+        </div>
+      <% } %>
     </div>
   </section>
 </main>
