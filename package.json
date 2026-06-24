@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "db:sync": "node database/sync.js",
     "seed": "node database/seed.js",
+    "reset-admin": "node database/reset-admin.js",
     "assign-photos": "node database/assign-photos.js",
     "migrate": "node database/migrate.js",
     "test": "cross-env NODE_ENV=test jest --runInBand --forceExit",
