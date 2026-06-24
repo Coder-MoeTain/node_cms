@@ -14,9 +14,18 @@
 
     <% if (resource === 'posts') { %>
       <ul class="np-subsub list-unstyled">
-        <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/posts">All <span class="text-muted">(<%= pagination.total || rows.length %>)</span></a></li>
+        <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/posts">All <span class="count">(<%= pagination.total || rows.length %>)</span></a></li>
         <% ['published','draft','private','scheduled'].forEach(function(status) { %>
           <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/posts?status=<%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></a></li>
+        <% }) %>
+      </ul>
+    <% } %>
+
+    <% if (resource === 'pages') { %>
+      <ul class="np-subsub list-unstyled">
+        <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/pages">All <span class="count">(<%= pagination.total || rows.length %>)</span></a></li>
+        <% ['published','draft','private'].forEach(function(status) { %>
+          <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/pages?status=<%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></a></li>
         <% }) %>
       </ul>
     <% } %>
@@ -37,8 +46,10 @@
     <div class="list-toolbar">
       <form class="admin-search" method="get">
         <input class="form-control" name="q" placeholder="Search <%= resourceLabel.toLowerCase() %>..." value="<%= query %>" aria-label="Search">
-        <% if (resource === 'posts') { %>
+        <% if (resource === 'posts' || resource === 'pages') { %>
           <input type="hidden" name="status" value="<%= filters.status || '' %>">
+        <% } %>
+        <% if (resource === 'posts') { %>
           <select class="form-select" name="category_id" aria-label="Filter by category">
             <option value="">All categories</option>
             <% (extra.categories || []).forEach(function(category) { %>
@@ -54,8 +65,9 @@
       <table class="np-list-table admin-table">
         <thead>
           <tr>
-            <th style="width:28px"><input type="checkbox" aria-label="Select all" data-select-all></th>
+            <th class="check-column"><input type="checkbox" aria-label="Select all" data-select-all></th>
             <th>Title</th>
+            <% if (['posts','pages'].includes(resource)) { %><th>Author</th><% } %>
             <th>Status</th>
             <% if (resource === 'posts') { %><th>Category</th><% } %>
             <th>Date</th>
@@ -63,9 +75,11 @@
         </thead>
         <tbody>
           <% rows.forEach(function(row) { %>
+            <% const statusKey = row.status || (row.active ? 'active' : 'inactive');
+               const badgeClass = statusKey === 'published' || row.active ? 'success' : (statusKey === 'draft' ? 'info' : (statusKey === 'scheduled' ? 'warning' : (statusKey === 'private' ? 'muted' : 'muted'))); %>
             <tr>
-              <td><input type="checkbox" class="row-select" aria-label="Select item" value="<%= row.id %>"></td>
-              <td>
+              <td class="check-column"><input type="checkbox" class="row-select" aria-label="Select item" value="<%= row.id %>"></td>
+              <td class="title-column">
                 <% if (canManageResource(resource, 'edit', row)) { %>
                   <a class="row-title" href="/admin/<%= resource %>/<%= row.id %>/edit"><%= row.title || row.name || row.subject || row.email %></a>
                 <% } else { %>
@@ -73,24 +87,34 @@
                 <% } %>
                 <div class="row-actions">
                   <% if (canManageResource(resource, 'edit', row)) { %><a href="/admin/<%= resource %>/<%= row.id %>/edit">Edit</a><% } %>
+                  <% if (row.slug && row.status === 'published') { %><span class="sep">|</span><a href="/<%= resource === 'pages' ? 'page' : 'post' %>/<%= row.slug %>" target="_blank" rel="noopener">View</a><% } %>
                   <% if (canManageResource(resource, 'destroy', row)) { %>
-                    <span>|</span>
+                    <span class="sep">|</span>
                     <form class="d-inline" method="post" action="/admin/<%= resource %>/<%= row.id %>?_method=DELETE" data-confirm="Move this item to trash?">
                       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                       <button class="delete-link border-0 bg-transparent p-0" type="submit">Trash</button>
                     </form>
                   <% } %>
-                  <% if (row.slug && row.status === 'published') { %><span>|</span><a href="/<%= resource === 'pages' ? 'page' : 'post' %>/<%= row.slug %>" target="_blank">View</a><% } %>
                 </div>
-                <% if (row.slug) { %><div class="text-muted small"><%= row.slug %></div><% } %>
+                <% if (row.slug) { %><div class="row-slug"><%= row.slug %></div><% } %>
               </td>
-              <td><span class="np-badge np-badge-<%= (row.status === 'published' || row.active) ? 'success' : 'muted' %>"><%= row.status || (row.active ? 'active' : 'inactive') %></span></td>
+              <% if (['posts','pages'].includes(resource)) { %><td class="author-column"><%= row.author ? row.author.name : '—' %></td><% } %>
+              <td><span class="np-badge np-badge-<%= badgeClass %>"><%= statusKey %></span></td>
               <% if (resource === 'posts') { %><td><%= row.Category ? row.Category.name : '—' %></td><% } %>
-              <td><%= row.created_at ? row.created_at.toLocaleDateString() : '' %></td>
+              <td class="date-column"><%= row.created_at ? row.created_at.toLocaleDateString() : '' %></td>
             </tr>
           <% }) %>
           <% if (!rows.length) { %>
-            <tr><td colspan="<%= resource === 'posts' ? 5 : 4 %>"><div class="empty-state"><i class="bi bi-inbox d-block"></i><strong>No items found</strong><p class="mb-0">Try another search or create a new item.</p></div></td></tr>
+            <tr><td colspan="<%= resource === 'posts' ? 6 : (resource === 'pages' ? 5 : 4) %>">
+              <div class="empty-state empty-state-card">
+                <i class="bi bi-inbox d-block" aria-hidden="true"></i>
+                <strong>No <%= resourceLabel.toLowerCase() %> found</strong>
+                <p class="mb-2">Try another search or create a new item.</p>
+                <% if (canManageResource(resource, 'create')) { %>
+                  <a class="np-btn np-btn-primary" href="/admin/<%= resource %>/create"><i class="bi bi-plus-lg"></i> Add New</a>
+                <% } %>
+              </div>
+            </td></tr>
           <% } %>
         </tbody>
       </table>

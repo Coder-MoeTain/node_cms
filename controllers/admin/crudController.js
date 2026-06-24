@@ -112,6 +112,7 @@ const configs = {
     title: 'Pages',
     permission: 'manage_pages',
     searchFields: ['title', 'slug', 'excerpt'],
+    include: [{ model: models.User, as: 'author' }],
     payload: async (body, req, record = null) => ({
       title: sanitizePlainText(body.title, 220),
       slug: await createUniqueSlug(models.Page, body.slug || body.title, 'page', record?.id),
@@ -258,6 +259,9 @@ async function index(req, res, next) {
       if (req.query.status) where.status = req.query.status;
       if (req.query.category_id) where.category_id = req.query.category_id;
       if (!policy.can(req.session.user, 'manage_posts')) where.author_id = req.session.user.id;
+    }
+    if (resource === 'pages' && req.query.status) {
+      where.status = req.query.status;
     }
     const { rows, count } = await config.model.findAndCountAll({
       where,

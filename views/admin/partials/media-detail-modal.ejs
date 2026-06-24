@@ -1,0 +1,31 @@
+<div class="modal fade" id="mediaDetailModal" tabindex="-1" aria-labelledby="mediaDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content media-detail-modal">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mediaDetailModalLabel">Attachment details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body media-detail-body">
+        <div class="media-detail-preview" data-media-detail-preview>
+          <div class="media-detail-empty">Select an attachment to view details.</div>
+        </div>
+        <aside class="media-detail-sidebar">
+          <h6 class="media-detail-filename" data-media-detail-name></h6>
+          <dl class="media-detail-meta">
+            <dt>Type</dt><dd data-media-detail-type></dd>
+            <dt>Uploaded</dt><dd data-media-detail-date></dd>
+            <dt>File URL</dt><dd><code class="media-detail-url" data-media-detail-url></code></dd>
+          </dl>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button class="np-btn np-btn-secondary np-btn-small" type="button" data-media-detail-copy>Copy URL</button>
+            <a class="np-btn np-btn-secondary np-btn-small" data-media-detail-edit href="#">Edit</a>
+            <form method="post" data-media-detail-delete data-confirm="Delete this file permanently?">
+              <input type="hidden" name="_csrf" value="">
+              <button class="np-btn np-btn-danger np-btn-small" type="submit">Delete permanently</button>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</div>

@@ -84,18 +84,17 @@ if (editorForm) {
   });
 }
 
-document.querySelectorAll('[data-open-media-picker]').forEach((button) => {
-  button.addEventListener('click', () => {
-    const field = button.dataset.openMediaPicker;
-    if (typeof activeMediaTargetField !== 'undefined') {
-      activeMediaTargetField = field;
-    } else {
-      window.activeMediaTargetField = field;
-    }
-    const modal = document.getElementById('mediaGalleryModal');
-    if (modal && window.bootstrap) {
-      bootstrap.Modal.getOrCreateInstance(modal).show();
-      if (typeof loadMediaGallery === 'function') loadMediaGallery();
-    }
-  });
+document.addEventListener('click', (event) => {
+  const picker = event.target.closest('[data-open-media-picker]');
+  if (!picker) return;
+  const field = picker.dataset.openMediaPicker;
+  window.activeMediaTargetField = field;
+  if (typeof activeMediaTargetField !== 'undefined') {
+    try { activeMediaTargetField = field; } catch (e) { /* legacy */ }
+  }
+  const modal = document.getElementById('mediaGalleryModal');
+  if (modal && window.bootstrap) {
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+    if (typeof loadMediaGallery === 'function') loadMediaGallery();
+  }
 });

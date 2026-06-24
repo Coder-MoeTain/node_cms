@@ -1,0 +1,23 @@
+<%
+  const pathField = typeof name !== 'undefined' ? name : 'featured_image';
+  const uploadField = typeof fileName !== 'undefined' ? fileName : 'featured_image_file';
+  const currentValue = typeof value !== 'undefined' ? value : '';
+%>
+<div class="featured-image-box" data-image-upload>
+  <input type="hidden" name="<%= pathField %>" value="<%= currentValue %>" data-image-path>
+  <input type="hidden" name="remove_<%= pathField %>" value="0" data-image-remove-flag>
+  <input class="d-none" type="file" name="<%= uploadField %>" accept="image/*" data-image-file>
+  <% if (currentValue) { %>
+    <img class="featured-image-preview" data-image-preview data-media-preview="<%= pathField %>" src="<%= currentValue %>" alt="Featured image preview">
+    <div class="featured-image-actions mt-2">
+      <button class="np-btn np-btn-secondary np-btn-small" type="button" data-open-media-picker="<%= pathField %>">Replace image</button>
+      <button class="np-btn np-btn-link np-btn-small text-danger" type="button" data-remove-image>Remove featured image</button>
+    </div>
+  <% } else { %>
+    <div class="featured-image-placeholder" data-image-preview data-media-preview="<%= pathField %>">
+      <i class="bi bi-image" aria-hidden="true"></i>
+      <p class="mb-2">Set a featured image</p>
+      <button class="np-btn np-btn-secondary np-btn-small" type="button" data-open-media-picker="<%= pathField %>">Set featured image</button>
+    </div>
+  <% } %>
+</div>

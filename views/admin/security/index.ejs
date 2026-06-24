@@ -2,58 +2,112 @@
 <%- include('../partials/sidebar') %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
-  <main class="admin-content">
+  <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="card mb-3">
-      <div class="card-header">Database Backup</div>
-      <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div class="np-page-header">
+      <h1>Security &amp; Backup</h1>
+    </div>
+    <%- include('../partials/settings-nav') %>
+
+    <div class="np-widget">
+      <div class="np-widget-header"><span>Database Backup</span></div>
+      <div class="np-widget-body d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div>
-          <h5 class="mb-1">Create a MySQL backup</h5>
-          <p class="mb-0 text-muted">Backups are saved in <code>database/backups</code>. The server must have <code>mysqldump</code> available in PATH.</p>
+          <p class="mb-1"><strong>Create a MySQL backup</strong></p>
+          <p class="np-help-text mb-0">Backups are saved in <code>database/backups</code>. The server must have <code>mysqldump</code> in PATH.</p>
         </div>
         <form method="post" action="/admin/security/backup-database">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button class="btn btn-primary"><i class="bi bi-database-down"></i> Backup Database</button>
+          <button class="np-btn np-btn-primary" type="submit"><i class="bi bi-database-down"></i> Backup Database</button>
         </form>
       </div>
     </div>
-    <form class="card mb-3" method="post" action="/admin/security/settings?_method=PUT">
+
+    <form method="post" action="/admin/security/settings?_method=PUT">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="card-header">Security Plugin Features</div>
-      <div class="card-body row">
-        <% settings.forEach(function(setting) { %>
-          <div class="col-md-4 mb-2"><label class="form-check"><input class="form-check-input" type="checkbox" name="<%= setting.key %>" <%= setting.enabled ? 'checked' : '' %>> <%= setting.key.replace(/_/g, ' ') %></label></div>
-        <% }) %>
+      <div class="np-widget">
+        <div class="np-widget-header"><span>Security Plugin Features</span></div>
+        <div class="np-widget-body p-0">
+          <table class="np-form-table np-settings-table">
+            <tbody>
+              <% settings.forEach(function(setting) { %>
+                <tr>
+                  <th scope="row"><%= setting.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }) %></th>
+                  <td>
+                    <label class="form-check">
+                      <input class="form-check-input" type="checkbox" name="<%= setting.key %>" <%= setting.enabled ? 'checked' : '' %>>
+                      Enable <%= setting.key.replace(/_/g, ' ') %>
+                    </label>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="card-footer"><button class="btn btn-primary">Save Security Settings</button></div>
+      <p class="mt-3"><button class="np-btn np-btn-primary" type="submit">Save Security Settings</button></p>
     </form>
+
     <div class="row g-3">
       <div class="col-lg-6">
-        <div class="card">
-          <div class="card-header">Failed Login Attempts</div>
-          <table class="table mb-0"><tbody><% attempts.forEach(function(attempt) { %><tr><td><%= attempt.email || '-' %></td><td><%= attempt.ip_address %></td><td><span class="badge <%= attempt.success ? 'text-bg-success' : 'text-bg-danger' %>"><%= attempt.success ? 'success' : 'failed' %></span></td></tr><% }) %></tbody></table>
+        <div class="np-widget">
+          <div class="np-widget-header"><span>Failed Login Attempts</span></div>
+          <div class="np-widget-body p-0">
+            <table class="np-list-table mb-0">
+              <tbody>
+                <% attempts.forEach(function(attempt) { %>
+                  <tr>
+                    <td><%= attempt.email || '—' %></td>
+                    <td><code><%= attempt.ip_address %></code></td>
+                    <td><span class="np-badge np-badge-<%= attempt.success ? 'success' : 'danger' %>"><%= attempt.success ? 'success' : 'failed' %></span></td>
+                  </tr>
+                <% }) %>
+                <% if (!attempts.length) { %><tr><td colspan="3" class="text-muted">No login attempts logged.</td></tr><% } %>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
       <div class="col-lg-6">
-        <div class="card mb-3">
-          <div class="card-header">Blocked IPs</div>
-          <div class="card-body">
+        <div class="np-widget">
+          <div class="np-widget-header"><span>Blocked IPs</span></div>
+          <div class="np-widget-body">
             <form class="row g-2" method="post" action="/admin/security/block-ip">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <div class="col"><input class="form-control" name="ip_address" placeholder="IP address" required></div>
               <div class="col"><input class="form-control" name="reason" placeholder="Reason"></div>
-              <div class="col-auto"><button class="btn btn-danger">Block</button></div>
+              <div class="col-auto"><button class="np-btn np-btn-danger" type="submit">Block</button></div>
             </form>
           </div>
           <ul class="list-group list-group-flush">
             <% blockedIps.forEach(function(ip) { %>
-              <li class="list-group-item d-flex justify-content-between"><span><%= ip.ip_address %> <small class="text-muted"><%= ip.reason || '' %></small></span><form method="post" action="/admin/security/unblock-ip/<%= ip.id %>?_method=DELETE"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-outline-secondary">Unblock</button></form></li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><code><%= ip.ip_address %></code> <small class="text-muted"><%= ip.reason || '' %></small></span>
+                <form method="post" action="/admin/security/unblock-ip/<%= ip.id %>?_method=DELETE" data-confirm="Unblock this IP address?">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="np-btn np-btn-small np-btn-secondary" type="submit">Unblock</button>
+                </form>
+              </li>
             <% }) %>
+            <% if (!blockedIps.length) { %><li class="list-group-item text-muted">No blocked IPs.</li><% } %>
           </ul>
         </div>
       </div>
     </div>
-    <div class="card mt-3"><div class="card-header">Admin Activity Log</div><table class="table mb-0"><tbody><% activityLogs.forEach(function(log) { %><tr><td><%= log.action %></td><td><%= log.entity_type || '' %></td><td><%= log.ip_address || '' %></td></tr><% }) %></tbody></table></div>
+
+    <div class="np-widget mt-3">
+      <div class="np-widget-header"><span>Admin Activity Log</span></div>
+      <div class="np-widget-body p-0">
+        <table class="np-list-table mb-0">
+          <tbody>
+            <% activityLogs.forEach(function(log) { %>
+              <tr><td><%= log.action %></td><td><%= log.entity_type || '' %></td><td><code><%= log.ip_address || '' %></code></td></tr>
+            <% }) %>
+            <% if (!activityLogs.length) { %><tr><td colspan="3" class="text-muted">No activity logged.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </main>
 </div>
 <%- include('../partials/footer') %>

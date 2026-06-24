@@ -3,6 +3,7 @@
   --np-sidebar-bg: #1d2327;
   --np-sidebar-hover: #2c3338;
   --np-sidebar-active: #2271b1;
+  --np-sidebar-submenu-bg: #2c3338;
   --np-sidebar-text: #f0f0f1;
   --np-sidebar-muted: #a7aaad;
   --np-topbar-bg: #1d2327;
@@ -33,43 +34,75 @@
   --site-footer-bg: #1d2327;
   --site-link: var(--np-primary);
   --site-button: var(--np-primary);
+  --site-button-hover: var(--np-primary-hover);
 }
 
 [data-theme-preset="wordpress-blue"] {
   --np-primary: #2271b1;
   --np-primary-hover: #135e96;
   --np-sidebar-active: #2271b1;
+  --site-primary: #2271b1;
+  --site-link: #2271b1;
+  --site-button: #2271b1;
+  --site-button-hover: #135e96;
 }
 
 [data-theme-preset="modern-indigo"] {
   --np-primary: #4f46e5;
   --np-primary-hover: #4338ca;
   --np-sidebar-active: #4f46e5;
+  --site-primary: #4f46e5;
+  --site-link: #4f46e5;
+  --site-button: #4f46e5;
+  --site-button-hover: #4338ca;
 }
 
 [data-theme-preset="clean-green"] {
   --np-primary: #008a20;
   --np-primary-hover: #006b18;
   --np-sidebar-active: #008a20;
+  --site-primary: #008a20;
+  --site-link: #008a20;
+  --site-button: #008a20;
+  --site-button-hover: #006b18;
 }
 
 [data-theme-preset="dark-slate"] {
   --np-sidebar-bg: #0f172a;
   --np-sidebar-hover: #1e293b;
+  --np-sidebar-submenu-bg: #1e293b;
   --np-topbar-bg: #0f172a;
   --np-primary: #38bdf8;
   --np-primary-hover: #0ea5e9;
   --np-sidebar-active: #0369a1;
+  --site-primary: #38bdf8;
+  --site-bg: #0f172a;
+  --site-text: #f8fafc;
+  --site-header-bg: #0f172a;
+  --site-link: #38bdf8;
+  --site-button: #0369a1;
+  --site-button-hover: #0ea5e9;
 }
 
 [data-theme-preset="warm-orange"] {
   --np-primary: #d97706;
   --np-primary-hover: #b45309;
   --np-sidebar-active: #d97706;
+  --site-primary: #d97706;
+  --site-bg: #fffbeb;
+  --site-text: #292524;
+  --site-link: #d97706;
+  --site-button: #d97706;
+  --site-button-hover: #b45309;
 }
 
 [data-theme-preset="minimal-gray"] {
   --np-primary: #50575e;
   --np-primary-hover: #3c434a;
   --np-sidebar-active: #50575e;
+  --site-primary: #50575e;
+  --site-bg: #f6f7f7;
+  --site-link: #50575e;
+  --site-button: #50575e;
+  --site-button-hover: #3c434a;
 }

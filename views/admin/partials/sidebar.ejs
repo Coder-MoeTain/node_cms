@@ -1,4 +1,8 @@
 <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin menu">
+  <div class="sidebar-mobile-header d-lg-none">
+    <span class="sidebar-mobile-title">Menu</span>
+    <button class="topbar-icon-button" type="button" data-sidebar-close aria-label="Close menu"><i class="bi bi-x-lg"></i></button>
+  </div>
   <% const isActive = (path) => currentPath === path || (path !== '/admin' && currentPath.startsWith(path)); %>
   <% const isAnyActive = (paths) => paths.some((path) => isActive(path)); %>
   <nav class="nav flex-column admin-nav">

@@ -55,33 +55,55 @@
                 </div>
               </div>
             </div>
-            <aside class="editor-sidebar">
-              <div class="np-metabox">
+            <aside class="editor-sidebar editor-sidebar-sticky">
+              <div class="np-metabox np-metabox-publish">
                 <div class="np-metabox-header">Publish</div>
                 <div class="np-metabox-body">
-                  <div class="mb-2"><label class="form-label">Status</label><select class="form-select" name="status"><% ['draft','published','private','scheduled'].forEach(function(status) { if (status !== 'published' || can('publish_posts')) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status.charAt(0).toUpperCase() + status.slice(1) %></option><% } }) %></select></div>
-                  <div class="mb-3"><label class="form-label">Publish</label><input class="form-control" name="published_at" type="datetime-local" value="<%= publishedAtValue %>"></div>
-                  <div class="d-flex flex-wrap gap-2">
+                  <div class="publish-status-row mb-2">
+                    <span class="publish-label">Status:</span>
+                    <select class="form-select form-select-sm" name="status" data-status-select><% ['draft','published','private','scheduled'].forEach(function(status) { if (status !== 'published' || can('publish_posts')) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status.charAt(0).toUpperCase() + status.slice(1) %></option><% } }) %></select>
+                  </div>
+                  <div class="publish-status-row mb-3">
+                    <span class="publish-label">Publish:</span>
+                    <input class="form-control form-control-sm" name="published_at" type="datetime-local" value="<%= publishedAtValue %>">
+                  </div>
+                  <div class="publish-actions">
                     <button class="np-btn np-btn-secondary" type="submit" data-save-draft>Save Draft</button>
                     <% if (previewUrl) { %><a class="np-btn np-btn-secondary" href="<%= previewUrl %>" target="_blank" rel="noopener">Preview</a><% } %>
-                    <button class="np-btn np-btn-primary" type="submit"><%= isEdit ? 'Update' : 'Publish' %></button>
-                    <a class="np-btn np-btn-link" href="/admin/<%= resource %>">Cancel</a>
+                    <button class="np-btn np-btn-primary" type="submit" data-publish-submit><%= isEdit ? 'Update' : 'Publish' %></button>
                   </div>
+                  <div class="mt-2"><a class="np-btn np-btn-link" href="/admin/<%= resource %>">Cancel</a></div>
                 </div>
               </div>
               <% if (resource === 'posts') { %>
                 <div class="np-metabox">
-                  <div class="np-metabox-header">Categories</div>
-                  <div class="np-metabox-body"><select class="form-select" name="category_id"><option value="">Uncategorized</option><% (extra.categories || []).forEach(function(category) { %><option value="<%= category.id %>" <%= String(val('category_id')) === String(category.id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select></div>
+                  <div class="np-metabox-header" data-metabox-toggle aria-expanded="true">Categories</div>
+                  <div class="np-metabox-body">
+                    <div class="category-checklist" role="radiogroup" aria-label="Categories">
+                      <label class="category-check-item">
+                        <input type="radio" name="category_id" value="" <%= !val('category_id') ? 'checked' : '' %>>
+                        <span>Uncategorized</span>
+                      </label>
+                      <% (extra.categories || []).forEach(function(category) { %>
+                        <label class="category-check-item">
+                          <input type="radio" name="category_id" value="<%= category.id %>" <%= String(val('category_id')) === String(category.id) ? 'checked' : '' %>>
+                          <span><%= category.name %></span>
+                        </label>
+                      <% }) %>
+                    </div>
+                  </div>
                 </div>
                 <div class="np-metabox">
-                  <div class="np-metabox-header">Tags</div>
-                  <div class="np-metabox-body"><select class="form-select" name="tags" multiple size="5"><% (extra.tags || []).forEach(function(tag) { %><option value="<%= tag.id %>" <%= selectedTags.includes(String(tag.id)) ? 'selected' : '' %>><%= tag.name %></option><% }) %></select></div>
+                  <div class="np-metabox-header" data-metabox-toggle aria-expanded="true">Tags</div>
+                  <div class="np-metabox-body">
+                    <select class="form-select" name="tags" multiple size="6" aria-label="Tags"><% (extra.tags || []).forEach(function(tag) { %><option value="<%= tag.id %>" <%= selectedTags.includes(String(tag.id)) ? 'selected' : '' %>><%= tag.name %></option><% }) %></select>
+                    <p class="np-help-text">Hold Ctrl or Cmd to select multiple tags.</p>
+                  </div>
                 </div>
                 <div class="np-metabox">
                   <div class="np-metabox-header">Featured Image</div>
                   <div class="np-metabox-body">
-                    <%- include('../partials/image-upload-field', { label: 'Featured Image', name: 'featured_image', fileName: 'featured_image_file', value: val('featured_image') }) %>
+                    <%- include('../partials/featured-image-field', { name: 'featured_image', fileName: 'featured_image_file', value: val('featured_image') }) %>
                   </div>
                 </div>
                 <div class="np-metabox">

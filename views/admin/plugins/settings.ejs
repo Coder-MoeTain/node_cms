@@ -9,31 +9,37 @@
       <a class="np-btn np-btn-secondary" href="/admin/plugins">Back to Plugins</a>
     </div>
 
-    <form class="np-widget" method="post" action="/admin/plugins/<%= plugin.slug %>/settings?_method=PUT">
+    <form method="post" action="/admin/plugins/<%= plugin.slug %>/settings?_method=PUT">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="np-widget-header"><span>Configuration</span></div>
-      <div class="np-widget-body">
-        <p class="text-muted"><%= plugin.description || '' %></p>
-        <% fields.forEach(function(field) { %>
-          <div class="mb-3">
-            <label class="form-label" for="setting-<%= field.key %>"><%= field.label || field.key %></label>
-            <% if (field.type === 'textarea') { %>
-              <textarea class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" rows="4" placeholder="<%= field.placeholder || '' %>"><%= settingsMap[field.key] || '' %></textarea>
-            <% } else if (field.type === 'checkbox') { %>
-              <label class="form-check">
-                <input class="form-check-input" id="setting-<%= field.key %>" name="<%= field.key %>" type="checkbox" value="on" <%= settingsMap[field.key] === 'on' || settingsMap[field.key] === 'true' ? 'checked' : '' %>>
-                <%= field.description || field.label %>
-              </label>
-            <% } else { %>
-              <input class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" type="<%= field.type || 'text' %>" value="<%= settingsMap[field.key] || '' %>" placeholder="<%= field.placeholder || '' %>">
-            <% } %>
-            <% if (field.description && field.type !== 'checkbox') { %><div class="form-text"><%= field.description %></div><% } %>
-          </div>
-        <% }) %>
+      <div class="np-widget">
+        <div class="np-widget-header"><span>Configuration</span></div>
+        <div class="np-widget-body">
+          <% if (plugin.description) { %><p class="np-help-text mb-3"><%= plugin.description %></p><% } %>
+          <table class="np-form-table np-settings-table">
+            <tbody>
+              <% fields.forEach(function(field) { %>
+                <tr>
+                  <th scope="row"><label for="setting-<%= field.key %>"><%= field.label || field.key %></label></th>
+                  <td>
+                    <% if (field.type === 'textarea') { %>
+                      <textarea class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" rows="4" placeholder="<%= field.placeholder || '' %>"><%= settingsMap[field.key] || '' %></textarea>
+                    <% } else if (field.type === 'checkbox') { %>
+                      <label class="form-check">
+                        <input class="form-check-input" id="setting-<%= field.key %>" name="<%= field.key %>" type="checkbox" value="on" <%= settingsMap[field.key] === 'on' || settingsMap[field.key] === 'true' ? 'checked' : '' %>>
+                        <%= field.description || field.label %>
+                      </label>
+                    <% } else { %>
+                      <input class="form-control" id="setting-<%= field.key %>" name="<%= field.key %>" type="<%= field.type || 'text' %>" value="<%= settingsMap[field.key] || '' %>" placeholder="<%= field.placeholder || '' %>">
+                    <% } %>
+                    <% if (field.description && field.type !== 'checkbox') { %><p class="np-help-text"><%= field.description %></p><% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="np-widget-footer p-3 border-top">
-        <button class="np-btn np-btn-primary" type="submit">Save Settings</button>
-      </div>
+      <p class="mt-3"><button class="np-btn np-btn-primary" type="submit">Save Settings</button></p>
     </form>
   </main>
 </div>

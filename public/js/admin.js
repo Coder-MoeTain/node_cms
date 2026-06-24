@@ -1,23 +1,77 @@
+function npConfirm(message, title = 'Please confirm') {
+  return new Promise((resolve) => {
+    const modalEl = document.getElementById('npConfirmModal');
+    if (!modalEl || !window.bootstrap) {
+      resolve(window.confirm(message));
+      return;
+    }
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalEl.querySelector('[data-confirm-message]').textContent = message;
+    modalEl.querySelector('#npConfirmModalLabel').textContent = title;
+    const accept = modalEl.querySelector('[data-confirm-accept]');
+    let accepted = false;
+    const onAccept = () => {
+      accepted = true;
+      modal.hide();
+    };
+    const onHidden = () => {
+      accept.removeEventListener('click', onAccept);
+      resolve(accepted);
+    };
+    accept.addEventListener('click', onAccept);
+    modalEl.addEventListener('hidden.bs.modal', onHidden, { once: true });
+    modal.show();
+  });
+}
+
 document.querySelectorAll('[data-confirm]').forEach((form) => {
-  form.addEventListener('submit', (event) => {
-    if (!confirm(form.dataset.confirm || 'Are you sure?')) event.preventDefault();
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const ok = await npConfirm(form.dataset.confirm || 'Are you sure?');
+    if (ok) form.submit();
   });
 });
 
 const sidebar = document.querySelector('.admin-sidebar');
 const overlay = document.querySelector('[data-sidebar-overlay]');
 
+function openSidebar() {
+  document.body.classList.add('admin-sidebar-open');
+  sidebar?.classList.add('open');
+  overlay?.classList.add('show');
+}
+
 function closeSidebar() {
+  document.body.classList.remove('admin-sidebar-open');
   sidebar?.classList.remove('open');
   overlay?.classList.remove('show');
 }
 
 document.querySelector('[data-sidebar-toggle]')?.addEventListener('click', () => {
-  sidebar?.classList.toggle('open');
-  overlay?.classList.toggle('show');
+  if (sidebar?.classList.contains('open')) closeSidebar();
+  else openSidebar();
 });
 
+document.querySelector('[data-sidebar-close]')?.addEventListener('click', closeSidebar);
 overlay?.addEventListener('click', closeSidebar);
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && sidebar?.classList.contains('open')) closeSidebar();
+});
+
+document.querySelectorAll('.admin-sidebar .collapse').forEach((collapseEl) => {
+  collapseEl.addEventListener('show.bs.collapse', () => {
+    if (window.innerWidth < 992) {
+      document.querySelectorAll('.admin-sidebar .collapse.show').forEach((openEl) => {
+        if (openEl !== collapseEl) bootstrap.Collapse.getOrCreateInstance(openEl, { toggle: false }).hide();
+      });
+    }
+  });
+});
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 992) closeSidebar();
+});
 
 document.querySelector('[data-user-menu]')?.addEventListener('click', (event) => {
   const menu = event.currentTarget;
@@ -65,7 +119,25 @@ let activeMediaTargetField = null;
 window.activeMediaTargetField = activeMediaTargetField;
 
 function updateMediaPreview(fieldName, filePath) {
+  const container = document.querySelector(`[data-image-upload] [name="${fieldName}"]`)?.closest('[data-image-upload]')
+    || document.querySelector(`[data-media-preview="${fieldName}"]`)?.closest('[data-image-upload]');
   const previewContainer = document.querySelector(`[data-media-preview="${fieldName}"]`);
+
+  if (container?.classList.contains('featured-image-box')) {
+    container.innerHTML = `
+      <input type="hidden" name="${fieldName}" value="${filePath}" data-image-path>
+      <input type="hidden" name="remove_${fieldName}" value="0" data-image-remove-flag>
+      <input class="d-none" type="file" name="${fieldName}_file" accept="image/*" data-image-file>
+      <img class="featured-image-preview" data-image-preview data-media-preview="${fieldName}" src="${filePath}" alt="Featured image preview">
+      <div class="featured-image-actions mt-2">
+        <button class="np-btn np-btn-secondary np-btn-small" type="button" data-open-media-picker="${fieldName}">Replace image</button>
+        <button class="np-btn np-btn-link np-btn-small text-danger" type="button" data-remove-image>Remove featured image</button>
+      </div>`;
+    const newContainer = container;
+    newContainer.querySelector('[data-remove-image]')?.addEventListener('click', () => clearImageUploadField(newContainer));
+    return;
+  }
+
   if (!previewContainer) return;
 
   if (previewContainer.tagName.toLowerCase() === 'img') {
@@ -94,16 +166,31 @@ function clearImageUploadField(container) {
   if (fileInput) fileInput.value = '';
 
   if (preview) {
-    const empty = document.createElement('div');
-    empty.className = 'settings-empty-preview';
-    empty.dataset.imagePreview = 'true';
-    if (pathInput?.name) empty.dataset.mediaPreview = pathInput.name;
-    empty.textContent = 'No image selected';
+    const isFeatured = container.classList.contains('featured-image-box');
+    const empty = document.createElement(isFeatured ? 'div' : 'div');
+    if (isFeatured) {
+      empty.className = 'featured-image-placeholder';
+      empty.innerHTML = '<i class="bi bi-image" aria-hidden="true"></i><p class="mb-2">Set a featured image</p><button class="np-btn np-btn-secondary np-btn-small" type="button" data-open-media-picker="' + (pathInput?.name || '') + '">Set featured image</button>';
+      empty.dataset.imagePreview = 'true';
+      if (pathInput?.name) empty.dataset.mediaPreview = pathInput.name;
+    } else {
+      empty.className = 'settings-empty-preview';
+      empty.dataset.imagePreview = 'true';
+      if (pathInput?.name) empty.dataset.mediaPreview = pathInput.name;
+      empty.textContent = 'No image selected';
+    }
     preview.replaceWith(empty);
   }
 
   removeButton?.remove();
 }
+
+document.addEventListener('click', (event) => {
+  const removeBtn = event.target.closest('[data-remove-image]');
+  if (!removeBtn) return;
+  const container = removeBtn.closest('[data-image-upload]');
+  if (container) clearImageUploadField(container);
+});
 
 document.querySelectorAll('[data-image-upload]').forEach((container) => {
   container.querySelector('[data-remove-image]')?.addEventListener('click', () => {
@@ -223,11 +310,13 @@ function updateBulkState() {
   if (bulkApply) bulkApply.disabled = !enabled;
 }
 
-document.querySelector('[data-bulk-apply]')?.addEventListener('click', () => {
+document.querySelector('[data-bulk-apply]')?.addEventListener('click', async () => {
   const action = document.querySelector('[data-bulk-action]')?.value;
   const selected = rowChecks().filter((box) => box.checked);
   if (!action || !selected.length) return;
-  if (action === 'delete' && confirm(`Move ${selected.length} item(s) to trash?`)) {
+  if (action === 'delete') {
+    const ok = await npConfirm(`Move ${selected.length} item(s) to trash?`, 'Move to trash');
+    if (!ok) return;
     const form = document.getElementById('bulk-form');
     if (form) {
       form.querySelectorAll('input[name="ids"]').forEach((input) => input.remove());

@@ -646,6 +646,126 @@
   margin-bottom: 1rem;
 }
 
+.sidebar-mobile-header {
+  align-items: center;
+  background: var(--np-sidebar-hover);
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.sidebar-mobile-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+body.admin-sidebar-open {
+  overflow: hidden;
+}
+
+.admin-sidebar .nav-submenu {
+  background: var(--np-sidebar-submenu-bg);
+}
+
+.admin-sidebar .nav-submenu .nav-link {
+  color: var(--np-sidebar-muted);
+}
+
+.admin-sidebar .nav-submenu .nav-link:hover,
+.admin-sidebar .nav-submenu .nav-link.active {
+  color: #fff;
+}
+
+.editor-sidebar-sticky {
+  position: sticky;
+  top: 12px;
+}
+
+.np-metabox-publish .publish-status-row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.np-metabox-publish .publish-label {
+  color: var(--np-text-muted);
+  font-size: 12px;
+  min-width: 56px;
+}
+
+.np-metabox-publish .publish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.category-checklist {
+  border: 1px solid var(--np-border-light);
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 6px 8px;
+}
+
+.category-check-item {
+  align-items: center;
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.featured-image-placeholder {
+  align-items: center;
+  background: #f6f7f7;
+  border: 1px solid var(--np-border-light);
+  color: var(--np-text-muted);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 120px;
+  padding: 16px;
+  text-align: center;
+}
+
+.featured-image-placeholder .bi-image {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.featured-image-preview {
+  display: block;
+  max-height: 200px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.theme-customizer .theme-preview-panel {
+  position: sticky;
+  top: 12px;
+}
+
+.np-list-table .check-column {
+  padding-left: 10px;
+  width: 2.2em;
+}
+
+.np-list-table .row-slug {
+  color: var(--np-text-muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.np-list-table .row-actions .sep {
+  color: var(--np-border);
+  margin: 0 4px;
+}
+
+.np-subsub .count {
+  color: var(--np-text-muted);
+}
+
 @media (max-width: 991px) {
   .admin-sidebar {
     transform: translateX(-100%);
