@@ -1337,3 +1337,14 @@ body.portal-nav-open {
   margin: 0;
   padding: 0;
 }
+
+@media (max-width: 575px) {
+  .portal-ticker-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .portal-ticker-more {
+    align-self: flex-end;
+  }
+}

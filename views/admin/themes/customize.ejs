@@ -40,7 +40,7 @@
               { id: 'dark-slate', label: 'Dark Slate', primary: '#38bdf8', secondary: '#64748b', bg: '#0f172a', text: '#f8fafc' },
               { id: 'warm-orange', label: 'Warm Orange', primary: '#d97706', secondary: '#78716c', bg: '#fffbeb', text: '#292524' },
               { id: 'minimal-gray', label: 'Minimal Gray', primary: '#50575e', secondary: '#646970', bg: '#f6f7f7', text: '#1d2327' },
-              { id: 'myanmar-portal', label: 'Myanmar Portal', primary: '#0b5f8a', secondary: '#f4b000', bg: '#f5f7fa', text: '#1f2933', accent: '#d71920', card: '#ffffff', footer: '#0b2f47', muted: '#6b7280', border: '#d7dde5', headerLayout: 'portal' }
+              { id: 'myanmar-portal', label: 'Myanmar Portal', primary: '#006ba6', secondary: '#ffcc00', bg: '#e8edf2', text: '#2b2b2b', accent: '#e4282c', card: '#ffffff', footer: '#0c3d5c', muted: '#5a6570', border: '#c5d3de', headerLayout: 'portal' }
             ]; %>
             <% presets.forEach(function(preset) { %>
               <button class="theme-preset-btn <%= (pc.preset || themePreset) === preset.id ? 'active' : '' %>" type="button" data-theme-preset="<%= preset.id %>" data-primary="<%= preset.primary %>" data-secondary="<%= preset.secondary %>" data-bg="<%= preset.bg %>" data-text="<%= preset.text %>" data-accent="<%= preset.accent || '' %>" data-card="<%= preset.card || '' %>" data-footer="<%= preset.footer || '' %>" data-muted="<%= preset.muted || '' %>" data-border="<%= preset.border || '' %>" data-header-layout="<%= preset.headerLayout || '' %>"><%= preset.label %></button>

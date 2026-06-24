@@ -14,6 +14,7 @@
           <div class="col-6 col-md-3">
             <article class="portal-media-card portal-card-<%= cardStyle %>">
               <a href="<%= item.file_path %>" target="_blank" rel="noopener" class="portal-media-thumb-wrap">
+                <span class="portal-media-badge portal-media-badge-<%= item.file_type === 'video' ? 'video' : 'image' %>"><%= item.file_type === 'video' ? 'Video' : 'Photo' %></span>
                 <% if (item.file_type === 'image') { %>
                   <img src="<%= item.thumbnail_path || item.file_path %>" alt="<%= item.alt_text || item.original_name %>" loading="lazy">
                 <% } else { %>

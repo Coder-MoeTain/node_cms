@@ -113,14 +113,21 @@ const configs = {
     permission: 'manage_pages',
     searchFields: ['title', 'slug', 'excerpt'],
     include: [{ model: models.User, as: 'author' }],
-    payload: async (body, req, record = null) => ({
+    payload: async (body, req, record = null, transaction = null) => ({
       title: sanitizePlainText(body.title, 220),
       slug: await createUniqueSlug(models.Page, body.slug || body.title, 'page', record?.id),
       content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
       excerpt: sanitizePlainText(body.excerpt, 1000),
+      featured_image: await resolveImageValue(req, {
+        fileField: 'featured_image_file',
+        pathField: 'featured_image',
+        record,
+        transaction
+      }),
       status: allowedStatus(body, req),
       seo_title: sanitizePlainText(body.seo_title, 220),
       seo_description: sanitizePlainText(body.seo_description, 1000),
+      og_image: sanitizePlainText(body.og_image, 255),
       author_id: record?.author_id || req.session.user.id,
       published_at: body.published_at || (allowedStatus(body, req) === 'published' ? new Date() : null)
     })

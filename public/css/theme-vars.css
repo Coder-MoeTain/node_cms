@@ -27,8 +27,8 @@
   --np-sidebar-width: 200px;
   --np-topbar-height: 32px;
   --np-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  --np-radius: 0;
-  --np-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+  --np-radius: 6px;
+  --np-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 
   /* Portal / government front-page tokens */
   --portal-primary: #0b5f8a;
@@ -140,16 +140,16 @@
 }
 
 [data-theme-preset="myanmar-portal"] {
-  --portal-primary: #0b5f8a;
-  --portal-primary-dark: #06466a;
-  --portal-secondary: #f4b000;
-  --portal-accent: #d71920;
-  --portal-bg: #f5f7fa;
+  --portal-primary: #006ba6;
+  --portal-primary-dark: #004d7a;
+  --portal-secondary: #ffcc00;
+  --portal-accent: #e4282c;
+  --portal-bg: #e8edf2;
   --portal-card: #ffffff;
-  --portal-border: #d7dde5;
-  --portal-text: #1f2933;
-  --portal-muted: #6b7280;
-  --portal-footer: #0b2f47;
+  --portal-border: #c5d3de;
+  --portal-text: #2b2b2b;
+  --portal-muted: #5a6570;
+  --portal-footer: #0c3d5c;
   --gov-primary: var(--portal-primary);
   --gov-primary-dark: var(--portal-primary-dark);
   --gov-secondary: var(--portal-secondary);
@@ -160,8 +160,8 @@
   --gov-text: var(--portal-text);
   --gov-muted: var(--portal-muted);
   --gov-footer: var(--portal-footer);
-  --np-primary: #0b5f8a;
-  --np-primary-hover: #06466a;
+  --np-primary: #006ba6;
+  --np-primary-hover: #004d7a;
   --np-sidebar-active: #0b5f8a;
   --site-primary: var(--portal-primary);
   --site-secondary: var(--portal-secondary);

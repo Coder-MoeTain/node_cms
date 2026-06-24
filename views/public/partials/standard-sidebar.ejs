@@ -1,0 +1,41 @@
+<aside class="standard-sidebar" aria-label="Sidebar">
+  <div class="widget">
+    <h2 class="widget-title">Search</h2>
+    <div class="widget-body">
+      <form action="/search" role="search">
+        <label class="visually-hidden" for="std-sidebar-search">Search</label>
+        <input class="form-control form-control-sm mb-2" id="std-sidebar-search" name="q" type="search" placeholder="Search…">
+        <button class="site-btn w-100" type="submit">Search</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="widget">
+    <h2 class="widget-title">Categories</h2>
+    <div class="widget-body">
+      <% if (sidebarCategories.length) { %>
+        <ul class="list-unstyled mb-0">
+          <% sidebarCategories.forEach(function(category) { %>
+            <li class="mb-1"><a href="/category/<%= category.slug %>"><%= category.name %></a></li>
+          <% }) %>
+        </ul>
+      <% } else { %><p class="text-muted small mb-0">No categories yet.</p><% } %>
+    </div>
+  </div>
+
+  <div class="widget">
+    <h2 class="widget-title">Recent Posts</h2>
+    <div class="widget-body">
+      <% if (recentPosts.length) { %>
+        <ul class="list-unstyled mb-0">
+          <% recentPosts.forEach(function(post) { %>
+            <li class="mb-2 pb-2 border-bottom">
+              <a href="/post/<%= post.slug %>"><%= post.title %></a>
+              <% if (post.published_at) { %><small class="text-muted d-block"><%= formatDate(post.published_at) %></small><% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %><p class="text-muted small mb-0">No posts yet.</p><% } %>
+    </div>
+  </div>
+</aside>

@@ -309,9 +309,9 @@ async function seed() {
     theme_name: 'classic-blog',
     active: true,
     header_layout: 'portal',
-    primary_color: '#0b5f8a',
-    secondary_color: '#f4b000',
-    background_color: '#f5f7fa',
+    primary_color: '#006ba6',
+    secondary_color: '#ffcc00',
+    background_color: '#e8edf2',
     text_color: '#1f2933',
     custom_css: portalCss
   }, { where: { theme_name: 'classic-blog' } });

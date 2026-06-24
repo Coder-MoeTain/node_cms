@@ -1,4 +1,4 @@
-<% const isPortal = (portalConfig.header && portalConfig.header.layout === 'portal') || activeTheme.header_layout === 'portal' || themePreset === 'myanmar-portal';
+<% /* isPortal from siteContext */
    const footerMenu = (siteMenus.footer && siteMenus.footer.length ? siteMenus.footer : siteMenus.header) || [];
    const footerLogo = siteSettings.site_logo || activeTheme.logo;
 %>

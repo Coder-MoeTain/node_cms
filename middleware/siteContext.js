@@ -54,6 +54,15 @@ async function loadSiteContext(req, res, next) {
     res.locals.portalConfig = resolvePortalConfig(themePlain);
     res.locals.themePreset = resolveThemePreset(themePlain, res.locals.portalConfig);
     res.locals.themeVars = parseThemeVars(themePlain.custom_css || '');
+    res.locals.isPortal =
+      res.locals.portalConfig.header?.layout === 'portal' ||
+      themePlain.header_layout === 'portal' ||
+      res.locals.themePreset === 'myanmar-portal';
+    res.locals.formatDate = (value) => {
+      if (!value) return '';
+      const date = value instanceof Date ? value : new Date(value);
+      return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    };
     res.locals.siteMenus = menus.reduce((map, menu) => ({ ...map, [menu.location]: buildMenuTree(menu.items || []) }), {});
     res.locals.sidebarCategories = categories;
     res.locals.recentPosts = recentPosts;
