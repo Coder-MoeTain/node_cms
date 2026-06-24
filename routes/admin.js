@@ -53,9 +53,9 @@ function resourcePermission(req, res, next) {
 
 router.get('/:resource', requireAuth, resourcePermission, crud.index);
 router.get('/:resource/create', requireAuth, resourcePermission, crud.create);
-router.post('/:resource', requireAuth, resourcePermission, crud.store);
+router.post('/:resource', requireAuth, resourcePermission, upload.image.single('featured_image_file'), crud.store);
 router.get('/:resource/:id/edit', requireAuth, resourcePermission, crud.edit);
-router.put('/:resource/:id', requireAuth, resourcePermission, crud.update);
+router.put('/:resource/:id', requireAuth, resourcePermission, upload.image.single('featured_image_file'), crud.update);
 router.delete('/:resource/:id', requireAuth, resourcePermission, crud.destroy);
 
 module.exports = router;

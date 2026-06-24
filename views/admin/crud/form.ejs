@@ -11,7 +11,7 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content">
     <%- include('../partials/flash') %>
-    <form class="card" method="post" action="<%= action %>">
+    <form class="card" method="post" action="<%= action %>" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="card-body">
         <% if (['posts','pages'].includes(resource)) { %>
@@ -28,7 +28,18 @@
           </div>
           <% if (resource === 'posts') { %>
             <div class="row g-3 mt-1">
-              <div class="col-md-6"><label class="form-label">Featured Image URL</label><input class="form-control media-preview-input" name="featured_image" value="<%= val('featured_image') %>"></div>
+              <div class="col-md-6">
+                <label class="form-label">Featured Image URL</label>
+                <input class="form-control media-preview-input" name="featured_image" value="<%= val('featured_image') %>" placeholder="/uploads/2026-06/image.jpg">
+                <div class="form-text">Paste a Media Library URL or upload a new image below.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Upload Featured Image</label>
+                <input class="form-control" name="featured_image_file" type="file" accept="image/*">
+                <% if (val('featured_image')) { %>
+                  <img class="img-fluid rounded mt-2" style="max-height: 140px; object-fit: cover;" src="<%= val('featured_image') %>" alt="Current featured image">
+                <% } %>
+              </div>
               <div class="col-md-6"><label class="form-label">Video URL (YouTube/Vimeo/embed)</label><input class="form-control" name="video_url" value="<%= val('video_url') %>"></div>
               <div class="col-md-6"><label class="form-label">Open Graph Image</label><input class="form-control" name="og_image" value="<%= val('og_image') %>"></div>
               <div class="col-md-6"><label class="form-label">Author</label><select class="form-select" name="author_id"><% (extra.users || []).forEach(function(user) { %><option value="<%= user.id %>" <%= String(val('author_id')) === String(user.id) ? 'selected' : '' %>><%= user.name %></option><% }) %></select></div>

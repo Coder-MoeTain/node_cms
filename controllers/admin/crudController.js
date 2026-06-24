@@ -1,7 +1,9 @@
 const bcrypt = require('bcrypt');
+const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const { Op } = require('sequelize');
 const models = require('../../models');
+const { classifyMime, publicUploadPath } = require('../../utils/fileHelper');
 const { createSlug } = require('../../utils/slugGenerator');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 
@@ -16,6 +18,22 @@ const richTextSanitizeOptions = {
   allowedIframeHostnames: ['www.youtube.com', 'youtube.com', 'player.vimeo.com']
 };
 
+async function createMediaFromUpload(file, userId) {
+  if (!file) return null;
+
+  const relative = `/uploads/${path.relative(publicUploadPath(), file.path).replace(/\\/g, '/')}`;
+  await models.Media.create({
+    filename: file.filename,
+    original_name: file.originalname,
+    file_path: relative,
+    file_type: classifyMime(file.mimetype),
+    mime_type: file.mimetype,
+    file_size: file.size,
+    uploaded_by: userId
+  });
+  return relative;
+}
+
 const configs = {
   posts: {
     model: models.Post,
@@ -24,22 +42,25 @@ const configs = {
     searchFields: ['title', 'slug', 'excerpt'],
     include: [{ model: models.Category }, { model: models.User, as: 'author' }, models.Tag],
     formData: async () => ({ categories: await models.Category.findAll(), tags: await models.Tag.findAll(), users: await models.User.findAll() }),
-    payload: (body, req) => ({
-      title: body.title,
-      slug: createSlug(body.slug || body.title, 'post'),
-      content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
-      excerpt: body.excerpt,
-      featured_image: body.featured_image,
-      video_url: body.video_url,
-      status: body.status || 'draft',
-      category_id: body.category_id || null,
-      author_id: body.author_id || req.session.user.id,
-      seo_title: body.seo_title,
-      seo_description: body.seo_description,
-      og_image: body.og_image,
-      allow_comments: body.allow_comments === 'on',
-      published_at: body.published_at || (body.status === 'published' ? new Date() : null)
-    }),
+    payload: async (body, req) => {
+      const uploadedFeaturedImage = await createMediaFromUpload(req.file, req.session.user.id);
+      return {
+        title: body.title,
+        slug: createSlug(body.slug || body.title, 'post'),
+        content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
+        excerpt: body.excerpt,
+        featured_image: uploadedFeaturedImage || body.featured_image,
+        video_url: body.video_url,
+        status: body.status || 'draft',
+        category_id: body.category_id || null,
+        author_id: body.author_id || req.session.user.id,
+        seo_title: body.seo_title,
+        seo_description: body.seo_description,
+        og_image: body.og_image,
+        allow_comments: body.allow_comments === 'on',
+        published_at: body.published_at || (body.status === 'published' ? new Date() : null)
+      };
+    },
     afterSave: async (record, body) => record.setTags(body.tags || [])
   },
   pages: {

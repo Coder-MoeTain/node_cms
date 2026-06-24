@@ -33,9 +33,23 @@ function fileFilter(req, file, callback) {
   return callback(null, true);
 }
 
+function imageFileFilter(req, file, callback) {
+  const extension = path.extname(file.originalname).toLowerCase();
+  if (blockedExtensions.has(extension) || !file.mimetype.startsWith('image/')) {
+    return callback(new Error('Featured image must be an image file.'));
+  }
+  return callback(null, true);
+}
+
 const upload = multer({
   storage,
   fileFilter,
+  limits: { fileSize: appConfig.uploadMaxSizeMb * 1024 * 1024 }
+});
+
+upload.image = multer({
+  storage,
+  fileFilter: imageFileFilter,
   limits: { fileSize: appConfig.uploadMaxSizeMb * 1024 * 1024 }
 });
 
