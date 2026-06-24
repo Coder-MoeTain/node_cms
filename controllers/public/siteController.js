@@ -193,7 +193,11 @@ async function page(req, res, next) {
   try {
     const row = await Page.findOne({ where: { slug: req.params.slug, status: 'published' } });
     if (!row) return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
-    return renderTheme(res, 'page', { title: row.title, seo: meta(row.seo_title || row.title, row.seo_description), page: row });
+    return renderTheme(res, 'page', {
+      title: row.title,
+      seo: meta(row.seo_title || row.title, row.seo_description, row.og_image || row.featured_image),
+      page: row
+    });
   } catch (error) {
     return next(error);
   }

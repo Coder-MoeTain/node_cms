@@ -3,23 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= seo?.title || title %></title>
-  <meta name="description" content="<%= seo?.description || siteSettings.site_tagline || '' %>">
-  <link rel="canonical" href="<%= seo?.canonical || '' %>">
+  <title><%= (typeof seo !== 'undefined' && seo && seo.title) || title %></title>
+  <meta name="description" content="<%= (typeof seo !== 'undefined' && seo && seo.description) || siteSettings.site_tagline || '' %>">
+  <link rel="canonical" href="<%= (typeof seo !== 'undefined' && seo && seo.canonical) || '' %>">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="<%= seo?.title || siteSettings.site_title || title %>">
-  <meta property="og:description" content="<%= seo?.description || siteSettings.site_tagline || '' %>">
-  <meta property="og:url" content="<%= seo?.canonical || '' %>">
+  <meta property="og:title" content="<%= (typeof seo !== 'undefined' && seo && seo.title) || siteSettings.site_title || title %>">
+  <meta property="og:description" content="<%= (typeof seo !== 'undefined' && seo && seo.description) || siteSettings.site_tagline || '' %>">
+  <meta property="og:url" content="<%= (typeof seo !== 'undefined' && seo && seo.canonical) || '' %>">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="<%= activeTheme.primary_color || '#0b5f8a' %>">
-  <% if (seo?.image) { %><meta property="og:image" content="<%= seo.image %>"><% } %>
+  <% if (typeof seo !== 'undefined' && seo && seo.image) { %><meta property="og:image" content="<%= seo.image %>"><% } %>
   <% if (siteSettings.favicon || activeTheme.favicon) { %><link rel="icon" href="<%= siteSettings.favicon || activeTheme.favicon %>"><% } %>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="/vendor/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/theme-vars.css">
   <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/ui-modern.css">
   <link rel="stylesheet" href="/css/site.css">
+  <% const isPortalLayout = typeof isPortal !== 'undefined' && isPortal; %>
+  <% if (isPortalLayout) { %>
   <link rel="stylesheet" href="/css/portal.css">
+  <% } %>
+  <% if (themePreset === 'myanmar-portal') { %>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;600;700&family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/mnp-portal.css">
+  <% } else { %>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <% } %>
   <% const tv = themeVars || {};
      const accent = tv.accent || activeTheme.primary_color || '#d71920';
      const cardColor = tv.card || '#ffffff';
@@ -31,9 +41,9 @@
   %>
   <style>
     :root {
-      --portal-primary: <%= activeTheme.primary_color || '#0b5f8a' %>;
-      --portal-primary-dark: #06466a;
-      --portal-secondary: <%= activeTheme.secondary_color || '#f4b000' %>;
+      --portal-primary: <%= activeTheme.primary_color || (themePreset === 'myanmar-portal' ? '#006ba6' : '#0b5f8a') %>;
+      --portal-primary-dark: <%= themePreset === 'myanmar-portal' ? '#004d7a' : '#06466a' %>;
+      --portal-secondary: <%= activeTheme.secondary_color || (themePreset === 'myanmar-portal' ? '#ffcc00' : '#f4b000') %>;
       --portal-accent: <%= accent %>;
       --portal-bg: <%= activeTheme.background_color || '#f5f7fa' %>;
       --portal-card: <%= cardColor %>;
@@ -76,5 +86,5 @@
   <% if (typeof schema !== 'undefined' && schema) { %><script type="application/ld+json"><%- schema %></script><% } %>
   <% (pluginPublicHead || []).forEach(function(snippet) { %><%- snippet %><% }) %>
 </head>
-<body class="<%= activeTheme.dark_mode ? 'theme-dark' : '' %> <%= activeTheme.site_layout === 'boxed' ? 'boxed-layout' : '' %> header-layout-<%= activeTheme.header_layout || 'standard' %> footer-layout-<%= activeTheme.footer_layout || 'four-columns' %> sidebar-<%= activeTheme.sidebar_position || 'right' %> blog-layout-<%= activeTheme.blog_layout || 'grid' %> portal-preset-<%= themePreset || 'default' %> <%= ((portalConfig.header && portalConfig.header.layout === 'portal') || activeTheme.header_layout === 'portal' || themePreset === 'myanmar-portal') ? 'portal-layout-active' : '' %>">
+<body class="<%= activeTheme.dark_mode ? 'theme-dark' : '' %> <%= activeTheme.site_layout === 'boxed' ? 'boxed-layout' : '' %> header-layout-<%= activeTheme.header_layout || 'standard' %> footer-layout-<%= activeTheme.footer_layout || 'four-columns' %> sidebar-<%= activeTheme.sidebar_position || 'right' %> blog-layout-<%= activeTheme.blog_layout || 'grid' %> portal-preset-<%= themePreset || 'default' %> <%= isPortalLayout ? 'portal-layout-active' : 'standard-layout-active' %>">
 <a class="np-skip-link" href="#main-content">Skip to content</a>

@@ -8,7 +8,7 @@
     <% if (list.length) { %>
       <ul class="portal-post-list portal-news-list">
         <% list.slice(0, 6).forEach(function(post) { %>
-          <li><%- include('../partials/portal-post-item', { post, showExcerpt: true }) %></li>
+          <li><%- include('../partials/portal-post-item', { post, showExcerpt: true, showReadMore: true }) %></li>
         <% }) %>
       </ul>
     <% } else { %>

@@ -244,6 +244,21 @@ function initPortalHeader() {
     });
   });
 
+  if (window.matchMedia('(min-width: 992px)').matches) {
+    header.querySelectorAll('.portal-nav-item.has-mega, .portal-nav-item.has-dropdown').forEach((item) => {
+      item.addEventListener('mouseenter', () => {
+        item.classList.add('is-open');
+        const toggle = item.querySelector('.portal-nav-submenu-toggle');
+        if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      });
+      item.addEventListener('mouseleave', () => {
+        item.classList.remove('is-open');
+        const toggle = item.querySelector('.portal-nav-submenu-toggle');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
   document.querySelectorAll('[data-font-scale]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const scale = btn.dataset.fontScale || 'normal';

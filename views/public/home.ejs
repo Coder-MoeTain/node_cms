@@ -3,8 +3,12 @@
 <main id="main-content" class="portal-main portal-home-page">
   <% const usePortalHome = (portalConfig.header && portalConfig.header.layout === 'portal') || activeTheme.header_layout === 'portal' || themePreset === 'myanmar-portal'; %>
   <% if (usePortalHome) { %>
-    <%- include('partials/portal-ticker') %>
-    <%- include('partials/portal-section-nav') %>
+    <% if (portalConfig.homepage && portalConfig.homepage.announcementTicker && themePreset !== 'myanmar-portal') { %>
+      <%- include('partials/portal-ticker') %>
+    <% } %>
+    <% if (portalConfig.homepage && portalConfig.homepage.sectionNav) { %>
+      <%- include('partials/portal-section-nav') %>
+    <% } %>
     <%- include('home-portal') %>
   <% } else { %>
     <% if (sliders.length) { %>

@@ -1,11 +1,21 @@
 <article class="post-card h-100">
-  <% if (post.featured_image) { %><img class="post-card-image" src="<%= post.featured_image %>" alt="<%= post.title %>"><% } %>
+  <% if (post.featured_image) { %>
+    <a class="post-card-image-wrap" href="/post/<%= post.slug %>" aria-hidden="true" tabindex="-1">
+      <img class="post-card-image" src="<%= post.featured_image %>" alt="" loading="lazy">
+    </a>
+  <% } %>
   <div class="post-card-body">
-    <div class="small post-meta mb-2"><%= post.Category ? post.Category.name : 'Uncategorized' %> · <%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %></div>
-    <h3 class="h5"><a href="/post/<%= post.slug %>"><%= post.title %></a></h3>
-    <p><%= post.excerpt || '' %></p>
-    <div>
-      <% (post.Tags || []).forEach(function(tag) { %><a class="badge text-bg-secondary text-decoration-none me-1" href="/tag/<%= tag.slug %>"><%= tag.name %></a><% }) %>
+    <div class="post-card-meta">
+      <% if (post.Category) { %><span class="post-card-category"><%= post.Category.name %></span><% } %>
+      <% if (post.published_at) { %><time datetime="<%= post.published_at %>"><%= formatDate(post.published_at) %></time><% } %>
     </div>
+    <h3 class="post-card-title"><a href="/post/<%= post.slug %>"><%= post.title %></a></h3>
+    <% if (post.excerpt) { %><p class="post-card-excerpt"><%= post.excerpt %></p><% } %>
+  <% if ((post.Tags || []).length) { %>
+    <div class="d-flex flex-wrap gap-1 mb-2">
+      <% (post.Tags || []).forEach(function(tag) { %><a class="post-card-tag" href="/tag/<%= tag.slug %>"><%= tag.name %></a><% }) %>
+    </div>
+  <% } %>
+    <a class="post-card-read" href="/post/<%= post.slug %>">Read article <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
   </div>
 </article>

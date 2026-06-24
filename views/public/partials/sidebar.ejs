@@ -29,7 +29,7 @@
       <% if (recentPosts.length) { %>
         <ul class="portal-sidebar-list portal-sidebar-posts">
           <% recentPosts.forEach(function(post) { %>
-            <li><a href="/post/<%= post.slug %>"><%= post.title %></a><time datetime="<%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %>"><%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %></time></li>
+            <li><a href="/post/<%= post.slug %>"><%= post.title %></a><time datetime="<%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %>"><%= post.published_at ? formatDate(post.published_at) : '' %></time></li>
           <% }) %>
         </ul>
       <% } else { %><p class="portal-empty-state">No posts yet.</p><% } %>
@@ -42,7 +42,7 @@
       <% if (announcementPosts && announcementPosts.length) { %>
         <ul class="portal-sidebar-list portal-sidebar-posts">
           <% announcementPosts.forEach(function(post) { %>
-            <li><a href="/post/<%= post.slug %>"><%= post.title %></a><time datetime="<%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %>"><%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %></time></li>
+            <li><a href="/post/<%= post.slug %>"><%= post.title %></a><time datetime="<%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %>"><%= post.published_at ? formatDate(post.published_at) : '' %></time></li>
           <% }) %>
         </ul>
       <% } else { %><p class="portal-empty-state">No announcements yet.</p><% } %>

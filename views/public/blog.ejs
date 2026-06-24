@@ -1,5 +1,6 @@
 <%- include('partials/head') %>
 <%- include('partials/header') %>
+<% if (isPortal) { %>
 <main class="container portal-page portal-main py-4" id="main-content">
   <nav class="portal-breadcrumb" aria-label="Breadcrumb">
     <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Blog</span>
@@ -11,7 +12,7 @@
         <% if (posts.length) { %>
           <ul class="portal-post-list portal-post-list-page">
             <% posts.forEach(function(post) { %>
-              <li><%- include('partials/portal-post-item', { post }) %></li>
+              <li><%- include('partials/portal-post-item', { post, showExcerpt: true }) %></li>
             <% }) %>
           </ul>
         <% } else { %>
@@ -31,4 +32,39 @@
     <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include('partials/sidebar') %></div><% } %>
   </div>
 </main>
+<% } else { %>
+<main class="container site-page py-4 py-lg-5" id="main-content">
+  <header class="site-page-header">
+    <nav class="portal-breadcrumb mb-2" aria-label="Breadcrumb">
+      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Blog</span>
+    </nav>
+    <h1 class="site-page-title">News &amp; Blog</h1>
+  </header>
+  <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
+    <section class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
+      <% if (posts.length) { %>
+        <div class="row g-4">
+          <% posts.forEach(function(post) { %>
+            <div class="col-md-6">
+              <%- include('partials/post-card', { post }) %>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="np-card p-4 text-center text-muted">No published posts yet.</div>
+      <% } %>
+      <% if (pagination && pagination.pages > 1) { %>
+        <nav class="portal-pagination mt-4" aria-label="Blog pagination">
+          <ul class="pagination">
+            <% for (let i = 1; i <= pagination.pages; i++) { %>
+              <li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?page=<%= i %>"><%= i %></a></li>
+            <% } %>
+          </ul>
+        </nav>
+      <% } %>
+    </section>
+    <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include('partials/standard-sidebar') %></div><% } %>
+  </div>
+</main>
+<% } %>
 <%- include('partials/footer') %>

@@ -1,4 +1,4 @@
-<% const isPortal = (portalConfig.header && portalConfig.header.layout === 'portal') || activeTheme.header_layout === 'portal' || themePreset === 'myanmar-portal';
+<% /* isPortal from siteContext */
    const hdr = portalConfig.header || {};
    const nav = portalConfig.nav || {};
    const siteLogo = siteSettings.site_logo || activeTheme.logo;
@@ -6,10 +6,10 @@
      { title: 'Home', url: '/', children: [] },
      { title: 'About', url: '/page/about', children: [
        { title: 'History', url: '/page/about' },
-       { title: 'National Symbols', url: '/blog' },
+       { title: 'National Symbols', url: '/category/documents' },
        { title: 'Geography', url: '/blog' },
-       { title: 'Travel', url: '/blog' },
-       { title: 'Culture', url: '/blog' }
+       { title: 'Culture', url: '/blog' },
+       { title: 'Travel', url: '/blog' }
      ]},
      { title: 'Nation', url: '/blog', children: [
        { title: 'Government Organizations', url: '/blog' },
@@ -21,23 +21,25 @@
        { title: 'Education', url: '/category/education' },
        { title: 'Economy', url: '/category/economy' },
        { title: 'Agriculture', url: '/category/agriculture' },
-       { title: 'Law & Justice', url: '/blog' },
-       { title: 'Technology', url: '/blog' },
-       { title: 'Transportation', url: '/blog' },
-       { title: 'Finance', url: '/blog' },
-       { title: 'Sports', url: '/blog' }
+       { title: 'Law & Justice', url: '/search?q=law' },
+       { title: 'Security', url: '/search?q=security' },
+       { title: 'Technology', url: '/search?q=technology' },
+       { title: 'Transportation', url: '/search?q=transportation' },
+       { title: 'Finance', url: '/search?q=finance' },
+       { title: 'Sports', url: '/search?q=sports' }
      ]},
      { title: 'News & Media', url: '/category/news', children: [
-       { title: 'News', url: '/category/news' },
-       { title: 'Videos', url: '/blog' },
+       { title: 'Latest News', url: '/category/news' },
        { title: 'Announcements', url: '/category/announcements' },
+       { title: 'Photos & Videos', url: '/#portal-media' },
        { title: 'Archives', url: '/blog' }
      ]},
-     { title: 'Services', url: '/blog', children: [
+     { title: 'Services', url: '/category/services', children: [
        { title: 'Online Services', url: '/blog' },
-       { title: 'Offline Services', url: '/blog' },
        { title: 'Forms', url: '/search?q=forms' },
-       { title: 'Documents', url: '/category/documents' }
+       { title: 'Documents', url: '/category/documents' },
+       { title: 'Public Holidays', url: '/page/public-holidays' },
+       { title: 'Emergency Contacts', url: '/#portal-emergency' }
      ]},
      { title: 'Contact', url: '/contact', children: [] }
    ];
@@ -78,6 +80,13 @@
         <% if (siteSettings.site_location || siteSettings.contact_address) { %><span class="portal-utility-location"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.site_location || siteSettings.contact_address %></span><% } %>
       </div>
       <div class="portal-utility-right">
+        <% if (themePreset === 'myanmar-portal') { %>
+        <div class="portal-mnp-socials" aria-label="Social media">
+          <% if (siteSettings.facebook_link) { %><a href="<%= siteSettings.facebook_link %>" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook"></i></a><% } %>
+          <% if (siteSettings.youtube_link) { %><a href="<%= siteSettings.youtube_link %>" rel="noopener" aria-label="YouTube"><i class="bi bi-youtube"></i></a><% } %>
+          <a href="/contact" aria-label="Contact"><i class="bi bi-envelope"></i></a>
+        </div>
+        <% } %>
         <% if (hdr.showLanguageSwitcher) { %>
         <div class="portal-lang-links" role="group" aria-label="Language">
           <button type="button" class="portal-lang-link language-option" data-lang="my" data-label="Myanmar">မြန်မာ</button>
@@ -96,17 +105,25 @@
   <div class="portal-identity-bar">
     <div class="container portal-identity-inner">
       <a class="portal-brand" href="/">
-        <% if (siteLogo) { %><img class="portal-brand-logo" src="<%= siteLogo %>" alt="<%= siteSettings.site_title || 'NodePress CMS' %>"><% } else { %><span class="portal-brand-mark">NP</span><% } %>
+        <% if (siteLogo) { %><img class="portal-brand-logo" src="<%= siteLogo %>" alt="<%= siteSettings.site_title || 'NodePress CMS' %>"><% } else if (themePreset === 'myanmar-portal') { %><span class="portal-brand-mark portal-brand-seal" aria-hidden="true"></span><% } else { %><span class="portal-brand-mark">NP</span><% } %>
         <div class="portal-brand-text">
-          <strong class="portal-brand-title"><%= siteSettings.site_title || 'NodePress CMS' %></strong>
-          <span class="portal-brand-tagline"><%= siteSettings.site_tagline || 'Official information portal powered by NodePress' %></span>
-          <span class="portal-brand-location"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.site_location || 'Nay Pyi Taw, MM' %></span>
+          <% if (themePreset === 'myanmar-portal') { %>
+            <strong class="portal-brand-title portal-brand-mnp">
+              <span class="portal-brand-line"><%= siteSettings.site_title || 'NodePress CMS' %></span>
+              <span class="portal-brand-line portal-brand-line-gold"><%= siteSettings.site_tagline || 'Official information portal' %></span>
+            </strong>
+            <span class="portal-brand-location portal-brand-location-mnp"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.site_location || siteSettings.contact_address || 'Nay Pyi Taw, MM' %></span>
+          <% } else { %>
+            <strong class="portal-brand-title"><%= siteSettings.site_title || 'NodePress CMS' %></strong>
+            <span class="portal-brand-tagline"><%= siteSettings.site_tagline || 'Official information portal powered by NodePress' %></span>
+            <span class="portal-brand-location"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.site_location || siteSettings.contact_address || 'Nay Pyi Taw, MM' %></span>
+          <% } %>
         </div>
       </a>
       <% if (hdr.showSearch) { %>
       <form class="portal-header-search" action="/search" role="search">
         <label class="visually-hidden" for="portal-search">Search</label>
-        <input class="form-control" id="portal-search" name="q" type="search" placeholder="Search this site..." aria-label="Search">
+        <input class="form-control" id="portal-search" name="q" type="search" placeholder="Search news, services, documents…" aria-label="Search">
         <button class="portal-search-btn" type="submit" aria-label="Submit search"><i class="bi bi-search" aria-hidden="true"></i></button>
       </form>
       <% } %>

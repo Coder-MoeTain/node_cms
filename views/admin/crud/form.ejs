@@ -75,6 +75,14 @@
                   <div class="mt-2"><a class="np-btn np-btn-link" href="/admin/<%= resource %>">Cancel</a></div>
                 </div>
               </div>
+              <% if (resource === 'pages') { %>
+                <div class="np-metabox">
+                  <div class="np-metabox-header">Featured Image</div>
+                  <div class="np-metabox-body">
+                    <%- include('../partials/featured-image-field', { name: 'featured_image', fileName: 'featured_image_file', value: val('featured_image') }) %>
+                  </div>
+                </div>
+              <% } %>
               <% if (resource === 'posts') { %>
                 <div class="np-metabox">
                   <div class="np-metabox-header" data-metabox-toggle aria-expanded="true">Categories</div>

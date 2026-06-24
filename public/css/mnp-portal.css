@@ -1,0 +1,431 @@
+/**
+ * Myanmar National Portal skin — inspired by myanmar.gov.mm layout patterns
+ * (colors, tiles, header chrome). No copied assets.
+ */
+
+.portal-preset-myanmar-portal.portal-layout-active {
+  --portal-primary: #006ba6;
+  --portal-primary-dark: #004d7a;
+  --portal-secondary: #ffcc00;
+  --portal-accent: #e4282c;
+  --portal-bg: #e8edf2;
+  --portal-card: #ffffff;
+  --portal-border: #c5d3de;
+  --portal-text: #2b2b2b;
+  --portal-muted: #5a6570;
+  --portal-footer: #0c3d5c;
+  font-family: Roboto, "Noto Sans Myanmar", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* --- Utility bar --- */
+.portal-preset-myanmar-portal .portal-utility-bar {
+  background: #1a3348;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.portal-preset-myanmar-portal .portal-mnp-socials {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.portal-preset-myanmar-portal .portal-mnp-socials a {
+  color: rgba(255, 255, 255, .88);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.portal-preset-myanmar-portal .portal-mnp-socials a:hover {
+  color: var(--portal-secondary);
+}
+
+/* --- Identity bar --- */
+.portal-preset-myanmar-portal .portal-identity-bar {
+  background: #fff;
+  border-bottom: 0;
+  box-shadow: 0 1px 0 var(--portal-border);
+  padding: 12px 0;
+}
+
+.portal-preset-myanmar-portal .portal-brand-seal {
+  background:
+    conic-gradient(#fecb00 0 25%, #34a853 25% 50%, #ea4335 50% 75%, #006ba6 75% 100%);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+  flex-shrink: 0;
+  height: 56px;
+  width: 56px;
+}
+
+.portal-preset-myanmar-portal .portal-brand-mnp {
+  display: block;
+  line-height: 1.05;
+}
+
+.portal-preset-myanmar-portal .portal-brand-line {
+  color: var(--portal-primary);
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+
+.portal-preset-myanmar-portal .portal-brand-line-gold {
+  color: #c89200;
+  font-size: 1rem;
+}
+
+.portal-preset-myanmar-portal .portal-brand-location-mnp {
+  color: var(--portal-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.portal-preset-myanmar-portal .portal-header-search .form-control {
+  border-radius: 2px;
+  min-height: 38px;
+}
+
+.portal-preset-myanmar-portal .portal-search-btn {
+  background: var(--portal-primary);
+  min-height: 38px;
+}
+
+/* --- Navigation --- */
+.portal-preset-myanmar-portal .portal-nav-bar {
+  background: linear-gradient(180deg, #0077b8 0%, #006ba6 100%);
+  border-bottom: 3px solid var(--portal-secondary);
+}
+
+.portal-preset-myanmar-portal .portal-nav-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  padding: 14px 18px;
+  text-transform: none;
+}
+
+.portal-preset-myanmar-portal .portal-nav-link.is-active,
+.portal-preset-myanmar-portal .portal-nav-link[aria-current="page"] {
+  background: rgba(0, 0, 0, .18);
+  box-shadow: inset 0 -3px 0 var(--portal-secondary);
+  color: #fff;
+}
+
+.portal-preset-myanmar-portal .portal-nav-link:hover,
+.portal-preset-myanmar-portal .portal-nav-item:hover > .portal-nav-link {
+  background: rgba(0, 0, 0, .12);
+  color: var(--portal-secondary);
+}
+
+/* --- Hero (image banners) --- */
+.portal-preset-myanmar-portal .portal-hero-mnp .portal-hero-slide-banner.hero-slide {
+  background-color: #d8e2ea;
+  background-image: var(--hero-image, none);
+  color: inherit;
+  display: block;
+  min-height: 280px;
+}
+
+.portal-preset-myanmar-portal .portal-hero-slide-banner::before {
+  display: none;
+}
+
+.portal-preset-myanmar-portal .portal-hero-banner-link {
+  display: block;
+  height: 100%;
+  inset: 0;
+  position: absolute;
+  width: 100%;
+}
+
+.portal-preset-myanmar-portal .portal-hero-mnp .portal-carousel-indicators [data-bs-target] {
+  background-color: var(--portal-secondary);
+  height: 5px;
+  opacity: .55;
+  width: 36px;
+}
+
+.portal-preset-myanmar-portal .portal-hero-mnp .portal-carousel-indicators .active {
+  opacity: 1;
+}
+
+.portal-preset-myanmar-portal .portal-mnp-hero-title {
+  color: #fff;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+/* --- COVID strip --- */
+.portal-mnp-covid {
+  background: linear-gradient(90deg, #c41e24 0%, #e4282c 100%);
+  color: #fff;
+}
+
+.portal-mnp-covid-link {
+  align-items: center;
+  color: #fff;
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  text-decoration: none;
+}
+
+.portal-mnp-covid-link:hover {
+  color: var(--portal-secondary);
+}
+
+.portal-mnp-covid-icon {
+  align-items: center;
+  background: rgba(255, 255, 255, .15);
+  border-radius: 50%;
+  display: flex;
+  font-size: 1.35rem;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.portal-mnp-covid-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.portal-mnp-covid-text strong {
+  font-size: 0.95rem;
+  letter-spacing: .04em;
+}
+
+.portal-mnp-covid-text span {
+  font-size: 0.8rem;
+  opacity: .9;
+}
+
+.portal-mnp-covid-arrow {
+  margin-left: auto;
+}
+
+/* --- Quick service tiles --- */
+.portal-preset-myanmar-portal .portal-mnp-services {
+  background: var(--portal-bg);
+  padding-top: 8px;
+}
+
+.portal-preset-myanmar-portal .portal-mnp-service-grid {
+  margin-top: 0;
+}
+
+.portal-preset-myanmar-portal .portal-mnp-service-card {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--portal-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(12, 61, 92, .08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 10px 14px;
+  text-align: center;
+}
+
+.portal-preset-myanmar-portal .portal-mnp-service-card:hover {
+  border-color: var(--portal-primary);
+  box-shadow: 0 8px 20px rgba(0, 107, 166, .15);
+  transform: translateY(-2px);
+}
+
+.portal-mnp-icon-wrap {
+  align-items: center;
+  border-radius: 50%;
+  display: flex;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.portal-mnp-icon-wrap i {
+  color: #fff;
+  font-size: 1.65rem;
+}
+
+.portal-mnp-icon-blue { background: #006ba6; }
+.portal-mnp-icon-green { background: #2e9e5b; }
+.portal-mnp-icon-purple { background: #6b4c9a; }
+.portal-mnp-icon-orange { background: #e67e22; }
+.portal-mnp-icon-red { background: #e4282c; }
+.portal-mnp-icon-teal { background: #00838f; }
+
+.portal-preset-myanmar-portal .portal-mnp-service-title {
+  color: var(--portal-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* --- Emergency row --- */
+.portal-preset-myanmar-portal .portal-mnp-emergency {
+  background: #fff;
+  border-top: 0;
+}
+
+.portal-mnp-section-label {
+  color: var(--portal-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.portal-preset-myanmar-portal .portal-mnp-emergency-card {
+  background: #f7f9fb;
+  border: 1px solid var(--portal-border);
+  border-radius: 4px;
+  padding: 16px 10px;
+  text-align: center;
+}
+
+.portal-mnp-emergency-icon {
+  align-items: center;
+  background: #fff;
+  border: 2px solid #dce6ef;
+  border-radius: 50%;
+  color: var(--portal-primary);
+  display: flex;
+  font-size: 1.5rem;
+  height: 56px;
+  justify-content: center;
+  margin: 0 auto 10px;
+  width: 56px;
+}
+
+.portal-preset-myanmar-portal .portal-mnp-emergency-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.portal-mnp-emergency-link {
+  color: var(--portal-primary);
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 8px;
+  text-decoration: none;
+}
+
+.portal-mnp-emergency-link:hover {
+  color: var(--portal-accent);
+  text-decoration: underline;
+}
+
+/* --- Widget panels --- */
+.portal-preset-myanmar-portal .portal-widget-header {
+  background: linear-gradient(180deg, #0077b8 0%, #006ba6 100%);
+  border-bottom: 2px solid var(--portal-secondary);
+  padding: 11px 14px;
+}
+
+.portal-preset-myanmar-portal .portal-widget-title {
+  font-size: 0.9rem;
+  letter-spacing: .02em;
+}
+
+.portal-preset-myanmar-portal .portal-widget.portal-card-bordered,
+.portal-preset-myanmar-portal .portal-widget.portal-card-shadow {
+  border: 1px solid var(--portal-border);
+  border-radius: 4px;
+  border-top: 0;
+  box-shadow: 0 2px 8px rgba(12, 61, 92, .06);
+  overflow: hidden;
+}
+
+.portal-preset-myanmar-portal .portal-section-title {
+  color: var(--portal-primary);
+  font-size: 1.1rem;
+}
+
+.portal-preset-myanmar-portal .portal-section-title::after {
+  background: var(--portal-secondary);
+  height: 4px;
+  width: 56px;
+}
+
+.portal-preset-myanmar-portal .portal-home-page .portal-tenders-jobs,
+.portal-preset-myanmar-portal .portal-home-page .portal-media-gallery {
+  background: transparent;
+}
+
+.portal-preset-myanmar-portal .portal-btn {
+  background: var(--portal-primary);
+  border-color: var(--portal-primary);
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.portal-preset-myanmar-portal .portal-btn:hover {
+  background: var(--portal-primary-dark);
+  border-color: var(--portal-primary-dark);
+}
+
+.portal-preset-myanmar-portal .portal-btn-outline {
+  border-color: var(--portal-secondary);
+  color: #fff;
+}
+
+.portal-preset-myanmar-portal .portal-btn-outline:hover {
+  background: var(--portal-secondary);
+  color: var(--portal-text);
+}
+
+/* --- Footer --- */
+.portal-preset-myanmar-portal .portal-footer {
+  background: linear-gradient(180deg, #0c3d5c 0%, #082a40 100%);
+  border-top: 4px solid var(--portal-secondary);
+}
+
+.portal-preset-myanmar-portal .portal-footer-heading {
+  color: var(--portal-secondary);
+}
+
+/* --- Stat counters --- */
+.portal-preset-myanmar-portal .portal-stat-grid {
+  background: #fff;
+  border: 1px solid var(--portal-border);
+  border-radius: 4px;
+}
+
+.portal-preset-myanmar-portal .portal-stat-value {
+  color: var(--portal-primary);
+}
+
+@media (max-width: 991px) {
+  .portal-preset-myanmar-portal .portal-nav-collapse {
+    background: var(--portal-primary-dark);
+  }
+
+  .portal-preset-myanmar-portal .portal-mnp-service-grid .col-lg-2 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 575px) {
+  .portal-preset-myanmar-portal .portal-mnp-service-grid .col-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .portal-preset-myanmar-portal .portal-brand-line {
+    font-size: 1rem;
+  }
+
+  .portal-preset-myanmar-portal .portal-hero-mnp .portal-hero-slide-banner {
+    min-height: 200px;
+  }
+}

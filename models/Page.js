@@ -6,6 +6,8 @@ module.exports = (sequelize) =>
     slug: { type: DataTypes.STRING(240), allowNull: false, unique: true },
     content: { type: DataTypes.TEXT('long'), allowNull: false },
     excerpt: DataTypes.TEXT,
+    featured_image: DataTypes.STRING(255),
+    og_image: DataTypes.STRING(255),
     status: { type: DataTypes.ENUM('draft', 'published', 'private'), defaultValue: 'draft' },
     seo_title: DataTypes.STRING(220),
     seo_description: DataTypes.TEXT,

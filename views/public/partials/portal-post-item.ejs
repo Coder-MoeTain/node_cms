@@ -1,23 +1,32 @@
 <% const catSlug = (post.Category && post.Category.slug) || 'news';
    const catClass = ['news','announcements','tenders','jobs','documents','services','emergency'].includes(catSlug) ? catSlug : 'default';
    const authorName = post.author ? (post.author.name || post.author.email) : (siteSettings.site_title || 'NodePress');
-   const dateStr = post.published_at ? post.published_at.toISOString().slice(0, 10) : '';
+   const dateStr = post.published_at ? formatDate(post.published_at) : '';
+   const dateIso = post.published_at ? post.published_at.toISOString().slice(0, 10) : '';
    const isHot = typeof hot !== 'undefined' && hot;
    const showClosingDate = typeof showClosing !== 'undefined' && showClosing;
-   const showExcerptText = typeof showExcerpt !== 'undefined' && showExcerpt;
+   const showExcerptText = typeof showExcerpt !== 'undefined' ? showExcerpt : false;
+   const showReadMoreLink = typeof showReadMore !== 'undefined' && showReadMore;
+   const hasThumb = Boolean(post.featured_image);
 %>
-<article class="portal-post-item <%= isHot ? 'is-hot' : '' %>">
+<article class="portal-post-item<%= isHot ? ' is-hot' : '' %><%= hasThumb ? ' has-thumb' : '' %>">
+  <% if (hasThumb) { %>
+    <a class="portal-post-thumb" href="/post/<%= post.slug %>" aria-hidden="true" tabindex="-1">
+      <img src="<%= post.featured_image %>" alt="" loading="lazy">
+    </a>
+  <% } %>
   <div class="portal-post-main">
-  <% if (isHot) { %><span class="portal-hot-badge">Hot</span><% } %>
-  <h3 class="portal-post-title">
-    <a href="/post/<%= post.slug %>"><%= post.title %></a>
-  </h3>
-  <% if (showExcerptText && post.excerpt) { %><p class="portal-post-excerpt"><%= post.excerpt %></p><% } %>
-  <div class="portal-post-meta">
-    <span class="portal-cat-badge portal-cat-<%= catClass %>"><%= post.Category ? post.Category.name : 'News' %></span>
-    <span class="portal-post-org"><%= authorName %></span>
-    <% if (dateStr) { %><time datetime="<%= dateStr %>"><%= dateStr %></time><% } %>
-    <% if (showClosingDate && post.excerpt) { %><span class="portal-post-closing">Closing: <%= post.excerpt.slice(0, 60) %></span><% } %>
-  </div>
+    <% if (isHot) { %><span class="portal-hot-badge">Hot</span><% } %>
+    <h3 class="portal-post-title">
+      <a href="/post/<%= post.slug %>"><%= post.title %></a>
+    </h3>
+    <% if (showExcerptText && post.excerpt) { %><p class="portal-post-excerpt"><%= post.excerpt.length > 140 ? post.excerpt.slice(0, 140) + '…' : post.excerpt %></p><% } %>
+    <div class="portal-post-meta">
+      <span class="portal-cat-badge portal-cat-<%= catClass %>"><%= post.Category ? post.Category.name : 'News' %></span>
+      <span class="portal-post-org"><%= authorName %></span>
+      <% if (dateStr) { %><time datetime="<%= dateIso %>"><%= dateStr %></time><% } %>
+      <% if (showClosingDate && post.excerpt) { %><span class="portal-post-closing">Closing: <%= post.excerpt.slice(0, 60) %></span><% } %>
+    </div>
+    <% if (showReadMoreLink) { %><a class="portal-read-more" href="/post/<%= post.slug %>">Read more <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
   </div>
 </article>
