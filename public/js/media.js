@@ -65,6 +65,9 @@ function initMediaLibrary() {
     const editLink = detailModalEl.querySelector('[data-media-detail-edit]');
     const deleteForm = detailModalEl.querySelector('[data-media-detail-delete]');
     const copyBtn = detailModalEl.querySelector('[data-media-detail-copy]');
+    const altEl = detailModalEl.querySelector('[data-media-detail-alt]');
+    const captionEl = detailModalEl.querySelector('[data-media-detail-caption]');
+    const descriptionEl = detailModalEl.querySelector('[data-media-detail-description]');
 
     const id = item.dataset.id;
     const filePath = item.dataset.filePath;
@@ -72,17 +75,25 @@ function initMediaLibrary() {
     const fileType = item.dataset.fileType;
     const originalName = item.dataset.originalName;
     const uploaded = item.dataset.uploaded;
+    const alt = item.dataset.alt || '';
+    const caption = item.dataset.caption || '';
+    const description = item.dataset.description || '';
 
     nameEl.textContent = originalName || 'Attachment';
-    typeEl.textContent = fileType || 'file';
+    typeEl.textContent = item.dataset.mime || fileType || 'file';
     dateEl.textContent = uploaded ? new Date(uploaded).toLocaleString() : '—';
     urlEl.textContent = filePath || '';
+    if (altEl) altEl.textContent = alt || '—';
+    if (captionEl) captionEl.textContent = caption || '—';
+    if (descriptionEl) descriptionEl.textContent = description || '—';
     editLink.href = `/admin/media/${id}/edit`;
     deleteForm.action = `/admin/media/${id}?_method=DELETE`;
     deleteForm.querySelector('input[name="_csrf"]').value = getCsrfToken();
 
     if (fileType === 'image') {
-      preview.innerHTML = `<img src="${thumb || filePath}" alt="${originalName || ''}">`;
+      preview.innerHTML = `<img src="${thumb || filePath}" alt="${alt || originalName || ''}">`;
+    } else if (fileType === 'video') {
+      preview.innerHTML = `<video controls class="w-100" src="${filePath}"></video>`;
     } else {
       preview.innerHTML = `<div class="media-detail-file"><i class="bi bi-file-earmark fs-1" aria-hidden="true"></i><span>${originalName || 'File'}</span></div>`;
     }
@@ -115,6 +126,19 @@ function initMediaLibrary() {
       navigator.clipboard.writeText(button.dataset.copyUrl || '');
       button.textContent = 'Copied';
       setTimeout(() => { button.textContent = 'Copy URL'; }, 1500);
+    });
+  });
+
+  document.querySelectorAll('[data-copy-target]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const selector = button.dataset.copyTarget;
+      const input = selector ? document.querySelector(selector) : null;
+      if (input) {
+        navigator.clipboard.writeText(input.value || '');
+        const label = button.textContent;
+        button.textContent = 'Copied';
+        setTimeout(() => { button.textContent = label; }, 1500);
+      }
     });
   });
 }

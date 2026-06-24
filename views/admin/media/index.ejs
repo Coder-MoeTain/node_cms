@@ -38,10 +38,16 @@
           data-thumb="<%= file.thumbnail_path || file.file_path %>"
           data-file-type="<%= file.file_type %>"
           data-uploaded="<%= file.created_at ? file.created_at.toISOString() : '' %>"
+          data-alt="<%= (file.alt_text || '').replace(/"/g, '&quot;') %>"
+          data-caption="<%= (file.caption || '').replace(/"/g, '&quot;') %>"
+          data-description="<%= (file.description || '').replace(/"/g, '&quot;') %>"
+          data-mime="<%= file.mime_type || '' %>"
           aria-label="Open <%= file.original_name %>"
         >
           <% if (file.file_type === 'image') { %>
             <img src="<%= file.thumbnail_path || file.file_path %>" alt="<%= file.alt_text || file.original_name %>">
+          <% } else if (file.file_type === 'video') { %>
+            <div class="media-attachment-meta d-flex align-items-center justify-content-center media-file-icon"><i class="bi bi-camera-video fs-1 text-muted" aria-hidden="true"></i></div>
           <% } else { %>
             <div class="media-attachment-meta d-flex align-items-center justify-content-center media-file-icon"><i class="bi bi-file-earmark fs-1 text-muted" aria-hidden="true"></i></div>
           <% } %>

@@ -11,10 +11,12 @@ const {
   Slider,
   Comment,
   ContactMessage,
-  SiteSetting
+  SiteSetting,
+  Media
 } = require('../../models');
 const { getPagination, pageMeta } = require('../../utils/pagination');
-const { meta, postSchema } = require('../../utils/seoHelper');
+const { meta, postSchema, websiteSchema } = require('../../utils/seoHelper');
+const appConfig = require('../../config/app');
 const themeLoader = require('../../utils/themeLoader');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
@@ -23,14 +25,66 @@ async function renderTheme(res, template, locals) {
   return res.render(await themeLoader.resolveTemplate(template), locals);
 }
 
+async function postsForCategorySlug(slug, limit = 6) {
+  const categoryRow = await Category.findOne({ where: { slug } });
+  if (!categoryRow) return [];
+  return Post.findAll({
+    where: { category_id: categoryRow.id, status: 'published' },
+    include: publishedPostInclude,
+    limit,
+    order: [['published_at', 'DESC']]
+  });
+}
+
 async function home(req, res, next) {
   try {
-    const [posts, banners, sliders] = await Promise.all([
+    const [
+      posts,
+      banners,
+      sliders,
+      newsPosts,
+      announcementPosts,
+      tenderPosts,
+      jobPosts,
+      hotPosts,
+      mediaItems
+    ] = await Promise.all([
       Post.findAll({ where: { status: 'published' }, include: publishedPostInclude, limit: 6, order: [['published_at', 'DESC']] }),
       Banner.findAll({ where: { active: true }, order: [['display_order', 'ASC']] }),
-      Slider.findAll({ where: { active: true }, order: [['display_order', 'ASC']] })
+      Slider.findAll({ where: { active: true }, order: [['display_order', 'ASC']] }),
+      postsForCategorySlug('news', 6),
+      postsForCategorySlug('announcements', 6),
+      postsForCategorySlug('tenders', 5),
+      postsForCategorySlug('jobs', 5),
+      Post.findAll({ where: { status: 'published' }, include: publishedPostInclude, limit: 8, order: [['views_count', 'DESC']] }),
+      Media.findAll({ where: { file_type: { [Op.in]: ['image', 'video'] } }, limit: 8, order: [['created_at', 'DESC']] })
     ]);
-    return renderTheme(res, 'home', { title: 'Home', seo: meta('Home'), posts, banners, sliders });
+
+    const latestNews = newsPosts.length ? newsPosts : posts.slice(0, 6);
+    const announcements = announcementPosts.length ? announcementPosts : posts.slice(0, 6);
+
+    const { siteSettings } = res.locals;
+    const siteName = siteSettings.site_title || appConfig.name;
+    const siteTagline = siteSettings.site_tagline || 'Official information portal powered by NodePress';
+
+    return renderTheme(res, 'home', {
+      title: 'Home',
+      seo: meta('Home', siteTagline, '', {
+        siteName,
+        canonical: `${appConfig.url}/`,
+        defaultDescription: siteTagline
+      }),
+      schema: websiteSchema(siteSettings, appConfig.url),
+      posts,
+      banners,
+      sliders,
+      latestNews,
+      announcements,
+      tenderPosts,
+      jobPosts,
+      hotPosts,
+      mediaItems
+    });
   } catch (error) {
     return next(error);
   }
@@ -59,7 +113,7 @@ async function post(req, res, next) {
       where: { slug: req.params.slug, status: 'published' },
       include: [...publishedPostInclude, { model: Comment, as: 'comments', where: { status: 'approved' }, required: false }]
     });
-    if (!row) return res.status(404).render('errors/404', { title: 'Post Not Found' });
+    if (!row) return res.status(404).render('public/error', { title: 'Post Not Found', code: 404, message: 'This post could not be found or is no longer published.' });
     await row.increment('views_count');
     const [relatedPosts, prevPost, nextPost] = await Promise.all([
       Post.findAll({
@@ -100,7 +154,7 @@ async function post(req, res, next) {
 async function category(req, res, next) {
   try {
     const categoryRow = await Category.findOne({ where: { slug: req.params.slug } });
-    if (!categoryRow) return res.status(404).render('errors/404', { title: 'Category Not Found' });
+    if (!categoryRow) return res.status(404).render('public/error', { title: 'Category Not Found', code: 404, message: 'This category could not be found.' });
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const { rows, count } = await Post.findAndCountAll({
       where: { category_id: categoryRow.id, status: 'published' },
@@ -120,7 +174,7 @@ async function tag(req, res, next) {
   try {
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const tagRow = await Tag.findOne({ where: { slug: req.params.slug } });
-    if (!tagRow) return res.status(404).render('errors/404', { title: 'Tag Not Found' });
+    if (!tagRow) return res.status(404).render('public/error', { title: 'Tag Not Found', code: 404, message: 'This tag could not be found.' });
     const { rows, count } = await Post.findAndCountAll({
       where: { status: 'published' },
       include: [...publishedPostInclude, { model: Tag, where: { id: tagRow.id } }],
@@ -138,7 +192,7 @@ async function tag(req, res, next) {
 async function page(req, res, next) {
   try {
     const row = await Page.findOne({ where: { slug: req.params.slug, status: 'published' } });
-    if (!row) return res.status(404).render('errors/404', { title: 'Page Not Found' });
+    if (!row) return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
     return renderTheme(res, 'page', { title: row.title, seo: meta(row.seo_title || row.title, row.seo_description), page: row });
   } catch (error) {
     return next(error);
@@ -147,21 +201,52 @@ async function page(req, res, next) {
 
 async function search(req, res, next) {
   try {
-    const q = req.query.q || '';
+    const q = (req.query.q || '').trim();
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
-    const posts = q
-      ? await Post.findAll({
-          where: {
-            status: 'published',
-            [Op.or]: [{ title: { [Op.like]: `%${q}%` } }, { excerpt: { [Op.like]: `%${q}%` } }, { content: { [Op.like]: `%${q}%` } }]
-          },
-          include: publishedPostInclude,
-          limit,
-          offset,
-          order: [['published_at', 'DESC']]
-        })
-      : [];
-    return renderTheme(res, 'search', { title: 'Search', seo: meta('Search'), q, posts, pagination: null });
+    let posts = [];
+    let pages = [];
+    let count = 0;
+
+    if (q) {
+      const postResult = await Post.findAndCountAll({
+        where: {
+          status: 'published',
+          [Op.or]: [
+            { title: { [Op.like]: `%${q}%` } },
+            { excerpt: { [Op.like]: `%${q}%` } },
+            { content: { [Op.like]: `%${q}%` } }
+          ]
+        },
+        include: publishedPostInclude,
+        distinct: true,
+        limit,
+        offset,
+        order: [['published_at', 'DESC']]
+      });
+      posts = postResult.rows;
+      count = postResult.count;
+
+      pages = await Page.findAll({
+        where: {
+          status: 'published',
+          [Op.or]: [
+            { title: { [Op.like]: `%${q}%` } },
+            { content: { [Op.like]: `%${q}%` } }
+          ]
+        },
+        limit: 8,
+        order: [['updated_at', 'DESC']]
+      });
+    }
+
+    return renderTheme(res, 'search', {
+      title: 'Search',
+      seo: meta('Search', q ? `Results for ${q}` : 'Search the site'),
+      q,
+      posts,
+      pages,
+      pagination: q ? pageMeta(count, page, limit) : null
+    });
   } catch (error) {
     return next(error);
   }
@@ -169,7 +254,11 @@ async function search(req, res, next) {
 
 async function contact(req, res, next) {
   try {
-    return renderTheme(res, 'contact', { title: 'Contact', seo: meta('Contact') });
+    const prefill = {
+      subject: req.query.subject || '',
+      email: req.query.email || ''
+    };
+    return renderTheme(res, 'contact', { title: 'Contact', seo: meta('Contact'), prefill });
   } catch (error) {
     return next(error);
   }

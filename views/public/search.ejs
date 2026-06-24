@@ -1,18 +1,56 @@
-<%- include('partials/head') %>
-<%- include('partials/header') %>
-<main class="container py-4" id="main-content">
-  <h1 class="mb-4">Search</h1>
-  <form class="search-form-bar" action="/search" role="search">
-    <input class="form-control" name="q" value="<%= q %>" placeholder="Search posts…" aria-label="Search query">
-    <button class="site-btn" type="submit">Search</button>
-  </form>
-  <% if (q) { %><p class="text-muted mb-3">Results for “<%= q %>”</p><% } %>
-  <div class="row g-4">
-    <% if (posts.length) { %>
-      <% posts.forEach(function(post) { %><div class="col-md-6 col-lg-4"><%- include('partials/post-card', { post }) %></div><% }) %>
-    <% } else { %>
-      <div class="col-12"><div class="np-card"><div class="np-card-body text-center text-muted">No posts found.</div></div></div>
-    <% } %>
-  </div>
-</main>
-<%- include('partials/footer') %>
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main class="container portal-page portal-main py-4" id="main-content">
+  <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Search</span>
+  </nav>
+  <h1 class="portal-page-title mb-4">Search</h1>
+  <form class="portal-search-page-form portal-card-bordered p-3 mb-4" action="/search" role="search">
+    <label class="form-label" for="search-q">Search query</label>
+    <div class="d-flex gap-2 flex-wrap">
+      <input class="form-control" id="search-q" name="q" value="<%= q %>" placeholder="Search posts, pages, documents…" aria-label="Search query">
+      <button class="site-btn portal-btn" type="submit">Search</button>
+    </div>
+  </form>
+  <% if (q) { %><p class="portal-search-results-label">Results for “<%= q %>”</p><% } %>
+  <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
+    <section class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
+      <% if (pages && pages.length) { %>
+        <div class="portal-widget portal-card-bordered mb-4">
+          <header class="portal-widget-header"><h2 class="portal-widget-title">Pages</h2></header>
+          <div class="portal-widget-body">
+            <ul class="portal-sidebar-list">
+              <% pages.forEach(function(pageRow) { %>
+                <li><a href="/page/<%= pageRow.slug %>"><%= pageRow.title %></a></li>
+              <% }) %>
+            </ul>
+          </div>
+        </div>
+      <% } %>
+      <div class="portal-list-panel portal-card-bordered">
+        <% if (posts.length) { %>
+          <ul class="portal-post-list portal-post-list-page">
+            <% posts.forEach(function(post) { %>
+              <li><%- include('partials/portal-post-item', { post }) %></li>
+            <% }) %>
+          </ul>
+        <% } else if (!pages || !pages.length) { %>
+          <%- include('partials/portal-empty', { icon: 'search', message: q ? 'No posts matched your search.' : 'Enter a search term above.' }) %>
+        <% } %>
+      </div>
+      <% if (pagination && pagination.pages > 1) { %>
+        <nav class="portal-pagination mt-4" aria-label="Search pagination">
+          <ul class="pagination">
+            <% for (let i = 1; i <= pagination.pages; i++) { %>
+              <li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?q=<%= encodeURIComponent(q) %>&page=<%= i %>"><%= i %></a></li>
+            <% } %>
+          </ul>
+        </nav>
+      <% } %>
+    </section>
+    <% if (activeTheme.sidebar_position !== 'none') { %>
+      <div class="col-lg-4"><%- include('partials/sidebar') %></div>
+    <% } %>
+  </div>
+</main>
+<%- include('partials/footer') %>

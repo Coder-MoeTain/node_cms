@@ -1,0 +1,18 @@
+<% const list = posts || []; const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
+<section class="portal-widget portal-widget-announcements portal-card-<%= cardStyle %>" id="portal-announcements" aria-label="Announcements">
+  <header class="portal-widget-header">
+    <h2 class="portal-widget-title">Announcements</h2>
+    <a class="portal-view-all" href="/category/announcements">More</a>
+  </header>
+  <div class="portal-widget-body">
+    <% if (list.length) { %>
+      <ul class="portal-post-list">
+        <% list.slice(0, 6).forEach(function(post) { %>
+          <li><%- include('../partials/portal-post-item', { post }) %></li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <%- include('../partials/portal-empty', { icon: 'megaphone', message: 'No announcements yet. Create an announcements category.' }) %>
+    <% } %>
+  </div>
+</section>

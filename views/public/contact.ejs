@@ -1,21 +1,40 @@
 <%- include('partials/head') %>
 <%- include('partials/header') %>
-<main class="container py-4" id="main-content">
-  <h1 class="mb-4">Contact Us</h1>
-  <% if (success && success.length) { %><div class="np-alert np-alert-success"><%= success[0] %></div><% } %>
-  <% if (error && error.length) { %><div class="np-alert np-alert-danger"><%= error[0] %></div><% } %>
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <form class="contact-form-card" method="post" action="/contact">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <div class="row g-3">
-          <div class="col-md-6"><label class="form-label" for="contact-name">Name</label><input class="form-control" id="contact-name" name="name" placeholder="Your name" required></div>
-          <div class="col-md-6"><label class="form-label" for="contact-email">Email</label><input class="form-control" id="contact-email" name="email" type="email" placeholder="you@example.com" required></div>
-          <div class="col-md-6"><label class="form-label" for="contact-phone">Phone</label><input class="form-control" id="contact-phone" name="phone" placeholder="Optional"></div>
-          <div class="col-md-6"><label class="form-label" for="contact-subject">Subject</label><input class="form-control" id="contact-subject" name="subject" placeholder="How can we help?" required></div>
-          <div class="col-12"><label class="form-label" for="contact-message">Message</label><textarea class="form-control" id="contact-message" name="message" rows="6" placeholder="Your message" required></textarea></div>
+<main class="container portal-page portal-main py-4" id="main-content">
+  <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Contact</span>
+  </nav>
+  <h1 class="portal-page-title mb-4">Contact Us</h1>
+  <% if (success && success.length) { %><div class="np-alert np-alert-success portal-alert" role="status"><%= success[0] %></div><% } %>
+  <% if (error && error.length) { %><div class="np-alert np-alert-danger portal-alert" role="alert"><%= error[0] %></div><% } %>
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="portal-widget portal-card-bordered">
+        <header class="portal-widget-header"><h2 class="portal-widget-title">Contact information</h2></header>
+        <div class="portal-widget-body portal-footer-contact">
+          <% if (siteSettings.contact_email) { %><p><i class="bi bi-envelope" aria-hidden="true"></i> <a href="mailto:<%= siteSettings.contact_email %>"><%= siteSettings.contact_email %></a></p><% } %>
+          <% if (siteSettings.contact_phone) { %><p><i class="bi bi-telephone" aria-hidden="true"></i> <a href="tel:<%= siteSettings.contact_phone %>"><%= siteSettings.contact_phone %></a></p><% } %>
+          <% if (siteSettings.contact_address) { %><p><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.contact_address %></p><% } %>
+          <% if (!siteSettings.contact_email && !siteSettings.contact_phone && !siteSettings.contact_address) { %>
+            <%- include('partials/portal-empty', { icon: 'envelope', message: 'Add contact details in Admin → Settings.' }) %>
+          <% } %>
         </div>
-        <button class="site-btn mt-3" type="submit">Send Message</button>
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <form class="portal-widget portal-card-bordered portal-contact-form" method="post" action="/contact">
+        <header class="portal-widget-header"><h2 class="portal-widget-title">Send a message</h2></header>
+        <div class="portal-widget-body">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label" for="contact-name">Name</label><input class="form-control" id="contact-name" name="name" placeholder="Your name" required></div>
+            <div class="col-md-6"><label class="form-label" for="contact-email">Email</label><input class="form-control" id="contact-email" name="email" type="email" placeholder="you@example.com" value="<%= (prefill && prefill.email) || '' %>" required></div>
+            <div class="col-md-6"><label class="form-label" for="contact-phone">Phone</label><input class="form-control" id="contact-phone" name="phone" placeholder="Optional"></div>
+            <div class="col-md-6"><label class="form-label" for="contact-subject">Subject</label><input class="form-control" id="contact-subject" name="subject" placeholder="How can we help?" value="<%= (prefill && prefill.subject) || '' %>" required></div>
+            <div class="col-12"><label class="form-label" for="contact-message">Message</label><textarea class="form-control" id="contact-message" name="message" rows="6" placeholder="Your message" required></textarea></div>
+          </div>
+          <button class="site-btn portal-btn mt-3" type="submit">Send Message</button>
+        </div>
       </form>
     </div>
   </div>

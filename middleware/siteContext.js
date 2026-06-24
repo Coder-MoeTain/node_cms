@@ -1,5 +1,6 @@
-const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post } = require('../models');
+const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post, Media } = require('../models');
 const pluginLoader = require('../utils/pluginLoader');
+const { resolvePortalConfig, resolveThemePreset, parseThemeVars } = require('../utils/portalConfig');
 
 function buildMenuTree(items = []) {
   const plainItems = items
@@ -20,9 +21,20 @@ function buildMenuTree(items = []) {
   return roots;
 }
 
+async function sidebarPostsForCategory(slug, limit = 5) {
+  const categoryRow = await Category.findOne({ where: { slug } });
+  if (!categoryRow) return [];
+  return Post.findAll({
+    where: { category_id: categoryRow.id, status: 'published' },
+    limit,
+    order: [['published_at', 'DESC']],
+    attributes: ['id', 'title', 'slug', 'published_at']
+  });
+}
+
 async function loadSiteContext(req, res, next) {
   try {
-    const [settings, theme, menus, categories, recentPosts, popularPosts] = await Promise.all([
+    const [settings, theme, menus, categories, recentPosts, popularPosts, announcementPosts] = await Promise.all([
       SiteSetting.findAll(),
       ThemeSetting.findOne({ where: { active: true } }),
       Menu.findAll({
@@ -32,17 +44,24 @@ async function loadSiteContext(req, res, next) {
       }),
       Category.findAll({ limit: 20, order: [['name', 'ASC']] }),
       Post.findAll({ where: { status: 'published' }, limit: 5, order: [['published_at', 'DESC']] }),
-      Post.findAll({ where: { status: 'published' }, limit: 5, order: [['views_count', 'DESC']] })
+      Post.findAll({ where: { status: 'published' }, limit: 5, order: [['views_count', 'DESC']] }),
+      sidebarPostsForCategory('announcements', 5)
     ]);
 
     res.locals.siteSettings = settings.reduce((map, row) => ({ ...map, [row.key]: row.value }), {});
-    res.locals.activeTheme = theme || {};
+    const themePlain = theme ? theme.get({ plain: true }) : {};
+    res.locals.activeTheme = themePlain;
+    res.locals.portalConfig = resolvePortalConfig(themePlain);
+    res.locals.themePreset = resolveThemePreset(themePlain, res.locals.portalConfig);
+    res.locals.themeVars = parseThemeVars(themePlain.custom_css || '');
     res.locals.siteMenus = menus.reduce((map, menu) => ({ ...map, [menu.location]: buildMenuTree(menu.items || []) }), {});
     res.locals.sidebarCategories = categories;
     res.locals.recentPosts = recentPosts;
     res.locals.popularPosts = popularPosts;
+    res.locals.announcementPosts = announcementPosts.length ? announcementPosts : recentPosts;
     res.locals.pluginPublicHead = await pluginLoader.collectHook('publicHead', { req, res });
     res.locals.pluginPublicFooter = await pluginLoader.collectHook('publicFooter', { req, res });
+    res.locals.currentPath = req.path;
     return next();
   } catch (error) {
     return next(error);

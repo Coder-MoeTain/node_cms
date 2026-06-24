@@ -234,6 +234,7 @@ function selectMediaItem(item) {
   const fileInput = container?.querySelector('[data-image-file]');
 
   input.value = item.filePath;
+  input.dispatchEvent(new Event('change', { bubbles: true }));
   if (removeFlag) removeFlag.value = '0';
   if (fileInput) fileInput.value = '';
   updateMediaPreview(field, item.filePath);
@@ -336,111 +337,3 @@ document.querySelector('[data-bulk-apply]')?.addEventListener('click', async () 
     });
   }
 });
-
-function syncThemePreview() {
-  const preview = document.querySelector('[data-theme-preview]');
-  if (!preview) return;
-  const primary = document.querySelector('[data-preview-primary]')?.value || '#2271b1';
-  const secondary = document.querySelector('[data-preview-secondary]')?.value || '#50575e';
-  const bg = document.querySelector('[data-preview-bg]')?.value || '#ffffff';
-  const text = document.querySelector('[data-preview-text]')?.value || '#1d2327';
-  const link = document.querySelector('[data-preview-link]')?.value || primary;
-  const button = document.querySelector('[data-preview-button-color]')?.value || primary;
-  preview.style.setProperty('--preview-primary', primary);
-  preview.style.setProperty('--preview-secondary', secondary);
-  preview.style.setProperty('--preview-bg', bg);
-  preview.style.setProperty('--preview-text', text);
-  preview.style.setProperty('--preview-link', link);
-  preview.querySelector('[data-preview-header]')?.style.setProperty('background', primary);
-  preview.querySelector('[data-preview-heading]')?.style.setProperty('color', primary);
-  const previewButton = preview.querySelector('[data-preview-button]');
-  if (previewButton) {
-    previewButton.style.setProperty('background', button);
-    previewButton.style.setProperty('border-color', button);
-  }
-  preview.querySelector('[data-preview-link-sample]')?.style.setProperty('color', link);
-}
-
-document.querySelectorAll('[data-preview-primary], [data-preview-secondary], [data-preview-bg], [data-preview-text], [data-preview-link], [data-preview-button-color]').forEach((input) => {
-  input.addEventListener('input', syncThemePreview);
-});
-
-document.querySelector('[data-preview-primary]')?.addEventListener('change', () => {
-  const primary = document.querySelector('[data-preview-primary]')?.value;
-  const link = document.querySelector('[data-preview-link]');
-  const button = document.querySelector('[data-preview-button-color]');
-  if (link && !link.dataset.userEdited) link.value = primary;
-  if (button && !button.dataset.userEdited) button.value = primary;
-  syncThemePreview();
-});
-
-document.querySelector('[data-preview-link]')?.addEventListener('input', (e) => { e.target.dataset.userEdited = '1'; });
-document.querySelector('[data-preview-button-color]')?.addEventListener('input', (e) => { e.target.dataset.userEdited = '1'; });
-
-document.querySelectorAll('[data-theme-preset]').forEach((button) => {
-  button.addEventListener('click', () => {
-    document.querySelectorAll('[data-theme-preset]').forEach((item) => item.classList.remove('active'));
-    button.classList.add('active');
-    const primary = document.querySelector('[data-preview-primary]');
-    const secondary = document.querySelector('[data-preview-secondary]');
-    const bg = document.querySelector('[data-preview-bg]');
-    const text = document.querySelector('[data-preview-text]');
-    const link = document.querySelector('[data-preview-link]');
-    const buttonColor = document.querySelector('[data-preview-button-color]');
-    if (primary) primary.value = button.dataset.primary;
-    if (secondary) secondary.value = button.dataset.secondary;
-    if (bg) bg.value = button.dataset.bg;
-    if (text) text.value = button.dataset.text;
-    if (link) { link.value = button.dataset.primary; delete link.dataset.userEdited; }
-    if (buttonColor) { buttonColor.value = button.dataset.primary; delete buttonColor.dataset.userEdited; }
-    syncThemePreview();
-  });
-});
-
-document.querySelectorAll('[data-preview-mode]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const mode = btn.dataset.previewMode;
-    document.querySelectorAll('[data-preview-mode]').forEach((item) => {
-      item.classList.toggle('active', item === btn);
-      item.setAttribute('aria-selected', item === btn ? 'true' : 'false');
-    });
-    const mock = document.querySelector('[data-theme-preview]');
-    const iframe = document.querySelector('[data-theme-preview-iframe]');
-    if (mock) mock.classList.toggle('is-hidden', mode === 'iframe');
-    if (iframe) iframe.classList.toggle('is-active', mode === 'iframe');
-  });
-});
-
-const fontSelect = document.querySelector('[data-font-select]');
-const fontCustom = document.querySelector('[data-font-custom]');
-if (fontSelect && fontCustom) {
-  fontSelect.addEventListener('change', () => {
-    if (fontSelect.value === '__custom__') {
-      fontCustom.classList.remove('d-none');
-      fontSelect.removeAttribute('name');
-      fontCustom.setAttribute('name', 'font_family');
-    } else {
-      fontCustom.classList.add('d-none');
-      fontCustom.removeAttribute('name');
-      fontSelect.setAttribute('name', 'font_family');
-    }
-  });
-  if (fontSelect.value === '__custom__') {
-    fontCustom.classList.remove('d-none');
-    fontSelect.removeAttribute('name');
-    fontCustom.setAttribute('name', 'font_family');
-  }
-}
-
-document.querySelector('[data-theme-customizer]')?.addEventListener('submit', (event) => {
-  const form = event.target;
-  const cssField = form.querySelector('#custom_css');
-  const link = form.querySelector('[data-preview-link]')?.value || form.querySelector('[data-preview-primary]')?.value;
-  const button = form.querySelector('[data-preview-button-color]')?.value || form.querySelector('[data-preview-primary]')?.value;
-  if (!cssField) return;
-  const css = cssField.value.replace(/\/\* np-theme-vars \*\/[\s\S]*?\}\s*/g, '').trim();
-  const vars = `/* np-theme-vars */\n:root { --site-link: ${link}; --site-button: ${button}; }`;
-  cssField.value = css ? `${vars}\n\n${css}` : vars;
-});
-
-syncThemePreview();

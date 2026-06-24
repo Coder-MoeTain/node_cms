@@ -66,7 +66,8 @@ router.get('/settings', requireAuth, can('manage_settings'), settings.settings);
 router.put('/settings', requireAuth, can('manage_settings'), brandingImageUpload, settings.updateSettings);
 router.get('/themes', requireAuth, can('manage_themes'), settings.themes);
 router.post('/themes/upload', requireAuth, can('manage_themes'), zipUpload.single('archive'), settings.uploadTheme);
-router.get('/themes/editor', requireAuth, can('manage_themes'), settings.themeEditor);
+router.get('/themes/customize', requireAuth, can('manage_themes'), settings.themeEditor);
+router.get('/themes/editor', requireAuth, can('manage_themes'), (req, res) => res.redirect('/admin/themes/customize'));
 router.post('/themes/activate', requireAuth, can('manage_themes'), settings.activateTheme);
 router.put('/theme-settings', requireAuth, can('manage_themes'), brandingImageUpload, settings.updateThemeSettings);
 

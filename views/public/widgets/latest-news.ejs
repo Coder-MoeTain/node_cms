@@ -1,0 +1,18 @@
+<% const list = posts || []; const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
+<section class="portal-widget portal-widget-news portal-card-<%= cardStyle %>" id="portal-news" aria-label="Latest news">
+  <header class="portal-widget-header">
+    <h2 class="portal-widget-title">Latest News</h2>
+    <a class="portal-view-all" href="/category/news">More</a>
+  </header>
+  <div class="portal-widget-body">
+    <% if (list.length) { %>
+      <ul class="portal-post-list portal-news-list">
+        <% list.slice(0, 6).forEach(function(post) { %>
+          <li><%- include('../partials/portal-post-item', { post, showExcerpt: true }) %></li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <%- include('../partials/portal-empty', { icon: 'newspaper', message: 'No news posts yet. Add content in the news category.' }) %>
+    <% } %>
+  </div>
+</section>

@@ -1,0 +1,27 @@
+<section class="portal-section portal-mobile-app" id="portal-mobile-app" aria-label="Mobile applications">
+  <div class="container py-4">
+    <div class="portal-mobile-app-panel portal-card-<%= (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'shadow' %>">
+      <div class="row g-4 align-items-center">
+        <div class="col-md-4 text-center">
+          <div class="portal-mobile-app-visual" aria-hidden="true">
+            <i class="bi bi-phone"></i>
+            <span>NodePress Mobile</span>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <h2 class="portal-section-title mb-2">Official Mobile Applications</h2>
+          <p class="portal-section-subtitle mb-3">Access <%= siteSettings.site_title || 'NodePress' %> services on your mobile device. Download from official app stores or learn more about our mobile app gallery.</p>
+          <div class="portal-app-buttons">
+            <a class="portal-app-store-btn" href="<%= siteSettings.app_store_link || '/contact' %>" rel="noopener">
+              <i class="bi bi-apple" aria-hidden="true"></i> App Store
+            </a>
+            <a class="portal-app-store-btn" href="<%= siteSettings.play_store_link || '/contact' %>" rel="noopener">
+              <i class="bi bi-google-play" aria-hidden="true"></i> Google Play
+            </a>
+            <a class="portal-view-all" href="/blog">Mobile App Gallery</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

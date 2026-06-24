@@ -1,13 +1,14 @@
 <%- include('partials/head') %>
 <%- include('partials/header') %>
 <%
+  const isPortal = (portalConfig.header && portalConfig.header.layout === 'portal') || activeTheme.header_layout === 'portal' || themePreset === 'myanmar-portal';
   const plainText = (post.content || '').replace(/<[^>]+>/g, ' ').trim();
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
   const readMinutes = Math.max(1, Math.ceil(wordCount / 200));
   const publishedDate = post.published_at || post.created_at;
   const authorInitial = post.author && post.author.name ? post.author.name.trim().charAt(0).toUpperCase() : 'A';
 %>
-<main class="post-page" id="main-content">
+<main class="<%= isPortal ? 'portal-main portal-page' : '' %> post-page" id="main-content">
   <% if (post.featured_image) { %>
     <figure class="post-hero">
       <img src="<%= post.featured_image %>" alt="<%= post.title %>">
@@ -16,7 +17,7 @@
   <% } %>
 
   <div class="container post-page-shell py-4">
-    <nav class="post-breadcrumb" aria-label="Breadcrumb">
+    <nav class="post-breadcrumb portal-breadcrumb" aria-label="Breadcrumb">
       <a href="/">Home</a>
       <span class="post-breadcrumb-sep" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
       <a href="/blog">Blog</a>
@@ -112,16 +113,16 @@
         <% } %>
 
         <% if (relatedPosts && relatedPosts.length) { %>
-          <section class="post-related">
-            <div class="section-heading post-related-heading">
-              <h2 class="h4 mb-0">Related Posts</h2>
-              <a href="/blog">View all</a>
+          <section class="post-related portal-related-posts">
+            <div class="portal-section-head portal-section-head-inline mb-3">
+              <h2 class="portal-section-title">Related posts</h2>
+              <a class="portal-view-all" href="/blog">View all</a>
             </div>
-            <div class="row g-3">
+            <ul class="portal-post-list portal-post-list-page portal-card-bordered p-3">
               <% relatedPosts.forEach(function(item) { %>
-                <div class="col-md-4"><%- include('partials/post-card', { post: item }) %></div>
+                <li><%- include('partials/portal-post-item', { post: item, showExcerpt: true }) %></li>
               <% }) %>
-            </div>
+            </ul>
           </section>
         <% } %>
 
@@ -169,7 +170,7 @@
                   <textarea class="form-control" id="comment-content" name="content" rows="4" required></textarea>
                 </div>
               </div>
-              <button class="btn btn-primary post-comment-submit" type="submit">Post comment</button>
+              <button class="site-btn portal-btn post-comment-submit" type="submit">Post comment</button>
             </form>
           </section>
         <% } %>

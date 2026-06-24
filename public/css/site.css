@@ -1,3 +1,7 @@
+/**
+ * NodePress public site — layout, content, widgets, utilities
+ * Theme overrides via --site-* variables (theme-vars.css + customizer)
+ */
 body {
   background: var(--site-bg, var(--np-bg, #ffffff));
   color: var(--site-text, var(--np-text, #1d2327));
@@ -309,9 +313,26 @@ a:hover {
   }
 }
 
-.translate-engine,
+.translate-engine {
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+  z-index: -1;
+}
+
+.translate-engine .goog-te-gadget {
+  display: block !important;
+  visibility: hidden;
+  position: absolute;
+  left: -9999px;
+  width: 200px;
+}
+
 .goog-te-banner-frame,
 .goog-te-balloon-frame,
+.goog-te-menu-frame,
 #goog-gt-tt {
   display: none !important;
 }
@@ -320,8 +341,15 @@ body {
   top: 0 !important;
 }
 
-.skiptranslate {
-  display: none !important;
+.goog-te-gadget {
+  font-size: 0 !important;
+}
+
+.goog-te-gadget .goog-te-combo {
+  font-size: 13px !important;
+  visibility: hidden;
+  position: absolute;
+  left: -9999px;
 }
 
 .hero-slide {

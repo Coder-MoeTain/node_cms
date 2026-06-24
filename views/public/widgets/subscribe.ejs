@@ -1,0 +1,16 @@
+<% const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
+<section class="portal-widget portal-widget-subscribe portal-card-<%= cardStyle %>" id="portal-subscribe" aria-label="Subscribe">
+  <header class="portal-widget-header">
+    <h2 class="portal-widget-title">Subscribe</h2>
+  </header>
+  <div class="portal-widget-body">
+    <p class="portal-subscribe-text">Get updates from <%= siteSettings.site_title || 'NodePress CMS' %> delivered to your inbox.</p>
+    <form class="portal-subscribe-form" action="/contact" method="get">
+      <label class="visually-hidden" for="subscribe-email">Email address</label>
+      <input type="hidden" name="subject" value="Newsletter subscription request">
+      <input class="form-control" id="subscribe-email" name="email" type="email" placeholder="Your email address" required aria-label="Email for subscription">
+      <button class="site-btn portal-btn portal-btn-block" type="submit">Subscribe</button>
+    </form>
+    <p class="portal-help-text">You will be directed to the contact page to complete your request.</p>
+  </div>
+</section>

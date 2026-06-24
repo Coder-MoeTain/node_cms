@@ -1,0 +1,22 @@
+<% const list = posts || []; const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
+<section class="portal-widget portal-widget-hot portal-hot-accent portal-card-<%= cardStyle %>" id="portal-hot" aria-label="Hot news">
+  <header class="portal-widget-header portal-hot-header">
+    <h2 class="portal-widget-title"><span class="portal-hot-label">Hot</span> News</h2>
+    <a class="portal-view-all" href="/blog">More</a>
+  </header>
+  <div class="portal-widget-body">
+    <% if (list.length) { %>
+      <ul class="portal-post-list portal-hot-list">
+        <% list.slice(0, 8).forEach(function(post, index) { %>
+          <li class="portal-hot-list-item">
+            <% const dateStr = post.published_at ? post.published_at.toISOString().slice(0, 10) : ''; %>
+            <% if (dateStr) { %><time class="portal-hot-date" datetime="<%= dateStr %>"><%= dateStr %></time><% } %>
+            <%- include('../partials/portal-post-item', { post, hot: index < 3 }) %>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <%- include('../partials/portal-empty', { icon: 'fire', message: 'No highlighted posts yet.' }) %>
+    <% } %>
+  </div>
+</section>

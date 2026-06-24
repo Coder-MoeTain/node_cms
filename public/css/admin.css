@@ -1,3 +1,10 @@
+/**
+ * NodePress Admin — layout, sidebar, topbar, list tables, editor shell
+ * Shared tokens: public/css/theme-vars.css
+ * Components: public/css/components.css
+ * Post editor: public/css/editor.css
+ * Theme customizer: public/css/customizer.css
+ */
 @import url('/css/theme-vars.css');
 
 .admin-body {
@@ -459,25 +466,9 @@
 
 .empty-state i { color: var(--np-text-muted); font-size: 24px; margin-bottom: 8px; }
 
-.editor-layout {
-  align-items: start;
-  display: grid;
-  gap: 20px;
-  grid-template-columns: minmax(0, 1fr) 280px;
-}
-
-.editor-main .np-editor-title { margin-bottom: 8px; }
+/* Post editor layout → public/css/editor.css */
 
 .editor-sidebar .np-metabox { margin-bottom: 12px; }
-
-.featured-image-preview {
-  background: #f6f7f7;
-  border: 1px solid var(--np-border-light);
-  margin-top: 8px;
-  max-height: 160px;
-  object-fit: cover;
-  width: 100%;
-}
 
 .media-library-toolbar {
   align-items: center;
@@ -776,8 +767,6 @@ body.admin-sidebar-open {
   .admin-sidebar.open { transform: translateX(0); }
 
   .admin-main { margin-left: 0; }
-
-  .editor-layout { grid-template-columns: 1fr; }
 
   .topbar-brand { min-width: auto; }
 }

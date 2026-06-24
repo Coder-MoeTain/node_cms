@@ -2,21 +2,28 @@ const fs = require('fs');
 const path = require('path');
 const { SiteSetting, Theme, ThemeSetting, Media } = require('../../models');
 const themeLoader = require('../../utils/themeLoader');
+const { resolvePortalConfig, stripManagedBlocks, parseThemeVars } = require('../../utils/portalConfig');
+const { ensurePortalSettings, SETTING_GROUP_LABELS, SETTING_GROUP_ORDER, getSettingGroup } = require('../../utils/portalSettings');
 const { resolveImageValue } = require('../../utils/uploadHelper');
 const { extractZipArchive } = require('../../utils/packageArchive');
 
-const defaultSettings = {
-  site_logo: { value: '', group: 'branding' },
-  favicon: { value: '', group: 'branding' }
-};
-
 async function settings(req, res, next) {
   try {
-    for (const [key, setting] of Object.entries(defaultSettings)) {
-      await SiteSetting.findOrCreate({ where: { key }, defaults: setting });
-    }
+    await ensurePortalSettings(SiteSetting);
     const rows = await SiteSetting.findAll({ order: [['group', 'ASC'], ['key', 'ASC']] });
-    return res.render('admin/settings/index', { title: 'Site Settings', rows });
+    const grouped = {};
+    rows.forEach((row) => {
+      const group = row.group || getSettingGroup(row.key);
+      if (!grouped[group]) grouped[group] = [];
+      grouped[group].push(row);
+    });
+    return res.render('admin/settings/index', {
+      title: 'Site Settings',
+      rows,
+      grouped,
+      groupLabels: SETTING_GROUP_LABELS,
+      groupOrder: SETTING_GROUP_ORDER
+    });
   } catch (error) {
     return next(error);
   }
@@ -45,7 +52,7 @@ async function updateSettings(req, res, next) {
       await SiteSetting.upsert({
         key,
         value: finalValue,
-        group: brandingImageFields[key] ? 'branding' : 'general'
+        group: getSettingGroup(key)
       });
     }
     req.flash('success', 'Settings updated.');
@@ -142,7 +149,15 @@ async function themeEditor(req, res, next) {
   try {
     await themeLoader.syncInstalledThemes();
     const [themes, themeSetting] = await Promise.all([Theme.findAll(), ThemeSetting.findOne({ where: { active: true } })]);
-    return res.render('admin/themes/editor', { title: 'Theme Editor', themes, themeSetting: themeSetting || {} });
+    const themePlain = themeSetting ? themeSetting.get({ plain: true }) : {};
+    return res.render('admin/themes/customize', {
+      title: 'Customize',
+      themes,
+      themeSetting: themePlain,
+      portalConfig: resolvePortalConfig(themePlain),
+      themeVars: parseThemeVars(themePlain.custom_css || ''),
+      cssWithoutManaged: stripManagedBlocks(themePlain.custom_css || '')
+    });
   } catch (error) {
     return next(error);
   }

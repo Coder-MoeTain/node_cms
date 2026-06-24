@@ -1,0 +1,32 @@
+<section class="portal-section portal-emergency" id="portal-emergency" aria-label="Emergency contacts">
+  <div class="container py-4">
+    <div class="portal-section-head portal-section-head-inline">
+      <div>
+        <h2 class="portal-section-title">Emergency Contacts</h2>
+        <p class="portal-section-subtitle">Important hotlines and emergency services</p>
+      </div>
+      <a class="portal-view-all" href="/contact">View all contacts</a>
+    </div>
+    <div class="row g-3 portal-emergency-grid">
+      <% const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
+      <% const contacts = [
+        { icon: 'bi-heart-pulse', title: 'Ambulance', phone: siteSettings.emergency_ambulance || '192', detail: '/contact' },
+        { icon: 'bi-hospital', title: 'Hospitals', phone: siteSettings.emergency_hospital || '192', detail: '/contact' },
+        { icon: 'bi-virus', title: 'Covid-19 Call Center', phone: siteSettings.emergency_covid || '2019', detail: '/contact' },
+        { icon: 'bi-fire', title: 'Fire Station', phone: siteSettings.emergency_fire || '191', detail: '/contact' },
+        { icon: 'bi-shield-check', title: 'Police Station', phone: siteSettings.emergency_police || '199', detail: '/contact' },
+        { icon: 'bi-truck', title: 'Highway Police Station', phone: siteSettings.emergency_highway || '1880', detail: '/contact' }
+      ]; %>
+      <% contacts.forEach(function(item) { %>
+        <div class="col-6 col-md-4 col-lg-2">
+          <article class="portal-emergency-card portal-card-<%= cardStyle %>">
+            <span class="portal-emergency-icon" aria-hidden="true"><i class="bi <%= item.icon %>"></i></span>
+            <h3 class="portal-emergency-title"><%= item.title %></h3>
+            <a class="portal-emergency-phone" href="tel:<%= String(item.phone).replace(/\s/g, '') %>"><%= item.phone %></a>
+            <a class="portal-emergency-detail" href="<%= item.detail %>">View details</a>
+          </article>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

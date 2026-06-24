@@ -2,26 +2,53 @@
 <%- include('../partials/sidebar') %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
-  <main class="admin-content">
+  <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <form class="card" method="post" action="/admin/media/<%= media.id %>?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
-      <div class="card-header professional-card-header"><span>Edit Media</span><a href="/admin/media">Back to media</a></div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-lg-4">
-            <% if (media.file_type === 'image') { %><img class="img-fluid rounded" src="<%= media.medium_path || media.file_path %>" alt="<%= media.alt_text || media.original_name %>"><% } %>
-            <input class="form-control mt-3" value="<%= media.file_path %>" readonly onclick="this.select();navigator.clipboard.writeText(this.value)">
-            <div class="small text-muted mt-2"><%= media.mime_type %> · <%= Math.round(media.file_size / 1024) %> KB <% if (media.width) { %>· <%= media.width %>x<%= media.height %><% } %></div>
+    <div class="np-page-header">
+      <h1>Edit Media</h1>
+      <a class="np-btn np-btn-secondary" href="/admin/media">Back to library</a>
+    </div>
+
+    <form method="post" action="/admin/media/<%= media.id %>?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="np-widget">
+            <div class="np-widget-header"><span>Preview</span></div>
+            <div class="np-widget-body text-center">
+              <% if (media.file_type === 'image') { %>
+                <img class="featured-image-preview rounded" src="<%= media.medium_path || media.file_path %>" alt="<%= media.alt_text || media.original_name %>">
+              <% } else if (media.file_type === 'video') { %>
+                <video class="w-100 rounded" controls src="<%= media.file_path %>"></video>
+              <% } else { %>
+                <div class="featured-image-placeholder"><i class="bi bi-file-earmark fs-1" aria-hidden="true"></i><span><%= media.original_name %></span></div>
+              <% } %>
+              <div class="mt-3">
+                <label class="form-label small text-muted">File URL</label>
+                <div class="d-flex gap-2">
+                  <input class="form-control form-control-sm" id="media-file-url" value="<%= media.file_path %>" readonly>
+                  <button class="np-btn np-btn-secondary np-btn-small" type="button" data-copy-target="#media-file-url">Copy URL</button>
+                </div>
+              </div>
+              <p class="np-help-text mt-2 mb-0"><%= media.mime_type %> · <%= Math.round(media.file_size / 1024) %> KB<% if (media.width) { %> · <%= media.width %>×<%= media.height %><% } %></p>
+            </div>
           </div>
-          <div class="col-lg-8">
-            <div class="mb-3"><label class="form-label">Alt Text</label><input class="form-control" name="alt_text" value="<%= media.alt_text || '' %>"></div>
-            <div class="mb-3"><label class="form-label">Caption</label><input class="form-control" name="caption" value="<%= media.caption || '' %>"></div>
-            <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="5"><%= media.description || '' %></textarea></div>
-            <div class="mb-3"><label class="form-label">Replace File</label><input class="form-control" type="file" name="file"></div>
+        </div>
+        <div class="col-lg-8">
+          <div class="np-widget">
+            <div class="np-widget-header"><span>Attachment details</span></div>
+            <div class="np-widget-body">
+              <div class="mb-3"><label class="form-label" for="alt_text">Alt text</label><input class="form-control" id="alt_text" name="alt_text" value="<%= media.alt_text || '' %>"></div>
+              <div class="mb-3"><label class="form-label" for="caption">Caption</label><input class="form-control" id="caption" name="caption" value="<%= media.caption || '' %>"></div>
+              <div class="mb-3"><label class="form-label" for="description">Description</label><textarea class="form-control" id="description" name="description" rows="5"><%= media.description || '' %></textarea></div>
+              <div class="mb-0"><label class="form-label" for="file">Replace file</label><input class="form-control" id="file" type="file" name="file"></div>
+            </div>
+            <div class="np-widget-footer">
+              <button class="np-btn np-btn-primary" type="submit">Save Media</button>
+            </div>
           </div>
         </div>
       </div>
-      <div class="card-footer"><button class="btn btn-primary">Save Media</button></div>
     </form>
   </main>
 </div>

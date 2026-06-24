@@ -1,3 +1,6 @@
+/**
+ * NodePress design tokens — admin + public site theme variables
+ */
 :root {
   --np-admin-bg: #f0f0f1;
   --np-sidebar-bg: #1d2327;
@@ -26,15 +29,44 @@
   --np-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   --np-radius: 0;
   --np-shadow: 0 1px 1px rgba(0, 0, 0, .04);
-  --site-primary: var(--np-primary);
-  --site-secondary: #50575e;
-  --site-bg: #ffffff;
-  --site-text: #1d2327;
-  --site-header-bg: #ffffff;
-  --site-footer-bg: #1d2327;
-  --site-link: var(--np-primary);
-  --site-button: var(--np-primary);
-  --site-button-hover: var(--np-primary-hover);
+
+  /* Portal / government front-page tokens */
+  --portal-primary: #0b5f8a;
+  --portal-primary-dark: #06466a;
+  --portal-secondary: #f4b000;
+  --portal-accent: #d71920;
+  --portal-bg: #f5f7fa;
+  --portal-card: #ffffff;
+  --portal-border: #d7dde5;
+  --portal-text: #1f2933;
+  --portal-muted: #6b7280;
+  --portal-footer: #0b2f47;
+
+  /* Legacy aliases */
+  --gov-primary: var(--portal-primary);
+  --gov-primary-dark: var(--portal-primary-dark);
+  --gov-secondary: var(--portal-secondary);
+  --gov-accent: var(--portal-accent);
+  --gov-bg: var(--portal-bg);
+  --gov-card: var(--portal-card);
+  --gov-border: var(--portal-border);
+  --gov-text: var(--portal-text);
+  --gov-muted: var(--portal-muted);
+  --gov-footer: var(--portal-footer);
+
+  --site-primary: var(--portal-primary);
+  --site-secondary: var(--portal-secondary);
+  --site-accent: var(--portal-accent);
+  --site-bg: var(--portal-bg);
+  --site-card: var(--portal-card);
+  --site-border: var(--portal-border);
+  --site-text: var(--portal-text);
+  --site-muted: var(--portal-muted);
+  --site-header-bg: var(--portal-card);
+  --site-footer-bg: var(--portal-footer);
+  --site-link: var(--portal-primary);
+  --site-button: var(--portal-primary);
+  --site-button-hover: var(--portal-primary-dark);
 }
 
 [data-theme-preset="wordpress-blue"] {
@@ -105,4 +137,43 @@
   --site-link: #50575e;
   --site-button: #50575e;
   --site-button-hover: #3c434a;
+}
+
+[data-theme-preset="myanmar-portal"] {
+  --portal-primary: #0b5f8a;
+  --portal-primary-dark: #06466a;
+  --portal-secondary: #f4b000;
+  --portal-accent: #d71920;
+  --portal-bg: #f5f7fa;
+  --portal-card: #ffffff;
+  --portal-border: #d7dde5;
+  --portal-text: #1f2933;
+  --portal-muted: #6b7280;
+  --portal-footer: #0b2f47;
+  --gov-primary: var(--portal-primary);
+  --gov-primary-dark: var(--portal-primary-dark);
+  --gov-secondary: var(--portal-secondary);
+  --gov-accent: var(--portal-accent);
+  --gov-bg: var(--portal-bg);
+  --gov-card: var(--portal-card);
+  --gov-border: var(--portal-border);
+  --gov-text: var(--portal-text);
+  --gov-muted: var(--portal-muted);
+  --gov-footer: var(--portal-footer);
+  --np-primary: #0b5f8a;
+  --np-primary-hover: #06466a;
+  --np-sidebar-active: #0b5f8a;
+  --site-primary: var(--portal-primary);
+  --site-secondary: var(--portal-secondary);
+  --site-accent: var(--portal-accent);
+  --site-bg: var(--portal-bg);
+  --site-card: var(--portal-card);
+  --site-border: var(--portal-border);
+  --site-text: var(--portal-text);
+  --site-muted: var(--portal-muted);
+  --site-header-bg: var(--portal-card);
+  --site-footer-bg: var(--portal-footer);
+  --site-link: var(--portal-primary);
+  --site-button: var(--portal-primary);
+  --site-button-hover: var(--portal-primary-dark);
 }

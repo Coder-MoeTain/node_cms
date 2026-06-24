@@ -1,13 +1,169 @@
+<% const isPortal = (portalConfig.header && portalConfig.header.layout === 'portal') || activeTheme.header_layout === 'portal' || themePreset === 'myanmar-portal';
+   const hdr = portalConfig.header || {};
+   const nav = portalConfig.nav || {};
+   const siteLogo = siteSettings.site_logo || activeTheme.logo;
+   const defaultNav = [
+     { title: 'Home', url: '/', children: [] },
+     { title: 'About', url: '/page/about', children: [
+       { title: 'History', url: '/page/about' },
+       { title: 'National Symbols', url: '/blog' },
+       { title: 'Geography', url: '/blog' },
+       { title: 'Travel', url: '/blog' },
+       { title: 'Culture', url: '/blog' }
+     ]},
+     { title: 'Nation', url: '/blog', children: [
+       { title: 'Government Organizations', url: '/blog' },
+       { title: 'Directory', url: '/blog' },
+       { title: 'Committees', url: '/blog' }
+     ]},
+     { title: 'Topics', url: '/blog', children: [
+       { title: 'Health', url: '/category/health' },
+       { title: 'Education', url: '/category/education' },
+       { title: 'Economy', url: '/category/economy' },
+       { title: 'Agriculture', url: '/category/agriculture' },
+       { title: 'Law & Justice', url: '/blog' },
+       { title: 'Technology', url: '/blog' },
+       { title: 'Transportation', url: '/blog' },
+       { title: 'Finance', url: '/blog' },
+       { title: 'Sports', url: '/blog' }
+     ]},
+     { title: 'News & Media', url: '/category/news', children: [
+       { title: 'News', url: '/category/news' },
+       { title: 'Videos', url: '/blog' },
+       { title: 'Announcements', url: '/category/announcements' },
+       { title: 'Archives', url: '/blog' }
+     ]},
+     { title: 'Services', url: '/blog', children: [
+       { title: 'Online Services', url: '/blog' },
+       { title: 'Offline Services', url: '/blog' },
+       { title: 'Forms', url: '/search?q=forms' },
+       { title: 'Documents', url: '/category/documents' }
+     ]},
+     { title: 'Contact', url: '/contact', children: [] }
+   ];
+   const menuItems = (siteMenus.header && siteMenus.header.length) ? siteMenus.header : defaultNav;
+   const cp = (typeof currentPath !== 'undefined' ? currentPath : '') || '';
+   function portalNavActive(url, children) {
+     if (url === '/') return cp === '/' || cp === '';
+     if (cp === url || (url.length > 1 && cp.indexOf(url) === 0)) return true;
+     if (children && children.length) {
+       for (let i = 0; i < children.length; i++) {
+         const cu = children[i].url || '';
+         if (cp === cu || (cu.length > 1 && cp.indexOf(cu) === 0)) return true;
+       }
+     }
+     return false;
+   }
+   function portalChildActive(url) {
+     if (!url || url === '/') return cp === '/' || cp === '';
+     return cp === url || (url.length > 1 && cp.indexOf(url) === 0);
+   }
+%>
+
+<% if (isPortal) { %>
+<header class="portal-header <%= nav.sticky ? 'portal-header-sticky' : '' %>" data-portal-header>
+  <% if (hdr.showUtilityBar) { %>
+  <div class="portal-utility-bar">
+    <div class="container portal-utility-inner">
+      <div class="portal-utility-left">
+        <a class="portal-utility-skip" href="#main-content">Skip to content</a>
+        <% if (hdr.showFontControls) { %>
+        <div class="portal-font-controls" role="group" aria-label="Font size">
+          <button type="button" class="portal-font-btn" data-font-scale="small" aria-label="Decrease font size">A-</button>
+          <button type="button" class="portal-font-btn active" data-font-scale="normal" aria-label="Default font size">A</button>
+          <button type="button" class="portal-font-btn" data-font-scale="large" aria-label="Increase font size">A+</button>
+        </div>
+        <% } %>
+        <span class="portal-utility-date"><%= new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+        <% if (siteSettings.site_location || siteSettings.contact_address) { %><span class="portal-utility-location"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.site_location || siteSettings.contact_address %></span><% } %>
+      </div>
+      <div class="portal-utility-right">
+        <% if (hdr.showLanguageSwitcher) { %>
+        <div class="portal-lang-links" role="group" aria-label="Language">
+          <button type="button" class="portal-lang-link language-option" data-lang="my" data-label="Myanmar">မြန်မာ</button>
+          <button type="button" class="portal-lang-link language-option active" data-lang="en" data-label="English">English</button>
+        </div>
+        <% } %>
+        <% if (hdr.showLoginLinks) { %>
+        <a class="portal-utility-link" href="/admin/login">Login</a>
+        <a class="portal-utility-link portal-utility-link-accent" href="/contact?subject=Citizen+registration+request">Register</a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <div class="portal-identity-bar">
+    <div class="container portal-identity-inner">
+      <a class="portal-brand" href="/">
+        <% if (siteLogo) { %><img class="portal-brand-logo" src="<%= siteLogo %>" alt="<%= siteSettings.site_title || 'NodePress CMS' %>"><% } else { %><span class="portal-brand-mark">NP</span><% } %>
+        <div class="portal-brand-text">
+          <strong class="portal-brand-title"><%= siteSettings.site_title || 'NodePress CMS' %></strong>
+          <span class="portal-brand-tagline"><%= siteSettings.site_tagline || 'Official information portal powered by NodePress' %></span>
+          <span class="portal-brand-location"><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.site_location || 'Nay Pyi Taw, MM' %></span>
+        </div>
+      </a>
+      <% if (hdr.showSearch) { %>
+      <form class="portal-header-search" action="/search" role="search">
+        <label class="visually-hidden" for="portal-search">Search</label>
+        <input class="form-control" id="portal-search" name="q" type="search" placeholder="Search this site..." aria-label="Search">
+        <button class="portal-search-btn" type="submit" aria-label="Submit search"><i class="bi bi-search" aria-hidden="true"></i></button>
+      </form>
+      <% } %>
+    </div>
+  </div>
+
+  <nav class="portal-nav-bar <%= nav.style === 'portal' ? 'portal-nav-portal' : '' %> <%= nav.megaMenu ? 'portal-nav-mega' : '' %>" aria-label="Main navigation">
+    <div class="container">
+      <button class="portal-mobile-toggle" type="button" data-portal-menu-toggle aria-expanded="false" aria-controls="portalMainNav">
+        <span class="portal-mobile-toggle-label">Menu</span>
+        <span class="portal-mobile-toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+      </button>
+      <div class="portal-nav-collapse" id="portalMainNav" data-portal-nav>
+        <ul class="portal-nav-list">
+          <% menuItems.forEach(function(item) { %>
+            <% if (item.children && item.children.length && (nav.megaMenu || item.children.length > 3)) { %>
+              <li class="portal-nav-item has-mega">
+                <a class="portal-nav-link <%= portalNavActive(item.url, item.children) ? 'is-active' : '' %>" href="<%= item.url %>" target="<%= item.target || '_self' %>" <%= portalNavActive(item.url, item.children) ? 'aria-current="page"' : '' %>><%= item.title %></a>
+                <button class="portal-nav-submenu-toggle" type="button" aria-expanded="false" aria-label="Toggle <%= item.title %> submenu"><i class="bi bi-chevron-down" aria-hidden="true"></i></button>
+                <div class="portal-mega-panel">
+                  <div class="portal-mega-grid">
+                    <% item.children.forEach(function(child) { %>
+                      <a class="portal-mega-link <%= portalChildActive(child.url) ? 'is-active' : '' %>" href="<%= child.url %>" target="<%= child.target || '_self' %>" <%= portalChildActive(child.url) ? 'aria-current="page"' : '' %>><%= child.title %></a>
+                    <% }) %>
+                  </div>
+                </div>
+              </li>
+            <% } else if (item.children && item.children.length) { %>
+              <li class="portal-nav-item has-dropdown">
+                <a class="portal-nav-link <%= portalNavActive(item.url, item.children) ? 'is-active' : '' %>" href="<%= item.url %>" target="<%= item.target || '_self' %>" <%= portalNavActive(item.url, item.children) ? 'aria-current="page"' : '' %>><%= item.title %></a>
+                <button class="portal-nav-submenu-toggle" type="button" aria-expanded="false" aria-label="Toggle <%= item.title %> submenu"><i class="bi bi-chevron-down" aria-hidden="true"></i></button>
+                <ul class="portal-dropdown-menu">
+                  <% item.children.forEach(function(child) { %>
+                    <li><a class="<%= portalChildActive(child.url) ? 'is-active' : '' %>" href="<%= child.url %>" target="<%= child.target || '_self' %>" <%= portalChildActive(child.url) ? 'aria-current="page"' : '' %>><%= child.title %></a></li>
+                  <% }) %>
+                </ul>
+              </li>
+            <% } else { %>
+              <li class="portal-nav-item"><a class="portal-nav-link <%= portalNavActive(item.url, item.children) ? 'is-active' : '' %>" href="<%= item.url %>" target="<%= item.target || '_self' %>" <%= portalNavActive(item.url, item.children) ? 'aria-current="page"' : '' %>><%= item.title %></a></li>
+            <% } %>
+          <% }) %>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="portal-mobile-overlay" data-portal-overlay hidden></div>
+</header>
+<% } else { %>
 <nav class="navbar navbar-expand-lg site-navbar sticky-top header-layout-<%= activeTheme.header_layout || 'standard' %>">
   <div class="container">
     <a class="navbar-brand fw-bold" href="/">
-      <% const siteLogo = siteSettings.site_logo || activeTheme.logo; %>
       <% if (siteLogo) { %><img class="site-logo" src="<%= siteLogo %>" alt="<%= siteSettings.site_title || 'NodePress CMS' %>"><% } else { %><span class="brand-mark">NP</span><%= siteSettings.site_title || 'NodePress CMS' %><% } %>
     </a>
-    <button class="navbar-toggler site-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu"><span></span><span></span><span></span></button>
+    <button class="navbar-toggler site-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu" aria-controls="mainMenu" aria-expanded="false" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
     <div class="collapse navbar-collapse" id="mainMenu">
       <ul class="navbar-nav mx-lg-auto">
-        <% (siteMenus.header || []).forEach(function(item) { %>
+        <% menuItems.forEach(function(item) { %>
           <% if (item.children && item.children.length) { %>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="<%= item.url %>" target="<%= item.target %>" role="button" data-bs-toggle="dropdown" aria-expanded="false"><%= item.title %></a>
@@ -23,50 +179,24 @@
         <% }) %>
       </ul>
       <form class="nav-search-wrap" action="/search" role="search">
-        <input class="form-control form-control-sm nav-search" name="q" placeholder="Search..." aria-label="Search">
+        <label class="visually-hidden" for="nav-search">Search</label>
+        <input class="form-control form-control-sm nav-search" id="nav-search" name="q" placeholder="Search..." aria-label="Search">
         <button class="nav-search-button" type="submit">Search</button>
       </form>
       <div class="dropdown language-switcher">
-        <button
-          class="language-toggle dropdown-toggle"
-          type="button"
-          id="languageMenu"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-          aria-haspopup="true"
-          aria-label="Choose language"
-        >
+        <button class="language-toggle dropdown-toggle" type="button" id="languageMenu" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Choose language">
           <i class="bi bi-globe2" aria-hidden="true"></i>
           <span class="language-current">English</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end language-menu" aria-labelledby="languageMenu">
           <li class="language-menu-label">Language</li>
-          <li>
-            <button type="button" class="dropdown-item language-option" data-lang="en" data-label="English">
-              <span class="language-option-text"><span class="language-code">EN</span> English</span>
-              <i class="bi bi-check2 language-check" aria-hidden="true"></i>
-            </button>
-          </li>
-          <li>
-            <button type="button" class="dropdown-item language-option" data-lang="my" data-label="Myanmar">
-              <span class="language-option-text"><span class="language-code">MY</span> Myanmar</span>
-              <i class="bi bi-check2 language-check" aria-hidden="true"></i>
-            </button>
-          </li>
-          <li>
-            <button type="button" class="dropdown-item language-option" data-lang="zh-CN" data-label="Chinese">
-              <span class="language-option-text"><span class="language-code">ZH</span> Chinese</span>
-              <i class="bi bi-check2 language-check" aria-hidden="true"></i>
-            </button>
-          </li>
-          <li>
-            <button type="button" class="dropdown-item language-option" data-lang="ru" data-label="Russian">
-              <span class="language-option-text"><span class="language-code">RU</span> Russian</span>
-              <i class="bi bi-check2 language-check" aria-hidden="true"></i>
-            </button>
-          </li>
+          <li><button type="button" class="dropdown-item language-option" data-lang="en" data-label="English"><span class="language-option-text"><span class="language-code">EN</span> English</span><i class="bi bi-check2 language-check" aria-hidden="true"></i></button></li>
+          <li><button type="button" class="dropdown-item language-option" data-lang="my" data-label="Myanmar"><span class="language-option-text"><span class="language-code">MY</span> Myanmar</span><i class="bi bi-check2 language-check" aria-hidden="true"></i></button></li>
+          <li><button type="button" class="dropdown-item language-option" data-lang="zh-CN" data-label="Chinese"><span class="language-option-text"><span class="language-code">ZH</span> Chinese</span><i class="bi bi-check2 language-check" aria-hidden="true"></i></button></li>
+          <li><button type="button" class="dropdown-item language-option" data-lang="ru" data-label="Russian"><span class="language-option-text"><span class="language-code">RU</span> Russian</span><i class="bi bi-check2 language-check" aria-hidden="true"></i></button></li>
         </ul>
       </div>
     </div>
   </div>
 </nav>
+<% } %>

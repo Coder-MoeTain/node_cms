@@ -1,0 +1,23 @@
+<% const catSlug = (post.Category && post.Category.slug) || 'news';
+   const catClass = ['news','announcements','tenders','jobs','documents','services','emergency'].includes(catSlug) ? catSlug : 'default';
+   const authorName = post.author ? (post.author.name || post.author.email) : (siteSettings.site_title || 'NodePress');
+   const dateStr = post.published_at ? post.published_at.toISOString().slice(0, 10) : '';
+   const isHot = typeof hot !== 'undefined' && hot;
+   const showClosingDate = typeof showClosing !== 'undefined' && showClosing;
+   const showExcerptText = typeof showExcerpt !== 'undefined' && showExcerpt;
+%>
+<article class="portal-post-item <%= isHot ? 'is-hot' : '' %>">
+  <div class="portal-post-main">
+  <% if (isHot) { %><span class="portal-hot-badge">Hot</span><% } %>
+  <h3 class="portal-post-title">
+    <a href="/post/<%= post.slug %>"><%= post.title %></a>
+  </h3>
+  <% if (showExcerptText && post.excerpt) { %><p class="portal-post-excerpt"><%= post.excerpt %></p><% } %>
+  <div class="portal-post-meta">
+    <span class="portal-cat-badge portal-cat-<%= catClass %>"><%= post.Category ? post.Category.name : 'News' %></span>
+    <span class="portal-post-org"><%= authorName %></span>
+    <% if (dateStr) { %><time datetime="<%= dateStr %>"><%= dateStr %></time><% } %>
+    <% if (showClosingDate && post.excerpt) { %><span class="portal-post-closing">Closing: <%= post.excerpt.slice(0, 60) %></span><% } %>
+  </div>
+  </div>
+</article>

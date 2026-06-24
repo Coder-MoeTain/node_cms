@@ -1,0 +1,45 @@
+<% const tenders = tenderPosts || []; const jobs = jobPosts || []; const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
+<section class="portal-section portal-tenders-jobs" id="portal-tenders" aria-label="Tenders and jobs">
+  <div class="container py-4">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <section class="portal-widget portal-card-<%= cardStyle %>">
+          <header class="portal-widget-header">
+            <h2 class="portal-widget-title">Tenders</h2>
+            <a class="portal-view-all" href="/category/tenders">View all</a>
+          </header>
+          <div class="portal-widget-body">
+            <% if (tenders.length) { %>
+              <ul class="portal-post-list portal-post-list-compact">
+                <% tenders.forEach(function(post) { %>
+                  <li><%- include('../partials/portal-post-item', { post, showClosing: true }) %></li>
+                <% }) %>
+              </ul>
+            <% } else { %>
+              <%- include('../partials/portal-empty', { icon: 'file-earmark-text', message: 'No tender posts yet.' }) %>
+            <% } %>
+          </div>
+        </section>
+      </div>
+      <div class="col-lg-6">
+        <section class="portal-widget portal-card-<%= cardStyle %>">
+          <header class="portal-widget-header">
+            <h2 class="portal-widget-title">Jobs &amp; Vacancies</h2>
+            <a class="portal-view-all" href="/category/jobs">View all</a>
+          </header>
+          <div class="portal-widget-body">
+            <% if (jobs.length) { %>
+              <ul class="portal-post-list portal-post-list-compact">
+                <% jobs.forEach(function(post) { %>
+                  <li><%- include('../partials/portal-post-item', { post, showClosing: true }) %></li>
+                <% }) %>
+              </ul>
+            <% } else { %>
+              <%- include('../partials/portal-empty', { icon: 'briefcase', message: 'No job vacancies posted yet.' }) %>
+            <% } %>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</section>

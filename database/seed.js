@@ -173,17 +173,54 @@ async function seed() {
     });
   }
 
-  const [category] = await Category.findOrCreate({
-    where: { slug: 'news' },
-    defaults: { name: 'News', description: 'Latest articles and updates.' }
-  });
+  const categoryDefs = [
+    ['news', 'News', 'Official news and press releases.'],
+    ['announcements', 'Announcements', 'Public announcements and notices.'],
+    ['tenders', 'Tenders', 'Government tender notices.'],
+    ['jobs', 'Jobs', 'Job vacancies and career opportunities.'],
+    ['documents', 'Documents', 'Policies, reports, and publications.'],
+    ['services', 'Services', 'Citizen services and resources.']
+  ];
+  const categories = {};
+  for (const [slug, name, description] of categoryDefs) {
+    const [row] = await Category.findOrCreate({ where: { slug }, defaults: { name, description } });
+    categories[slug] = row;
+  }
+  const category = categories.news;
   await Tag.findOrCreate({ where: { slug: 'nodepress' }, defaults: { name: 'NodePress' } });
 
   await Page.findOrCreate({
     where: { slug: 'about' },
     defaults: {
       title: 'About Us',
-      content: '<p>Welcome to NodePress CMS, a customizable blog platform.</p>',
+      content: '<p>Welcome to the official NodePress government information portal.</p>',
+      status: 'published',
+      published_at: new Date()
+    }
+  });
+  await Page.findOrCreate({
+    where: { slug: 'terms' },
+    defaults: {
+      title: 'Terms of Use',
+      content: '<p>These terms govern use of this official information portal.</p>',
+      status: 'published',
+      published_at: new Date()
+    }
+  });
+  await Page.findOrCreate({
+    where: { slug: 'privacy' },
+    defaults: {
+      title: 'Privacy Policy',
+      content: '<p>How we collect, use, and protect citizen information on this portal.</p>',
+      status: 'published',
+      published_at: new Date()
+    }
+  });
+  await Page.findOrCreate({
+    where: { slug: 'public-holidays' },
+    defaults: {
+      title: 'Public Holidays',
+      content: '<p>National public holiday calendar for the current year.</p>',
       status: 'published',
       published_at: new Date()
     }
@@ -192,9 +229,11 @@ async function seed() {
   const [headerMenu] = await Menu.findOrCreate({ where: { slug: 'main-menu' }, defaults: { name: 'Main Menu' } });
   const menuItems = [
     ['Home', '/', 1],
-    ['Blog', '/blog', 2],
-    ['About', '/page/about', 3],
-    ['Contact', '/contact', 4]
+    ['News', '/category/news', 2],
+    ['Announcements', '/category/announcements', 3],
+    ['Services', '/category/services', 4],
+    ['Documents', '/category/documents', 5],
+    ['Contact', '/contact', 6]
   ];
   for (const [title, url, display_order] of menuItems) {
     await MenuItem.findOrCreate({
@@ -202,11 +241,15 @@ async function seed() {
       defaults: { menu_id: headerMenu.id, title, url, display_order }
     });
   }
-  const blogMenuItem = await MenuItem.findOne({ where: { menu_id: headerMenu.id, title: 'Blog' } });
+  const blogMenuItem = await MenuItem.findOne({ where: { menu_id: headerMenu.id, title: 'News' } });
   if (blogMenuItem) {
     await MenuItem.findOrCreate({
-      where: { menu_id: headerMenu.id, title: 'News Archive' },
-      defaults: { menu_id: headerMenu.id, parent_id: blogMenuItem.id, title: 'News Archive', url: '/category/news', display_order: 1 }
+      where: { menu_id: headerMenu.id, title: 'Tenders' },
+      defaults: { menu_id: headerMenu.id, parent_id: blogMenuItem.id, title: 'Tenders', url: '/category/tenders', display_order: 1 }
+    });
+    await MenuItem.findOrCreate({
+      where: { menu_id: headerMenu.id, title: 'Jobs' },
+      defaults: { menu_id: headerMenu.id, parent_id: blogMenuItem.id, title: 'Jobs', url: '/category/jobs', display_order: 2 }
     });
   }
 
@@ -219,8 +262,8 @@ async function seed() {
     ['Articles', '/blog', 2],
     ['About NodePress', '/page/about', 3],
     ['Contact', '/contact', 4],
-    ['Privacy Policy', '/page/privacy-policy', 5],
-    ['Terms', '/page/terms-and-conditions', 6]
+    ['Privacy Policy', '/page/privacy', 5],
+    ['Terms', '/page/terms', 6]
   ];
   for (const [title, url, display_order] of footerItems) {
     await MenuItem.findOrCreate({
@@ -260,14 +303,23 @@ async function seed() {
 
   await ThemeSetting.findOrCreate({ where: { theme_name: 'classic-blog' }, defaults: { active: true } });
 
+  const { buildPortalConfigBlock, MYANMAR_PORTAL_DEFAULTS } = require('../utils/portalConfig');
+  const portalCss = buildPortalConfigBlock(MYANMAR_PORTAL_DEFAULTS);
+  await ThemeSetting.update({
+    theme_name: 'classic-blog',
+    active: true,
+    header_layout: 'portal',
+    primary_color: '#0b5f8a',
+    secondary_color: '#f4b000',
+    background_color: '#f5f7fa',
+    text_color: '#1f2933',
+    custom_css: portalCss
+  }, { where: { theme_name: 'classic-blog' } });
+
+  const { PORTAL_SETTING_DEFINITIONS } = require('../utils/portalSettings');
   const settings = {
-    site_title: 'NodePress CMS',
-    site_tagline: 'A modern blog CMS for Node.js',
-    site_logo: '',
-    favicon: '',
+    ...Object.fromEntries(Object.entries(PORTAL_SETTING_DEFINITIONS).map(([key, def]) => [key, def.value])),
     admin_email: 'admin@example.com',
-    contact_email: 'contact@example.com',
-    posts_per_page: '6',
     default_post_status: 'draft',
     maintenance_mode: 'false',
     facebook_link: '#',
@@ -276,7 +328,8 @@ async function seed() {
     linkedin_link: '#'
   };
   for (const [key, value] of Object.entries(settings)) {
-    await SiteSetting.findOrCreate({ where: { key }, defaults: { value } });
+    const group = PORTAL_SETTING_DEFINITIONS[key]?.group || 'general';
+    await SiteSetting.findOrCreate({ where: { key }, defaults: { value, group } });
   }
 
   const securitySettings = {

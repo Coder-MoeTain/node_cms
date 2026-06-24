@@ -4,37 +4,41 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header"><h1>General Settings</h1></div>
+    <div class="np-page-header"><h1>Site Settings</h1><p class="np-help-text">Configure portal identity, contact details, emergency numbers, statistics, and branding.</p></div>
     <%- include('../partials/settings-nav') %>
     <form method="post" action="/admin/settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="np-widget">
-        <div class="np-widget-header"><span>Site Settings</span></div>
-        <div class="np-widget-body p-0">
-          <table class="np-form-table np-settings-table">
-            <tbody>
-              <% rows.forEach(function(row) { %>
-                <tr>
-                  <th scope="row"><label for="setting-<%= row.key %>"><%= row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }) %></label></th>
-                  <td>
-                    <% if (['site_logo','favicon'].includes(row.key)) { %>
-                      <%- include('../partials/image-upload-field', {
-                        label: row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }),
-                        name: row.key,
-                        fileName: row.key + '_file',
-                        value: row.value
-                      }) %>
-                      <p class="np-help-text">Upload an image or choose one from the Media Library.</p>
-                    <% } else { %>
-                      <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" value="<%= row.value %>">
-                    <% } %>
-                  </td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
+      <% const order = groupOrder || []; const labels = groupLabels || {}; %>
+      <% order.forEach(function(groupKey) { %>
+        <% const groupRows = (grouped && grouped[groupKey]) || []; if (!groupRows.length) return; %>
+        <div class="np-widget mb-3">
+          <div class="np-widget-header"><span><%= labels[groupKey] || groupKey %></span></div>
+          <div class="np-widget-body p-0">
+            <table class="np-form-table np-settings-table">
+              <tbody>
+                <% groupRows.forEach(function(row) { %>
+                  <tr>
+                    <th scope="row"><label for="setting-<%= row.key %>"><%= row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }) %></label></th>
+                    <td>
+                      <% if (['site_logo','favicon'].includes(row.key)) { %>
+                        <%- include('../partials/image-upload-field', {
+                          label: row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }),
+                          name: row.key,
+                          fileName: row.key + '_file',
+                          value: row.value
+                        }) %>
+                        <p class="np-help-text">Upload an image or choose one from the Media Library.</p>
+                      <% } else { %>
+                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" value="<%= row.value %>">
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      <% }) %>
       <p class="mt-3"><button class="np-btn np-btn-primary" type="submit">Save Changes</button></p>
     </form>
   </main>

@@ -1,0 +1,19 @@
+<% const cfg = portalConfig || {}; const hp = cfg.homepage || {};
+   const tickerPosts = (typeof announcements !== 'undefined' && announcements && announcements.length)
+     ? announcements
+     : (announcementPosts || []);
+%>
+<% if (hp.announcementTicker && tickerPosts.length) { %>
+<div class="portal-ticker" role="region" aria-label="Latest announcements" data-portal-ticker>
+  <div class="container portal-ticker-inner">
+    <span class="portal-ticker-label"><i class="bi bi-megaphone-fill" aria-hidden="true"></i> Latest</span>
+    <div class="portal-ticker-links">
+      <% tickerPosts.slice(0, 5).forEach(function(post, index) { %>
+        <% if (index > 0) { %><span class="portal-ticker-sep" aria-hidden="true">|</span><% } %>
+        <a class="portal-ticker-link" href="/post/<%= post.slug %>"><%= post.title %></a>
+      <% }) %>
+    </div>
+    <a class="portal-ticker-more" href="/category/announcements">All announcements</a>
+  </div>
+</div>
+<% } %>

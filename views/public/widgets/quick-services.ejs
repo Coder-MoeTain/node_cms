@@ -1,0 +1,28 @@
+<section class="portal-section portal-quick-services" id="portal-quick-services" aria-label="Quick services">
+  <div class="container py-4">
+    <div class="portal-section-head">
+      <h2 class="portal-section-title">Quick Services</h2>
+      <p class="portal-section-subtitle">Shortcut access to common government resources</p>
+    </div>
+    <div class="row g-3 portal-service-grid">
+      <% const services = [
+        { icon: 'bi-building', title: 'Government Websites', desc: 'Official ministries and agencies', url: '/blog' },
+        { icon: 'bi-ui-checks', title: 'Forms', desc: 'Downloadable application forms', url: '/search?q=forms' },
+        { icon: 'bi-folder2-open', title: 'Documents', desc: 'Policies, reports, and publications', url: '/category/documents' },
+        { icon: 'bi-calendar-event', title: 'Upcoming Public Holidays', desc: 'National holiday calendar', url: '/page/public-holidays' },
+        { icon: 'bi-telephone-fill', title: 'Emergency Contacts', desc: 'Hotlines and emergency services', url: '#portal-emergency' },
+        { icon: 'bi-phone', title: 'Mobile App Gallery', desc: 'Official mobile applications', url: '#portal-mobile-app' }
+      ]; %>
+      <% const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
+      <% services.forEach(function(item) { %>
+        <div class="col-6 col-md-4 col-lg-2">
+          <a class="portal-service-card portal-card-<%= cardStyle %>" href="<%= item.url %>">
+            <span class="portal-service-icon" aria-hidden="true"><i class="bi <%= item.icon %>"></i></span>
+            <strong class="portal-service-title"><%= item.title %></strong>
+            <span class="portal-service-desc"><%= item.desc %></span>
+          </a>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

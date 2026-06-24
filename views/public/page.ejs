@@ -1,9 +1,19 @@
-<%- include('partials/head') %>
-<%- include('partials/header') %>
-<main class="container py-4">
-  <article class="content-page mx-auto">
-    <h1><%= page.title %></h1>
-    <div class="content"><%- page.content %></div>
-  </article>
-</main>
-<%- include('partials/footer') %>
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main class="container portal-page portal-main py-4" id="main-content">
+  <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a> <span aria-hidden="true">/</span> <span><%= page.title %></span>
+  </nav>
+  <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
+    <article class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
+      <div class="portal-list-panel portal-card-bordered content-page p-4">
+        <h1 class="portal-page-title mb-3"><%= page.title %></h1>
+        <div class="content portal-page-content"><%- page.content %></div>
+      </div>
+    </article>
+    <% if (activeTheme.sidebar_position !== 'none') { %>
+      <div class="col-lg-4"><%- include('partials/sidebar') %></div>
+    <% } %>
+  </div>
+</main>
+<%- include('partials/footer') %>
