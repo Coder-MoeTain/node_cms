@@ -1,16 +1,15 @@
 {
-  "name": "Updraft Backup",
+  "name": "Site Backup",
   "slug": "updraft-backup",
-  "version": "1.1.0",
-  "description": "WordPress UpdraftPlus equivalent — database and uploads backup from the admin dashboard.",
+  "version": "1.2.0",
+  "description": "Create database and file backups from the admin dashboard with retention controls.",
   "author": "NodePress",
   "permissions": ["manage_plugins"],
   "settings": [
-    { "section": "Backup Contents", "key": "include_uploads", "label": "Include uploads folder", "type": "checkbox", "default": "true", "description": "Archive public/uploads with each backup." },
-    { "section": "Backup Contents", "key": "include_plugins", "label": "Include plugins folder", "type": "checkbox", "default": "false", "description": "Archive plugins/ directory in backup tarball." },
-    { "section": "Retention", "key": "retention_days", "label": "Retention (days)", "type": "number", "default": "14", "min": 1, "max": 365, "placeholder": "14", "description": "Delete backup files older than this many days." },
-    { "section": "Retention", "key": "max_backups", "label": "Max backup files", "type": "number", "default": "10", "min": 1, "max": 100, "placeholder": "10", "description": "Keep only the newest N database backups." },
-    { "section": "Schedule", "key": "schedule_note", "label": "Schedule note", "type": "text", "default": "Manual backups via dashboard", "description": "Reminder text for your backup routine (cron not included)." },
-    { "section": "Notifications", "key": "notify_email", "label": "Notification email", "type": "text", "default": "", "placeholder": "admin@example.com", "description": "Optional email to notify after backup completes." }
+    { "section": "Backup contents", "key": "include_uploads", "label": "Include uploads folder", "type": "checkbox", "default": "true", "description": "Archive public/uploads with each backup." },
+    { "section": "Backup contents", "key": "include_plugins", "label": "Include plugins folder", "type": "checkbox", "default": "false", "description": "Archive installed plugins with each backup." },
+    { "section": "Retention", "key": "retention_days", "label": "Retention (days)", "type": "number", "default": "14", "min": 1, "max": 365, "description": "Delete backups older than this many days." },
+    { "section": "Retention", "key": "max_backups", "label": "Maximum backups", "type": "number", "default": "10", "min": 1, "max": 100, "description": "Keep at most this many backup files." },
+    { "section": "Notes", "key": "schedule_note", "label": "Dashboard note", "type": "text", "default": "Run manual backups before major updates.", "description": "Short note shown on the dashboard widget." }
   ]
 }

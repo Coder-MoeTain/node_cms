@@ -1,6 +1,13 @@
 const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post, Media, Plugin } = require('../models');
 const pluginLoader = require('../utils/pluginLoader');
 const { resolvePortalConfig, resolveThemePreset, parseThemeVars } = require('../utils/portalConfig');
+const {
+  translateMenus,
+  translatePosts,
+  translateCategories,
+  translateSiteSettings
+} = require('../utils/contentTranslator');
+const { getPortalStats } = require('../utils/portalStats');
 
 function buildMenuTree(items = []) {
   const plainItems = items
@@ -62,13 +69,19 @@ async function loadSiteContext(req, res, next) {
     res.locals.formatDate = (value) => {
       if (!value) return '';
       const date = value instanceof Date ? value : new Date(value);
-      return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      return date.toLocaleDateString(res.locals.locale || undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     };
-    res.locals.siteMenus = menus.reduce((map, menu) => ({ ...map, [menu.location]: buildMenuTree(menu.items || []) }), {});
-    res.locals.sidebarCategories = categories;
-    res.locals.recentPosts = recentPosts;
-    res.locals.popularPosts = popularPosts;
-    res.locals.announcementPosts = announcementPosts.length ? announcementPosts : recentPosts;
+    const engine = res.locals.translationEngine;
+    const siteMenus = menus.reduce((map, menu) => ({ ...map, [menu.location]: buildMenuTree(menu.items || []) }), {});
+    res.locals.siteMenus = await translateMenus(engine, siteMenus);
+    res.locals.sidebarCategories = await translateCategories(engine, categories);
+    res.locals.recentPosts = await translatePosts(engine, recentPosts);
+    res.locals.popularPosts = await translatePosts(engine, popularPosts);
+    res.locals.announcementPosts = announcementPosts.length
+      ? await translatePosts(engine, announcementPosts)
+      : await translatePosts(engine, recentPosts);
+    res.locals.siteSettings = await translateSiteSettings(engine, res.locals.siteSettings);
+    res.locals.portalStats = await getPortalStats(res.locals.siteSettings);
     res.locals.activePluginSlugs = activePlugins.map((row) => row.slug);
     res.locals.pluginPublicHead = await pluginLoader.collectHook('publicHead', { req, res });
     res.locals.pluginPublicFooter = await pluginLoader.collectHook('publicFooter', { req, res });

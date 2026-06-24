@@ -32,10 +32,10 @@ module.exports = {
     });
 
     hooks.register('dashboardWidgets', () => ({
-      title: 'Super Cache',
+      title: 'Page Cache',
       body: enabled
-        ? `Public pages cached for <strong>${maxAge}s</strong> in browsers.`
-        : 'Caching headers are disabled.'
+        ? `Public pages cached for <strong>${maxAge}s</strong> in browsers${cacheStatic ? ' · uploads cached longer' : ''}.`
+        : 'Browser cache headers are disabled.'
     }));
   }
 };

@@ -1,0 +1,56 @@
+<% const currentLocale = typeof locale !== 'undefined' ? locale : 'en';
+   const localeList = typeof locales !== 'undefined' ? locales : [];
+   const variant = typeof langSwitcherVariant !== 'undefined' ? langSwitcherVariant : 'dropdown';
+   const activeLocale = localeList.find((item) => item.code === currentLocale) || localeList[0] || { code: 'en', native: 'English', label: 'English', flag: 'en' };
+%>
+<% if (variant === 'portal') { %>
+  <div class="np-lang-switcher np-lang-switcher--portal" role="group" aria-label="Language">
+    <% localeList.forEach(function(item) { %>
+      <button type="button"
+        class="np-lang-chip language-option<%= item.code === currentLocale ? ' active' : '' %>"
+        data-lang="<%= item.code %>"
+        data-label="<%= item.label %>"
+        data-flag="<%= item.flag %>"
+        title="<%= item.label %>"
+        <%= item.code === currentLocale ? 'aria-current="true"' : '' %>>
+        <span class="np-lang-flag np-lang-flag--<%= item.flag %>" aria-hidden="true"></span>
+        <span class="np-lang-chip-text"><%= item.native %></span>
+      </button>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="dropdown np-lang-switcher np-lang-switcher--dropdown language-switcher">
+    <button class="np-lang-toggle language-toggle dropdown-toggle"
+      type="button"
+      id="languageMenu"
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+      aria-haspopup="true"
+      aria-label="Choose language">
+      <span class="np-lang-flag np-lang-flag--<%= activeLocale.flag %> language-toggle-flag" data-language-toggle-flag data-flag="<%= activeLocale.flag %>" aria-hidden="true"></span>
+      <span class="language-current"><%= activeLocale.native %></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end np-lang-menu language-menu" aria-labelledby="languageMenu">
+      <li class="np-lang-menu-label language-menu-label">Language</li>
+      <% localeList.forEach(function(item) { %>
+        <li>
+          <button type="button"
+            class="dropdown-item np-lang-option language-option<%= item.code === currentLocale ? ' active' : '' %>"
+            data-lang="<%= item.code %>"
+            data-label="<%= item.label %>"
+            data-flag="<%= item.flag %>"
+            <%= item.code === currentLocale ? 'aria-current="true"' : '' %>>
+            <span class="np-lang-option-main">
+              <span class="np-lang-flag np-lang-flag--<%= item.flag %>" aria-hidden="true"></span>
+              <span class="np-lang-option-text">
+                <span class="np-lang-option-native"><%= item.native %></span>
+                <span class="np-lang-option-label"><%= item.label %></span>
+              </span>
+            </span>
+            <i class="bi bi-check2 language-check" aria-hidden="true"></i>
+          </button>
+        </li>
+      <% }) %>
+    </ul>
+  </div>
+<% } %>

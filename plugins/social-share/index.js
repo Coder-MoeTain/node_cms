@@ -41,5 +41,12 @@ module.exports = {
       const positionClass = position === 'floating' ? 'np-social-share-floating' : 'np-social-share-inline';
       return `<div class="np-social-share ${positionClass} np-share-style-${buttonStyle}" role="navigation" aria-label="Share this post"><span class="np-share-label">Share:</span>${links}</div><style>.np-social-share{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:1.5rem 0;padding:1rem;background:var(--site-card,#f8f9fa);border-radius:.5rem}.np-social-share-floating{position:sticky;bottom:1rem;z-index:5}.np-share-label{font-weight:600;margin-right:.25rem}.np-share-btn{padding:.35rem .75rem;background:var(--site-button,#0d6efd);color:#fff;font-size:.875rem;text-decoration:none}.np-share-style-pill .np-share-btn{border-radius:999px}.np-share-style-square .np-share-btn{border-radius:.25rem}.np-share-style-minimal .np-share-btn{background:transparent;color:var(--site-button,#0d6efd);padding:0 .5rem 0 0}.np-share-btn:hover{opacity:.9;color:#fff}</style>`;
     });
+
+    hooks.register('dashboardWidgets', () => ({
+      title: 'Social Share',
+      body: enabled
+        ? `Share buttons on post pages (${networks.join(', ') || 'none configured'}).`
+        : 'Social share buttons are disabled.'
+    }));
   }
 };

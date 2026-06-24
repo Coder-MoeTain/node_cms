@@ -16,6 +16,8 @@ const models = require('./models');
 const { applySecurityMiddleware, apiLimiter } = require('./middleware/security');
 const { csrfProtection } = require('./middleware/csrf');
 const { loadSiteContext } = require('./middleware/siteContext');
+const { localeMiddleware } = require('./middleware/locale');
+const { portalVisitMiddleware } = require('./middleware/portalVisit');
 const pluginHooks = require('./middleware/pluginHooks');
 const { wafMiddleware } = require('./middleware/waf');
 const errorHandler = require('./middleware/errorHandler');
@@ -87,6 +89,8 @@ app.use((req, res, next) => {
   res.locals.formData = {};
   next();
 });
+app.use(localeMiddleware);
+app.use(portalVisitMiddleware);
 app.use(loadSiteContext);
 app.use(pluginHooks);
 app.use(wafMiddleware);

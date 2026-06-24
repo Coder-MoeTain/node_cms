@@ -1,16 +1,16 @@
 {
-  "name": "Super Cache",
+  "name": "Page Cache",
   "slug": "super-cache",
-  "version": "1.1.0",
-  "description": "WordPress WP Super Cache equivalent — browser cache headers for public pages.",
+  "version": "1.2.0",
+  "description": "Set browser cache headers for public pages and static uploads to improve performance.",
   "author": "NodePress",
   "permissions": ["manage_plugins"],
   "settings": [
-    { "section": "General", "key": "enabled", "label": "Enable caching headers", "type": "checkbox", "default": "true", "description": "Send Cache-Control headers on public GET requests." },
-    { "section": "General", "key": "max_age", "label": "Browser cache max-age (seconds)", "type": "number", "default": "3600", "min": 60, "placeholder": "3600", "description": "How long browsers should cache public pages." },
-    { "section": "Page Types", "key": "cache_home", "label": "Cache homepage", "type": "checkbox", "default": "true", "description": "Apply cache headers on /." },
-    { "section": "Page Types", "key": "cache_posts", "label": "Cache blog posts", "type": "checkbox", "default": "true", "description": "Apply cache headers on /post/* pages." },
-    { "section": "Page Types", "key": "cache_static", "label": "Cache static assets path", "type": "checkbox", "default": "true", "description": "Apply long cache headers on /uploads/* files." },
-    { "section": "Exclusions", "key": "exclude_paths", "label": "Excluded paths", "type": "text", "default": "/contact,/search,/admin", "description": "Comma-separated paths that should never be cached." }
+    { "section": "General", "key": "enabled", "label": "Enable cache headers", "type": "checkbox", "default": "true", "description": "Send Cache-Control headers on public GET responses." },
+    { "section": "General", "key": "max_age", "label": "Cache duration (seconds)", "type": "number", "default": "3600", "min": 60, "max": 604800, "description": "How long browsers may cache HTML pages." },
+    { "section": "Scope", "key": "cache_home", "label": "Cache homepage", "type": "checkbox", "default": "true", "description": "Apply cache headers to the homepage." },
+    { "section": "Scope", "key": "cache_posts", "label": "Cache post pages", "type": "checkbox", "default": "true", "description": "Apply cache headers to single post URLs." },
+    { "section": "Scope", "key": "cache_static", "label": "Cache uploads", "type": "checkbox", "default": "true", "description": "Apply longer cache headers to /uploads/ assets." },
+    { "section": "Exclusions", "key": "exclude_paths", "label": "Excluded paths", "type": "text", "default": "/contact,/search,/admin", "description": "Comma-separated path prefixes that should not be cached." }
   ]
 }

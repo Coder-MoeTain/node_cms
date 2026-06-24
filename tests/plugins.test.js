@@ -42,6 +42,7 @@ test('active plugins register core hooks', async () => {
     'publicHead',
     'publicFooter',
     'beforeCommentCreate',
+    'beforeContactSubmit',
     'requestRedirect',
     'cacheControl'
   ]));

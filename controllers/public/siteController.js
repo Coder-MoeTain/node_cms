@@ -19,11 +19,54 @@ const { meta, postSchema, websiteSchema } = require('../../utils/seoHelper');
 const appConfig = require('../../config/app');
 const pluginLoader = require('../../utils/pluginLoader');
 const themeLoader = require('../../utils/themeLoader');
+const {
+  translatePost,
+  translatePosts,
+  translatePage,
+  translatePages,
+  translateCategory,
+  translateBanners,
+  translateSliders
+} = require('../../utils/contentTranslator');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
 
 async function renderTheme(res, template, locals) {
   return res.render(await themeLoader.resolveTemplate(template), locals);
+}
+
+async function translateViewData(res, data) {
+  const engine = res.locals.translationEngine;
+  if (!engine?.isActive) return data;
+  const output = { ...data };
+
+  if (output.post) output.post = await translatePost(engine, output.post);
+  if (output.posts) output.posts = await translatePosts(engine, output.posts);
+  if (output.page) output.page = await translatePage(engine, output.page);
+  if (output.pages) output.pages = await translatePages(engine, output.pages);
+  if (output.relatedPosts) output.relatedPosts = await translatePosts(engine, output.relatedPosts);
+  if (output.prevPost) output.prevPost = await translatePost(engine, output.prevPost);
+  if (output.nextPost) output.nextPost = await translatePost(engine, output.nextPost);
+  if (output.latestNews) output.latestNews = await translatePosts(engine, output.latestNews);
+  if (output.announcements) output.announcements = await translatePosts(engine, output.announcements);
+  if (output.tenderPosts) output.tenderPosts = await translatePosts(engine, output.tenderPosts);
+  if (output.jobPosts) output.jobPosts = await translatePosts(engine, output.jobPosts);
+  if (output.hotPosts) output.hotPosts = await translatePosts(engine, output.hotPosts);
+  if (output.banners) output.banners = await translateBanners(engine, output.banners);
+  if (output.sliders) output.sliders = await translateSliders(engine, output.sliders);
+  if (output.title && typeof output.title === 'string') output.title = await engine.translate(output.title);
+  if (output.heading && typeof output.heading === 'string') output.heading = await engine.translate(output.heading);
+  if (output.seo) {
+    output.seo = { ...output.seo };
+    if (output.seo.title) output.seo.title = await engine.translate(output.seo.title);
+    if (output.seo.description) output.seo.description = await engine.translate(output.seo.description);
+  }
+
+  return output;
+}
+
+async function renderPublic(res, template, locals) {
+  return renderTheme(res, template, await translateViewData(res, locals));
 }
 
 async function postsForCategorySlug(slug, limit = 6) {
@@ -68,7 +111,7 @@ async function home(req, res, next) {
     const siteName = siteSettings.site_title || appConfig.name;
     const siteTagline = siteSettings.site_tagline || 'Official information portal powered by NodePress';
 
-    return renderTheme(res, 'home', {
+    return renderPublic(res, 'home', {
       title: 'Home',
       seo: meta('Home', siteTagline, '', {
         siteName,
@@ -102,7 +145,7 @@ async function blog(req, res, next) {
       offset,
       order: [['published_at', 'DESC']]
     });
-    return renderTheme(res, 'blog', { title: 'Blog', seo: meta('Blog'), posts: rows, pagination: pageMeta(count, page, limit) });
+    return renderPublic(res, 'blog', { title: 'Blog', seo: meta('Blog'), posts: rows, pagination: pageMeta(count, page, limit) });
   } catch (error) {
     return next(error);
   }
@@ -138,7 +181,7 @@ async function post(req, res, next) {
         attributes: ['title', 'slug']
       })
     ]);
-    return renderTheme(res, 'post', {
+    return renderPublic(res, 'post', {
       title: row.title,
       seo: meta(row.seo_title || row.title, row.seo_description || row.excerpt, row.og_image || row.featured_image),
       post: row,
@@ -165,7 +208,14 @@ async function category(req, res, next) {
       offset,
       order: [['published_at', 'DESC']]
     });
-    return renderTheme(res, 'archive', { title: categoryRow.name, seo: meta(categoryRow.name, categoryRow.description), heading: categoryRow.name, posts: rows, pagination: pageMeta(count, page, limit) });
+    const translatedCategory = await translateCategory(res.locals.translationEngine, categoryRow);
+    return renderPublic(res, 'archive', {
+      title: translatedCategory.name,
+      seo: meta(translatedCategory.name, translatedCategory.description),
+      heading: translatedCategory.name,
+      posts: rows,
+      pagination: pageMeta(count, page, limit)
+    });
   } catch (error) {
     return next(error);
   }
@@ -184,7 +234,7 @@ async function tag(req, res, next) {
       offset,
       order: [['published_at', 'DESC']]
     });
-    return renderTheme(res, 'archive', { title: tagRow.name, seo: meta(tagRow.name), heading: `Tag: ${tagRow.name}`, posts: rows, pagination: pageMeta(count, page, limit) });
+    return renderPublic(res, 'archive', { title: tagRow.name, seo: meta(tagRow.name), heading: `Tag: ${tagRow.name}`, posts: rows, pagination: pageMeta(count, page, limit) });
   } catch (error) {
     return next(error);
   }
@@ -194,7 +244,7 @@ async function page(req, res, next) {
   try {
     const row = await Page.findOne({ where: { slug: req.params.slug, status: 'published' } });
     if (!row) return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
-    return renderTheme(res, 'page', {
+    return renderPublic(res, 'page', {
       title: row.title,
       seo: meta(row.seo_title || row.title, row.seo_description, row.og_image || row.featured_image),
       page: row
@@ -244,7 +294,7 @@ async function search(req, res, next) {
       });
     }
 
-    return renderTheme(res, 'search', {
+    return renderPublic(res, 'search', {
       title: 'Search',
       seo: meta('Search', q ? `Results for ${q}` : 'Search the site'),
       q,
@@ -263,7 +313,7 @@ async function contact(req, res, next) {
       subject: req.query.subject || '',
       email: req.query.email || ''
     };
-    return renderTheme(res, 'contact', { title: 'Contact', seo: meta('Contact'), prefill });
+    return renderPublic(res, 'contact', { title: 'Contact', seo: meta('Contact'), prefill });
   } catch (error) {
     return next(error);
   }
@@ -277,12 +327,25 @@ async function submitContact(req, res, next) {
       return res.redirect('/contact');
     }
 
-    await ContactMessage.create({
+    const messagePayload = {
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
       subject: req.body.subject,
-      message: sanitizeHtml(req.body.message || '', { allowedTags: [], allowedAttributes: {} })
+      content: sanitizeHtml(req.body.message || '', { allowedTags: [], allowedAttributes: {} })
+    };
+    const allowed = await pluginLoader.applyHook('beforeContactSubmit', messagePayload, { req, res });
+    if (!allowed) {
+      req.flash('error', 'Your message was flagged as spam.');
+      return res.redirect('/contact');
+    }
+
+    await ContactMessage.create({
+      name: allowed.name,
+      email: allowed.email,
+      phone: allowed.phone,
+      subject: allowed.subject,
+      message: allowed.content
     });
     req.flash('success', 'Thanks. Your message has been sent.');
     return res.redirect('/contact');

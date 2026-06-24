@@ -11,11 +11,11 @@ beforeAll(async () => {
   }, { where: { active: true } });
 });
 
-test('portal home includes portal chrome and section nav', async () => {
+test('portal home includes portal chrome', async () => {
   const response = await request(app).get('/');
   expect(response.status).toBe(200);
   expect(response.text).toMatch(/portal-header|data-portal-header/);
-  expect(response.text).toMatch(/portal-section-nav|portal-quick-services/);
+  expect(response.text).not.toMatch(/portal-section-nav/);
 });
 
 test('portal 404 uses public error layout', async () => {

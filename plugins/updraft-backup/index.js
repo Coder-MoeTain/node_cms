@@ -99,8 +99,8 @@ module.exports = {
         : 'No backups yet';
       const csrf = typeof req.csrfToken === 'function' ? req.csrfToken() : '';
       return {
-        title: 'Updraft Backup',
-        body: `<p class="mb-1"><small>${scheduleNote}</small></p><p class="mb-2">Latest: <code>${latestLabel}</code></p><form method="post" action="/admin/plugins/updraft-backup/run"><input type="hidden" name="_csrf" value="${csrf}"><button type="submit" class="btn btn-sm btn-outline-primary">Run backup now</button></form>`
+        title: 'Site Backup',
+        body: `<p class="mb-1"><small>${scheduleNote}</small></p><p class="mb-2">Latest: <code>${latestLabel}</code></p><form method="post" action="/admin/plugins/updraft-backup/run"><input type="hidden" name="_csrf" value="${csrf}"><button type="submit" class="np-btn np-btn-small np-btn-primary">Run backup now</button></form>`
       };
     });
   }
