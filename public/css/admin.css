@@ -148,6 +148,24 @@
   margin: 0;
 }
 
+.admin-dashboard-page .topbar-kicker {
+  font-size: calc(.72rem - 3pt);
+}
+
+.admin-dashboard-page .topbar-title h1 {
+  font-size: calc(1.35rem - 3pt);
+}
+
+.admin-dashboard-page .topbar-actions,
+.admin-dashboard-page .topbar-actions .btn,
+.admin-dashboard-page .user-chip {
+  font-size: calc(1rem - 3pt);
+}
+
+.admin-dashboard-page .user-avatar {
+  font-size: calc(.85rem - 3pt);
+}
+
 .topbar-actions {
   align-items: center;
   display: flex;
@@ -254,6 +272,15 @@
   position: relative;
 }
 
+.admin-dashboard,
+.admin-dashboard .btn,
+.admin-dashboard .card-header,
+.admin-dashboard .table,
+.admin-dashboard .list-group-item,
+.admin-dashboard .alert {
+  font-size: calc(1rem - 3pt);
+}
+
 .dashboard-hero::after {
   border: 1px solid rgba(125, 211, 252, .25);
   border-radius: 50%;
@@ -272,14 +299,14 @@
 
 .dashboard-eyebrow {
   color: #7dd3fc;
-  font-size: .75rem;
+  font-size: calc(.75rem - 3pt);
   font-weight: 900;
   letter-spacing: .18em;
   text-transform: uppercase;
 }
 
 .dashboard-hero h2 {
-  font-size: 2rem;
+  font-size: calc(2rem - 3pt);
   font-weight: 900;
   letter-spacing: -.05em;
   margin: .25rem 0;
@@ -301,6 +328,7 @@
 
 .stat-card h2 {
   color: #0f172a;
+  font-size: calc(2rem - 3pt);
   font-weight: 900;
   margin: 0;
 }
@@ -321,7 +349,7 @@
 .stat-label {
   color: #64748b;
   display: block;
-  font-size: .78rem;
+  font-size: calc(.78rem - 3pt);
   font-weight: 900;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -336,7 +364,7 @@
 .professional-card-header a,
 .table-action {
   color: #2563eb;
-  font-size: .85rem;
+  font-size: calc(.85rem - 3pt);
   font-weight: 800;
   text-decoration: none;
 }
@@ -344,7 +372,7 @@
 .status-pill {
   border-radius: 999px;
   display: inline-flex;
-  font-size: .72rem;
+  font-size: calc(.72rem - 3pt);
   font-weight: 900;
   letter-spacing: .08em;
   padding: .35rem .65rem;
@@ -380,6 +408,14 @@
 
 .insight-card {
   background: linear-gradient(135deg, #fff, #eff6ff);
+}
+
+.insight-card h5 {
+  font-size: calc(1.25rem - 3pt);
+}
+
+.admin-dashboard small {
+  font-size: calc(.875em - 3pt);
 }
 
 .security-alert {
@@ -419,6 +455,10 @@
   border: 0;
   box-shadow: none;
   padding-left: .25rem;
+}
+
+.admin-search .form-select {
+  min-width: 150px;
 }
 
 .admin-table thead th {

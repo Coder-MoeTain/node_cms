@@ -69,7 +69,7 @@ Professional `10/10` requires plugin architecture, full theme engine, complete t
 | Activity logs | Implemented |
 | Login attempt logs | Implemented |
 | Maintenance mode | Implemented |
-| Database backup option | Documented as remaining production task |
+| Database backup option | Implemented with `mysqldump` action in Security panel |
 
 ## Step 3: Database Upgrade SQL
 
@@ -115,6 +115,10 @@ Implemented files:
 - `middleware/permission.js`
 - `middleware/security.js`
 - `middleware/upload.js`
+- `middleware/csrf.js`
+- `middleware/rateLimit.js`
+- `middleware/activityLog.js`
+- `middleware/notFound.js`
 - `middleware/errorHandler.js`
 - `routes/admin.js`
 
@@ -133,6 +137,7 @@ Implemented:
 - Upload validation
 - Login attempt logging
 - Activity logging model
+- Activity logging middleware for admin mutations
 - IP blocking middleware
 - Admin session timeout
 
@@ -175,6 +180,14 @@ Dashboard now shows:
 - Recent activity logs
 - Security alert count
 
+Security panel now includes:
+
+- Security setting toggles
+- Failed login attempts
+- Blocked IPs
+- Activity logs
+- Database backup button using `mysqldump`
+
 ## Step 6: Blog Post System
 
 Implemented through:
@@ -203,8 +216,10 @@ Features:
 - Slug generation
 - SEO title/description
 - Search and pagination
+- Status and category filters in admin post list
 - Public blog, post, category, tag, search
 - Recent/popular posts
+- Related posts
 - View count
 
 ## Step 7: Media Upload Library

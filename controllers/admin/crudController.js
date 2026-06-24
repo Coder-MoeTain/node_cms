@@ -184,6 +184,10 @@ async function index(req, res, next) {
     const where = query
       ? { [Op.or]: config.searchFields.map((field) => ({ [field]: { [Op.like]: `%${query}%` } })) }
       : {};
+    if (resource === 'posts') {
+      if (req.query.status) where.status = req.query.status;
+      if (req.query.category_id) where.category_id = req.query.category_id;
+    }
     const { rows, count } = await config.model.findAndCountAll({
       where,
       include: config.include || [],
@@ -198,7 +202,12 @@ async function index(req, res, next) {
       config,
       rows,
       query,
-      pagination: pageMeta(count, page, limit)
+      pagination: pageMeta(count, page, limit),
+      filters: {
+        status: req.query.status || '',
+        category_id: req.query.category_id || ''
+      },
+      extra: config.formData ? await config.formData() : {}
     });
   } catch (error) {
     return next(error);

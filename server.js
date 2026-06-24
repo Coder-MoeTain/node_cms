@@ -7,15 +7,16 @@ const methodOverride = require('method-override');
 const flash = require('connect-flash');
 const compression = require('compression');
 const morgan = require('morgan');
-const csrf = require('csurf');
 const expressLayouts = require('express-ejs-layouts');
 
 const appConfig = require('./config/app');
 const sequelize = require('./config/database');
 const models = require('./models');
 const { applySecurityMiddleware } = require('./middleware/security');
+const { csrfProtection } = require('./middleware/csrf');
 const { loadSiteContext } = require('./middleware/siteContext');
 const errorHandler = require('./middleware/errorHandler');
+const notFoundMiddleware = require('./middleware/notFound');
 
 const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
@@ -56,7 +57,7 @@ app.use(
 );
 
 app.use(flash());
-app.use(csrf());
+app.use(csrfProtection);
 app.use((req, res, next) => {
   res.locals.csrfToken = req.csrfToken();
   res.locals.currentUser = req.session.user || null;
@@ -78,9 +79,7 @@ app.use('/admin', adminRoutes);
 app.use('/api', apiRoutes);
 app.use('/', publicRoutes);
 
-app.use((req, res) => {
-  res.status(404).render('errors/404', { title: 'Page Not Found' });
-});
+app.use(notFoundMiddleware);
 
 app.use(errorHandler);
 

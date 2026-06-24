@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 const { requireAuth, guestOnly } = require('../middleware/auth');
 const { can } = require('../middleware/permission');
 const { loginLimiter } = require('../middleware/security');
+const { activityLogMiddleware } = require('../middleware/activityLog');
 const upload = require('../middleware/upload');
 
 const auth = require('../controllers/admin/authController');
@@ -24,6 +25,8 @@ router.post('/reset-password', guestOnly, auth.resetPassword);
 router.get('/profile', requireAuth, auth.profile);
 router.put('/profile', requireAuth, auth.updateProfile);
 
+router.use(requireAuth, activityLogMiddleware('admin'));
+
 router.get('/', requireAuth, can('view_dashboard'), dashboard.dashboard);
 
 router.get('/media', requireAuth, can('manage_media'), media.index);
@@ -41,6 +44,7 @@ router.put('/security/settings', requireAuth, can('manage_security'), security.u
 router.get('/security/login-attempts', requireAuth, can('manage_security'), security.index);
 router.post('/security/block-ip', requireAuth, can('manage_security'), security.blockIp);
 router.delete('/security/unblock-ip/:id', requireAuth, can('manage_security'), security.unblockIp);
+router.post('/security/backup-database', requireAuth, can('manage_security'), security.backupDatabase);
 
 function resourcePermission(req, res, next) {
   try {

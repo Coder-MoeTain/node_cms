@@ -4,6 +4,19 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content">
     <%- include('../partials/flash') %>
+    <div class="card mb-3">
+      <div class="card-header">Database Backup</div>
+      <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <h5 class="mb-1">Create a MySQL backup</h5>
+          <p class="mb-0 text-muted">Backups are saved in <code>database/backups</code>. The server must have <code>mysqldump</code> available in PATH.</p>
+        </div>
+        <form method="post" action="/admin/security/backup-database">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-primary"><i class="bi bi-database-down"></i> Backup Database</button>
+        </form>
+      </div>
+    </div>
     <form class="card mb-3" method="post" action="/admin/security/settings?_method=PUT">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="card-header">Security Plugin Features</div>

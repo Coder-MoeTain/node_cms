@@ -2,7 +2,8 @@
 <%- include('../partials/sidebar') %>
 <%
   const isEdit = Boolean(record.id);
-  const action = isEdit ? `/admin/${resource}/${record.id}?_method=PUT` : `/admin/${resource}`;
+  const csrfQuery = `_csrf=${encodeURIComponent(csrfToken)}`;
+  const action = isEdit ? `/admin/${resource}/${record.id}?_method=PUT&${csrfQuery}` : `/admin/${resource}?${csrfQuery}`;
   const val = (name, fallback = '') => record[name] == null ? fallback : record[name];
   const selectedTags = record.Tags ? record.Tags.map((tag) => String(tag.id)) : [];
   const selectedPermissions = record.Permissions ? record.Permissions.map((permission) => String(permission.id)) : [];
