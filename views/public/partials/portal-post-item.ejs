@@ -26,6 +26,7 @@
       <span class="portal-post-org"><%= authorName %></span>
       <% if (dateStr) { %><time datetime="<%= dateIso %>"><%= dateStr %></time><% } %>
       <% if (showClosingDate && post.excerpt) { %><span class="portal-post-closing">Closing: <%= post.excerpt.slice(0, 60) %></span><% } %>
+      <%- include('post-edit-link', { post }) %>
     </div>
     <% if (showReadMoreLink) { %><a class="portal-read-more" href="/post/<%= post.slug %>">Read more <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
   </div>

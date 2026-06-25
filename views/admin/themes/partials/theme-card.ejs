@@ -1,0 +1,33 @@
+<%#
+  theme-card.ejs
+  locals: theme, csrfToken, compact (optional), showOverlay (optional, default true)
+%>
+<% const overlay = typeof showOverlay === 'undefined' ? true : showOverlay; %>
+<% const isCompact = typeof compact !== 'undefined' && compact; %>
+<div class="theme-browser-card<%= theme.active ? ' is-active' : '' %><%= isCompact ? ' theme-browser-card-compact' : '' %>">
+  <div class="theme-screenshot">
+    <% if (theme.preview_image) { %>
+      <img src="<%= theme.preview_image %>" alt="<%= theme.name %> preview" loading="lazy">
+    <% } else { %>
+      <div class="theme-screenshot-placeholder" aria-hidden="true"><i class="bi bi-image"></i></div>
+    <% } %>
+    <% if (overlay && !theme.active) { %>
+      <div class="theme-screenshot-overlay">
+        <form method="post" action="/admin/themes/activate">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="theme_id" value="<%= theme.id %>">
+          <button class="np-btn np-btn-primary np-btn-small" type="submit">Activate</button>
+        </form>
+        <a class="np-btn np-btn-secondary np-btn-small" href="/admin/themes/<%= theme.slug %>/preview" target="_blank" rel="noopener">Live Preview</a>
+        <a class="np-btn np-btn-secondary np-btn-small" href="/admin/themes/<%= theme.slug %>">Details</a>
+      </div>
+    <% } %>
+    <% if (theme.active) { %>
+      <span class="theme-active-badge">Active</span>
+    <% } %>
+  </div>
+  <div class="theme-name-bar">
+    <strong class="theme-name"><%= theme.name %></strong>
+    <% if (theme.version) { %><span class="theme-version">Version <%= theme.version %></span><% } %>
+  </div>
+</div>

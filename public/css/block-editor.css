@@ -4,3 +4,22 @@
 .np-block-actions button { border: none; background: transparent; cursor: pointer; padding: 0 0.35rem; }
 .np-block-preview { border: 1px dashed var(--np-border, #dee2e6); border-radius: 8px; padding: 1rem; min-height: 80px; background: #fafafa; }
 .editor-mode-toggle { margin-bottom: 1rem; }
+.np-block-image-preview {
+  align-items: center;
+  background: #f6f7f7;
+  border: 1px dashed var(--np-border, #dee2e6);
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  min-height: 120px;
+  overflow: hidden;
+}
+.np-block-image-preview img {
+  display: block;
+  max-height: 220px;
+  max-width: 100%;
+  object-fit: contain;
+}
+.np-block-image-preview.is-empty {
+  min-height: 80px;
+}

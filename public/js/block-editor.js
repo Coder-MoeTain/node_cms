@@ -74,8 +74,56 @@
           card.innerHTML += `<label>Level <input type="number" min="1" max="6" data-field="level" value="${block.attrs?.level || 2}"></label>
             <textarea class="form-control mt-1" data-field="content" rows="2">${escapeHtml(block.content)}</textarea>`;
         } else if (block.type === 'image') {
-          card.innerHTML += `<input class="form-control mb-1" data-field="src" placeholder="Image URL" value="${escapeHtml(block.attrs?.src || '')}">
-            <input class="form-control" data-field="alt" placeholder="Alt text" value="${escapeHtml(block.attrs?.alt || '')}">`;
+          const src = block.attrs?.src || '';
+          card.innerHTML += `
+            <div class="np-block-image-field" data-block-image-field>
+              <div class="np-block-image-preview mb-2${src ? '' : ' is-empty'}">
+                ${src ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(block.attrs?.alt || '')}">` : '<span class="text-muted small">No image selected</span>'}
+              </div>
+              <input type="file" class="d-none" accept="image/jpeg,image/png,image/gif,image/webp" data-block-image-file>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <button type="button" class="np-btn np-btn-secondary np-btn-small" data-block-image-upload>Upload photo</button>
+                <button type="button" class="np-btn np-btn-secondary np-btn-small" data-block-image-library>Media library</button>
+                ${src ? '<button type="button" class="np-btn np-btn-link np-btn-small text-danger" data-block-image-remove>Remove</button>' : ''}
+              </div>
+              <input class="form-control" data-field="alt" placeholder="Alt text" value="${escapeHtml(block.attrs?.alt || '')}">
+            </div>`;
+
+          const fileInput = card.querySelector('[data-block-image-file]');
+
+          function setBlockImage(filePath, altText) {
+            block.attrs = block.attrs || {};
+            block.attrs.src = filePath;
+            if (altText && !block.attrs.alt) block.attrs.alt = altText;
+            sync();
+          }
+
+          card.querySelector('[data-block-image-upload]')?.addEventListener('click', () => fileInput?.click());
+
+          fileInput?.addEventListener('change', async () => {
+            const file = fileInput.files?.[0];
+            if (!file || typeof window.npUploadImage !== 'function') return;
+            try {
+              const uploaded = await window.npUploadImage(file);
+              setBlockImage(uploaded.filePath, uploaded.originalName || '');
+            } catch (error) {
+              window.alert(error.message || 'Upload failed.');
+            }
+            fileInput.value = '';
+          });
+
+          card.querySelector('[data-block-image-library]')?.addEventListener('click', () => {
+            if (typeof window.npOpenMediaPicker !== 'function') return;
+            window.npOpenMediaPicker((item) => {
+              setBlockImage(item.filePath, item.originalName || '');
+            });
+          });
+
+          card.querySelector('[data-block-image-remove]')?.addEventListener('click', () => {
+            block.attrs = block.attrs || {};
+            block.attrs.src = '';
+            sync();
+          });
         } else if (block.type === 'button') {
           card.innerHTML += `<input class="form-control mb-1" data-field="url" placeholder="URL" value="${escapeHtml(block.attrs?.url || '')}">
             <input class="form-control" data-field="label" placeholder="Label" value="${escapeHtml(block.attrs?.label || '')}">`;

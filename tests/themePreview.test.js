@@ -14,6 +14,14 @@ test('theme customize preview redirects to public site with flag', async () => {
   expect(response.headers.location).toMatch(/customizer_preview=1/);
 });
 
+test('theme live preview redirects to public site with theme slug', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const response = await agent.get('/admin/themes/classic-blog/preview');
+  expect(response.status).toBe(302);
+  expect(response.headers.location).toMatch(/theme_preview=classic-blog/);
+});
+
 test('theme preview draft stores customizer draft in session', async () => {
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');

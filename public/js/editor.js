@@ -87,17 +87,57 @@ if (editorForm) {
   });
 }
 
-document.addEventListener('click', (event) => {
-  const picker = event.target.closest('[data-open-media-picker]');
-  if (!picker) return;
-  const field = picker.dataset.openMediaPicker;
-  window.activeMediaTargetField = field;
-  if (typeof activeMediaTargetField !== 'undefined') {
-    try { activeMediaTargetField = field; } catch (e) { /* legacy */ }
-  }
-  const modal = document.getElementById('mediaGalleryModal');
-  if (modal && window.bootstrap) {
-    bootstrap.Modal.getOrCreateInstance(modal).show();
-    if (typeof loadMediaGallery === 'function') loadMediaGallery();
-  }
-});
+function hideTinyMceImageSourceField() {
+  const dialog = document.querySelector('.tox-dialog');
+  if (!dialog) return;
+  dialog.querySelectorAll('.tox-form__group').forEach((group) => {
+    const label = group.querySelector('label');
+    const input = group.querySelector('input');
+    if (!label || !input) return;
+    const labelText = label.textContent.trim().toLowerCase();
+    if (labelText === 'source' || labelText === 'url' || input.type === 'url') {
+      group.style.display = 'none';
+    }
+  });
+}
+
+if (window.tinymce && document.querySelector('.rich-editor')) {
+  tinymce.init({
+    selector: '.rich-editor',
+    license_key: 'gpl',
+    base_url: '/vendor/tinymce',
+    suffix: '.min',
+    height: 420,
+    menubar: false,
+    plugins: 'link image media table lists code autoresize',
+    toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code',
+    automatic_uploads: true,
+    paste_data_images: true,
+    image_uploadtab: true,
+    images_file_types: 'jpg,jpeg,png,gif,webp',
+    file_picker_types: 'image',
+    images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
+      if (typeof window.npUploadImage !== 'function') {
+        reject(new Error('Upload is not available.'));
+        return;
+      }
+      const blob = blobInfo.blob();
+      const file = new File([blob], blobInfo.filename(), { type: blob.type });
+      window.npUploadImage(file)
+        .then((data) => resolve(data.location))
+        .catch((error) => reject(error.message || 'Upload failed.'));
+    }),
+    file_picker_callback: (callback) => {
+      window.npOpenMediaPicker((item) => {
+        callback(item.filePath, { alt: item.originalName || '' });
+      });
+    },
+    setup(editor) {
+      editor.on('ExecCommand', (event) => {
+        if (event.command === 'mceImage') {
+          setTimeout(hideTinyMceImageSourceField, 50);
+        }
+      });
+    }
+  });
+}

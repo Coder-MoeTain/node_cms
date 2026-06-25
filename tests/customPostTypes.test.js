@@ -88,55 +88,24 @@ describe('Custom Post Types', () => {
     expect(Array.isArray(contentRes.body.data)).toBe(true);
     expect(contentRes.body.data.length).toBeGreaterThan(0);
   });
-});
 
-describe('Custom Fields', () => {
-  test('admin can attach field group to custom post type and save values', async () => {
-    const typeSlug = `events-${Date.now()}`;
-    await models.CustomPostType.create({
-      name: 'Events',
-      slug: typeSlug,
-      status: 'active',
-      supports_custom_fields: true
-    });
+  test('inactive custom post type is hidden from public archive', async () => {
+    const type = await models.CustomPostType.findOne({ where: { slug: typeSlug } });
+    await type.update({ status: 'inactive' });
+    const archive = await request(app).get(`/types/${typeSlug}`);
+    expect(archive.status).toBe(404);
+    await type.update({ status: 'active' });
+  });
 
-    const group = await models.FieldGroup.create({
-      name: 'Event Details',
-      slug: `event-details-${Date.now()}`,
-      location_type: 'custom_post_type',
-      location_value: typeSlug,
-      status: 'active'
-    });
-    await models.CustomField.create({
-      field_group_id: group.id,
-      label: 'Event Date',
-      name: 'event_date',
-      type: 'date',
-      is_required: true,
-      status: 'active'
-    });
-
+  test('admin CPT list and edit pages load', async () => {
     const agent = request.agent(app);
     await login(agent, 'admin@example.com', 'Admin@12345');
-    const csrf = await getCsrf(agent, `/admin/content/${typeSlug}/create`);
-    const slug = `event-${Date.now()}`;
-    const res = await agent.post(`/admin/content/${typeSlug}`).type('form').send({
-      title: 'Town Hall',
-      slug,
-      content: '<p>Event</p>',
-      status: 'published',
-      cf_event_date: '2026-12-01',
-      _csrf: csrf
-    });
-    expect(res.status).toBe(302);
-
-    const post = await models.Post.findOne({ where: { slug, post_type: typeSlug } });
-    const value = await models.CustomFieldValue.findOne({
-      where: { resource_type: 'custom_post', resource_id: post.id },
-      include: [models.CustomField]
-    });
-    expect(value).toBeTruthy();
-    expect(value.value_text).toBe('2026-12-01');
+    const list = await agent.get('/admin/custom-post-types');
+    expect(list.status).toBe(200);
+    expect(list.text).toMatch(/Test News|Custom Post Types/i);
+    const type = await models.CustomPostType.findOne({ where: { slug: typeSlug } });
+    const edit = await agent.get(`/admin/custom-post-types/${type.id}/edit`);
+    expect(edit.status).toBe(200);
   });
 });
 

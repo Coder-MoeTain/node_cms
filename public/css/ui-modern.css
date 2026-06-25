@@ -143,7 +143,7 @@ body {
 }
 
 .post-card-title {
-  font-size: 1.125rem;
+  font-size: calc(1.125rem - 3pt);
   font-weight: 600;
   line-height: 1.35;
   margin: 0 0 var(--np-space-2);
@@ -205,6 +205,49 @@ body {
 .post-card-tag:hover {
   background: #e2e8f0;
   color: var(--site-primary);
+}
+
+.post-edit-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--site-primary, #0d6efd);
+  background: rgba(13, 110, 253, 0.08);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.post-edit-link:hover {
+  color: #fff;
+  background: var(--site-primary, #0d6efd);
+}
+
+.post-card-meta,
+.site-post-meta,
+.portal-post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.post-admin-actions {
+  margin: 0.5rem 0 0;
+}
+
+.portal-post-meta .post-edit-link {
+  margin-left: 0;
+}
+
+.card-body .post-edit-link {
+  position: relative;
+  z-index: 2;
 }
 
 /* --- Portal post list with thumbnails --- */

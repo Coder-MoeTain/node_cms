@@ -509,7 +509,7 @@
 .portal-post-list > li:last-child { border-bottom: 0; }
 
 .portal-post-title {
-  font-size: 0.95rem;
+  font-size: calc(0.95rem - 3pt);
   font-weight: 600;
   line-height: 1.35;
   margin: 0 0 4px;

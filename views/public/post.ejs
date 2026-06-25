@@ -31,6 +31,9 @@
             <a class="post-category-pill" href="/category/<%= post.Category.slug %>"><%= post.Category.name %></a>
           <% } %>
           <h1 class="post-title"><%= post.title %></h1>
+          <% if (typeof canEditPost === 'function' && canEditPost(post)) { %>
+            <p class="post-admin-actions"><%- include('partials/post-edit-link', { post }) %></p>
+          <% } %>
           <% if (post.excerpt) { %><p class="post-lead"><%= post.excerpt %></p><% } %>
           <ul class="post-meta-list">
             <li>

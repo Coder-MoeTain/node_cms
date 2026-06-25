@@ -28,6 +28,14 @@ Default admin: `admin@example.com` / `Admin@12345`
 | `auth.test.js`, `authExtended.test.js`, `authTwoFactor.test.js` | Login, lockout, 2FA |
 | `rbac.test.js`, `rbacOwnership.test.js`, `policy.test.js` | Permissions |
 | `posts.test.js`, `pages.test.js`, `crudAdmin.test.js` | CRUD |
+| `customPostTypes.test.js` | Custom post types (admin → public → API) |
+| `customFields.test.js` | Field groups, validation, public render |
+| `revisionsAutosave.test.js` | Revision history, restore, autosave API |
+| `templatesFse.test.js` | Site templates / block JSON editor |
+| `importExport.integration.test.js` | Export, import, dry-run, CLI export |
+| `networkMultisite.test.js` | Multisite flag, network admin, site resolver |
+| `cli.test.js` | `bin/nodepress` commands |
+| `wordpressFeatures.test.js` | Widgets, comments, health, blocks |
 | `media.test.js`, `uploads*.test.js`, `zipUpload.test.js` | Uploads |
 | `plugins*.test.js`, `hookManager.test.js` | Plugins |
 | `themes*.test.js`, `themePreview.test.js`, `themeManager.test.js` | Themes |

@@ -58,6 +58,11 @@ test('discoverThemeAssets lists inheritance chain', () => {
   expect(Array.isArray(assets.templates)).toBe(true);
 });
 
+test('resolveThemePreviewImage finds bundled screenshot', () => {
+  const image = themeLoader.resolveThemePreviewImage('classic-blog');
+  expect(image).toMatch(/screenshot\.(svg|png|jpe?g|webp)$/);
+});
+
 test('validateManifest rejects invalid slug', () => {
   expect(() => themeLoader.validateManifest({ name: 'Bad', slug: 'Bad Theme', version: '1.0.0' }))
     .toThrow(/slug/i);

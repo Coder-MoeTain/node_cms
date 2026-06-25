@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { Theme, ThemeSetting } = require('../../models');
 const themeManager = require('../../utils/themeManager');
+const themeLoader = require('../../utils/themeLoader');
 const { resolvePortalConfig, stripManagedBlocks, parseThemeVars } = require('../../utils/portalConfig');
 const { resolveImageValue } = require('../../utils/uploadHelper');
 const { zipUpload } = require('../../middleware/zipUpload');
@@ -17,6 +18,17 @@ function normalizeLogoPlacement(value) {
   return allowed.includes(value) ? value : 'left';
 }
 
+function enrichThemeRow(theme) {
+  const plain = theme.get ? theme.get({ plain: true }) : { ...theme };
+  const manifest = plain.manifest || themeLoader.getManifestBySlug(plain.slug) || {};
+  return {
+    ...plain,
+    preview_image: themeLoader.resolveThemePreviewImage(plain.slug) || plain.preview_image || null,
+    version: manifest.version || '1.0.0',
+    author: manifest.author || null
+  };
+}
+
 async function index(req, res, next) {
   try {
     await themeManager.syncInstalledThemes();
@@ -24,13 +36,18 @@ async function index(req, res, next) {
       Theme.findAll({ order: [['name', 'ASC']] }),
       ThemeSetting.findOne({ where: { active: true } })
     ]);
-    const themeAssets = themes.reduce((map, theme) => {
+    const enrichedThemes = themes.map(enrichThemeRow);
+    const themeAssets = enrichedThemes.reduce((map, theme) => {
       map[theme.slug] = themeManager.discoverThemeAssets(theme.slug);
       return map;
     }, {});
+    const activeTheme = enrichedThemes.find((theme) => theme.active) || null;
+    const inactiveThemes = enrichedThemes.filter((theme) => !theme.active);
     return res.render('admin/themes/index', {
       title: 'Themes',
-      themes,
+      themes: enrichedThemes,
+      activeTheme,
+      inactiveThemes,
       themeSetting: themeSetting || {},
       themeAssets,
       builtInThemes: themeManager.BUILT_IN_THEMES
@@ -49,7 +66,7 @@ async function show(req, res, next) {
     const details = themeManager.getThemeDetails(req.params.slug);
     return res.render('admin/themes/show', {
       title: themeRow.name,
-      theme: themeRow,
+      theme: enrichThemeRow(themeRow),
       details,
       assets: details?.assets || { templates: [], partials: [], chain: [] }
     });
@@ -212,6 +229,20 @@ async function previewTheme(req, res) {
   return res.redirect('/?customizer_preview=1');
 }
 
+async function previewThemeLive(req, res, next) {
+  try {
+    const slug = req.params.slug;
+    const theme = await Theme.findOne({ where: { slug } });
+    if (!theme) {
+      req.flash('error', 'Theme not found.');
+      return res.redirect('/admin/themes');
+    }
+    return res.redirect(`/?theme_preview=${encodeURIComponent(slug)}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   index,
   show,
@@ -222,5 +253,6 @@ module.exports = {
   resetSettings,
   upload,
   uninstall,
-  previewTheme
+  previewTheme,
+  previewThemeLive
 };

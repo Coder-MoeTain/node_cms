@@ -12,6 +12,7 @@
     <div class="site-post-meta">
       <% if (post.Category) { %><span class="post-card-category"><%= post.Category.name %></span><% } %>
       <% if (dateStr) { %><time datetime="<%= dateIso %>"><%= dateStr %></time><% } %>
+      <%- include('post-edit-link', { post }) %>
     </div>
     <h3 class="site-post-title"><a href="/post/<%= post.slug %>"><%= post.title %></a></h3>
     <% if (post.excerpt) { %><p class="site-post-excerpt"><%= post.excerpt.length > 160 ? post.excerpt.slice(0, 160) + '…' : post.excerpt %></p><% } %>

@@ -2,6 +2,11 @@ const request = require('supertest');
 const { app, models } = require('../server');
 const { login, getCsrf } = require('./helpers');
 
+const PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64'
+);
+
 beforeAll(async () => {
   await models.User.update({ force_password_change: false }, { where: { email: 'admin@example.com' } });
 });
@@ -50,6 +55,21 @@ test('media gallery JSON endpoint returns items', async () => {
   const response = await agent.get('/admin/settings/media-gallery?type=image');
   expect(response.status).toBe(200);
   expect(response.body.items).toEqual(expect.any(Array));
+});
+
+test('editor JSON upload returns image location', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/media');
+
+  const response = await agent
+    .post('/admin/media/upload-json')
+    .set('x-csrf-token', csrf)
+    .attach('file', PNG, { filename: 'editor-upload.png', contentType: 'image/png' });
+
+  expect(response.status).toBe(200);
+  expect(response.body.location).toMatch(/^\/uploads\//);
+  expect(response.body.filePath).toBe(response.body.location);
 });
 
 test('guest cannot access media library', async () => {

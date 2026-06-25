@@ -1,8 +1,18 @@
-const { loadTranslation, applyManualTranslation } = require('./contentTranslationStore');
+const { loadTranslation, loadTranslationsBatch, applyManualTranslation } = require('./contentTranslationStore');
+const { createEngine } = require('./translationEngine');
 
 function asPlain(value) {
   if (!value) return value;
   return typeof value.get === 'function' ? value.get({ plain: true }) : { ...value };
+}
+
+function resolveContentEngine(engine, contentLocale) {
+  if (!engine) return null;
+  if (!contentLocale || contentLocale === engine.sourceLocale) return engine;
+  return createEngine(engine.targetLocale, {
+    sourceLocale: contentLocale,
+    useDatabase: engine.useDatabase
+  });
 }
 
 async function translateFields(engine, record, fields, { htmlFields = [] } = {}) {
@@ -24,14 +34,27 @@ async function translateFields(engine, record, fields, { htmlFields = [] } = {})
 
 async function translateWithManual(engine, record, resourceType, fields, options = {}) {
   if (!record) return record;
-  if (!engine?.isActive) return asPlain(record);
-
   const plain = asPlain(record);
-  const manual = await loadTranslation(resourceType, plain.id, engine.targetLocale);
-  if (manual && (manual.title || manual.content || manual.excerpt || manual.seo_title || manual.seo_description || manual.name || manual.description)) {
-    return applyManualTranslation(plain, manual);
-  }
-  return translateFields(engine, plain, fields, options);
+  const contentEngine = resolveContentEngine(engine, options.contentLocale);
+  if (!contentEngine?.isActive) return plain;
+
+  const manual = options.manualMap?.get(plain.id) || await loadTranslation(resourceType, plain.id, contentEngine.targetLocale);
+  const htmlSet = new Set(options.htmlFields || []);
+
+  await Promise.all(
+    fields.map(async (field) => {
+      if (manual?.[field]) {
+        plain[field] = manual[field];
+        return;
+      }
+      if (!plain[field]) return;
+      plain[field] = htmlSet.has(field)
+        ? await contentEngine.translateHtml(plain[field])
+        : await contentEngine.translate(plain[field]);
+    })
+  );
+
+  return plain;
 }
 
 async function translateMenuTree(engine, items = []) {
@@ -59,15 +82,11 @@ async function translateMenus(engine, menus = {}) {
   return translated;
 }
 
-async function translatePost(engine, post, resourceType = 'post') {
+async function translatePost(engine, post, resourceType = 'post', contentLocale = null) {
   if (!post) return post;
-  const translated = await translateWithManual(
-    engine,
-    post,
-    resourceType,
-    ['title', 'excerpt', 'content', 'seo_title', 'seo_description'],
-    { htmlFields: ['content', 'seo_description'] }
-  );
+  const postFields = ['title', 'excerpt', 'content', 'seo_title', 'seo_description'];
+  const fieldOptions = { htmlFields: ['content', 'seo_description'], contentLocale };
+  const translated = await translateWithManual(engine, post, resourceType, postFields, fieldOptions);
   if (translated.Category) {
     translated.Category = await translateCategory(engine, translated.Category);
   }
@@ -83,20 +102,40 @@ async function translatePost(engine, post, resourceType = 'post') {
   return translated;
 }
 
-async function translatePosts(engine, posts = [], resourceType = 'post') {
-  if (!engine?.isActive || !posts.length) return posts;
-  return Promise.all(posts.map((post) => translatePost(engine, post, resourceType)));
+async function translatePosts(engine, posts = [], resourceType = 'post', contentLocale = null) {
+  if (!posts.length) return posts;
+  const contentEngine = resolveContentEngine(engine, contentLocale);
+  if (!contentEngine?.isActive) return posts.map((post) => asPlain(post));
+
+  const ids = posts.map((post) => asPlain(post).id).filter(Boolean);
+  const manualMap = await loadTranslationsBatch(resourceType, ids, contentEngine.targetLocale);
+  const postFields = ['title', 'excerpt', 'content', 'seo_title', 'seo_description'];
+  const fieldOptions = { htmlFields: ['content', 'seo_description'], contentLocale, manualMap };
+
+  return Promise.all(
+    posts.map(async (post) => {
+      const translated = await translateWithManual(engine, post, resourceType, postFields, fieldOptions);
+      if (translated.Category) translated.Category = await translateCategory(engine, translated.Category);
+      if (translated.category) translated.category = await translateCategory(engine, translated.category);
+      if (translated.Tags?.length) translated.Tags = await translateTags(engine, translated.Tags);
+      if (translated.tags?.length) translated.tags = await translateTags(engine, translated.tags);
+      return translated;
+    })
+  );
 }
 
-async function translatePage(engine, page) {
+async function translatePage(engine, page, contentLocale = null) {
   return translateWithManual(engine, page, 'page', ['title', 'excerpt', 'content', 'seo_title', 'seo_description'], {
-    htmlFields: ['content', 'seo_description']
+    htmlFields: ['content', 'seo_description'],
+    contentLocale
   });
 }
 
-async function translatePages(engine, pages = []) {
-  if (!engine?.isActive || !pages.length) return pages;
-  return Promise.all(pages.map((page) => translatePage(engine, page)));
+async function translatePages(engine, pages = [], contentLocale = null) {
+  if (!pages.length) return pages;
+  const contentEngine = resolveContentEngine(engine, contentLocale);
+  if (!contentEngine?.isActive) return pages.map((page) => asPlain(page));
+  return Promise.all(pages.map((page) => translatePage(engine, page, contentLocale)));
 }
 
 async function translateCategory(engine, category) {

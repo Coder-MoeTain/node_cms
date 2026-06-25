@@ -4,14 +4,19 @@
       <div class="modal-header">
         <div>
           <h5 class="modal-title" id="mediaGalleryModalLabel">Media Library</h5>
-          <small class="text-muted">Select an image from your library.</small>
+          <small class="text-muted">Upload a photo or choose one from your library.</small>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="media-gallery-toolbar">
-          <span class="text-muted">Choose an attachment</span>
-          <a class="np-btn np-btn-secondary np-btn-small" href="/admin/media" target="_blank"><i class="bi bi-upload"></i> Upload New</a>
+          <div class="media-gallery-upload">
+            <input type="file" class="d-none" id="mediaGalleryUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+            <button type="button" class="np-btn np-btn-primary np-btn-small" data-media-gallery-upload>
+              <i class="bi bi-upload"></i> Upload Photo
+            </button>
+            <span class="text-muted small ms-2" data-media-gallery-upload-status></span>
+          </div>
         </div>
         <div class="media-gallery-grid" data-media-gallery-grid>
           <div class="media-gallery-empty">Loading media...</div>

@@ -12,6 +12,9 @@
     <article>
       <% if (post.featured_image) { %><figure class="mb-4"><img src="<%= post.featured_image %>" alt="<%= post.title %>" class="img-fluid rounded"></figure><% } %>
       <h1><%= post.title %></h1>
+      <% if (typeof canEditPost === 'function' && canEditPost(post)) { %>
+        <p class="post-admin-actions"><%- include('partials/post-edit-link', { post }) %></p>
+      <% } %>
       <% if (post.excerpt) { %><p class="lead text-muted"><%= post.excerpt %></p><% } %>
       <div class="post-content"><%- content || post.content %></div>
       <% if (customFields && Object.keys(customFields).length) { %>

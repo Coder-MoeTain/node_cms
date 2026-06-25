@@ -38,29 +38,31 @@ async function renderTheme(res, template, locals) {
 
 async function translateViewData(res, data) {
   const engine = res.locals.translationEngine;
-  if (!engine?.isActive) return data;
+  const contentLocale = res.locals.contentLocale || null;
   const output = { ...data };
 
-  if (output.post) output.post = await translatePost(engine, output.post);
-  if (output.posts) output.posts = await translatePosts(engine, output.posts);
-  if (output.page) output.page = await translatePage(engine, output.page);
-  if (output.pages) output.pages = await translatePages(engine, output.pages);
-  if (output.relatedPosts) output.relatedPosts = await translatePosts(engine, output.relatedPosts);
-  if (output.prevPost) output.prevPost = await translatePost(engine, output.prevPost);
-  if (output.nextPost) output.nextPost = await translatePost(engine, output.nextPost);
-  if (output.latestNews) output.latestNews = await translatePosts(engine, output.latestNews);
-  if (output.announcements) output.announcements = await translatePosts(engine, output.announcements);
-  if (output.tenderPosts) output.tenderPosts = await translatePosts(engine, output.tenderPosts);
-  if (output.jobPosts) output.jobPosts = await translatePosts(engine, output.jobPosts);
-  if (output.hotPosts) output.hotPosts = await translatePosts(engine, output.hotPosts);
+  if (output.post) output.post = await translatePost(engine, output.post, 'post', contentLocale);
+  if (output.posts) output.posts = await translatePosts(engine, output.posts, 'post', contentLocale);
+  if (output.page) output.page = await translatePage(engine, output.page, contentLocale);
+  if (output.pages) output.pages = await translatePages(engine, output.pages, contentLocale);
+  if (output.relatedPosts) output.relatedPosts = await translatePosts(engine, output.relatedPosts, 'post', contentLocale);
+  if (output.prevPost) output.prevPost = await translatePost(engine, output.prevPost, 'post', contentLocale);
+  if (output.nextPost) output.nextPost = await translatePost(engine, output.nextPost, 'post', contentLocale);
+  if (output.latestNews) output.latestNews = await translatePosts(engine, output.latestNews, 'post', contentLocale);
+  if (output.announcements) output.announcements = await translatePosts(engine, output.announcements, 'post', contentLocale);
+  if (output.tenderPosts) output.tenderPosts = await translatePosts(engine, output.tenderPosts, 'post', contentLocale);
+  if (output.jobPosts) output.jobPosts = await translatePosts(engine, output.jobPosts, 'post', contentLocale);
+  if (output.hotPosts) output.hotPosts = await translatePosts(engine, output.hotPosts, 'post', contentLocale);
   if (output.banners) output.banners = await translateBanners(engine, output.banners);
   if (output.sliders) output.sliders = await translateSliders(engine, output.sliders);
-  if (output.title && typeof output.title === 'string') output.title = await engine.translate(output.title);
-  if (output.heading && typeof output.heading === 'string') output.heading = await engine.translate(output.heading);
-  if (output.seo) {
-    output.seo = { ...output.seo };
-    if (output.seo.title) output.seo.title = await engine.translate(output.seo.title);
-    if (output.seo.description) output.seo.description = await engine.translate(output.seo.description);
+  if (engine?.isActive) {
+    if (output.title && typeof output.title === 'string') output.title = await engine.translate(output.title);
+    if (output.heading && typeof output.heading === 'string') output.heading = await engine.translate(output.heading);
+    if (output.seo) {
+      output.seo = { ...output.seo };
+      if (output.seo.title) output.seo.title = await engine.translate(output.seo.title);
+      if (output.seo.description) output.seo.description = await engine.translate(output.seo.description);
+    }
   }
 
   return output;
