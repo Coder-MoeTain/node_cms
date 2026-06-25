@@ -35,7 +35,6 @@
   --admin-font-size-body: 14px;
   --admin-font-size-help: 12px;
   --admin-font-size-table: 13px;
-  --admin-sidebar-width-collapsed: 64px;
 
   /* Map legacy np-* tokens to admin system */
   --np-admin-bg: var(--admin-bg);
@@ -187,42 +186,12 @@
   margin-bottom: var(--admin-space-3);
 }
 
-.admin-sidebar .nav-link span,
-.nav-menu-toggle > span {
-  flex: 1;
-}
-
-.sidebar-brand-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--admin-sidebar-text);
-  min-height: 48px;
-}
-
-.sidebar-brand-text {
-  font-size: 14px;
-  letter-spacing: 0.02em;
-}
-
 .admin-topbar {
   background: var(--admin-topbar-bg);
   border-bottom: 1px solid var(--admin-border);
   box-shadow: var(--admin-shadow);
   color: var(--admin-topbar-text);
-  left: var(--np-sidebar-width);
   padding: 0 var(--admin-space-4);
-  width: calc(100% - var(--np-sidebar-width));
-}
-
-body.admin-sidebar-collapsed .admin-topbar {
-  left: var(--admin-sidebar-width-collapsed);
-  width: calc(100% - var(--admin-sidebar-width-collapsed));
-}
-
-@media (max-width: 991.98px) {
-  .admin-topbar {
-    left: 0;
-    width: 100%;
-  }
 }
 
 .np-help-panel {
@@ -398,43 +367,6 @@ body.admin-sidebar-collapsed .admin-topbar {
 .topbar-badge-alert:hover {
   background: #f8d7da;
   color: var(--admin-danger);
-}
-
-/* --- Sidebar collapse (Phase 3/11) --- */
-body.admin-sidebar-collapsed {
-  --np-sidebar-width: var(--admin-sidebar-width-collapsed);
-}
-
-body.admin-sidebar-collapsed .admin-sidebar .nav-link span,
-body.admin-sidebar-collapsed .admin-sidebar .nav-menu-toggle span,
-body.admin-sidebar-collapsed .admin-sidebar .nav-section,
-body.admin-sidebar-collapsed .admin-sidebar .sidebar-brand-text,
-body.admin-sidebar-collapsed .admin-sidebar .nav-menu-toggle .bi-chevron-down {
-  opacity: 0;
-  pointer-events: none;
-  position: absolute;
-  width: 0;
-}
-
-body.admin-sidebar-collapsed .admin-sidebar .nav-link,
-body.admin-sidebar-collapsed .admin-sidebar .nav-menu-toggle {
-  justify-content: center;
-  padding-inline: 0;
-}
-
-body.admin-sidebar-collapsed .admin-sidebar .nav-submenu { display: none !important; }
-
-.sidebar-collapse-toggle {
-  background: transparent;
-  border: 0;
-  color: var(--admin-sidebar-muted);
-  display: none;
-  margin-left: auto;
-  padding: 6px;
-}
-
-@media (min-width: 992px) {
-  .sidebar-collapse-toggle { display: inline-flex; }
 }
 
 /* --- Dashboard (Phase 4) --- */
