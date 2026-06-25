@@ -2,10 +2,12 @@
 <%- include(themePartial('header')) %>
 <main class="<%= isPortal ? 'container portal-page portal-main py-4' : 'site-page site-main py-5' %>" id="main-content">
   <div class="<%= isPortal ? '' : 'container' %>">
-    <nav class="<%= isPortal ? 'portal-breadcrumb' : 'site-breadcrumb' %>" aria-label="Breadcrumb">
-      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Search</span>
-    </nav>
-    <h1 class="<%= isPortal ? 'portal-page-title mb-4' : 'site-page-title mb-4' %>">Search</h1>
+    <%- include('partials/page-header', {
+      title: 'Search',
+      subtitle: q ? ('Results for “' + q + '”') : 'Find posts, pages, and documents across the site.',
+      isPortal: isPortal,
+      crumbs: [{ label: 'Home', url: '/' }, { label: 'Search' }]
+    }) %>
     <form class="<%= isPortal ? 'portal-search-page-form portal-card-bordered p-3 mb-4' : 'site-search-form mb-4' %>" action="/search" role="search">
       <label class="form-label" for="search-q">Search query</label>
       <div class="d-flex gap-2 flex-wrap">
@@ -13,11 +15,11 @@
         <button class="site-btn <%= isPortal ? 'portal-btn' : '' %>" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Search</button>
       </div>
     </form>
-    <% if (q) { %><p class="<%= isPortal ? 'portal-search-results-label' : 'site-search-results-label' %>">Results for “<%= q %>”</p><% } %>
+    <% if (q) { %><p class="<%= isPortal ? 'portal-search-results-label' : 'site-search-results-label' %>" aria-live="polite"><%= posts.length + (pages ? pages.length : 0) %> result<%= (posts.length + (pages ? pages.length : 0)) === 1 ? '' : 's' %> for “<%= q %>”</p><% } %>
     <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
       <section class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
         <% if (pages && pages.length) { %>
-          <div class="<%= isPortal ? 'portal-widget portal-card-bordered mb-4' : 'site-panel mb-4' %>">
+          <div class="<%= isPortal ? 'portal-widget site-widget portal-card-bordered mb-4' : 'site-panel mb-4' %>">
             <header class="<%= isPortal ? 'portal-widget-header' : 'site-panel-header' %>"><h2 class="<%= isPortal ? 'portal-widget-title' : 'site-panel-title' %>">Pages</h2></header>
             <div class="<%= isPortal ? 'portal-widget-body' : 'site-panel-body' %>">
               <ul class="<%= isPortal ? 'portal-sidebar-list' : 'site-link-list' %>">
@@ -28,7 +30,7 @@
             </div>
           </div>
         <% } %>
-        <div class="<%= isPortal ? 'portal-list-panel portal-card-bordered' : 'site-panel' %>">
+        <div class="<%= isPortal ? 'portal-list-panel site-list-panel portal-card-bordered' : 'site-list-panel site-panel' %>">
           <% if (posts.length) { %>
             <ul class="<%= isPortal ? 'portal-post-list portal-post-list-page' : 'site-post-list' %>">
               <% posts.forEach(function(post) { %>

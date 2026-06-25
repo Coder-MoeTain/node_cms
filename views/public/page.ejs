@@ -2,23 +2,20 @@
 <%- include(themePartial('header')) %>
 <% if (page.featured_image) { %>
   <figure class="post-hero">
-    <img src="<%= page.featured_image %>" alt="<%= page.title %>">
+    <img src="<%= page.featured_image %>" alt="<%= page.title %>" decoding="async">
     <div class="post-hero-shade" aria-hidden="true"></div>
   </figure>
 <% } %>
-<main class="container portal-page portal-main py-4" id="main-content">
-  <nav class="portal-breadcrumb" aria-label="Breadcrumb">
-    <a href="/">Home</a> <span aria-hidden="true">/</span> <span><%= page.title %></span>
-  </nav>
+<main class="<%= isPortal ? 'container portal-page portal-main py-4' : 'container site-page py-4 py-lg-5' %>" id="main-content">
+  <%- include('partials/page-header', { title: page.title, isPortal: isPortal, crumbs: [{ label: 'Home', url: '/' }, { label: page.title }] }) %>
   <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
     <article class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
-      <div class="portal-list-panel portal-card-bordered content-page p-4">
-        <h1 class="portal-page-title mb-3"><%= page.title %></h1>
-        <div class="content portal-page-content"><%- page.content %></div>
+      <div class="portal-list-panel site-list-panel portal-card-bordered content-page ds-prose p-4">
+        <div class="content portal-page-content entry-content"><%- page.content %></div>
       </div>
     </article>
     <% if (activeTheme.sidebar_position !== 'none') { %>
-      <div class="col-lg-4"><%- include(themePartial('sidebar')) %></div>
+      <div class="col-lg-4"><%- include(themePartial(isPortal ? 'sidebar' : 'standard-sidebar')) %></div>
     <% } %>
   </div>
 </main>

@@ -4,7 +4,7 @@ const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post, Media, Plugin
 const pluginLoader = require('../utils/pluginLoader');
 const themeLoader = require('../utils/themeLoader');
 const { resolveThemePartials } = require('../utils/themePartials');
-const { resolvePortalConfig, resolveThemePreset, parseThemeVars } = require('../utils/portalConfig');
+const { resolvePortalConfig, resolveThemePreset, parseThemeVars, parseDesignTokens } = require('../utils/portalConfig');
 const {
   translateMenus,
   translatePosts,
@@ -102,6 +102,7 @@ async function loadSiteContext(req, res, next) {
     res.locals.portalConfig = resolvePortalConfig(themePlain);
     res.locals.themePreset = resolveThemePreset(themePlain, res.locals.portalConfig);
     res.locals.themeVars = parseThemeVars(themePlain.custom_css || '');
+    res.locals.designTokens = parseDesignTokens(themePlain.custom_css || '');
     res.locals.themeLayoutClasses = themeLoader.getLayoutClasses(themePlain);
     res.locals.themePartials = await resolveThemePartials();
     res.locals.themePartial = (name) => res.locals.themePartials[name] || `public/partials/${name}`;

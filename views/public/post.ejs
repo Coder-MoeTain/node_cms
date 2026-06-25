@@ -8,9 +8,10 @@
   const authorInitial = post.author && post.author.name ? post.author.name.trim().charAt(0).toUpperCase() : 'A';
 %>
 <main class="<%= isPortal ? 'portal-main portal-page' : '' %> post-page" id="main-content">
+  <div class="post-reading-progress" aria-hidden="true"><div class="post-reading-progress-bar" data-reading-progress></div></div>
   <% if (post.featured_image) { %>
     <figure class="post-hero">
-      <img src="<%= post.featured_image %>" alt="<%= post.title %>">
+      <img src="<%= post.featured_image %>" alt="<%= post.title %>" decoding="async" fetchpriority="high">
       <div class="post-hero-shade" aria-hidden="true"></div>
     </figure>
   <% } %>
@@ -35,6 +36,7 @@
             <p class="post-admin-actions"><%- include('partials/post-edit-link', { post }) %></p>
           <% } %>
           <% if (post.excerpt) { %><p class="post-lead"><%= post.excerpt %></p><% } %>
+          <%- include('partials/post-toolbar', { post }) %>
           <ul class="post-meta-list">
             <li>
               <i class="bi bi-calendar3" aria-hidden="true"></i>
@@ -116,11 +118,8 @@
 
         <% if (relatedPosts && relatedPosts.length) { %>
           <section class="post-related portal-related-posts">
-            <div class="portal-section-head portal-section-head-inline mb-3">
-              <h2 class="portal-section-title">Related posts</h2>
-              <a class="portal-view-all" href="/blog">View all</a>
-            </div>
-            <ul class="portal-post-list portal-post-list-page portal-card-bordered p-3">
+            <%- include('partials/section-head', { title: 'Related posts', viewAllUrl: '/blog', viewAllLabel: 'View all', inline: true, headClass: 'mb-3' }) %>
+            <ul class="portal-post-list portal-post-list-page portal-card-bordered site-list-panel p-3">
               <% relatedPosts.forEach(function(item) { %>
                 <li><%- include(themePartial('portal-post-item'), { post: item, showExcerpt: true }) %></li>
               <% }) %>

@@ -1,36 +1,27 @@
-<%- include(themePartial('head')) %>
-<%- include(themePartial('header')) %>
-<main class="container portal-page portal-main py-4" id="main-content">
-  <nav class="portal-breadcrumb" aria-label="Breadcrumb">
-    <a href="/">Home</a> <span aria-hidden="true">/</span> <span><%= heading %></span>
-  </nav>
-  <h1 class="portal-page-title mb-4"><%= heading %></h1>
-  <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
-    <section class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
-      <div class="portal-list-panel portal-card-bordered">
-        <% if (posts.length) { %>
-          <ul class="portal-post-list portal-post-list-page">
-            <% posts.forEach(function(post) { %>
-              <li><%- include(themePartial('portal-post-item'), { post }) %></li>
-            <% }) %>
-          </ul>
-        <% } else { %>
-          <%- include(themePartial('portal-empty'), { icon: 'archive', message: 'No posts in this archive yet.' }) %>
-        <% } %>
-      </div>
-      <% if (pagination && pagination.pages > 1) { %>
-        <nav class="portal-pagination mt-4" aria-label="Archive pagination">
-          <ul class="pagination">
-            <% for (let i = 1; i <= pagination.pages; i++) { %>
-              <li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?page=<%= i %>"><%= i %></a></li>
-            <% } %>
-          </ul>
-        </nav>
-      <% } %>
-    </section>
-    <% if (activeTheme.sidebar_position !== 'none') { %>
-      <div class="col-lg-4"><%- include(themePartial('sidebar')) %></div>
-    <% } %>
-  </div>
-</main>
-<%- include(themePartial('footer')) %>
+<%- include(themePartial('head')) %>
+<%- include(themePartial('header')) %>
+<main class="container portal-page portal-main py-4" id="main-content">
+  <%- include('partials/page-header', { title: heading, isPortal: true, crumbs: [{ label: 'Home', url: '/' }, { label: heading }] }) %>
+  <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
+    <section class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
+      <div class="portal-list-panel site-list-panel portal-card-bordered">
+        <% if (posts.length) { %>
+          <ul class="portal-post-list portal-post-list-page">
+            <% posts.forEach(function(post) { %>
+              <li><%- include(themePartial('portal-post-item'), { post, showExcerpt: true }) %></li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <%- include(themePartial('portal-empty'), { icon: 'archive', message: 'No posts in this archive yet.' }) %>
+        <% } %>
+      </div>
+      <% if (pagination && pagination.pages > 1) { %>
+        <%- include('../partials/pagination', { pagination, paginationBase: '?', paginationClass: 'portal-pagination mt-4', paginationLabel: 'Archive pagination' }) %>
+      <% } %>
+    </section>
+    <% if (activeTheme.sidebar_position !== 'none') { %>
+      <div class="col-lg-4"><%- include(themePartial('sidebar')) %></div>
+    <% } %>
+  </div>
+</main>
+<%- include(themePartial('footer')) %>

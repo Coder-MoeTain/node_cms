@@ -2,13 +2,10 @@
 <%- include(themePartial('header')) %>
 <% if (isPortal) { %>
 <main class="container portal-page portal-main py-4" id="main-content">
-  <nav class="portal-breadcrumb" aria-label="Breadcrumb">
-    <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Blog</span>
-  </nav>
-  <h1 class="portal-page-title mb-4">News &amp; Blog</h1>
+  <%- include('partials/page-header', { title: 'News & Blog', isPortal: true, crumbs: [{ label: 'Home', url: '/' }, { label: 'Blog' }] }) %>
   <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
     <section class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
-      <div class="portal-list-panel portal-card-bordered">
+      <div class="portal-list-panel site-list-panel portal-card-bordered">
         <% if (posts.length) { %>
           <ul class="portal-post-list portal-post-list-page">
             <% posts.forEach(function(post) { %>
@@ -28,12 +25,7 @@
 </main>
 <% } else { %>
 <main class="container site-page py-4 py-lg-5" id="main-content">
-  <header class="site-page-header">
-    <nav class="portal-breadcrumb mb-2" aria-label="Breadcrumb">
-      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Blog</span>
-    </nav>
-    <h1 class="site-page-title">News &amp; Blog</h1>
-  </header>
+  <%- include('partials/page-header', { title: 'News & Blog', subtitle: 'Articles, updates, and announcements.', isPortal: false, crumbs: [{ label: 'Home', url: '/' }, { label: 'Blog' }] }) %>
   <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
     <section class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
       <% if (posts.length) { %>

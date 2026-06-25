@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="/css/ui-modern.css">
   <link rel="stylesheet" href="/css/site.css">
   <link rel="stylesheet" href="/css/site-modern.css">
+  <link rel="stylesheet" href="/css/site-pages.css">
   <% if (typeof themeStylesheet !== 'undefined' && themeStylesheet) { %><link rel="stylesheet" href="<%= themeStylesheet %>"><% } %>
   <link rel="stylesheet" href="/css/language-switcher.css">
   <% const isPortalLayout = typeof isPortal !== 'undefined' && isPortal; %>
@@ -44,6 +45,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
   <% } %>
   <% const tv = themeVars || {};
+     const dt = (typeof designTokens !== 'undefined' && designTokens && designTokens.vars) ? designTokens.vars : {};
      const accent = tv.accent || activeTheme.primary_color || '#d71920';
      const cardColor = tv.card || '#ffffff';
      const footerBg = tv.footer || '#0b2f47';
@@ -97,11 +99,14 @@
       --site-button: <%= buttonColor %>;
       --site-button-hover: var(--gov-primary-dark);
       --site-font-family: <%= activeTheme.font_family || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' %>;
-      --site-radius-sm: 8px;
-      --site-radius-md: 14px;
-      --site-radius-lg: 22px;
-      --site-shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.06);
-      --site-shadow-md: 0 12px 30px rgba(15, 23, 42, 0.10);
+      --site-radius-sm: <%= dt.radiusSm || '8px' %>;
+      --site-radius-md: <%= dt.radiusMd || '14px' %>;
+      --site-radius-lg: <%= dt.radiusLg || '22px' %>;
+      --site-shadow-sm: <%= dt.shadowSm || '0 4px 12px rgba(15, 23, 42, 0.06)' %>;
+      --site-shadow-md: <%= dt.shadowMd || '0 12px 30px rgba(15, 23, 42, 0.10)' %>;
+      --site-shadow-lg: <%= dt.shadowLg || '0 20px 40px rgba(15, 23, 42, 0.12)' %>;
+      --site-section-pad: <%= dt.sectionPad || '3.5rem' %>;
+      --site-section-pad-mobile: <%= dt.sectionPadMobile || '2rem' %>;
       --site-container: 1180px;
       --site-header-z: 1030;
       --site-scroll-offset: 72px;
@@ -113,5 +118,5 @@
   <% if (typeof schema !== 'undefined' && schema) { %><script type="application/ld+json"><%- schema %></script><% } %>
   <% (pluginPublicHead || []).forEach(function(snippet) { %><%- snippet %><% }) %>
 </head>
-<body class="site-design-system <%= typeof themeLayoutClasses !== 'undefined' ? themeLayoutClasses : '' %> portal-preset-<%= themePreset || 'default' %> <%= isPortalLayout ? 'portal-layout-active' : 'standard-layout-active' %><% if (typeof isCustomizerPreview !== 'undefined' && isCustomizerPreview) { %> customizer-preview-active<% } %>">
+<body class="site-design-system <%= typeof themeLayoutClasses !== 'undefined' ? themeLayoutClasses : '' %> portal-preset-<%= themePreset || 'default' %> <%= isPortalLayout ? 'portal-layout-active' : 'standard-layout-active' %><% if (activeTheme.dark_mode) { %> theme-dark<% } %><% if (typeof isCustomizerPreview !== 'undefined' && isCustomizerPreview) { %> customizer-preview-active<% } %>">
 <a class="np-skip-link" href="#main-content">Skip to main content</a>

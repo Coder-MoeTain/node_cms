@@ -1,6 +1,7 @@
 document.querySelectorAll('img').forEach((img) => {
   if (img.closest('.portal-brand, .portal-footer-brand, .site-logo, .navbar-brand, .post-hero')) return;
-  img.loading = 'lazy';
+  if (!img.hasAttribute('loading')) img.loading = 'lazy';
+  if (!img.hasAttribute('decoding')) img.decoding = 'async';
 });
 
 const supportedLanguages = ['my', 'zh-CN', 'en', 'ru'];
@@ -381,8 +382,100 @@ function initBackToTop() {
   onScroll();
 }
 
-initPortalCarousel();
 initHeroCarousel();
+
+function initReadingProgress() {
+  const bar = document.querySelector('[data-reading-progress]');
+  const target = document.querySelector('.post-article, .post-page-shell, .post-page');
+  if (!bar || !target) return;
+
+  const update = () => {
+    const rect = target.getBoundingClientRect();
+    const total = target.scrollHeight - window.innerHeight;
+    if (total <= 0) {
+      bar.style.width = '0%';
+      return;
+    }
+    const scrolled = Math.min(Math.max(-rect.top, 0), total);
+    bar.style.width = `${(scrolled / total) * 100}%`;
+  };
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+}
+
+function initPostToolbar() {
+  document.querySelectorAll('[data-copy-url]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const url = window.location.href;
+      try {
+        await navigator.clipboard.writeText(url);
+        const label = button.innerHTML;
+        button.classList.add('is-copied');
+        button.innerHTML = '<i class="bi bi-check2" aria-hidden="true"></i> Copied';
+        window.setTimeout(() => {
+          button.classList.remove('is-copied');
+          button.innerHTML = label;
+        }, 1800);
+      } catch {
+        window.prompt('Copy this link:', url);
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-share-post]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const shareData = {
+        title: button.dataset.shareTitle || document.title,
+        url: window.location.href
+      };
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+        } catch {
+          // User dismissed share sheet.
+        }
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        button.classList.add('is-copied');
+        window.setTimeout(() => button.classList.remove('is-copied'), 1800);
+      } catch {
+        window.prompt('Copy this link:', shareData.url);
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-print-page]').forEach((button) => {
+    button.addEventListener('click', () => window.print());
+  });
+}
+
+function initCommentReply() {
+  const parentField = document.getElementById('comment-parent-id');
+  const contentField = document.getElementById('comment-content');
+  const formTitle = document.querySelector('.post-comment-form-title');
+  if (!parentField) return;
+
+  document.querySelectorAll('[data-reply-to]').forEach((button) => {
+    button.addEventListener('click', () => {
+      parentField.value = button.getAttribute('data-reply-to') || '';
+      contentField?.focus();
+      if (formTitle) formTitle.textContent = 'Reply to comment';
+    });
+  });
+
+  document.querySelector('.post-comment-form')?.addEventListener('reset', () => {
+    parentField.value = '';
+    if (formTitle) formTitle.textContent = 'Leave a reply';
+  });
+}
+
+function initSkipLinkTarget() {
+  const main = document.getElementById('main-content');
+  if (main && !main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+}
 
 function initWidgetReveal() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -405,6 +498,10 @@ function initWidgetReveal() {
 
 initWidgetReveal();
 initBackToTop();
+initReadingProgress();
+initPostToolbar();
+initCommentReply();
+initSkipLinkTarget();
 
 function initCountUp() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
