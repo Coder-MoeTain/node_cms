@@ -31,7 +31,14 @@ async function expectPluginInstalled(agent, zipPath) {
     .post(`/admin/plugins/upload?_csrf=${encodeURIComponent(csrf)}`)
     .attach('archive', zipPath);
   expect(upload.status).toBe(302);
-  const installed = await models.Plugin.findOne({ where: { slug: SLUG } });
+
+  let installed = null;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    await pluginLoader.syncInstalledPlugins();
+    installed = await models.Plugin.findOne({ where: { slug: SLUG } });
+    if (installed) break;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
   expect(installed).toBeTruthy();
   if (!global.__full_lifecycle_pluginInstall) {
     await pluginLoader.invokePluginLifecycle(SLUG, 'onInstall', app);
@@ -45,9 +52,10 @@ beforeAll(async () => {
   await cleanupPlugin();
 });
 
-afterEach(cleanupPlugin);
+afterAll(cleanupPlugin);
 
 test('full HTTP plugin lifecycle: upload, activate, deactivate, uninstall', async () => {
+  await cleanupPlugin();
   const zipPath = path.join(os.tmpdir(), `${SLUG}-${Date.now()}.zip`);
   createZipArchive(pluginFixtureFiles(SLUG, { name: 'Full Lifecycle Plugin' }), zipPath);
 

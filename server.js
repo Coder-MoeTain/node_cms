@@ -141,6 +141,14 @@ async function start() {
     await sequelize.authenticate();
     await sessionStore.sync();
     await pluginLoader.loadActivePlugins(app);
+    if (process.env.NODE_ENV !== 'test' && process.env.SCHEDULED_PUBLISH !== 'false') {
+      const { publishScheduledContent } = require('./utils/scheduledPublisher');
+      const runPublish = () => publishScheduledContent().catch((err) => {
+        console.error('Scheduled publish error:', err.message);
+      });
+      runPublish();
+      setInterval(runPublish, 60 * 1000).unref();
+    }
     const server = app.listen(appConfig.port, () => {
       console.log(`${appConfig.name} running at ${appConfig.url}`);
       if (typeof process.send === 'function') process.send('ready');

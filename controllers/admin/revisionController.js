@@ -62,4 +62,28 @@ async function restore(req, res, next) {
   }
 }
 
-module.exports = { index, restore };
+async function compare(req, res, next) {
+  try {
+    if (!policy.hasAnyPermission(req.session.user, ['manage_posts', 'manage_pages', 'manage_custom_content'])) {
+      req.flash('error', 'You do not have permission.');
+      return res.redirect('/admin');
+    }
+    const left = await models.Revision.findByPk(req.query.left);
+    const right = await models.Revision.findByPk(req.query.right);
+    if (!left || !right) {
+      req.flash('error', 'Select two revisions to compare.');
+      return res.redirect('/admin');
+    }
+    return res.render('admin/revisions/compare', {
+      title: 'Compare Revisions',
+      left,
+      right,
+      resourceType: left.resource_type,
+      resourceId: left.resource_id
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { index, restore, compare };

@@ -1,6 +1,7 @@
 const { SiteSetting, Media } = require('../../models');
 const { ensurePortalSettings, SETTING_GROUP_LABELS, SETTING_GROUP_ORDER, PORTAL_SETTING_DEFINITIONS, getSettingGroup } = require('../../utils/portalSettings');
 const { resolveImageValue, sanitizeUploadPath } = require('../../utils/uploadHelper');
+const { filterExistingMedia } = require('../../utils/mediaHelper');
 
 async function settings(req, res, next) {
   try {
@@ -76,11 +77,11 @@ async function updateSettings(req, res, next) {
 async function mediaGallery(req, res, next) {
   try {
     const mediaType = req.query.type || 'image';
-    const rows = await Media.findAll({
+    const rows = filterExistingMedia(await Media.findAll({
       where: { file_type: mediaType },
       limit: 60,
       order: [['created_at', 'DESC']]
-    });
+    }));
     return res.json({
       items: rows.map((item) => ({
         id: item.id,

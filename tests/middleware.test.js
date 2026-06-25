@@ -70,7 +70,7 @@ test('errorHandler returns JSON for API errors', () => {
   const next = jest.fn();
   errorHandler(new Error('boom'), req, res, next);
   expect(res.status).toHaveBeenCalledWith(500);
-  expect(res.json).toHaveBeenCalledWith({ message: 'boom' });
+  expect(res.json).toHaveBeenCalledWith({ error: 'boom' });
 });
 
 test('errorHandler maps CSRF errors to 403', () => {

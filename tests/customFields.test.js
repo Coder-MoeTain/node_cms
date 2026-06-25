@@ -1,6 +1,6 @@
 const request = require('supertest');
 const { app, models } = require('../server');
-const { login, getCsrf } = require('./helpers');
+const { login, getCsrf, postForm } = require('./helpers');
 const {
   sanitizeFieldValue,
   validateFieldValue,
@@ -136,16 +136,19 @@ describe('Custom field groups (admin → DB → public)', () => {
 
     const agent = request.agent(app);
     await login(agent, 'admin@example.com', 'Admin@12345');
-    const csrf = await getCsrf(agent, `/admin/content/${typeSlug}/create`);
     const itemSlug = `town-hall-${Date.now()}`;
-    const save = await agent.post(`/admin/content/${typeSlug}`).type('form').send({
-      title: 'Town Hall',
-      slug: itemSlug,
-      content: '<p>Public meeting</p>',
-      status: 'published',
-      cf_venue_name: 'City Hall Auditorium',
-      _csrf: csrf
-    });
+    const save = await postForm(
+      agent,
+      `/admin/content/${typeSlug}`,
+      {
+        title: 'Town Hall',
+        slug: itemSlug,
+        content: '<p>Public meeting</p>',
+        status: 'published',
+        cf_venue_name: 'City Hall Auditorium'
+      },
+      `/admin/content/${typeSlug}/create`
+    );
     expect(save.status).toBe(302);
 
     const post = await models.Post.findOne({ where: { slug: itemSlug, post_type: typeSlug } });

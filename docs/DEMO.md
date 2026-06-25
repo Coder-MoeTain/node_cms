@@ -30,7 +30,11 @@ End-to-end workflow proof for custom content, fields, revisions, templates, impo
 
 | Public homepage | Admin dashboard |
 | --- | --- |
-| ![Public homepage](assets/screenshots/public-home.png) | ![Admin dashboard](assets/screenshots/admin-dashboard.png) |
+| ![Public homepage](assets/screenshots/public-home.svg) | ![Admin dashboard](assets/screenshots/admin-dashboard.svg) |
+
+<p align="center">
+  <img src="assets/workflow-proof.svg" alt="Full workflow mapped to integration tests" width="95%">
+</p>
 
 ### Suggested captures for a complete demo
 
@@ -57,7 +61,7 @@ Embed in the README:
 <video src="docs/assets/nodepress-demo.mp4" controls width="100%"></video>
 ```
 
-Until the video is recorded, the screenshot gallery and CI test suite serve as automated proof.
+Until a screen recording is added, the workflow diagram, screenshot gallery, and CI test suite serve as automated proof.
 
 ## CI verification
 

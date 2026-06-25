@@ -18,6 +18,14 @@ async function removeTheme(slug) {
   themeLoader.removeThemeDirectory(slug);
 }
 
+async function restoreDefaultTheme() {
+  await models.Theme.update({ active: false }, { where: {} });
+  await models.ThemeSetting.update({ active: false }, { where: {} });
+  await models.ThemeSetting.update({ active: true }, { where: { theme_name: 'classic-blog' } });
+  const classic = await models.Theme.findOne({ where: { slug: 'classic-blog' } });
+  if (classic) await classic.update({ active: true });
+}
+
 beforeAll(async () => {
   await models.User.update({ force_password_change: false }, { where: { email: 'admin@example.com' } });
   await removeTheme(PARENT_SLUG);
@@ -29,6 +37,7 @@ afterEach(async () => {
   await removeTheme(PARENT_SLUG);
   await removeTheme(CHILD_SLUG);
   await removeTheme(UPLOAD_SLUG);
+  await restoreDefaultTheme();
 });
 
 test('installThemeFromArchive installs a valid theme zip', async () => {
@@ -87,8 +96,8 @@ test('admin can upload a theme zip via HTTP', async () => {
   await login(agent, 'admin@example.com', 'Admin@12345');
   const csrf = await getCsrf(agent, '/admin/themes');
   const response = await agent
-    .post('/admin/themes/upload')
-    .set('x-csrf-token', csrf)
+    .post(`/admin/themes/upload?_csrf=${encodeURIComponent(csrf)}`)
+    .set('X-CSRF-Token', csrf)
     .attach('archive', zipPath);
   expect(response.status).toBe(302);
   const row = await models.Theme.findOne({ where: { slug: UPLOAD_SLUG } });
@@ -106,15 +115,15 @@ test('admin can upload parent and child themes, activate child, then uninstall b
   let csrf = await getCsrf(agent, '/admin/themes');
 
   const parentUpload = await agent
-    .post('/admin/themes/upload')
-    .set('x-csrf-token', csrf)
+    .post(`/admin/themes/upload?_csrf=${encodeURIComponent(csrf)}`)
+    .set('X-CSRF-Token', csrf)
     .attach('archive', parentZip);
   expect(parentUpload.status).toBe(302);
 
   csrf = await getCsrf(agent, '/admin/themes');
   const childUpload = await agent
-    .post('/admin/themes/upload')
-    .set('x-csrf-token', csrf)
+    .post(`/admin/themes/upload?_csrf=${encodeURIComponent(csrf)}`)
+    .set('X-CSRF-Token', csrf)
     .attach('archive', childZip);
   expect(childUpload.status).toBe(302);
 

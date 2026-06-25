@@ -93,10 +93,10 @@ INSERT IGNORE INTO site_settings (`key`, `value`, `group`) VALUES
 ('posts_per_page', '6', 'reading'),
 ('default_post_status', 'draft', 'writing'),
 ('maintenance_mode', 'false', 'security'),
-('facebook_link', '#', 'social'),
-('youtube_link', '#', 'social'),
-('telegram_link', '#', 'social'),
-('linkedin_link', '#', 'social');
+('facebook_link', '', 'social'),
+('youtube_link', '', 'social'),
+('telegram_link', '', 'social'),
+('linkedin_link', '', 'social');
 
 INSERT IGNORE INTO security_settings (`key`, `value`, enabled) VALUES
 ('login_attempt_limiter', 'true', TRUE),

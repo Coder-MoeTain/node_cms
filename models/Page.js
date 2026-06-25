@@ -11,7 +11,7 @@ module.exports = (sequelize) =>
     excerpt: DataTypes.TEXT,
     featured_image: DataTypes.STRING(255),
     og_image: DataTypes.STRING(255),
-    status: { type: DataTypes.ENUM('draft', 'published', 'private'), defaultValue: 'draft' },
+    status: { type: DataTypes.ENUM('draft', 'published', 'private', 'scheduled'), defaultValue: 'draft' },
     seo_title: DataTypes.STRING(220),
     seo_description: DataTypes.TEXT,
     author_id: DataTypes.INTEGER,

@@ -35,7 +35,7 @@
               <div><label class="form-label">Meta Description</label><input class="form-control" name="seo_description" value="<%= val('seo_description') %>"></div>
             </div>
           </div>
-          <%- include('../partials/content-translations', { translations: typeof translations !== 'undefined' ? translations : {}, translationLocales: typeof translationLocales !== 'undefined' ? translationLocales : ['my', 'zh-CN', 'ru'] }) %>
+          <%- include('../partials/content-translations', { translations: typeof translations !== 'undefined' ? translations : {}, translationLocales: typeof translationLocales !== 'undefined' ? translationLocales : ['en', 'my', 'zh-CN', 'ru'] }) %>
           <% if (type.supports_custom_fields && fieldGroups && fieldGroups.length) { %>
             <%- include('../partials/custom-field-meta-boxes', { fieldGroups, customFieldValues: customFieldValues || {} }) %>
           <% } %>

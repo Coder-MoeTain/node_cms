@@ -1,11 +1,11 @@
-<% const locales = typeof translationLocales !== 'undefined' ? translationLocales : ['my', 'zh-CN', 'ru']; %>
-<% const labels = { my: 'Myanmar (မြန်မာ)', 'zh-CN': 'Chinese (中文)', ru: 'Russian (Русский)' }; %>
+<% const locales = typeof translationLocales !== 'undefined' ? translationLocales : ['en', 'my', 'zh-CN', 'ru']; %>
+<% const labels = { en: 'English', my: 'Myanmar (မြန်မာ)', 'zh-CN': 'Chinese (中文)', ru: 'Russian (Русский)' }; %>
 <% const store = typeof translations !== 'undefined' ? translations : {}; %>
 
 <div class="np-metabox mt-3">
   <div class="np-metabox-header">Translations (no Google Translate)</div>
   <div class="np-metabox-body">
-    <p class="np-help-text">Enter human-written translations for each language. When a visitor selects a language, these override the default English content. Leave blank to use the glossary auto-translation fallback.</p>
+    <p class="np-help-text">Enter human-written translations for each language. When a visitor selects a language, these override automatic glossary translation for that locale. Leave blank to use the glossary auto-translation fallback.</p>
     <ul class="nav nav-tabs mb-3" role="tablist">
       <% locales.forEach(function(locale, idx) { %>
         <li class="nav-item" role="presentation">

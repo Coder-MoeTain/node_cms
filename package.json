@@ -26,6 +26,7 @@
     "audit": "npm audit",
     "backup": "node scripts/backup.js",
     "health": "node scripts/health-check.js",
+    "publish:scheduled": "node scripts/publish-scheduled.js",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:start:prod": "pm2 start ecosystem.config.js --env production",
     "pm2:reload": "pm2 reload ecosystem.config.js --env production",
@@ -49,6 +50,7 @@
   "author": "NodePress CMS",
   "license": "MIT",
   "dependencies": {
+    "adm-zip": "^0.5.17",
     "bcrypt": "latest",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.13.1",
@@ -69,6 +71,7 @@
     "morgan": "latest",
     "multer": "latest",
     "mysql2": "latest",
+    "nodemailer": "^7.0.13",
     "qrcode": "^1.5.4",
     "sanitize-html": "latest",
     "sequelize": "latest",
@@ -77,8 +80,7 @@
     "speakeasy": "^2.0.0",
     "tinymce": "^8.6.0",
     "unzipper": "^0.12.5",
-    "winston": "^3.19.0",
-    "adm-zip": "^0.5.17"
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

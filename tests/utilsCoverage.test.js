@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 const { ensureDirectory, publicUploadPath, classifyMime } = require('../utils/fileHelper');
 const { createSlug, createUniqueSlug } = require('../utils/slugGenerator');
-const { mediaUrl, diskPathFromPublic } = require('../utils/mediaHelper');
+const { mediaUrl, diskPathFromPublic, normalizeUploadUrlsInHtml } = require('../utils/mediaHelper');
 const { isSafeEntryName, extractZipArchive } = require('../utils/packageArchive');
 const { resolveThemePartials, partialIncludePath } = require('../utils/themePartials');
 const { getPagination, pageMeta } = require('../utils/pagination');
@@ -40,6 +40,13 @@ test('mediaHelper builds CDN URLs and disk paths', () => {
   expect(mediaUrl('/uploads/test.png')).toBe('https://cdn.example.com/uploads/test.png');
   process.env.CDN_URL = original;
   expect(diskPathFromPublic('/uploads/test.png')).toContain('uploads');
+});
+
+test('mediaHelper normalizes relative upload URLs in HTML', () => {
+  const html = '<p><img src="uploads/2026/06/test.png" alt="x"></p>';
+  expect(normalizeUploadUrlsInHtml(html)).toBe('<p><img src="/uploads/2026/06/test.png" alt="x"></p>');
+  expect(normalizeUploadUrlsInHtml('<img src="/admin/uploads/a.png">')).toBe('<img src="/uploads/a.png">');
+  expect(normalizeUploadUrlsInHtml('<img src="/uploads/ok.png">')).toBe('<img src="/uploads/ok.png">');
 });
 
 test('pagination helpers compute page metadata', () => {

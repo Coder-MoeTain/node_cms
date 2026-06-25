@@ -60,4 +60,39 @@ function mediaUrl(filePath) {
   return cdn ? `${cdn.replace(/\/$/, '')}${filePath}` : filePath;
 }
 
-module.exports = { buildMediaPayload, removeMediaFiles, diskPathFromPublic, mediaUrl };
+function normalizeUploadUrlsInHtml(html) {
+  if (!html) return html;
+  return String(html)
+    .replace(/(\s(?:src|href)=["'])\/admin\/uploads\//gi, '$1/uploads/')
+    .replace(/(\s(?:src|href)=["'])(?:\.\.\/)+uploads\//gi, '$1/uploads/')
+    .replace(
+      /(\s(?:src|href)=["'])(?!\/|https?:\/\/|data:|mailto:|#|tel:)(uploads\/[^"']+)(["'])/gi,
+      '$1/$2$3'
+    );
+}
+
+function mediaFileExists(filePath) {
+  if (!filePath) return false;
+  try {
+    return fs.existsSync(diskPathFromPublic(filePath));
+  } catch {
+    return false;
+  }
+}
+
+function filterExistingMedia(rows = []) {
+  return rows.filter((row) => {
+    const plain = typeof row.get === 'function' ? row.get({ plain: true }) : row;
+    return mediaFileExists(plain.file_path);
+  });
+}
+
+module.exports = {
+  buildMediaPayload,
+  removeMediaFiles,
+  diskPathFromPublic,
+  mediaUrl,
+  mediaFileExists,
+  filterExistingMedia,
+  normalizeUploadUrlsInHtml
+};

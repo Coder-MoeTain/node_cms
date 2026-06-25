@@ -25,6 +25,16 @@ function requireWrite(req, res, next) {
   return apiError(res, 403, 'Insufficient permissions.');
 }
 
+function requireWritePages(req, res, next) {
+  if (!req.apiUser && !req.session?.user) {
+    return apiError(res, 401, 'Authentication required for write operations.');
+  }
+  if (req.apiUser || policy.isSuperAdmin(req.session?.user) || policy.hasPermission(req.session?.user, 'manage_pages')) {
+    return next();
+  }
+  return apiError(res, 403, 'Insufficient permissions.');
+}
+
 router.get('/posts', async (req, res, next) => {
   try {
     const { page, limit, offset } = getPagination(req, 20);
@@ -217,6 +227,68 @@ router.delete('/posts/:idOrSlug', requireWrite, async (req, res, next) => {
     return res.json({ data: { deleted: true } });
   } catch (error) {
     return next(error);
+  }
+});
+
+router.post('/pages', requireWritePages, async (req, res, next) => {
+  try {
+    const page = await Page.create({
+      title: req.body.title || 'Untitled',
+      slug: req.body.slug || `page-${Date.now()}`,
+      content: req.body.content || '<p></p>',
+      status: req.body.status || 'draft',
+      published_at: req.body.status === 'published' ? new Date() : null
+    });
+    return res.status(201).json({ data: page });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.put('/pages/:idOrSlug', requireWritePages, async (req, res, next) => {
+  try {
+    const where = {};
+    where[Number.isFinite(Number(req.params.idOrSlug)) ? 'id' : 'slug'] = req.params.idOrSlug;
+    const page = await Page.findOne({ where });
+    if (!page) return apiError(res, 404, 'Page not found.');
+    await page.update({
+      title: req.body.title ?? page.title,
+      content: req.body.content ?? page.content,
+      status: req.body.status ?? page.status
+    });
+    return res.json({ data: page });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete('/pages/:idOrSlug', requireWritePages, async (req, res, next) => {
+  try {
+    const where = {};
+    where[Number.isFinite(Number(req.params.idOrSlug)) ? 'id' : 'slug'] = req.params.idOrSlug;
+    const page = await Page.findOne({ where });
+    if (!page) return apiError(res, 404, 'Page not found.');
+    await page.destroy();
+    return res.json({ data: { deleted: true } });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get('/comments', async (req, res, next) => {
+  try {
+    const { page, limit, offset } = getPagination(req, 20);
+    const where = { status: 'approved' };
+    if (req.query.post_id) where.post_id = req.query.post_id;
+    const { rows, count } = await Comment.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['created_at', 'DESC']]
+    });
+    res.json({ data: rows, meta: pageMeta(count, page, limit) });
+  } catch (error) {
+    next(error);
   }
 });
 

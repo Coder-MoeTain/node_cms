@@ -7,6 +7,7 @@ const { Op } = require('sequelize');
 const { User, Role, Permission, LoginAttempt, ActivityLog, PasswordResetToken } = require('../../models');
 const pluginLoader = require('../../utils/pluginLoader');
 const loginBruteForce = require('../../utils/loginBruteForce');
+const { sendPasswordResetEmail } = require('../../utils/mailer');
 
 function loginForm(req, res) {
   res.render('admin/auth/login', {
@@ -142,7 +143,8 @@ async function forgotPassword(req, res, next) {
         ip_address: req.ip,
         user_agent: req.get('user-agent')
       });
-      if (process.env.NODE_ENV !== 'production') {
+      const mailResult = await sendPasswordResetEmail(user, token);
+      if (process.env.NODE_ENV !== 'production' && !mailResult.sent) {
         req.flash('success', `Development reset link: /admin/reset-password?token=${token}`);
       }
     }

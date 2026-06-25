@@ -210,7 +210,7 @@ async function uninstall(req, res, next) {
       req.flash('error', 'Cannot uninstall the active theme. Activate another theme first.');
       return res.redirect('/admin/themes');
     }
-    const children = themeManager.getChildThemeSlugs(theme.slug);
+    const children = await themeManager.getChildThemeSlugsFromDb(theme.slug);
     if (children.length) {
       req.flash('error', `Cannot uninstall: child themes depend on this theme (${children.join(', ')}).`);
       return res.redirect('/admin/themes');

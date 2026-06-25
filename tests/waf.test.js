@@ -15,6 +15,10 @@ async function setWafMode(mode) {
   clearWafCache();
 }
 
+afterAll(async () => {
+  await setWafMode('monitor');
+});
+
 test('homepage loads normally with WAF enabled', async () => {
   await setWafMode('monitor');
   const response = await request(app).get('/');

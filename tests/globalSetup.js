@@ -27,4 +27,6 @@ module.exports = async () => {
     { force_password_change: false },
     { where: { email: 'admin@example.com' } }
   );
+  const pluginLoader = require('../utils/pluginLoader');
+  await pluginLoader.syncInstalledPlugins();
 };

@@ -1,8 +1,9 @@
 const sanitizeHtml = require('sanitize-html');
 const { ContentTranslation } = require('../models');
-const { SUPPORTED_LOCALES, DEFAULT_LOCALE } = require('./translationEngine');
+const { SUPPORTED_LOCALES } = require('./translationEngine');
+const { normalizeUploadUrlsInHtml } = require('./mediaHelper');
 
-const TRANSLATION_LOCALES = SUPPORTED_LOCALES.filter((locale) => locale !== DEFAULT_LOCALE);
+const TRANSLATION_LOCALES = [...SUPPORTED_LOCALES];
 
 const richTextSanitizeOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
@@ -27,7 +28,7 @@ function parseTranslationBody(body) {
     const title = sanitizePlain(row.title, 220);
     const excerpt = sanitizePlain(row.excerpt, 5000);
     const content = row.content
-      ? sanitizeHtml(String(row.content), richTextSanitizeOptions)
+      ? sanitizeHtml(normalizeUploadUrlsInHtml(String(row.content)), richTextSanitizeOptions)
       : '';
     const seo_title = sanitizePlain(row.seo_title, 220);
     const seo_description = sanitizePlain(row.seo_description, 2000);

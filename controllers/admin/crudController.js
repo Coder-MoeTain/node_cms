@@ -3,6 +3,7 @@ const sanitizeHtml = require('sanitize-html');
 const { Op } = require('sequelize');
 const models = require('../../models');
 const { resolveImageValue } = require('../../utils/uploadHelper');
+const { normalizeUploadUrlsInHtml } = require('../../utils/mediaHelper');
 const { createSlug, createUniqueSlug } = require('../../utils/slugGenerator');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const policy = require('../../utils/policy');
@@ -124,7 +125,7 @@ const configs = {
         title: sanitizePlainText(body.title, 220),
         slug: await createUniqueSlug(models.Post, body.slug || body.title, 'post', record?.id, { post_type: 'post' }),
         post_type: 'post',
-        content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
+        content: sanitizeHtml(normalizeUploadUrlsInHtml(body.content || ''), richTextSanitizeOptions),
         excerpt: sanitizePlainText(body.excerpt, 1000),
         featured_image: await resolveImageValue(req, {
           fileField: 'featured_image_file',
@@ -155,7 +156,7 @@ const configs = {
     payload: async (body, req, record = null, transaction = null) => applyBlockContent(body, {
       title: sanitizePlainText(body.title, 220),
       slug: await createUniqueSlug(models.Page, body.slug || body.title, 'page', record?.id),
-      content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
+      content: sanitizeHtml(normalizeUploadUrlsInHtml(body.content || ''), richTextSanitizeOptions),
       excerpt: sanitizePlainText(body.excerpt, 1000),
       featured_image: await resolveImageValue(req, {
         fileField: 'featured_image_file',
@@ -298,9 +299,13 @@ async function index(req, res, next) {
     }
     const { page, limit, offset } = getPagination(req, 10);
     const query = req.query.q || '';
+    const trashed = req.query.trashed === '1';
     const where = query
       ? { [Op.or]: config.searchFields.map((field) => ({ [field]: { [Op.like]: `%${query}%` } })) }
       : {};
+    if (trashed) {
+      where.deleted_at = { [Op.ne]: null };
+    }
     if (resource === 'posts') {
       where.post_type = 'post';
       if (req.query.status) where.status = req.query.status;
@@ -316,14 +321,16 @@ async function index(req, res, next) {
       distinct: true,
       limit,
       offset,
-      order: [['created_at', 'DESC']]
+      order: [['created_at', 'DESC']],
+      paranoid: !trashed
     });
     return res.render('admin/crud/index', {
-      title: config.title,
+      title: trashed ? `${config.title} Trash` : config.title,
       resource,
       config,
       rows,
       query,
+      trashed,
       pagination: pageMeta(count, page, limit),
       filters: {
         status: req.query.status || '',
@@ -467,6 +474,48 @@ async function update(req, res, next) {
   }
 }
 
+async function restore(req, res, next) {
+  try {
+    const resource = req.params.resource;
+    const config = getConfig(resource);
+    const record = await config.model.findByPk(req.params.id, { paranoid: false });
+    if (!record || !record.deleted_at) {
+      req.flash('error', 'Item not found in trash.');
+      return res.redirect(`/admin/${resource}?trashed=1`);
+    }
+    if (!policy.canManageResource(req.session.user, resource, 'destroy', record)) {
+      req.flash('error', 'You do not have permission to restore that resource.');
+      return res.redirect(`/admin/${resource}?trashed=1`);
+    }
+    await record.restore();
+    req.flash('success', `${config.title} restored from trash.`);
+    return res.redirect(`/admin/${resource}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function forceDestroy(req, res, next) {
+  try {
+    const resource = req.params.resource;
+    const config = getConfig(resource);
+    const record = await config.model.findByPk(req.params.id, { paranoid: false });
+    if (!record) {
+      req.flash('error', 'Item not found.');
+      return res.redirect(`/admin/${resource}?trashed=1`);
+    }
+    if (!policy.canManageResource(req.session.user, resource, 'destroy', record)) {
+      req.flash('error', 'You do not have permission to delete that resource.');
+      return res.redirect(`/admin/${resource}?trashed=1`);
+    }
+    await record.destroy({ force: true });
+    req.flash('success', `${config.title} permanently deleted.`);
+    return res.redirect(`/admin/${resource}?trashed=1`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function destroy(req, res, next) {
   try {
     const resource = req.params.resource;
@@ -501,6 +550,19 @@ async function bulkDestroy(req, res, next) {
     const resource = req.params.resource;
     const config = getConfig(resource);
     const action = req.body.action || 'trash';
+    if (action === 'restore') {
+      const ids = normalizeBulkIds(req.body).map((id) => Number(id)).filter(Boolean);
+      let restored = 0;
+      for (const id of ids) {
+        const record = await config.model.findByPk(id, { paranoid: false });
+        if (!record?.deleted_at) continue;
+        if (!policy.canManageResource(req.session.user, resource, 'bulk', record)) continue;
+        await record.restore();
+        restored += 1;
+      }
+      req.flash('success', restored ? `${restored} item(s) restored.` : 'No items restored.');
+      return res.redirect(`/admin/${resource}${req.body.return_trashed ? '?trashed=1' : ''}`);
+    }
     if (action !== 'trash') {
       req.flash('error', 'Unsupported bulk action.');
       return res.redirect(`/admin/${resource}`);
@@ -535,4 +597,4 @@ async function bulkDestroy(req, res, next) {
   }
 }
 
-module.exports = { configs, index, create, store, edit, update, destroy, bulkDestroy };
+module.exports = { configs, index, create, store, edit, update, destroy, restore, forceDestroy, bulkDestroy };

@@ -27,7 +27,7 @@ test('admin can view site settings', async () => {
   expect(response.text).toMatch(/Settings|Site title/i);
 });
 
-test('admin can update site settings', async () => {
+test('admin can update site settings with placeholder social links', async () => {
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');
   const csrf = await getCsrf(agent, '/admin/settings');
@@ -36,12 +36,13 @@ test('admin can update site settings', async () => {
     .type('form')
     .send({
       site_title: 'NodePress Test Site',
-      site_tagline: 'Updated in tests',
+      facebook_link: '#',
+      app_store_link: '/contact',
       _csrf: csrf
     });
   expect(response.status).toBe(302);
-  const setting = await models.SiteSetting.findOne({ where: { key: 'site_title' } });
-  expect(setting?.value).toBe('NodePress Test Site');
+  const facebook = await models.SiteSetting.findOne({ where: { key: 'facebook_link' } });
+  expect(facebook?.value).toBe('#');
 });
 
 test('admin can upload site logo without site_logo in form body', async () => {

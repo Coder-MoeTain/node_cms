@@ -1,6 +1,6 @@
 const request = require('supertest');
 const { app, models } = require('../server');
-const { login, getCsrf } = require('./helpers');
+const { login, getCsrf, putForm } = require('./helpers');
 const { saveRevision, listRevisions } = require('../utils/revisionHelper');
 const { saveAutosave, loadAutosave, deleteAutosave } = require('../utils/autosaveHelper');
 
@@ -50,7 +50,11 @@ describe('Revisions', () => {
     const agent = request.agent(app);
     await login(agent, 'admin@example.com', 'Admin@12345');
     const csrf = await getCsrf(agent, `/admin/revisions?resource_type=post&resource_id=${postId}`);
-    const restore = await agent.post(`/admin/revisions/${revision.id}/restore`).type('form').send({ _csrf: csrf });
+    const restore = await agent
+      .post(`/admin/revisions/${revision.id}/restore?_csrf=${encodeURIComponent(csrf)}`)
+      .set('X-CSRF-Token', csrf)
+      .type('form')
+      .send({ _csrf: csrf });
     expect(restore.status).toBe(302);
 
     const post = await models.Post.findByPk(postId);
@@ -60,17 +64,15 @@ describe('Revisions', () => {
   test('post update via admin creates a new revision', async () => {
     const agent = request.agent(app);
     await login(agent, 'admin@example.com', 'Admin@12345');
-    const csrf = await getCsrf(agent, `/admin/posts/${postId}/edit`);
     const before = await listRevisions('post', postId);
     const countBefore = before.length;
 
-    const update = await agent.put(`/admin/posts/${postId}`).type('form').send({
+    const update = await putForm(agent, `/admin/posts/${postId}`, {
       title: 'Revision Seed Post v3',
       slug: (await models.Post.findByPk(postId)).slug,
       content: '<p>Version 3</p>',
-      status: 'published',
-      _csrf: csrf
-    });
+      status: 'published'
+    }, `/admin/posts/${postId}/edit`);
     expect(update.status).toBe(302);
 
     const after = await listRevisions('post', postId);

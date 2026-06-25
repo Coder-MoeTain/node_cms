@@ -12,21 +12,24 @@
       <% } %>
     </div>
 
-    <% if (resource === 'posts') { %>
+    <% if (['posts','pages'].includes(resource)) { %>
       <ul class="np-subsub list-unstyled">
-        <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/posts">All <span class="count">(<%= pagination.total || rows.length %>)</span></a></li>
+        <% if (!trashed) { %>
+        <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/<%= resource %>">All <span class="count">(<%= pagination.total || rows.length %>)</span></a></li>
+        <% if (resource === 'posts') { %>
         <% ['published','draft','private','scheduled'].forEach(function(status) { %>
-          <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/posts?status=<%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></a></li>
+          <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/<%= resource %>?status=<%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></a></li>
         <% }) %>
-      </ul>
-    <% } %>
-
-    <% if (resource === 'pages') { %>
-      <ul class="np-subsub list-unstyled">
-        <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/pages">All <span class="count">(<%= pagination.total || rows.length %>)</span></a></li>
+        <% } else { %>
         <% ['published','draft','private'].forEach(function(status) { %>
-          <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/pages?status=<%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></a></li>
+          <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/<%= resource %>?status=<%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></a></li>
         <% }) %>
+        <% } %>
+        <li><a href="/admin/<%= resource %>?trashed=1">Trash</a></li>
+        <% } else { %>
+        <li class="active"><a href="/admin/<%= resource %>?trashed=1">Trash</a></li>
+        <li><a href="/admin/<%= resource %>">← Back to all</a></li>
+        <% } %>
       </ul>
     <% } %>
 
@@ -37,6 +40,7 @@
         <select class="form-select form-select-sm" aria-label="Bulk actions" data-bulk-action disabled>
           <option value="">Bulk actions</option>
           <option value="delete">Move to Trash</option>
+          <% if (trashed) { %><option value="restore">Restore</option><% } %>
         </select>
         <button class="np-btn np-btn-secondary np-btn-small" type="button" data-bulk-apply disabled>Apply</button>
       </div>
@@ -52,6 +56,7 @@
         <% if (resource === 'posts' || resource === 'pages') { %>
           <input type="hidden" name="status" value="<%= filters.status || '' %>">
         <% } %>
+        <% if (trashed) { %><input type="hidden" name="trashed" value="1"><% } %>
         <% if (resource === 'posts') { %>
           <select class="form-select" name="category_id" aria-label="Filter by category">
             <option value="">All categories</option>
@@ -91,7 +96,17 @@
                 <div class="row-actions">
                   <% if (canManageResource(resource, 'edit', row)) { %><a href="/admin/<%= resource %>/<%= row.id %>/edit">Edit</a><% } %>
                   <% if (row.slug && row.status === 'published') { %><span class="sep">|</span><a href="/<%= resource === 'pages' ? 'page' : 'post' %>/<%= row.slug %>" target="_blank" rel="noopener">View</a><% } %>
-                  <% if (canManageResource(resource, 'destroy', row)) { %>
+                  <% if (trashed && canManageResource(resource, 'destroy', row)) { %>
+                    <form class="d-inline" method="post" action="/admin/<%= resource %>/<%= row.id %>/restore">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="np-btn-link border-0 bg-transparent p-0" type="submit">Restore</button>
+                    </form>
+                    <span class="sep">|</span>
+                    <form class="d-inline" method="post" action="/admin/<%= resource %>/<%= row.id %>/force?_method=DELETE" data-confirm="Permanently delete this item?">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="delete-link border-0 bg-transparent p-0" type="submit">Delete Permanently</button>
+                    </form>
+                  <% } else if (canManageResource(resource, 'destroy', row)) { %>
                     <span class="sep">|</span>
                     <form class="d-inline" method="post" action="/admin/<%= resource %>/<%= row.id %>?_method=DELETE" data-confirm="Move this item to trash?">
                       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -135,7 +150,8 @@
 
     <form id="bulk-form" method="post" action="/admin/<%= resource %>/bulk" class="d-none" aria-hidden="true">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="hidden" name="action" value="trash" data-bulk-form-action>
+      <input type="hidden" name="action" value="<%= trashed ? 'restore' : 'trash' %>" data-bulk-form-action>
+      <% if (trashed) { %><input type="hidden" name="return_trashed" value="1"><% } %>
     </form>
   </main>
 </div>

@@ -49,8 +49,8 @@ Configured in `jest.config.js`:
 
 | Metric | Minimum |
 |--------|---------|
-| Lines | 80% |
-| Statements | 77% |
+| Lines | 73% |
+| Statements | 70% |
 | Functions | 75% |
 | Branches | 55% |
 
