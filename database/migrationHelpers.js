@@ -1,14 +1,14 @@
 const { QueryTypes } = require('sequelize');
 
-function parseAddColumnIfNotExistsStatements(sql) {
-  if (!/ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS/i.test(sql)) return null;
+function parseAddColumnStatements(sql) {
+  if (!/ALTER\s+TABLE/i.test(sql) || !/ADD\s+COLUMN/i.test(sql)) return null;
 
   const tableMatch = sql.match(/ALTER\s+TABLE\s+`?([\w]+)`?\s+/i);
   if (!tableMatch) return null;
 
   const table = tableMatch[1];
   const columns = [];
-  const pattern = /ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+`?([\w]+)`?\s+([\s\S]*?)(?=,\s*ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS|;?\s*$)/gi;
+  const pattern = /ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([\w]+)`?\s+([\s\S]*?)(?=,\s*ADD\s+COLUMN|;?\s*$)/gi;
   let match = pattern.exec(sql);
   while (match) {
     columns.push({
@@ -20,6 +20,10 @@ function parseAddColumnIfNotExistsStatements(sql) {
   }
 
   return columns.length ? columns : null;
+}
+
+function parseAddColumnIfNotExistsStatements(sql) {
+  return parseAddColumnStatements(sql);
 }
 
 function parseCreateIndexIfNotExists(sql) {
@@ -76,7 +80,7 @@ async function executeMigrationStatement(sequelize, statement, transaction) {
   const trimmed = statement.trim();
   if (!trimmed) return;
 
-  const addColumns = parseAddColumnIfNotExistsStatements(trimmed);
+  const addColumns = parseAddColumnStatements(trimmed);
   if (addColumns) {
     for (const column of addColumns) {
       await ensureColumn(sequelize, column, transaction);
@@ -94,6 +98,7 @@ async function executeMigrationStatement(sequelize, statement, transaction) {
 }
 
 module.exports = {
+  parseAddColumnStatements,
   parseAddColumnIfNotExistsStatements,
   parseCreateIndexIfNotExists,
   executeMigrationStatement

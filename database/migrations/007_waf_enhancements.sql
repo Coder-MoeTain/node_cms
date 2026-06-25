@@ -1,13 +1,14 @@
 -- WAF enhancements: additional columns, settings, and seed metadata
+-- Safe on fresh installs where database/schema.sql already includes these columns.
 
 ALTER TABLE waf_rules
-  ADD COLUMN pattern_type ENUM('regex','contains','equals') NOT NULL DEFAULT 'regex' AFTER pattern;
+  ADD COLUMN IF NOT EXISTS pattern_type ENUM('regex','contains','equals') NOT NULL DEFAULT 'regex' AFTER pattern;
 
 ALTER TABLE waf_rules
-  ADD COLUMN is_system BOOLEAN NOT NULL DEFAULT FALSE AFTER status;
+  ADD COLUMN IF NOT EXISTS is_system BOOLEAN NOT NULL DEFAULT FALSE AFTER status;
 
 ALTER TABLE waf_rules
-  ADD COLUMN deleted_at DATETIME NULL AFTER updated_at;
+  ADD COLUMN IF NOT EXISTS deleted_at DATETIME NULL AFTER updated_at;
 
 ALTER TABLE waf_rules
   MODIFY COLUMN category ENUM(
@@ -22,13 +23,13 @@ ALTER TABLE waf_rules
   MODIFY COLUMN action ENUM('log','block','rate_limit','temporary_block','challenge') NOT NULL DEFAULT 'block';
 
 ALTER TABLE waf_logs
-  ADD COLUMN route_type VARCHAR(40) NULL AFTER url;
+  ADD COLUMN IF NOT EXISTS route_type VARCHAR(40) NULL AFTER url;
 
 ALTER TABLE waf_logs
-  ADD COLUMN file_snapshot JSON NULL AFTER body_snapshot;
+  ADD COLUMN IF NOT EXISTS file_snapshot JSON NULL AFTER body_snapshot;
 
 ALTER TABLE waf_logs
-  ADD COLUMN response_status INT UNSIGNED NULL AFTER user_id;
+  ADD COLUMN IF NOT EXISTS response_status INT UNSIGNED NULL AFTER user_id;
 
 INSERT INTO waf_settings (setting_key, setting_value, setting_type) VALUES
 ('block_cms_probes', 'true', 'boolean'),
