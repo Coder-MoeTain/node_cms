@@ -1,7 +1,21 @@
 const {
+  parseAddColumnStatements,
   parseAddColumnIfNotExistsStatements,
   parseCreateIndexIfNotExists
 } = require('../database/migrationHelpers');
+
+test('parses plain ADD COLUMN statements for idempotent migration handling', () => {
+  const sql = `ALTER TABLE waf_rules
+  ADD COLUMN pattern_type ENUM('regex','contains','equals') NOT NULL DEFAULT 'regex' AFTER pattern`;
+  const parsed = parseAddColumnStatements(sql);
+  expect(parsed).toEqual([
+    {
+      table: 'waf_rules',
+      column: 'pattern_type',
+      definition: "ENUM('regex','contains','equals') NOT NULL DEFAULT 'regex' AFTER pattern"
+    }
+  ]);
+});
 
 test('parses single ADD COLUMN IF NOT EXISTS statement', () => {
   const sql = `ALTER TABLE users
@@ -35,6 +49,8 @@ test('parses CREATE INDEX IF NOT EXISTS statement', () => {
   });
 });
 
-test('returns null for regular ALTER TABLE statements', () => {
-  expect(parseAddColumnIfNotExistsStatements('ALTER TABLE users ADD COLUMN avatar VARCHAR(255)')).toBeNull();
+test('parses plain ADD COLUMN for idempotent handling', () => {
+  expect(parseAddColumnStatements('ALTER TABLE users ADD COLUMN avatar VARCHAR(255)')).toEqual([
+    { table: 'users', column: 'avatar', definition: 'VARCHAR(255)' }
+  ]);
 });
