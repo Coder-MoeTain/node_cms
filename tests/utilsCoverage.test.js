@@ -4,7 +4,8 @@ const os = require('os');
 const { ensureDirectory, publicUploadPath, classifyMime } = require('../utils/fileHelper');
 const { createSlug, createUniqueSlug } = require('../utils/slugGenerator');
 const { mediaUrl, diskPathFromPublic } = require('../utils/mediaHelper');
-const { isSafeEntryName } = require('../utils/packageArchive');
+const { isSafeEntryName, extractZipArchive } = require('../utils/packageArchive');
+const { resolveThemePartials, partialIncludePath } = require('../utils/themePartials');
 const { getPagination, pageMeta } = require('../utils/pagination');
 const { buildDeferredLoader } = require('../utils/consentScript');
 const { getSettingGroup } = require('../utils/portalSettings');
@@ -52,6 +53,27 @@ test('pagination helpers compute page metadata', () => {
 test('packageArchive rejects unsafe entry names', () => {
   expect(isSafeEntryName('theme/theme.json')).toBe(true);
   expect(isSafeEntryName('../evil.php')).toBe(false);
+});
+
+test('packageArchive extracts a valid plugin zip archive', async () => {
+  const { createZipArchive, pluginFixtureFiles } = require('./helpers/zipFixtures');
+  const targetRoot = path.join(os.tmpdir(), `archive-extract-${Date.now()}`);
+  const zipPath = path.join(targetRoot, 'plugin.zip');
+  fs.mkdirSync(targetRoot, { recursive: true });
+  createZipArchive(pluginFixtureFiles('extract-test-plugin'), zipPath);
+
+  const { manifest } = await extractZipArchive(zipPath, targetRoot, 'plugin.json');
+  expect(manifest.slug).toBe('extract-test-plugin');
+  expect(fs.existsSync(path.join(targetRoot, 'extract-test-plugin', 'plugin.json'))).toBe(true);
+
+  fs.rmSync(targetRoot, { recursive: true, force: true });
+});
+
+test('themePartials resolve public partial paths', async () => {
+  const map = await resolveThemePartials();
+  expect(map.head).toBeTruthy();
+  expect(partialIncludePath(map, 'head')).toBe(map.head);
+  expect(partialIncludePath(null, 'footer')).toBe('public/partials/footer');
 });
 
 test('consentScript defers tracking HTML', () => {

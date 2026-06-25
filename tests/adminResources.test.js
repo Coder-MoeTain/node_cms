@@ -56,7 +56,14 @@ test('admin can view menus and banners', async () => {
 });
 
 test('admin can edit and approve a comment', async () => {
-  const post = await models.Post.findOne({ where: { slug: 'comment-test-post' } });
+  const admin = await models.User.findOne({ where: { email: 'admin@example.com' } });
+  const post = await models.Post.create({
+    title: 'Comment Test Post',
+    slug: `comment-test-${Date.now()}`,
+    content: '<p>Comments</p>',
+    status: 'published',
+    author_id: admin.id
+  });
   const comment = await models.Comment.create({
     post_id: post.id,
     name: 'Moderation Test',
@@ -74,4 +81,6 @@ test('admin can edit and approve a comment', async () => {
   expect(response.status).toBe(302);
   await comment.reload();
   expect(comment.status).toBe('approved');
+  await comment.destroy({ force: true });
+  await post.destroy({ force: true });
 });

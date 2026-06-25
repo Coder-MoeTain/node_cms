@@ -34,6 +34,22 @@ test('PM2 ecosystem config defines production cluster app', () => {
   expect(config.deploy.production['post-deploy']).toMatch(/migrate/);
 });
 
+test('bootstrap test database script resets schema for CI', () => {
+  const script = path.join(process.cwd(), 'database', 'bootstrapTestDatabase.js');
+  expect(fs.existsSync(script)).toBe(true);
+  const source = fs.readFileSync(script, 'utf8');
+  expect(source).toMatch(/DROP DATABASE IF EXISTS/);
+  expect(source).toMatch(/sequelize\.sync/);
+});
+
+test('remote deploy script runs migrations and PM2 reload', () => {
+  const script = path.join(process.cwd(), 'scripts', 'remote-deploy.sh');
+  expect(fs.existsSync(script)).toBe(true);
+  const source = fs.readFileSync(script, 'utf8');
+  expect(source).toMatch(/npm run migrate/);
+  expect(source).toMatch(/pm2:reload/);
+});
+
 test('health check script validates local endpoints', async () => {
   const healthScript = path.join(process.cwd(), 'scripts', 'health-check.js');
   expect(fs.existsSync(healthScript)).toBe(true);

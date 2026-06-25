@@ -22,7 +22,7 @@ Health endpoints:
 - `GET /health`
 - `GET /ready`
 
-Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. CI runs `db:sync`, migrations, seed data, and `test:ci` with global coverage thresholds (lines ≥ 80%, statements ≥ 77%, functions ≥ 75%, branches ≥ 55%). See `.env.example`, `docs/DEPLOYMENT.md`, `docs/DEMO.md`, and `docs/BACKUP_AND_RESTORE.md`.
+Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. CI runs migrations, seed data, and `test:ci` with global coverage thresholds (lines ≥ 80%, statements ≥ 77%, functions ≥ 75%, branches ≥ 55%). See `.env.example`, `docs/DEPLOYMENT.md`, `docs/DEMO.md`, and `docs/BACKUP_AND_RESTORE.md`.
 
 <p align="center">
   <img src="docs/assets/nodepress-cover.svg" alt="NodePress CMS cover" width="100%">
@@ -46,7 +46,8 @@ Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment 
 
 <p align="center">
   <a href="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml"><img src="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
-  <img src="https://img.shields.io/badge/coverage-lines%20%E2%89%A580%25-brightgreen?style=flat-square" alt="Coverage threshold">
+  <a href="https://codecov.io/gh/Coder-MoeTain/node_cms"><img src="https://codecov.io/gh/Coder-MoeTain/node_cms/graph/badge.svg" alt="Codecov coverage"></a>
+  <img src="https://img.shields.io/badge/coverage-lines%20%E2%89%A580%25-brightgreen?style=flat-square" alt="Coverage lines threshold">
   <img src="https://img.shields.io/badge/coverage-statements%20%E2%89%A577%25-brightgreen?style=flat-square" alt="Statements threshold">
   <img src="https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
   <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
@@ -79,13 +80,15 @@ Admin Panel  -> http://localhost:3000/admin/login
 
 ### Demo video
 
-Add a walkthrough recording to `docs/assets/nodepress-demo.mp4`, then embed it in your fork or site:
+<p align="center">
+  <video src="docs/assets/nodepress-demo.mp4" poster="docs/assets/screenshots/public-home.png" controls width="90%" style="max-width:960px;border-radius:12px;">
+    Your browser does not support HTML5 video. See the screenshot gallery above.
+  </video>
+</p>
 
-```html
-<video src="docs/assets/nodepress-demo.mp4" controls width="100%"></video>
-```
-
-Until then, use the screenshot gallery above and the SVG mockups below.
+<p align="center">
+  <em>Add a walkthrough recording at <code>docs/assets/nodepress-demo.mp4</code> (steps in <a href="docs/DEMO.md">docs/DEMO.md</a>).</em>
+</p>
 
 ## Highlights
 

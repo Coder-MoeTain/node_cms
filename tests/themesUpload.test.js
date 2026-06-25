@@ -94,3 +94,54 @@ test('admin can upload a theme zip via HTTP', async () => {
   const row = await models.Theme.findOne({ where: { slug: UPLOAD_SLUG } });
   expect(row).toBeTruthy();
 });
+
+test('admin can upload parent and child themes, activate child, then uninstall both', async () => {
+  const parentZip = path.join(os.tmpdir(), `${PARENT_SLUG}-lifecycle-${Date.now()}.zip`);
+  createZipArchive(themeTemplateFiles(PARENT_SLUG), parentZip);
+  const childZip = path.join(os.tmpdir(), `${CHILD_SLUG}-lifecycle-${Date.now()}.zip`);
+  createZipArchive(themeTemplateFiles(CHILD_SLUG, { parent: PARENT_SLUG, name: 'Zip Child Theme' }), childZip);
+
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  let csrf = await getCsrf(agent, '/admin/themes');
+
+  const parentUpload = await agent
+    .post('/admin/themes/upload')
+    .set('x-csrf-token', csrf)
+    .attach('archive', parentZip);
+  expect(parentUpload.status).toBe(302);
+
+  csrf = await getCsrf(agent, '/admin/themes');
+  const childUpload = await agent
+    .post('/admin/themes/upload')
+    .set('x-csrf-token', csrf)
+    .attach('archive', childZip);
+  expect(childUpload.status).toBe(302);
+
+  const childRow = await models.Theme.findOne({ where: { slug: CHILD_SLUG } });
+  expect(childRow).toBeTruthy();
+
+  csrf = await getCsrf(agent, '/admin/themes');
+  const activate = await agent
+    .post('/admin/themes/activate')
+    .type('form')
+    .send({ _csrf: csrf, theme_id: childRow.id });
+  expect(activate.status).toBe(302);
+  await childRow.reload();
+  expect(childRow.active).toBe(true);
+
+  const home = await request(app).get('/');
+  expect(home.status).toBe(200);
+  expect(home.text).toContain(`theme-${CHILD_SLUG}`);
+
+  await models.Theme.update({ active: false }, { where: { slug: CHILD_SLUG } });
+  csrf = await getCsrf(agent, '/admin/themes');
+  const uninstallChild = await agent.post(`/admin/themes/${CHILD_SLUG}/uninstall`).type('form').send({ _csrf: csrf });
+  expect(uninstallChild.status).toBe(302);
+  expect(await models.Theme.findOne({ where: { slug: CHILD_SLUG } })).toBeNull();
+
+  csrf = await getCsrf(agent, '/admin/themes');
+  const uninstallParent = await agent.post(`/admin/themes/${PARENT_SLUG}/uninstall`).type('form').send({ _csrf: csrf });
+  expect(uninstallParent.status).toBe(302);
+  expect(await models.Theme.findOne({ where: { slug: PARENT_SLUG } })).toBeNull();
+});

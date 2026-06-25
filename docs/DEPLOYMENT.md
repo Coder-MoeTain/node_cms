@@ -93,3 +93,24 @@ server {
 2. Restore the previous release directory.
 3. Restore database backup if a migration changed schema.
 4. Start PM2: `npm run pm2:start:prod`.
+
+## GitHub Actions Deploy
+
+The `.github/workflows/deploy.yml` workflow runs the full test suite, builds a Docker image, and deploys over SSH when repository secrets are configured.
+
+| Secret | Purpose |
+| --- | --- |
+| `DEPLOY_HOST` | Target server hostname or IP |
+| `DEPLOY_USER` | SSH user (e.g. `deploy`) |
+| `DEPLOY_SSH_KEY` | Private key for SSH (PEM) |
+| `DEPLOY_PATH` | Absolute path to the app git clone on the server |
+| `DEPLOY_PORT` | Optional SSH port (default `22`) |
+
+Trigger manually from the Actions tab (staging or production) or push a `v*` tag.
+
+On the server, you can also run:
+
+```bash
+export DEPLOY_PATH=/var/www/nodepress-cms
+npm run deploy:remote
+```
