@@ -57,6 +57,15 @@ async function loadTranslation(resourceType, resourceId, locale) {
   return row ? row.get({ plain: true }) : null;
 }
 
+async function loadTranslationsBatch(resourceType, resourceIds = [], locale) {
+  const ids = [...new Set(resourceIds.filter(Boolean))];
+  if (!ids.length || !locale) return new Map();
+  const rows = await ContentTranslation.findAll({
+    where: { resource_type: resourceType, resource_id: ids, locale }
+  });
+  return new Map(rows.map((row) => [row.resource_id, row.get({ plain: true })]));
+}
+
 async function saveTranslations(resourceType, resourceId, body, transaction = null) {
   const parsed = parseTranslationBody(body);
   for (const locale of TRANSLATION_LOCALES) {
@@ -93,6 +102,7 @@ module.exports = {
   parseTranslationBody,
   loadTranslations,
   loadTranslation,
+  loadTranslationsBatch,
   saveTranslations,
   applyManualTranslation
 };

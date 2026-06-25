@@ -728,7 +728,7 @@ a:hover {
 
 .post-title {
   color: #0f172a;
-  font-size: clamp(calc(1.75rem - 8pt), calc(4vw - 8pt), calc(2.65rem - 8pt));
+  font-size: clamp(calc(1.75rem - 11pt), calc(4vw - 11pt), calc(2.65rem - 11pt));
   font-weight: 800;
   letter-spacing: -.03em;
   line-height: 1.15;
@@ -1881,7 +1881,7 @@ a:hover {
 }
 
 .site-post-title {
-  font-size: 1.125rem;
+  font-size: calc(1.125rem - 3pt);
   font-weight: 600;
   margin: 0 0 .35rem;
 }

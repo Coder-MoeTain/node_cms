@@ -4,6 +4,32 @@ const { saveTranslations, loadTranslation } = require('../utils/contentTranslati
 const { ContentTranslation, Post } = require('../models');
 
 describe('content translations', () => {
+  test('manual post translation overrides glossary for non-English content', async () => {
+    const post = await Post.create({
+      title: 'မြန်မာခေါင်းစဉ်',
+      slug: 'myanmar-title-test',
+      content: '<p>မြန်မာအကြောင်းအရာ</p>',
+      status: 'published',
+      post_type: 'post'
+    });
+
+    await ContentTranslation.create({
+      resource_type: 'post',
+      resource_id: post.id,
+      locale: 'zh-CN',
+      title: '中文标题',
+      content: '<p>中文内容</p>'
+    });
+
+    const engine = new TranslationEngine({ sourceLocale: 'en', targetLocale: 'zh-CN', useDatabase: false });
+    const translated = await translatePost(engine, post, 'post', 'my');
+    expect(translated.title).toBe('中文标题');
+    expect(translated.content).toContain('中文内容');
+
+    await post.destroy();
+    await ContentTranslation.destroy({ where: { resource_type: 'post', resource_id: post.id } });
+  });
+
   test('manual post translation overrides glossary', async () => {
     const post = await Post.create({
       title: 'Hello World',

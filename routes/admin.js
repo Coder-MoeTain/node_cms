@@ -63,6 +63,7 @@ router.post('/quick-draft', requireAuth, canAny(['manage_posts', 'create_posts']
 
 router.get('/media', requireAuth, canAny(['manage_media', 'upload_media']), media.index);
 router.post('/media/upload', requireAuth, canAny(['manage_media', 'upload_media']), upload.array('files', 20), media.upload);
+router.post('/media/upload-json', requireAuth, canAny(['manage_media', 'upload_media']), upload.image.single('file'), media.uploadJson);
 router.get('/media/:id/edit', requireAuth, canAny(['manage_media', 'upload_media']), media.edit);
 router.put('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), upload.single('file'), media.update);
 router.delete('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), media.destroy);
@@ -94,6 +95,7 @@ router.post('/themes/activate', requireAuth, can('manage_themes'), themes.activa
 router.post('/themes/reset', requireAuth, can('manage_themes'), themes.resetSettings);
 router.put('/theme-settings', requireAuth, can('manage_themes'), brandingImageUpload, themes.updateSettings);
 router.post('/theme-settings/preview', requireAuth, can('manage_themes'), themes.previewDraft);
+router.get('/themes/:slug/preview', requireAuth, can('manage_themes'), themes.previewThemeLive);
 router.get('/themes/:slug', requireAuth, can('manage_themes'), themes.show);
 router.post('/themes/:slug/uninstall', requireAuth, can('manage_themes'), themes.uninstall);
 

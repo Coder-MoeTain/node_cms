@@ -45,7 +45,7 @@ function applySecurityMiddleware(app) {
           "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'],
           "style-src": ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
           "font-src": ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com', 'data:'],
-          "img-src": ["'self'", 'data:', 'https:'],
+          "img-src": ["'self'", 'data:', 'blob:', 'https:'],
           "frame-src": ["'self'", 'https://www.youtube.com', 'https://youtube.com', 'https://player.vimeo.com'],
           "connect-src": ["'self'"]
         }

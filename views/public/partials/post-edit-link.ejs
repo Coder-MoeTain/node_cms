@@ -1,0 +1,5 @@
+<% if (typeof canEditPost === 'function' && canEditPost(post)) { %>
+  <a class="post-edit-link" href="<%= postEditUrl(post) %>" title="Edit this post">
+    <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit
+  </a>
+<% } %>

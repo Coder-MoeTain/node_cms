@@ -12,6 +12,8 @@ const {
   translateSiteSettings
 } = require('../utils/contentTranslator');
 const { getPortalStats } = require('../utils/portalStats');
+const policy = require('../utils/policy');
+const { createEngine, normalizeLocale } = require('../utils/translationEngine');
 
 function buildMenuTree(items = []) {
   const plainItems = items
@@ -50,6 +52,17 @@ function applyCustomizerPreview(req, themePlain) {
   return { ...themePlain, ...draft };
 }
 
+function applyThemePreview(req, themePlain) {
+  const previewSlug = req.query.theme_preview;
+  if (!previewSlug || typeof previewSlug !== 'string' || !req.session?.user) return themePlain;
+  if (!policy.canAccessAdmin(req.session.user, '/admin')) return themePlain;
+  if (!themeLoader.getThemeBySlug(previewSlug)) return themePlain;
+  return {
+    ...themeLoader.buildThemeSettingDefaults(previewSlug),
+    theme_name: previewSlug
+  };
+}
+
 async function loadSiteContext(req, res, next) {
   try {
     const [settings, theme, menus, categories, recentPosts, popularPosts, announcementPosts, activePlugins] = await Promise.all([
@@ -68,8 +81,21 @@ async function loadSiteContext(req, res, next) {
     ]);
 
     res.locals.siteSettings = settings.reduce((map, row) => ({ ...map, [row.key]: row.value }), {});
-    const themePlain = applyCustomizerPreview(req, theme ? theme.get({ plain: true }) : {});
+    const contentLocale = normalizeLocale(
+      res.locals.siteSettings.default_content_locale || process.env.DEFAULT_CONTENT_LOCALE || 'my'
+    );
+    res.locals.contentLocale = contentLocale;
+    res.locals.translationEngine = createEngine(res.locals.locale, {
+      sourceLocale: 'en',
+      useDatabase: process.env.NODE_ENV !== 'test'
+    });
+    res.locals.translateText = (text) => res.locals.translationEngine.translate(text);
+    res.locals.translateHtml = (html) => res.locals.translationEngine.translateHtml(html);
+    let themePlain = applyCustomizerPreview(req, theme ? theme.get({ plain: true }) : {});
+    themePlain = applyThemePreview(req, themePlain);
     res.locals.activeTheme = themePlain;
+    res.locals.isThemePreview = Boolean(req.query.theme_preview && req.session?.user);
+    res.locals.previewThemeSlug = res.locals.isThemePreview ? req.query.theme_preview : null;
     const themeSlug = themePlain.theme_name || 'classic-blog';
     const themeCssPath = path.join(process.cwd(), 'themes', themeSlug, 'assets', 'css', 'theme.css');
     res.locals.themeStylesheet = fs.existsSync(themeCssPath) ? `/themes/${themeSlug}/assets/css/theme.css` : null;
@@ -101,11 +127,11 @@ async function loadSiteContext(req, res, next) {
     res.locals.siteMenus = await translateMenus(engine, siteMenus);
     res.locals.quickServiceItems = res.locals.siteMenus['quick-services'] || [];
     res.locals.sidebarCategories = await translateCategories(engine, categories);
-    res.locals.recentPosts = await translatePosts(engine, recentPosts);
-    res.locals.popularPosts = await translatePosts(engine, popularPosts);
+    res.locals.recentPosts = await translatePosts(engine, recentPosts, 'post', contentLocale);
+    res.locals.popularPosts = await translatePosts(engine, popularPosts, 'post', contentLocale);
     res.locals.announcementPosts = announcementPosts.length
-      ? await translatePosts(engine, announcementPosts)
-      : await translatePosts(engine, recentPosts);
+      ? await translatePosts(engine, announcementPosts, 'post', contentLocale)
+      : await translatePosts(engine, recentPosts, 'post', contentLocale);
     res.locals.siteSettings = await translateSiteSettings(engine, res.locals.siteSettings);
     res.locals.portalStats = await getPortalStats(res.locals.siteSettings);
     res.locals.activePluginSlugs = activePlugins.map((row) => row.slug);
@@ -114,10 +140,27 @@ async function loadSiteContext(req, res, next) {
     res.locals.pluginPublicHead = await pluginLoader.collectHook('publicHead', { req, res });
     res.locals.pluginPublicFooter = await pluginLoader.collectHook('publicFooter', { req, res });
     res.locals.currentPath = req.path;
+    const sessionUser = req.session?.user || null;
+    res.locals.currentUser = sessionUser;
+    res.locals.isAdminLoggedIn = Boolean(sessionUser && policy.canAccessAdmin(sessionUser, '/admin'));
+    res.locals.canEditPost = (post) => {
+      if (!sessionUser || !post?.id) return false;
+      const type = post.post_type || 'post';
+      if (type === 'post') return policy.canEditPost(sessionUser, post);
+      if (type === 'page') return policy.canEditPage(sessionUser, post);
+      return policy.hasAnyPermission(sessionUser, ['manage_custom_content', 'manage_posts', 'edit_posts']);
+    };
+    res.locals.postEditUrl = (post) => {
+      if (!post?.id) return '#';
+      const type = post.post_type || 'post';
+      if (type === 'post') return `/admin/posts/${post.id}/edit`;
+      if (type === 'page') return `/admin/pages/${post.id}/edit`;
+      return `/admin/content/${type}/${post.id}/edit`;
+    };
     return next();
   } catch (error) {
     return next(error);
   }
 }
 
-module.exports = { loadSiteContext, buildMenuTree, applyCustomizerPreview };
+module.exports = { loadSiteContext, buildMenuTree, applyCustomizerPreview, applyThemePreview };

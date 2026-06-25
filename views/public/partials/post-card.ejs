@@ -8,6 +8,7 @@
     <div class="post-card-meta">
       <% if (post.Category) { %><span class="post-card-category"><%= post.Category.name %></span><% } %>
       <% if (post.published_at) { %><time datetime="<%= post.published_at %>"><%= formatDate(post.published_at) %></time><% } %>
+      <%- include('post-edit-link', { post }) %>
     </div>
     <h3 class="post-card-title"><a href="/post/<%= post.slug %>"><%= post.title %></a></h3>
     <% if (post.excerpt) { %><p class="post-card-excerpt"><%= post.excerpt %></p><% } %>

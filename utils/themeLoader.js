@@ -292,6 +292,38 @@ function getChildThemeSlugs(parentSlug) {
     .map((theme) => theme.manifest.slug);
 }
 
+const SCREENSHOT_FILENAMES = [
+  'screenshot.png',
+  'screenshot.jpg',
+  'screenshot.jpeg',
+  'screenshot.webp',
+  'screenshot.svg'
+];
+
+function resolveThemePreviewImage(slug) {
+  const theme = getThemeBySlug(slug);
+  if (!theme) return null;
+
+  const manifestPath = theme.manifest.screenshot;
+  if (manifestPath && typeof manifestPath === 'string') {
+    const match = manifestPath.match(/^\/themes\/[^/]+\/(.+)$/);
+    if (match && fs.existsSync(path.join(theme.path, match[1]))) {
+      return manifestPath;
+    }
+    if (manifestPath.startsWith('http://') || manifestPath.startsWith('https://')) {
+      return manifestPath;
+    }
+  }
+
+  for (const name of SCREENSHOT_FILENAMES) {
+    if (fs.existsSync(path.join(theme.path, name))) {
+      return `/themes/${slug}/${name}`;
+    }
+  }
+
+  return null;
+}
+
 module.exports = {
   themesRoot,
   BASE_THEME_DEFAULTS,
@@ -309,6 +341,7 @@ module.exports = {
   getLayoutClasses,
   removeThemeDirectory,
   getChildThemeSlugs,
+  resolveThemePreviewImage,
   listTemplateFiles,
   listPartialFiles,
   validateManifest,

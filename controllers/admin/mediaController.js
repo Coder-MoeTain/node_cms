@@ -111,4 +111,30 @@ async function destroy(req, res, next) {
   }
 }
 
-module.exports = { index, upload, edit, update, destroy };
+async function uploadJson(req, res, next) {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'No file uploaded.' });
+
+    const allowed = await pluginLoader.applyFilters('beforeMediaUpload', file, {
+      req,
+      user: req.session.user
+    });
+    if (!allowed) return res.status(403).json({ error: 'Upload blocked by a plugin or security policy.' });
+
+    const mediaRecord = await Media.create(await buildMediaPayload(allowed, req.session.user.id));
+    await pluginLoader.doAction('afterMediaUpload', mediaRecord, { req, user: req.session.user, file: allowed });
+
+    return res.json({
+      location: mediaRecord.file_path,
+      filePath: mediaRecord.file_path,
+      thumbnailPath: mediaRecord.thumbnail_path,
+      id: mediaRecord.id,
+      originalName: mediaRecord.original_name
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { index, upload, uploadJson, edit, update, destroy };

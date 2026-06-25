@@ -22,7 +22,8 @@ async function archive(req, res, next) {
     });
 
     const engine = res.locals.translationEngine;
-    const posts = await translatePosts(engine, rows, 'custom_post');
+    const contentLocale = res.locals.contentLocale;
+    const posts = await translatePosts(engine, rows, 'custom_post', contentLocale);
     const title = engine?.isActive ? await engine.translate(type.name) : type.name;
 
     return res.render('public/custom-archive', {
@@ -56,7 +57,8 @@ async function single(req, res, next) {
     await postRow.increment('views_count');
 
     const engine = res.locals.translationEngine;
-    const post = await translatePost(engine, postRow, 'custom_post');
+    const contentLocale = res.locals.contentLocale;
+    const post = await translatePost(engine, postRow, 'custom_post', contentLocale);
 
     let customFields = {};
     if (type.supports_custom_fields) {

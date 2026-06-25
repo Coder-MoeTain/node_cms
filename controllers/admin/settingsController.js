@@ -1,11 +1,20 @@
 const { SiteSetting, Media } = require('../../models');
 const { ensurePortalSettings, SETTING_GROUP_LABELS, SETTING_GROUP_ORDER, PORTAL_SETTING_DEFINITIONS, getSettingGroup } = require('../../utils/portalSettings');
-const { resolveImageValue } = require('../../utils/uploadHelper');
+const { resolveImageValue, sanitizeUploadPath } = require('../../utils/uploadHelper');
 
 async function settings(req, res, next) {
   try {
     await ensurePortalSettings(SiteSetting);
     const rows = await SiteSetting.findAll({ order: [['group', 'ASC'], ['key', 'ASC']] });
+    for (const row of rows) {
+      if (['site_logo', 'favicon'].includes(row.key) && row.value) {
+        const valid = sanitizeUploadPath(row.value);
+        if (valid !== row.value) {
+          await row.update({ value: valid });
+          row.value = valid;
+        }
+      }
+    }
     const grouped = {};
     rows.forEach((row) => {
       const group = row.group || getSettingGroup(row.key);
@@ -32,19 +41,25 @@ const brandingImageFields = {
 
 async function updateSettings(req, res, next) {
   try {
+    for (const [key, fileField] of Object.entries(brandingImageFields)) {
+      const existing = await SiteSetting.findOne({ where: { key } });
+      const finalValue = await resolveImageValue(req, {
+        fileField,
+        pathField: key,
+        record: existing
+      });
+      await SiteSetting.upsert({
+        key,
+        value: finalValue,
+        group: getSettingGroup(key)
+      });
+    }
+
     for (const [key, value] of Object.entries(req.body)) {
       if (key === '_csrf' || key === '_method' || key.endsWith('_file') || key.startsWith('remove_')) continue;
+      if (brandingImageFields[key]) continue;
 
       let finalValue = Array.isArray(value) ? value.join(',') : value;
-      if (brandingImageFields[key]) {
-        const existing = await SiteSetting.findOne({ where: { key } });
-        finalValue = await resolveImageValue(req, {
-          fileField: brandingImageFields[key],
-          pathField: key,
-          record: existing || { [key]: finalValue }
-        });
-      }
-
       await SiteSetting.upsert({
         key,
         value: finalValue,

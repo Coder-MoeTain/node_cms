@@ -91,16 +91,7 @@ document.addEventListener('click', (event) => {
 });
 
 if (window.tinymce) {
-  tinymce.init({
-    selector: '.rich-editor',
-    license_key: 'gpl',
-    base_url: '/vendor/tinymce',
-    suffix: '.min',
-    height: 420,
-    menubar: false,
-    plugins: 'link image media table lists code autoresize',
-    toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code'
-  });
+  /* TinyMCE init is in editor.js when .rich-editor is present */
 }
 
 document.querySelector('[data-preview-file]')?.addEventListener('change', (event) => {
@@ -116,7 +107,41 @@ document.querySelector('[data-preview-file]')?.addEventListener('change', (event
 });
 
 let activeMediaTargetField = null;
+let mediaPickerCallback = null;
 window.activeMediaTargetField = activeMediaTargetField;
+
+function getCsrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.content
+    || document.querySelector('input[name="_csrf"]')?.value
+    || '';
+}
+
+async function npUploadImage(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const csrf = getCsrfToken();
+  const response = await fetch(`/admin/media/upload-json?_csrf=${encodeURIComponent(csrf)}`, {
+    method: 'POST',
+    headers: { 'x-csrf-token': csrf },
+    body: formData
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Upload failed.');
+  return data;
+}
+
+window.npUploadImage = npUploadImage;
+
+window.npOpenMediaPicker = function openMediaPicker(callback) {
+  mediaPickerCallback = typeof callback === 'function' ? callback : null;
+  activeMediaTargetField = null;
+  window.activeMediaTargetField = null;
+  const modal = document.getElementById('mediaGalleryModal');
+  if (modal && window.bootstrap) {
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+    loadMediaGallery();
+  }
+};
 
 function updateMediaPreview(fieldName, filePath) {
   const container = document.querySelector(`[data-image-upload] [name="${fieldName}"]`)?.closest('[data-image-upload]')
@@ -205,25 +230,37 @@ document.querySelectorAll('[data-image-upload]').forEach((container) => {
     if (!file || !preview) return;
 
     if (removeFlag) removeFlag.value = '0';
-    if (pathInput) pathInput.value = '';
+    // Keep existing path until save; server resolves uploaded file vs hidden path.
 
-    const objectUrl = URL.createObjectURL(file);
-    if (preview.tagName.toLowerCase() === 'img') {
-      preview.src = objectUrl;
-      return;
-    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const previewUrl = reader.result;
+      if (preview.tagName.toLowerCase() === 'img') {
+        preview.src = previewUrl;
+        return;
+      }
 
-    const image = document.createElement('img');
-    image.className = 'settings-image-preview';
-    image.dataset.imagePreview = 'true';
-    if (pathInput?.name) image.dataset.mediaPreview = pathInput.name;
-    image.src = objectUrl;
-    image.alt = 'Selected image preview';
-    preview.replaceWith(image);
+      const image = document.createElement('img');
+      image.className = 'settings-image-preview';
+      image.dataset.imagePreview = 'true';
+      if (pathInput?.name) image.dataset.mediaPreview = pathInput.name;
+      image.src = previewUrl;
+      image.alt = 'Selected image preview';
+      preview.replaceWith(image);
+    };
+    reader.readAsDataURL(file);
   });
 });
 
 function selectMediaItem(item) {
+  if (mediaPickerCallback) {
+    const callback = mediaPickerCallback;
+    mediaPickerCallback = null;
+    callback(item);
+    bootstrap.Modal.getInstance(document.getElementById('mediaGalleryModal'))?.hide();
+    return;
+  }
+
   const field = activeMediaTargetField || window.activeMediaTargetField;
   if (!field) return;
   const input = document.querySelector(`[name="${field}"]`);
@@ -278,8 +315,59 @@ document.querySelectorAll('[data-open-media-gallery]').forEach((button) => {
   button.addEventListener('click', () => {
     activeMediaTargetField = button.dataset.openMediaGallery;
     window.activeMediaTargetField = activeMediaTargetField;
+    mediaPickerCallback = null;
     loadMediaGallery();
   });
+});
+
+document.querySelector('[data-media-gallery-upload]')?.addEventListener('click', () => {
+  document.getElementById('mediaGalleryUploadInput')?.click();
+});
+
+document.getElementById('mediaGalleryUploadInput')?.addEventListener('change', async (event) => {
+  const files = [...(event.target.files || [])];
+  const status = document.querySelector('[data-media-gallery-upload-status]');
+  if (!files.length) return;
+
+  status.textContent = 'Uploading…';
+  try {
+    for (const file of files) {
+      const uploaded = await npUploadImage(file);
+      if (mediaPickerCallback) {
+        selectMediaItem({
+          filePath: uploaded.filePath,
+          thumbnailPath: uploaded.thumbnailPath,
+          originalName: uploaded.originalName
+        });
+        event.target.value = '';
+        status.textContent = '';
+        return;
+      }
+    }
+    status.textContent = files.length === 1 ? 'Photo uploaded.' : `${files.length} photos uploaded.`;
+    await loadMediaGallery();
+    setTimeout(() => { status.textContent = ''; }, 2500);
+  } catch (error) {
+    status.textContent = error.message || 'Upload failed.';
+  }
+  event.target.value = '';
+});
+
+document.getElementById('mediaGalleryModal')?.addEventListener('hidden.bs.modal', () => {
+  mediaPickerCallback = null;
+});
+
+document.addEventListener('click', (event) => {
+  const picker = event.target.closest('[data-open-media-picker]');
+  if (!picker) return;
+  mediaPickerCallback = null;
+  activeMediaTargetField = picker.dataset.openMediaPicker;
+  window.activeMediaTargetField = activeMediaTargetField;
+  const modal = document.getElementById('mediaGalleryModal');
+  if (modal && window.bootstrap) {
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+    loadMediaGallery();
+  }
 });
 
 document.querySelectorAll('[data-copy-url]').forEach((button) => {
