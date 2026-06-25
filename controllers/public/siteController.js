@@ -483,6 +483,12 @@ async function comment(req, res, next) {
     }
     const savedComment = await Comment.create(allowed);
     await pluginLoader.doAction('afterCommentSave', savedComment, { req, res, post: postRow });
+    try {
+      const { sendCommentNotification } = require('../../utils/mailer');
+      await sendCommentNotification({ post: postRow, comment: savedComment });
+    } catch {
+      // Email delivery must not block comment submission.
+    }
     req.flash('success', 'Comment submitted for moderation.');
     return res.redirect(`/post/${postRow.slug}#comments`);
   } catch (error) {

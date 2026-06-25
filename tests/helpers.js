@@ -1,16 +1,74 @@
 const request = require('supertest');
+const fs = require('fs');
+const path = require('path');
+const { publicUploadPath } = require('../utils/fileHelper');
+
+const TEST_IMAGE = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64'
+);
+
+function writeTestUpload(filePath) {
+  const relative = String(filePath || '').replace(/^\/uploads\//, '');
+  const diskPath = publicUploadPath(relative);
+  fs.mkdirSync(path.dirname(diskPath), { recursive: true });
+  fs.writeFileSync(diskPath, TEST_IMAGE);
+  return `/uploads/${relative.replace(/\\/g, '/')}`;
+}
+
+function removeTestUpload(filePath) {
+  const relative = String(filePath || '').replace(/^\/uploads\//, '');
+  const diskPath = publicUploadPath(relative);
+  if (fs.existsSync(diskPath)) fs.unlinkSync(diskPath);
+}
 
 async function getCsrf(agent, url) {
-  const page = await agent.get(url);
+  let page = await agent.get(url);
+  if (page.status === 302 && page.headers.location) {
+    page = await agent.get(page.headers.location);
+  }
   const match = page.text.match(/name="_csrf" value="([^"]+)"/);
-  return match?.[1] || '';
+  const token = match?.[1] || '';
+  if (!token) {
+    throw new Error(`CSRF token not found on ${url} (status ${page.status})`);
+  }
+  return token;
+}
+
+/** POST urlencoded form with CSRF in query, body, and header (matches multipart admin forms). */
+async function postForm(agent, url, fields, csrfPageUrl) {
+  const csrf = await getCsrf(agent, csrfPageUrl || url);
+  const separator = url.includes('?') ? '&' : '?';
+  return agent
+    .post(`${url}${separator}_csrf=${encodeURIComponent(csrf)}`)
+    .set('X-CSRF-Token', csrf)
+    .type('form')
+    .send({ ...fields, _csrf: csrf });
+}
+
+async function putForm(agent, url, fields, csrfPageUrl) {
+  const editUrl = csrfPageUrl || `${url.replace(/\?.*$/, '')}/edit`;
+  const csrf = await getCsrf(agent, editUrl);
+  const separator = url.includes('?') ? '&' : '?';
+  return agent
+    .put(`${url}${separator}_csrf=${encodeURIComponent(csrf)}`)
+    .set('X-CSRF-Token', csrf)
+    .type('form')
+    .send({ ...fields, _csrf: csrf });
 }
 
 async function login(agent, email, password, totp) {
-  const csrf = await getCsrf(agent, '/admin/login');
-  const payload = { email, password, _csrf: csrf };
-  if (totp) payload.totp = totp;
-  return agent.post('/admin/login').type('form').send(payload);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const csrf = await getCsrf(agent, '/admin/login');
+    const payload = { email, password, _csrf: csrf };
+    if (totp) payload.totp = totp;
+    const response = await agent.post('/admin/login').type('form').send(payload);
+    const location = String(response.headers.location || '');
+    if (response.status === 302 && !location.includes('/admin/login')) {
+      return response;
+    }
+  }
+  throw new Error(`Login failed for ${email}`);
 }
 
 async function ensurePortalTheme(models, portalConfig) {
@@ -37,4 +95,4 @@ async function ensurePortalTheme(models, portalConfig) {
   return active;
 }
 
-module.exports = { getCsrf, login, ensurePortalTheme };
+module.exports = { getCsrf, postForm, putForm, login, ensurePortalTheme, TEST_IMAGE, writeTestUpload, removeTestUpload };

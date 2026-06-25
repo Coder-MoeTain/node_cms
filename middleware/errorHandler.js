@@ -14,8 +14,12 @@ function errorHandler(error, req, res, next) {
     ip: req.ip
   });
 
-  if (req.originalUrl.startsWith('/api')) {
-    return res.status(status).json({ message: error.message || 'Server error' });
+  if (req.originalUrl.includes('/upload-json') || req.originalUrl.startsWith('/api')) {
+    return res.status(status).json({
+      error: error.code === 'EBADCSRFTOKEN'
+        ? 'Your session token expired or was invalid. Please reload the page and try again.'
+        : error.message || 'Server error'
+    });
   }
 
   return res.status(status).render('errors/500', {

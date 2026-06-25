@@ -10,12 +10,29 @@ const { previewImport, importSite } = require('../utils/importer');
 describe('Import / export with real data', () => {
   const importSlug = `imported-post-${Date.now()}`;
   const categorySlug = `imported-cat-${Date.now()}`;
+  let seedPostId;
+
+  beforeAll(async () => {
+    const admin = await models.User.findOne({ where: { email: 'admin@example.com' } });
+    const [post] = await models.Post.findOrCreate({
+      where: { slug: 'export-seed-post' },
+      defaults: {
+        title: 'Export Seed Post',
+        slug: 'export-seed-post',
+        content: '<p>seed</p>',
+        status: 'published',
+        post_type: 'post',
+        author_id: admin?.id
+      }
+    });
+    seedPostId = post.id;
+  });
 
   test('exportSite includes live posts and pages from database', async () => {
     const payload = await exportSite({ includeMedia: false });
     expect(payload.version).toBe('1.0');
     expect(Array.isArray(payload.posts)).toBe(true);
-    expect(payload.posts.length).toBeGreaterThan(0);
+    expect(payload.posts.some((row) => row.id === seedPostId || row.slug === 'export-seed-post')).toBe(true);
     expect(Array.isArray(payload.pages)).toBe(true);
   });
 
@@ -83,7 +100,7 @@ describe('Import / export with real data', () => {
     const out = path.join(os.tmpdir(), `nodepress-export-${Date.now()}.json`);
     execFileSync(process.execPath, ['bin/nodepress', 'export', out], {
       cwd: process.cwd(),
-      env: { ...process.env, NODE_ENV: 'test' },
+      env: { ...process.env, NODE_ENV: 'test', DOTENV_CONFIG_QUIET: 'true' },
       stdio: 'pipe'
     });
     expect(fs.existsSync(out)).toBe(true);
@@ -100,7 +117,7 @@ describe('Import / export with real data', () => {
 
     const csrf = await getCsrf(agent, '/admin/tools/import');
     const res = await agent.post(`/admin/tools/import/preview?_csrf=${encodeURIComponent(csrf)}`)
-      .attach('file', tmp);
+      .attach('file', tmp, { contentType: 'application/json', filename: 'import.json' });
     expect(res.status).toBe(200);
     expect(res.text).toMatch(/posts/i);
     fs.unlinkSync(tmp);

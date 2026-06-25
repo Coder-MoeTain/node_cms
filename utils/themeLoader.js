@@ -287,9 +287,19 @@ function removeThemeDirectory(slug) {
 }
 
 function getChildThemeSlugs(parentSlug) {
-  return discoverThemes()
+  const fromDisk = discoverThemes()
     .filter((theme) => theme.manifest.parent === parentSlug)
     .map((theme) => theme.manifest.slug);
+  return fromDisk;
+}
+
+async function getChildThemeSlugsFromDb(parentSlug) {
+  const { Theme } = require('../models');
+  const rows = await Theme.findAll({
+    where: { parent_slug: parentSlug },
+    attributes: ['slug']
+  });
+  return [...new Set([...getChildThemeSlugs(parentSlug), ...rows.map((row) => row.slug)])];
 }
 
 const SCREENSHOT_FILENAMES = [
@@ -341,6 +351,7 @@ module.exports = {
   getLayoutClasses,
   removeThemeDirectory,
   getChildThemeSlugs,
+  getChildThemeSlugsFromDb,
   resolveThemePreviewImage,
   listTemplateFiles,
   listPartialFiles,

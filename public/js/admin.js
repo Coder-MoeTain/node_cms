@@ -120,12 +120,18 @@ async function npUploadImage(file) {
   const formData = new FormData();
   formData.append('file', file);
   const csrf = getCsrfToken();
-  const response = await fetch(`/admin/media/upload-json?_csrf=${encodeURIComponent(csrf)}`, {
-    method: 'POST',
-    headers: { 'x-csrf-token': csrf },
-    body: formData
-  });
-  const data = await response.json();
+  let response;
+  try {
+    response = await fetch(`/admin/media/upload-json?_csrf=${encodeURIComponent(csrf)}`, {
+      method: 'POST',
+      headers: { 'x-csrf-token': csrf },
+      body: formData
+    });
+  } catch {
+    throw new Error('Upload failed. The server may be restarting — wait a moment and try again.');
+  }
+  const contentType = response.headers.get('content-type') || '';
+  const data = contentType.includes('application/json') ? await response.json() : {};
   if (!response.ok) throw new Error(data.error || 'Upload failed.');
   return data;
 }

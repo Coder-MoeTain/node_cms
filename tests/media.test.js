@@ -1,11 +1,6 @@
 const request = require('supertest');
 const { app, models } = require('../server');
-const { login, getCsrf } = require('./helpers');
-
-const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-  'base64'
-);
+const { login, getCsrf, TEST_IMAGE, writeTestUpload, removeTestUpload } = require('./helpers');
 
 beforeAll(async () => {
   await models.User.update({ force_password_change: false }, { where: { email: 'admin@example.com' } });
@@ -20,6 +15,7 @@ test('admin media library loads', async () => {
 });
 
 test('admin can edit media metadata', async () => {
+  writeTestUpload('/uploads/phase5-media-meta.jpg');
   const [media] = await models.Media.findOrCreate({
     where: { original_name: 'phase5-media-meta.jpg' },
     defaults: {
@@ -65,7 +61,7 @@ test('editor JSON upload returns image location', async () => {
   const response = await agent
     .post('/admin/media/upload-json')
     .set('x-csrf-token', csrf)
-    .attach('file', PNG, { filename: 'editor-upload.png', contentType: 'image/png' });
+    .attach('file', TEST_IMAGE, { filename: 'editor-upload.png', contentType: 'image/png' });
 
   expect(response.status).toBe(200);
   expect(response.body.location).toMatch(/^\/uploads\//);

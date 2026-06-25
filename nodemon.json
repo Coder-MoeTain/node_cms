@@ -1,0 +1,11 @@
+{
+  "ignore": [
+    "coverage/**",
+    "database/backups/**",
+    "public/uploads/**",
+    "tmp/**",
+    "tests/.test-runtime.json",
+    "logs/**",
+    "*.log"
+  ]
+}

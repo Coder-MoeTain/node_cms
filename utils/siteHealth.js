@@ -67,6 +67,35 @@ async function runChecks() {
     value: typeof pluginLoader.loadActivePlugins === 'function' ? 'Available' : 'Missing'
   });
 
+  try {
+    const { WafSetting } = require('../models');
+    const wafEnabled = await WafSetting.findOne({ where: { setting_key: 'waf_enabled' } });
+    const wafMode = await WafSetting.findOne({ where: { setting_key: 'waf_mode' } });
+    checks.push({
+      id: 'waf',
+      label: 'WAF status',
+      status: wafEnabled?.setting_value === 'true' ? 'good' : 'recommended',
+      value: wafEnabled?.setting_value === 'true' ? `Enabled (${wafMode?.setting_value || 'monitor'})` : 'Disabled'
+    });
+  } catch {
+    checks.push({ id: 'waf', label: 'WAF status', status: 'recommended', value: 'Could not read settings' });
+  }
+
+  try {
+    fs.accessSync(uploadsDir, fs.constants.W_OK);
+    checks.push({ id: 'uploads_writable_test', label: 'Uploads write test', status: 'good', value: 'Writable' });
+  } catch {
+    checks.push({ id: 'uploads_writable_test', label: 'Uploads write test', status: 'critical', value: 'Not writable' });
+  }
+
+  const { smtpConfigured } = require('./mailer');
+  checks.push({
+    id: 'email',
+    label: 'Email (SMTP)',
+    status: smtpConfigured() ? 'good' : 'recommended',
+    value: smtpConfigured() ? 'Configured' : 'Log-only (set SMTP_HOST and SMTP_FROM)'
+  });
+
   const critical = checks.filter((c) => c.status === 'critical').length;
   const recommended = checks.filter((c) => c.status === 'recommended').length;
 

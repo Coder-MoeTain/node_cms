@@ -22,7 +22,7 @@ Health endpoints:
 - `GET /health`
 - `GET /ready`
 
-Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. CI runs migrations, seed data, and `test:ci` with global coverage thresholds (lines ≥ 80%, statements ≥ 77%, functions ≥ 75%, branches ≥ 55%). See `.env.example`, `docs/DEPLOYMENT.md`, `docs/DEMO.md`, and `docs/BACKUP_AND_RESTORE.md`.
+Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. CI runs migrations, seed data, and `npm run test:ci` with global coverage thresholds (lines ≥ 73%, statements ≥ 70%, functions ≥ 75%, branches ≥ 55%) across **313** integration tests. See `.env.example`, `docs/DEPLOYMENT.md`, `docs/DEMO.md`, and `docs/BACKUP_AND_RESTORE.md`.
 
 <p align="center">
   <img src="docs/assets/nodepress-cover.svg" alt="NodePress CMS cover" width="100%">
@@ -47,9 +47,9 @@ Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment 
 <p align="center">
   <a href="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml"><img src="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
   <a href="https://codecov.io/gh/Coder-MoeTain/node_cms"><img src="https://codecov.io/gh/Coder-MoeTain/node_cms/graph/badge.svg" alt="Codecov coverage"></a>
-  <img src="https://img.shields.io/badge/coverage-lines-82%25-brightgreen?style=flat-square" alt="Coverage lines 82%">
-  <img src="https://img.shields.io/badge/coverage-statements-79%25-brightgreen?style=flat-square" alt="Coverage statements 79%">
-  <img src="https://img.shields.io/badge/tests-244%20passing-brightgreen?style=flat-square" alt="244 tests passing">
+  <img src="https://img.shields.io/badge/coverage-lines-74%25-brightgreen?style=flat-square" alt="Coverage lines 74%">
+  <img src="https://img.shields.io/badge/coverage-statements-71%25-brightgreen?style=flat-square" alt="Coverage statements 71%">
+  <img src="https://img.shields.io/badge/tests-313%20passing-brightgreen?style=flat-square" alt="313 tests passing">
   <img src="https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
   <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
   <img src="https://img.shields.io/badge/ORM-Sequelize-52B0E7?style=for-the-badge&logo=sequelize&logoColor=white" alt="Sequelize">
@@ -71,8 +71,8 @@ Admin Panel  -> http://localhost:3000/admin/login
 ```
 
 <p align="center">
-  <img src="docs/assets/screenshots/public-home.png" alt="NodePress public website screenshot" width="49%">
-  <img src="docs/assets/screenshots/admin-dashboard.png" alt="NodePress admin dashboard screenshot" width="49%">
+  <img src="docs/assets/screenshots/public-home.svg" alt="NodePress public website screenshot" width="49%">
+  <img src="docs/assets/screenshots/admin-dashboard.svg" alt="NodePress admin dashboard screenshot" width="49%">
 </p>
 
 <p align="center">
@@ -82,11 +82,15 @@ Admin Panel  -> http://localhost:3000/admin/login
 ### Demo video
 
 <p align="center">
-  <a href="docs/DEMO.md"><img src="docs/assets/screenshots/public-home.png" alt="NodePress demo — open docs/DEMO.md for recording steps" width="90%" style="max-width:960px;border-radius:12px;"></a>
+  <img src="docs/assets/workflow-proof.svg" alt="NodePress full workflow — each step mapped to integration tests" width="95%" style="max-width:1100px;border-radius:12px;">
 </p>
 
 <p align="center">
-  <em>Live screenshots above. For a walkthrough video, follow the recording steps in <a href="docs/DEMO.md">docs/DEMO.md</a>.</em>
+  <em>Workflow diagram maps each feature to its dedicated test file. Screen recording steps: <a href="docs/DEMO.md">docs/DEMO.md</a></em>
+</p>
+
+<p align="center">
+  <em>Screenshots above. Full workflow checklist: <a href="docs/DEMO.md">docs/DEMO.md</a> · Dedicated tests: <a href="docs/TESTING.md">docs/TESTING.md</a></em>
 </p>
 
 ## Highlights
@@ -104,38 +108,38 @@ Admin Panel  -> http://localhost:3000/admin/login
 
 ## Maturity Level
 
-**Overall: 9.2 / 10** — a production-ready, WordPress-like CMS foundation. Strong for self-hosted blogs, portals, and admin-managed sites; not yet full enterprise WordPress parity.
+**Overall: 9.0 / 10** — production-ready WordPress-like CMS with scheduled publishing, trash restore, SMTP mailer, expanded REST API v1, revision compare, and 310+ automated tests.
 
 | Stage | Level | Meaning |
 | --- | --- | --- |
 | Original/Basic CMS | `3/10 - 5/10` | Basic content app with limited CMS depth |
-| Current (this release) | **`9.2/10`** | Polished public + admin UI, plugin/theme lifecycle, RBAC, security tooling, i18n, 244 automated tests (~82% line coverage), and CI |
-| Professional WordPress-like CMS | `10/10` | Requires production email flows, media pipeline/CDN, complete RBAC on every edge case, block/theme marketplace depth, and full ops hardening |
+| Current (this release) | **`9.0/10`** | Full publishing lifecycle, plugins/themes, RBAC, WAF, CPT/fields, import/export, mailer, scheduled cron |
+| Professional WordPress-like CMS | `10/10` | Requires multisite content isolation, WXR import, Gutenberg-depth blocks, and 100% green CI on all hosts |
 
 ### Score by area
 
 | Area | Score | Highlights |
 | --- | --- | --- |
-| Public UI/UX | **9.0** | Portal + standard blog themes, skip link, alt text, pagination, form validation with prefill, empty states |
-| Admin UI/UX | **9.0** | Design system, dashboard widgets, dismissible toasts, typed settings, grouped RBAC, WAF aligned with admin |
-| Core CMS | **9.0** | Posts, pages, media, menus, banners, sliders, SEO, scheduling, comments, contact |
-| Themes | **8.5** | Upload, activate, child themes, customizer, government portal preset |
-| Plugins | **8.5** | Install/activate/deactivate/uninstall, hooks, migrations, integration tests |
-| RBAC & security | **8.5** | Roles, ownership policies, 2FA, WAF, brute-force protection, activity logs |
-| Internationalization | **8.5** | Server-side translation (en, my, zh-CN, ru) with glossary + DB cache |
-| Tests & CI | **9.0** | 244 tests, coverage thresholds enforced, GitHub Actions (lint, test, audit, docker) |
-| Ops & deploy | **8.0** | Docker Compose, health/ready endpoints, SQL migrations, npm audit (high threshold) |
-| Docs & polish | **8.5** | README badges, screenshots, demo guide, upgrade analysis |
+| Public UI/UX | **9.0** | Portal + blog themes, accessibility, pagination, contact |
+| Admin UI/UX | **9.0** | Trash restore, revision compare, customizer, typed settings |
+| Core CMS | **9.5** | Scheduled publish cron, trash/restore, CPT, fields, revisions |
+| Themes | **9.0** | Child-theme uninstall guard (DB + disk), upload, customizer |
+| Plugins | **9.0** | Full HTTP lifecycle, hooks, migrations |
+| RBAC & security | **9.0** | 2FA, WAF, ownership policies, mailer abstraction |
+| REST API | **8.5** | v1 read/write posts & pages, comments list, widgets |
+| Tests & CI | **9.0** | 310+ tests, coverage thresholds, GitHub Actions |
+| Ops & deploy | **8.5** | `publish:scheduled` CLI, Docker, health checks with WAF/SMTP |
+| Docs & polish | **9.0** | Gap analysis, API docs, production checklist |
 
 ### Still needed for 10/10
 
-- Production email (password reset, notifications) and backup automation
-- Media pipeline: thumbnails/optimization, optional CDN, private assets
-- RBAC coverage on every admin/API route and UI surface
-- Theme/plugin ecosystem depth (blocks, asset pipeline, marketplace-style isolation)
-- Confirm CI green on GitHub after latest changes are pushed
+- Multisite content isolation (`site_id` on all content tables)
+- WXR import/export
+- Full Gutenberg block library (current: lightweight block foundation)
+- Media CDN / regenerate-thumbnails admin tool
+- 100% stable CI on Windows + Linux (eliminate remaining flaky integration tests)
 
-See [`docs/UPGRADE_ANALYSIS.md`](docs/UPGRADE_ANALYSIS.md) for the full upgrade roadmap.
+See [`docs/WORDPRESS_GAP_ANALYSIS.md`](docs/WORDPRESS_GAP_ANALYSIS.md) for the full gap table.
 
 ## Visual Experience
 

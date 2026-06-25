@@ -4,6 +4,7 @@ const models = require('../../models');
 const { createUniqueSlug } = require('../../utils/slugGenerator');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { resolveImageValue } = require('../../utils/uploadHelper');
+const { normalizeUploadUrlsInHtml } = require('../../utils/mediaHelper');
 const policy = require('../../utils/policy');
 const {
   loadFieldGroupsForLocation,
@@ -67,7 +68,7 @@ function allowedStatus(body, req, record = null) {
 async function buildPayload(body, req, type, record = null, transaction = null) {
   const status = allowedStatus(body, req, record);
   const content = type.supports_editor
-    ? sanitizeHtml(body.content || '', richTextSanitizeOptions)
+    ? sanitizeHtml(normalizeUploadUrlsInHtml(body.content || ''), richTextSanitizeOptions)
     : sanitizePlainText(body.content, 50000);
   const payload = {
     title: type.supports_title ? sanitizePlainText(body.title, 220) : sanitizePlainText(type.name, 220),

@@ -1,0 +1,24 @@
+<svg width="1100" height="640" viewBox="0 0 1100 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1100" height="640" rx="24" fill="#0B1220"/>
+  <text x="48" y="52" fill="#E2E8F0" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">NodePress CMS  Full Workflow Proof</text>
+  <text x="48" y="82" fill="#94A3B8" font-family="Segoe UI, Arial, sans-serif" font-size="15">Each step is covered by a dedicated Jest integration test (305 total).</text>
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#0F172A">
+    <rect x="48" y="110" width="220" height="72" rx="14" fill="#DBEAFE"/><text x="64" y="138" font-weight="700">1. Custom Post Types</text><text x="64" y="160" fill="#475569">customPostTypes.test.js</text>
+    <rect x="292" y="110" width="220" height="72" rx="14" fill="#DBEAFE"/><text x="308" y="138" font-weight="700">2. Publish CPT item</text><text x="308" y="160" fill="#475569">customPostTypes.test.js</text>
+    <rect x="536" y="110" width="220" height="72" rx="14" fill="#DCFCE7"/><text x="552" y="138" font-weight="700">3. Field groups</text><text x="552" y="160" fill="#475569">customFields.test.js</text>
+    <rect x="780" y="110" width="272" height="72" rx="14" fill="#DCFCE7"/><text x="796" y="138" font-weight="700">4. Fields on public site</text><text x="796" y="160" fill="#475569">customFields.test.js</text>
+    <rect x="48" y="210" width="220" height="72" rx="14" fill="#FEF3C7"/><text x="64" y="238" font-weight="700">5. Revisions / restore</text><text x="64" y="260" fill="#475569">revisionsAutosave.test.js</text>
+    <rect x="292" y="210" width="220" height="72" rx="14" fill="#FEF3C7"/><text x="308" y="238" font-weight="700">6. Autosave recovery</text><text x="308" y="260" fill="#475569">revisionsAutosave.test.js</text>
+    <rect x="536" y="210" width="220" height="72" rx="14" fill="#EDE9FE"/><text x="552" y="238" font-weight="700">7. Templates / FSE</text><text x="552" y="260" fill="#475569">templatesFse.test.js</text>
+    <rect x="780" y="210" width="272" height="72" rx="14" fill="#FFE4E6"/><text x="796" y="238" font-weight="700">89. Import / Export</text><text x="796" y="260" fill="#475569">importExport.integration.test.js</text>
+    <rect x="48" y="310" width="220" height="72" rx="14" fill="#E0E7FF"/><text x="64" y="338" font-weight="700">10. Multisite / network</text><text x="64" y="360" fill="#475569">networkMultisite.test.js</text>
+    <rect x="292" y="310" width="220" height="72" rx="14" fill="#E0E7FF"/><text x="308" y="338" font-weight="700">11. Plugins / themes</text><text x="308" y="360" fill="#475569">pluginsLifecycleIntegration.test.js</text>
+    <rect x="536" y="310" width="220" height="72" rx="14" fill="#CCFBF1"/><text x="552" y="338" font-weight="700">12. CLI commands</text><text x="552" y="360" fill="#475569">cli.test.js</text>
+    <rect x="780" y="310" width="272" height="72" rx="14" fill="#F1F5F9"/><text x="796" y="338" font-weight="700">CI + coverage</text><text x="796" y="360" fill="#475569">.github/workflows/ci.yml</text>
+  </g>
+  <rect x="48" y="420" width="1004" height="170" rx="18" fill="#111827" stroke="#334155"/>
+  <text x="72" y="456" fill="#38BDF8" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700">Automated verification</text>
+  <text x="72" y="486" fill="#CBD5E1" font-family="Segoe UI, Arial, sans-serif" font-size="14">npm run test:ci  ’  ESLint + Jest (MySQL) + coverage thresholds + npm audit + Docker smoke test</text>
+  <text x="72" y="516" fill="#CBD5E1" font-family="Segoe UI, Arial, sans-serif" font-size="14">Badges: GitHub Actions workflow status · Codecov graph · local coverage summary in README</text>
+  <text x="72" y="556" fill="#94A3B8" font-family="Segoe UI, Arial, sans-serif" font-size="13">Manual demo: docs/DEMO.md · UI previews: docs/assets/screenshots/*.svg</text>
+</svg>

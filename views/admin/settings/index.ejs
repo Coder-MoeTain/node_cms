@@ -27,7 +27,8 @@
                       <% } else if (row.key === 'contact_email') { %>
                         <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="email" value="<%= row.value %>">
                       <% } else if (row.key.includes('link') || row.key.includes('url')) { %>
-                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="url" value="<%= row.value %>">
+                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="text" value="<%= row.value %>" placeholder="https://example.com or /page/path" inputmode="url" autocomplete="url">
+                        <p class="np-help-text mb-0">Full URL, site path, or leave blank.</p>
                       <% } else if (row.key === 'contact_phone' || row.key.startsWith('emergency_')) { %>
                         <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="tel" value="<%= row.value %>">
                       <% } else if (row.key === 'posts_per_page' || row.key.startsWith('stat_') || row.key === 'portal_visit_count') { %>

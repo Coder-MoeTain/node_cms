@@ -1,7 +1,7 @@
 const request = require('supertest');
 const bcrypt = require('bcrypt');
 const { app, models } = require('../server');
-const { login, getCsrf } = require('./helpers');
+const { login, getCsrf, writeTestUpload, removeTestUpload } = require('./helpers');
 
 let authorId;
 let otherAuthorId;
@@ -71,6 +71,9 @@ beforeAll(async () => {
     }
   });
   otherPostId = otherPost.id;
+
+  writeTestUpload('/uploads/rbac-own-media.jpg');
+  writeTestUpload('/uploads/rbac-other-media.jpg');
 
   const [ownMedia] = await models.Media.findOrCreate({
     where: { original_name: 'rbac-own-media.jpg' },

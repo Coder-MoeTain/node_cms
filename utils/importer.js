@@ -52,6 +52,30 @@ async function importSite(data, { dryRun = false, userId = null } = {}) {
       await models.Page.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
       logs.push(`Page: ${rest.slug}`);
     }
+    for (const row of data.menus || []) {
+      const { id, items, ...rest } = row;
+      const [menu] = await models.Menu.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
+      for (const item of items || []) {
+        const { id: itemId, menu_id, ...itemRest } = item;
+        await models.MenuItem.findOrCreate({
+          where: { menu_id: menu.id, title: itemRest.title, url: itemRest.url || '' },
+          defaults: { ...itemRest, menu_id: menu.id }
+        });
+      }
+      logs.push(`Menu: ${rest.slug}`);
+    }
+    for (const row of data.widget_areas || []) {
+      const { id, widgets, ...rest } = row;
+      const [area] = await models.WidgetArea.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
+      for (const widget of widgets || []) {
+        const { id: widgetId, widget_area_id, ...widgetRest } = widget;
+        await models.WidgetInstance.findOrCreate({
+          where: { widget_area_id: area.id, widget_type: widgetRest.widget_type, title: widgetRest.title || '' },
+          defaults: { ...widgetRest, widget_area_id: area.id }
+        });
+      }
+      logs.push(`Widget area: ${rest.slug}`);
+    }
 
     await job.update({
       status: 'completed',

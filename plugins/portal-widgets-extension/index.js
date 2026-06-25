@@ -12,7 +12,6 @@ module.exports = {
   async register({ hooks, manifest }) {
     const settings = await loadPluginSettings(manifest.slug, manifest);
     const showCitizenServices = settingBool(settings.show_citizen_services, true);
-    const showEmergencyBanner = settingBool(settings.show_emergency_banner, true);
     const footerNotice = settingValue(settings, 'footer_notice');
 
     hooks.addAction('adminMenuItems', () => ({
@@ -23,10 +22,7 @@ module.exports = {
 
     hooks.register('dashboardWidgets', () => ({
       title: 'Portal Widgets',
-      body: [
-        showCitizenServices ? 'Citizen services on' : 'Citizen services off',
-        showEmergencyBanner ? 'Emergency banner on' : 'Emergency banner off'
-      ].join(' · ')
+      body: showCitizenServices ? 'Citizen services on' : 'Citizen services off'
     }), 15);
 
     hooks.addFilter('beforePageRender', (locals) => {
@@ -34,17 +30,13 @@ module.exports = {
       return {
         ...locals,
         portalWidgetExtension: {
-          citizenServices: showCitizenServices,
-          emergencyBanner: showEmergencyBanner
+          citizenServices: showCitizenServices
         }
       };
     }, 10);
 
     hooks.register('publicFooter', () => {
       const parts = [];
-      if (showEmergencyBanner) {
-        parts.push('<div class="portal-widget-extension-emergency small text-center py-2">Emergency: Police 199 · Fire 191 · Ambulance 192</div>');
-      }
       if (footerNotice) {
         parts.push(`<div class="portal-widget-extension-notice small text-center text-muted py-2">${escapeHtml(footerNotice)}</div>`);
       }

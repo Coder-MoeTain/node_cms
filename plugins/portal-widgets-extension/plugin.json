@@ -25,14 +25,6 @@
     },
     {
       "section": "Widgets",
-      "key": "show_emergency_banner",
-      "label": "Emergency contacts banner",
-      "type": "checkbox",
-      "default": "true",
-      "description": "Highlight emergency contact numbers in the portal footer."
-    },
-    {
-      "section": "Widgets",
       "key": "footer_notice",
       "label": "Footer notice",
       "type": "textarea",

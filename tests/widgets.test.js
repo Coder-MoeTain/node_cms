@@ -1,6 +1,6 @@
 const request = require('supertest');
 const { app, models } = require('../server');
-const { ensurePortalTheme } = require('./helpers');
+const { ensurePortalTheme, writeTestUpload } = require('./helpers');
 
 const PORTAL_CONFIG = {
   preset: 'myanmar-portal',
@@ -18,6 +18,7 @@ const PORTAL_CONFIG = {
 
 beforeEach(async () => {
   await ensurePortalTheme(models, PORTAL_CONFIG);
+  writeTestUpload('/uploads/widget-gallery-test.jpg');
   const admin = await models.User.findOne({ where: { email: 'admin@example.com' } });
   await models.Media.findOrCreate({
     where: { original_name: 'widget-gallery-test.jpg' },

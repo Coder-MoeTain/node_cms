@@ -101,6 +101,17 @@ function hideTinyMceImageSourceField() {
   });
 }
 
+function normalizeEditorUploadUrls(html) {
+  if (!html) return html;
+  return String(html)
+    .replace(/(\s(?:src|href)=["'])\/admin\/uploads\//gi, '$1/uploads/')
+    .replace(/(\s(?:src|href)=["'])(?:\.\.\/)+uploads\//gi, '$1/uploads/')
+    .replace(
+      /(\s(?:src|href)=["'])(?!\/|https?:\/\/|data:|mailto:|#|tel:)(uploads\/[^"']+)(["'])/gi,
+      '$1/$2$3'
+    );
+}
+
 if (window.tinymce && document.querySelector('.rich-editor')) {
   tinymce.init({
     selector: '.rich-editor',
@@ -111,6 +122,10 @@ if (window.tinymce && document.querySelector('.rich-editor')) {
     menubar: false,
     plugins: 'link image media table lists code autoresize',
     toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code',
+    relative_urls: false,
+    remove_script_host: false,
+    convert_urls: false,
+    document_base_url: '/',
     automatic_uploads: true,
     paste_data_images: true,
     image_uploadtab: true,
@@ -133,6 +148,12 @@ if (window.tinymce && document.querySelector('.rich-editor')) {
       });
     },
     setup(editor) {
+      editor.on('BeforeSetContent', (event) => {
+        if (event.content) event.content = normalizeEditorUploadUrls(event.content);
+      });
+      editor.on('GetContent', (event) => {
+        if (event.content) event.content = normalizeEditorUploadUrls(event.content);
+      });
       editor.on('ExecCommand', (event) => {
         if (event.command === 'mceImage') {
           setTimeout(hideTinyMceImageSourceField, 50);

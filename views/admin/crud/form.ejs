@@ -54,7 +54,7 @@
                   <div><label class="form-label">Meta Description</label><input class="form-control" name="seo_description" value="<%= val('seo_description') %>"></div>
                 </div>
               </div>
-              <%- include('../partials/content-translations', { translations: typeof translations !== 'undefined' ? translations : {}, translationLocales: typeof translationLocales !== 'undefined' ? translationLocales : ['my', 'zh-CN', 'ru'] }) %>
+              <%- include('../partials/content-translations', { translations: typeof translations !== 'undefined' ? translations : {}, translationLocales: typeof translationLocales !== 'undefined' ? translationLocales : ['en', 'my', 'zh-CN', 'ru'] }) %>
             </div>
             <aside class="editor-sidebar editor-sidebar-sticky">
               <div class="np-metabox np-metabox-publish">

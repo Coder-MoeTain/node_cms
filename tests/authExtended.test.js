@@ -92,37 +92,44 @@ test('repeated failed logins from one IP are throttled', async () => {
   });
   loginBruteForce.clearSettingsCache();
 
-  const agent = request.agent(app);
-  for (let i = 0; i < 3; i++) {
+  try {
+    const agent = request.agent(app);
+    for (let i = 0; i < 3; i++) {
+      const page = await agent.get('/admin/login');
+      const csrf = page.text.match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
+      await agent.post('/admin/login').type('form').send({
+        email: `unknown-${i}@test.local`,
+        password: 'wrong-password',
+        _csrf: csrf
+      });
+    }
+
     const page = await agent.get('/admin/login');
     const csrf = page.text.match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
-    await agent.post('/admin/login').type('form').send({
-      email: `unknown-${i}@test.local`,
+    const blocked = await agent.post('/admin/login').type('form').send({
+      email: 'admin@example.com',
       password: 'wrong-password',
       _csrf: csrf
     });
+    expect(blocked.status).toBe(302);
+    expect(blocked.headers.location).toMatch(/^\/admin\/login/);
+  } finally {
+    await models.SecuritySetting.upsert({
+      key: 'login_max_ip_attempts',
+      value: '10',
+      enabled: true
+    });
+    await models.SecuritySetting.upsert({
+      key: 'login_attempt_limiter',
+      value: 'false',
+      enabled: false
+    });
+    await models.LoginAttempt.destroy({
+      where: {
+        ip_address: ['::ffff:127.0.0.1', '127.0.0.1', '::1']
+      },
+      force: true
+    });
+    loginBruteForce.clearSettingsCache();
   }
-
-  const page = await agent.get('/admin/login');
-  const csrf = page.text.match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
-  const blocked = await agent.post('/admin/login').type('form').send({
-    email: 'admin@example.com',
-    password: 'wrong-password',
-    _csrf: csrf
-  });
-  expect(blocked.status).toBe(302);
-  expect(blocked.headers.location).toBe('/admin/login');
-
-  await models.SecuritySetting.upsert({
-    key: 'login_max_ip_attempts',
-    value: '10',
-    enabled: true
-  });
-  await models.LoginAttempt.destroy({
-    where: {
-      ip_address: ['::ffff:127.0.0.1', '127.0.0.1', '::1']
-    },
-    force: true
-  });
-  loginBruteForce.clearSettingsCache();
 });

@@ -40,19 +40,28 @@ test('admin cannot enable 2FA with invalid token', async () => {
 });
 
 test('login requires valid TOTP when 2FA is enabled', async () => {
-  const user = await models.User.findOne({ where: { email: 'admin@example.com' } });
   const secret = speakeasy.generateSecret({ length: 20 });
-  await user.update({ two_factor_enabled: true, two_factor_secret: secret.base32 });
+  await models.User.update(
+    { two_factor_enabled: true, two_factor_secret: secret.base32 },
+    { where: { email: 'admin@example.com' } }
+  );
+  const fresh = await models.User.findOne({ where: { email: 'admin@example.com' } });
+  expect(fresh.two_factor_enabled).toBe(true);
 
   const agent = request.agent(app);
-  const badLogin = await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/login');
+  const badLogin = await agent.post('/admin/login').type('form').send({
+    email: 'admin@example.com',
+    password: 'Admin@12345',
+    _csrf: csrf
+  });
   expect(badLogin.status).toBe(302);
-  expect(badLogin.headers.location).toContain('/admin/login');
+  expect(badLogin.headers.location).toMatch(/\/admin\/login/);
 
   const token = speakeasy.totp({ secret: secret.base32, encoding: 'base32' });
   const goodLogin = await login(agent, 'admin@example.com', 'Admin@12345', token);
   expect(goodLogin.status).toBe(302);
-  expect(goodLogin.headers.location).not.toContain('/admin/login');
+  expect(goodLogin.headers.location).not.toMatch(/\/admin\/login/);
 });
 
 test('admin can disable 2FA', async () => {

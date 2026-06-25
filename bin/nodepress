@@ -18,6 +18,7 @@ Usage:
   nodepress plugin:list            List installed plugins
   nodepress theme:list             List installed themes
   nodepress export [file.json]     Export site JSON
+  nodepress publish:scheduled      Publish due scheduled posts/pages
 `);
     process.exit(0);
   }
@@ -87,6 +88,14 @@ Usage:
     const out = rest[0] || `nodepress-export-${Date.now()}.json`;
     fs.writeFileSync(out, JSON.stringify(await exportSite(), null, 2));
     console.log(`Exported to ${out}`);
+    process.exit(0);
+  }
+
+  if (command === 'publish:scheduled') {
+    const { publishScheduledContent } = require('../utils/scheduledPublisher');
+    await require('../config/database').authenticate();
+    const result = await publishScheduledContent();
+    console.log(`Published ${result.posts} post(s) and ${result.pages} page(s).`);
     process.exit(0);
   }
 

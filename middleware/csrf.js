@@ -15,6 +15,9 @@ function getSubmittedToken(req) {
 
 function csrfProtection(req, res, next) {
   req.csrfToken = () => ensureToken(req);
+  // REST API clients authenticate via API key or session cookie; skip browser CSRF for /api.
+  if (req.path.startsWith('/api')) return next();
+
   const token = ensureToken(req);
   if (safeMethods.has(req.method)) return next();
 

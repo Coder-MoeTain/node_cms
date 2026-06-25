@@ -6,6 +6,7 @@ const { loginBruteForceGuard, conditionalLoginLimiter } = require('../middleware
 const { activityLogMiddleware } = require('../middleware/activityLog');
 const upload = require('../middleware/upload');
 const { zipUpload } = require('../middleware/zipUpload');
+const { jsonUpload } = require('../middleware/jsonUpload');
 
 const crudImageUpload = upload.image.fields([
   { name: 'featured_image_file', maxCount: 1 },
@@ -43,6 +44,13 @@ const comments = require('../controllers/admin/commentController');
 
 const router = express.Router();
 
+function handleImageUpload(req, res, next) {
+  upload.image.single('file')(req, res, (error) => {
+    if (error) return res.status(400).json({ error: error.message || 'Upload failed.' });
+    next();
+  });
+}
+
 router.get('/login', guestOnly, auth.loginForm);
 router.post('/login', conditionalLoginLimiter, loginBruteForceGuard, guestOnly, [body('email').isEmail().withMessage('Valid email is required.'), body('password').notEmpty().withMessage('Password is required.')], auth.login);
 router.post('/logout', requireAuth, auth.logout);
@@ -63,7 +71,7 @@ router.post('/quick-draft', requireAuth, canAny(['manage_posts', 'create_posts']
 
 router.get('/media', requireAuth, canAny(['manage_media', 'upload_media']), media.index);
 router.post('/media/upload', requireAuth, canAny(['manage_media', 'upload_media']), upload.array('files', 20), media.upload);
-router.post('/media/upload-json', requireAuth, canAny(['manage_media', 'upload_media']), upload.image.single('file'), media.uploadJson);
+router.post('/media/upload-json', requireAuth, canAny(['manage_media', 'upload_media']), handleImageUpload, media.uploadJson);
 router.get('/media/:id/edit', requireAuth, canAny(['manage_media', 'upload_media']), media.edit);
 router.put('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), upload.single('file'), media.update);
 router.delete('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), media.destroy);
@@ -150,6 +158,7 @@ router.put('/field-groups/:id', requireAuth, can('manage_custom_fields'), fieldG
 router.delete('/field-groups/:id', requireAuth, can('manage_custom_fields'), fieldGroups.destroy);
 
 router.get('/revisions', requireAuth, canAny(['manage_posts', 'manage_pages', 'manage_custom_content']), revisions.index);
+router.get('/revisions/compare', requireAuth, canAny(['manage_posts', 'manage_pages', 'manage_custom_content']), revisions.compare);
 router.post('/revisions/:id/restore', requireAuth, canAny(['manage_posts', 'manage_pages', 'manage_custom_content']), revisions.restore);
 
 router.get('/tools', requireAuth, can('manage_settings'), tools.index);
@@ -157,7 +166,7 @@ router.get('/tools/health', requireAuth, canAny(['manage_settings', 'manage_secu
 router.get('/tools/export', requireAuth, can('manage_settings'), importExport.exportForm);
 router.get('/tools/export/download', requireAuth, can('manage_settings'), importExport.exportDownload);
 router.get('/tools/import', requireAuth, can('manage_settings'), importExport.importForm);
-router.post('/tools/import/preview', requireAuth, can('manage_settings'), upload.single('file'), importExport.importPreview);
+router.post('/tools/import/preview', requireAuth, can('manage_settings'), jsonUpload.single('file'), importExport.importPreview);
 router.post('/tools/import', requireAuth, can('manage_settings'), importExport.importRun);
 
 router.get('/updates', requireAuth, can('manage_settings'), updates.index);
@@ -207,6 +216,8 @@ function resourcePermission(req, res, next) {
 router.get('/:resource', requireAuth, resourcePermission, crud.index);
 router.post('/:resource/bulk', requireAuth, resourcePermission, crud.bulkDestroy);
 router.get('/:resource/create', requireAuth, resourcePermission, crud.create);
+router.post('/:resource/:id/restore', requireAuth, resourcePermission, crud.restore);
+router.delete('/:resource/:id/force', requireAuth, resourcePermission, crud.forceDestroy);
 router.post('/:resource', requireAuth, resourcePermission, crudImageUpload, crud.store);
 router.get('/:resource/:id/edit', requireAuth, resourcePermission, crud.edit);
 router.put('/:resource/:id', requireAuth, resourcePermission, crudImageUpload, crud.update);

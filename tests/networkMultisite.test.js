@@ -7,6 +7,10 @@ const { siteResolver } = require('../middleware/siteResolver');
 describe('Multisite / network mode', () => {
   const originalMultisite = appConfig.multisiteEnabled;
 
+  beforeEach(() => {
+    appConfig.multisiteEnabled = originalMultisite;
+  });
+
   afterEach(() => {
     appConfig.multisiteEnabled = originalMultisite;
   });

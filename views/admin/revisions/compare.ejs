@@ -1,0 +1,35 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header mb-3">
+      <h1>Compare Revisions</h1>
+      <a class="np-btn np-btn-secondary" href="/admin/revisions?resource_type=<%= resourceType %>&resource_id=<%= resourceId %>">Back to list</a>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header">Revision #<%= left.id %> — <%= left.created_at %></div>
+          <div class="card-body">
+            <h2 class="h5"><%= left.title %></h2>
+            <div class="np-revision-content"><%- left.content %></div>
+            <% if (left.excerpt) { %><p class="text-muted mt-2"><%= left.excerpt %></p><% } %>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header">Revision #<%= right.id %> — <%= right.created_at %></div>
+          <div class="card-body">
+            <h2 class="h5"><%= right.title %></h2>
+            <div class="np-revision-content"><%- right.content %></div>
+            <% if (right.excerpt) { %><p class="text-muted mt-2"><%= right.excerpt %></p><% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>
