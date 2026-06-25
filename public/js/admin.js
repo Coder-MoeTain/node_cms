@@ -138,12 +138,54 @@ async function npUploadImage(file) {
 
 window.npUploadImage = npUploadImage;
 
+function elevateMediaGalleryModal() {
+  const modal = document.getElementById('mediaGalleryModal');
+  if (!modal) return;
+  const onShown = () => {
+    modal.style.zIndex = '200050';
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    const backdrop = backdrops[backdrops.length - 1];
+    if (backdrop) backdrop.style.zIndex = '200040';
+  };
+  modal.addEventListener('shown.bs.modal', onShown, { once: true });
+}
+
+function closeMediaGalleryModal() {
+  const modal = document.getElementById('mediaGalleryModal');
+  if (modal && window.bootstrap) {
+    bootstrap.Modal.getInstance(modal)?.hide();
+  }
+}
+
+function escapeHtmlAttr(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
+function insertImageIntoEditor(editor, item) {
+  if (!editor || !item?.filePath) return;
+  const url = escapeHtmlAttr(item.filePath);
+  const alt = escapeHtmlAttr(item.originalName || item.name || '');
+  editor.insertContent(`<img src="${url}" alt="${alt}" />`);
+  editor.focus();
+  try {
+    editor.windowManager?.close();
+  } catch (_) {
+    /* dialog may already be closed */
+  }
+}
+
+window.npInsertEditorImage = insertImageIntoEditor;
+
 window.npOpenMediaPicker = function openMediaPicker(callback) {
   mediaPickerCallback = typeof callback === 'function' ? callback : null;
   activeMediaTargetField = null;
   window.activeMediaTargetField = null;
   const modal = document.getElementById('mediaGalleryModal');
   if (modal && window.bootstrap) {
+    elevateMediaGalleryModal();
     bootstrap.Modal.getOrCreateInstance(modal).show();
     loadMediaGallery();
   }
@@ -263,7 +305,7 @@ function selectMediaItem(item) {
     const callback = mediaPickerCallback;
     mediaPickerCallback = null;
     callback(item);
-    bootstrap.Modal.getInstance(document.getElementById('mediaGalleryModal'))?.hide();
+    closeMediaGalleryModal();
     return;
   }
 
@@ -281,7 +323,7 @@ function selectMediaItem(item) {
   if (removeFlag) removeFlag.value = '0';
   if (fileInput) fileInput.value = '';
   updateMediaPreview(field, item.filePath);
-  bootstrap.Modal.getInstance(document.getElementById('mediaGalleryModal'))?.hide();
+  closeMediaGalleryModal();
 }
 
 async function loadMediaGallery() {
@@ -290,9 +332,13 @@ async function loadMediaGallery() {
 
   grid.innerHTML = '<div class="media-gallery-empty">Loading media...</div>';
   try {
-    const response = await fetch('/admin/settings/media-gallery?type=image', {
+    const response = await fetch('/admin/media/gallery?type=image', {
       headers: { Accept: 'application/json' }
     });
+    if (!response.ok) {
+      grid.innerHTML = '<div class="media-gallery-empty">Unable to load media library. Check your upload permissions.</div>';
+      return;
+    }
     const data = await response.json();
 
     if (!data.items?.length) {
@@ -309,7 +355,11 @@ async function loadMediaGallery() {
 
     grid.querySelectorAll('.media-gallery-item').forEach((button) => {
       button.addEventListener('click', () => {
-        selectMediaItem({ filePath: button.dataset.filePath, name: button.dataset.fileName });
+        selectMediaItem({
+          filePath: button.dataset.filePath,
+          originalName: button.dataset.fileName,
+          name: button.dataset.fileName
+        });
       });
     });
   } catch (error) {

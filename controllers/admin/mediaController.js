@@ -111,6 +111,35 @@ async function destroy(req, res, next) {
   }
 }
 
+async function gallery(req, res, next) {
+  try {
+    const mediaType = req.query.type || 'image';
+    const where = { file_type: mediaType };
+    if (!policy.hasPermission(req.session.user, 'manage_media') && policy.hasPermission(req.session.user, 'upload_media')) {
+      where.uploaded_by = req.session.user.id;
+    }
+    const rows = filterExistingMedia(await Media.findAll({
+      where,
+      limit: 60,
+      order: [['created_at', 'DESC']]
+    }));
+    return res.json({
+      items: rows.map((item) => ({
+        id: item.id,
+        originalName: item.original_name,
+        filePath: item.file_path,
+        thumbnailPath: item.thumbnail_path,
+        fileType: item.file_type,
+        mimeType: item.mime_type,
+        fileSize: item.file_size,
+        createdAt: item.created_at
+      }))
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function uploadJson(req, res, next) {
   try {
     const file = req.file;
@@ -137,4 +166,4 @@ async function uploadJson(req, res, next) {
   }
 }
 
-module.exports = { index, upload, uploadJson, edit, update, destroy };
+module.exports = { index, upload, uploadJson, gallery, edit, update, destroy };

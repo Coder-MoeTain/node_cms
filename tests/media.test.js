@@ -43,6 +43,22 @@ test('admin can edit media metadata', async () => {
 test('media gallery JSON endpoint returns items', async () => {
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');
+  const response = await agent.get('/admin/media/gallery?type=image');
+  expect(response.status).toBe(200);
+  expect(response.body.items).toEqual(expect.any(Array));
+});
+
+test('author with upload_media can browse media gallery JSON', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'author@example.com', 'Author@12345');
+  const response = await agent.get('/admin/media/gallery?type=image');
+  expect(response.status).toBe(200);
+  expect(response.body.items).toEqual(expect.any(Array));
+});
+
+test('media gallery settings endpoint returns items', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
   const response = await agent.get('/admin/settings/media-gallery?type=image');
   expect(response.status).toBe(200);
   expect(response.body.items).toEqual(expect.any(Array));

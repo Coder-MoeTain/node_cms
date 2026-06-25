@@ -1,0 +1,50 @@
+﻿
+> nodepress-cms@1.0.0 test
+> cross-env NODE_ENV=test jest --runInBand --forceExit tests/pluginsLifecycleIntegration.test.js --verbose
+
+Γùç injected env (13) from .env // tip: Γîÿ custom filepath { path: '/custom/path/.env' }
+Γùç injected env (0) from .env // tip: Γùê encrypted .env [www.dotenvx.com]
+Test database bootstrapped: nodepress_cms_test_1736
+Γùç injected env (13) from .env // tip: Γîü auth for agents [www.vestauth.com]
+Seed complete. Login with admin@example.com / Admin@12345
+Author account: author@example.com / Author@12345
+Γùç injected env (13) from .env // tip: Γîÿ override existing { override: true }
+Γùç injected env (0) from .env // tip: Γùê encrypted .env [www.dotenvx.com]
+  console.log
+    Γùç injected env (0) from .env // tip: Γîÿ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+  console.log
+    Γùç injected env (0) from .env // tip: Γîÿ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:17 +0000] "GET /admin/login HTTP/1.1" 200 - "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:17 +0000] "POST /admin/login HTTP/1.1" 302 28 "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:18 +0000] "GET /admin/plugins HTTP/1.1" 200 - "-" "-"
+node.exe : (node:1736) [DEP0044] DeprecationWarning: The `util.isArray` API is deprecated. Please use 
+`Array.isArray()` instead.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:1736) [DE...ray()` instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-deprecation ...` to show where the warning was created)
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:18 +0000] "POST /admin/plugins/upload?_csrf=4ab3bf09924caf4b68fd4e237fc665596215b0670c271c2409d80a42d1ac496a HTTP/1.1" 302 36 "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:18 +0000] "GET /admin/plugins HTTP/1.1" 200 - "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:18 +0000] "POST /admin/plugins/full-lifecycle-plugin/activate HTTP/1.1" 302 36 "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:19 +0000] "GET / HTTP/1.1" 200 - "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:19 +0000] "GET /admin/plugins HTTP/1.1" 200 - "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:19 +0000] "POST /admin/plugins/full-lifecycle-plugin/deactivate HTTP/1.1" 302 36 "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:19 +0000] "GET / HTTP/1.1" 200 - "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:20 +0000] "GET /admin/plugins HTTP/1.1" 200 - "-" "-"
+::ffff:127.0.0.1 - - [25/Jun/2026:06:31:20 +0000] "POST /admin/plugins/full-lifecycle-plugin/uninstall HTTP/1.1" 302 36 "-" "-"
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        5.569 s
+Ran all test suites matching tests/pluginsLifecycleIntegration.test.js.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after 
+all tests finished?

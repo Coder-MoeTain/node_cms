@@ -2,10 +2,10 @@
 <% const labels = { en: 'English', my: 'Myanmar (မြန်မာ)', 'zh-CN': 'Chinese (中文)', ru: 'Russian (Русский)' }; %>
 <% const store = typeof translations !== 'undefined' ? translations : {}; %>
 
-<div class="np-metabox mt-3">
-  <div class="np-metabox-header">Translations (no Google Translate)</div>
+<div class="np-metabox mt-3" data-content-translations>
+  <div class="np-metabox-header">Translations</div>
   <div class="np-metabox-body">
-    <p class="np-help-text">Enter human-written translations for each language. When a visitor selects a language, these override automatic glossary translation for that locale. Leave blank to use the glossary auto-translation fallback.</p>
+    <p class="np-help-text">Use <strong>Auto-fill translations</strong> under the main editor to generate draft translations from the title and body. Review and edit before publishing. Saved translations override glossary auto-translation on the public site.</p>
     <ul class="nav nav-tabs mb-3" role="tablist">
       <% locales.forEach(function(locale, idx) { %>
         <li class="nav-item" role="presentation">
@@ -18,12 +18,12 @@
         const row = store[locale] || {};
         const key = locale;
       %>
-        <div class="tab-pane fade<%= idx === 0 ? ' show active' : '' %>" id="tr-tab-<%= locale.replace(/[^a-z]/gi, '') %>" role="tabpanel">
-          <div class="mb-2"><label class="form-label">Title</label><input class="form-control" name="tr[<%= key %>][title]" value="<%= row.title || '' %>"></div>
-          <div class="mb-2"><label class="form-label">Excerpt</label><textarea class="form-control" name="tr[<%= key %>][excerpt]" rows="2"><%= row.excerpt || '' %></textarea></div>
-          <div class="mb-2"><label class="form-label">Content</label><textarea class="form-control rich-editor" name="tr[<%= key %>][content]" rows="8"><%- row.content || '' %></textarea></div>
-          <div class="mb-2"><label class="form-label">SEO Title</label><input class="form-control" name="tr[<%= key %>][seo_title]" value="<%= row.seo_title || '' %>"></div>
-          <div><label class="form-label">SEO Description</label><textarea class="form-control" name="tr[<%= key %>][seo_description]" rows="2"><%= row.seo_description || '' %></textarea></div>
+        <div class="tab-pane fade<%= idx === 0 ? ' show active' : '' %>" id="tr-tab-<%= locale.replace(/[^a-z]/gi, '') %>" role="tabpanel" data-translation-locale="<%= key %>">
+          <div class="mb-2"><label class="form-label">Title</label><input class="form-control" name="tr[<%= key %>][title]" data-translation-field="title" value="<%= row.title || '' %>"></div>
+          <div class="mb-2"><label class="form-label">Excerpt</label><textarea class="form-control" name="tr[<%= key %>][excerpt]" data-translation-field="excerpt" rows="2"><%= row.excerpt || '' %></textarea></div>
+          <div class="mb-2"><label class="form-label">Content</label><textarea class="form-control" name="tr[<%= key %>][content]" data-translation-field="content" rows="8"><%- row.content || '' %></textarea></div>
+          <div class="mb-2"><label class="form-label">SEO Title</label><input class="form-control" name="tr[<%= key %>][seo_title]" data-translation-field="seo_title" value="<%= row.seo_title || '' %>"></div>
+          <div><label class="form-label">SEO Description</label><textarea class="form-control" name="tr[<%= key %>][seo_description]" data-translation-field="seo_description" rows="2"><%= row.seo_description || '' %></textarea></div>
         </div>
       <% }) %>
     </div>

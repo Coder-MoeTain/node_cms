@@ -620,6 +620,10 @@
 
 .sidebar-overlay.show { display: block; }
 
+#mediaGalleryModal.modal.show {
+  z-index: 200050 !important;
+}
+
 .media-gallery-modal .modal-header,
 .media-gallery-modal .modal-footer { background: #f6f7f7; }
 
