@@ -6,7 +6,10 @@ const {
   safeRegex,
   maskSensitiveFields,
   matchPattern,
-  shouldSkipWaf
+  shouldSkipWaf,
+  ipMatchesListEntry,
+  summarizeMatchedRules,
+  MAX_REGEX_PATTERN_LENGTH
 } = require('../utils/wafHelper');
 
 async function setWafMode(mode) {
@@ -83,13 +86,42 @@ test('contains pattern type matches normalized values', () => {
   expect(matchPattern('foo union select bar', rule)).toBe(true);
 });
 
-test('API-style request receives JSON 403 when blocked', async () => {
+test('IPv4 CIDR matching supports whitelist and block ranges', () => {
+  expect(ipMatchesListEntry('203.0.113.44', '203.0.113.0/24')).toBe(true);
+  expect(ipMatchesListEntry('203.0.114.1', '203.0.113.0/24')).toBe(false);
+  expect(ipMatchesListEntry('10.0.0.5', '10.0.0.5')).toBe(true);
+});
+
+test('summarizeMatchedRules reports combined rule names', () => {
+  const summary = summarizeMatchedRules([
+    { rule: { id: 1, name: 'SQLi UNION SELECT', category: 'sql_injection', severity: 'critical' } },
+    { rule: { id: 2, name: 'SQLi Comment Abuse', category: 'sql_injection', severity: 'medium' } }
+  ]);
+  expect(summary.name).toBe('SQLi UNION SELECT (+1 more)');
+  expect(summary.severity).toBe('critical');
+  expect(summary.all).toHaveLength(2);
+});
+
+test('oversized regex patterns are rejected', () => {
+  const huge = 'a'.repeat(MAX_REGEX_PATTERN_LENGTH + 1);
+  expect(validatePattern(huge, 'regex')).toBe(false);
+  expect(safeRegex(huge)).toBeNull();
+});
+
+test('API-style request receives structured JSON 403 when blocked', async () => {
+  await models.WafSetting.upsert({
+    setting_key: 'waf_response_message',
+    setting_value: 'Custom WAF block message.',
+    setting_type: 'string'
+  });
   await setWafMode('block');
   const response = await request(app)
     .get('/?id=1%20UNION%20SELECT%201')
     .set('Accept', 'application/json');
   if (response.status === 403) {
     expect(response.headers['content-type']).toMatch(/json/);
+    expect(response.body.error).toBe('waf_blocked');
+    expect(response.body.message).toMatch(/Custom WAF block message|blocked/i);
   }
   await setWafMode('monitor');
 });

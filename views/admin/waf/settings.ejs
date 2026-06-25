@@ -11,6 +11,7 @@
       </div>
       <a class="np-btn np-btn-secondary" href="/admin/waf">Dashboard</a>
     </div>
+    <%- include('../partials/waf-nav', { activeNav: typeof activeNav !== 'undefined' ? activeNav : 'settings' }) %>
     <div class="np-alert np-alert-info">
       <strong>Monitor mode</strong> logs suspicious requests without blocking. Use it for 24–48 hours before switching to <strong>block mode</strong>.
     </div>
@@ -53,6 +54,7 @@
         <div class="np-widget-body">
           <div class="row g-3">
             <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="log_all_suspicious" <%= settings.log_all_suspicious === 'true' ? 'checked' : '' %>> Log all suspicious requests</label></div>
+            <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="log_blocked_only" <%= settings.log_blocked_only === 'true' ? 'checked' : '' %>> Log blocked actions only</label></div>
             <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="log_all_requests" <%= settings.log_all_requests === 'true' ? 'checked' : '' %>> Log all dynamic requests</label></div>
             <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="auto_block_enabled" <%= settings.auto_block_enabled === 'true' ? 'checked' : '' %>> Enable auto block</label></div>
             <div class="col-md-4"><label class="form-label">Auto block threshold</label><input class="form-control" type="number" min="1" name="auto_block_threshold" value="<%= settings.auto_block_threshold || 5 %>"></div>

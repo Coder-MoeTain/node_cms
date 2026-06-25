@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const { executeMigrationStatement } = require('./migrationHelpers');
 
 const migrationsDir = path.join(__dirname, 'migrations');
 
@@ -34,7 +35,7 @@ async function run() {
     const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
     await sequelize.transaction(async (transaction) => {
       for (const statement of splitStatements(sql)) {
-        await sequelize.query(statement, { transaction });
+        await executeMigrationStatement(sequelize, statement, transaction);
       }
       await sequelize.query('INSERT INTO migrations (name) VALUES (?)', { replacements: [file], transaction });
     });

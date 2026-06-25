@@ -124,6 +124,7 @@ router.post('/waf/settings', requireAuth, wafPermission, waf.updateSettings);
 router.get('/waf/rules', requireAuth, wafPermission, waf.rules);
 router.get('/waf/rules/create', requireAuth, wafPermission, waf.createRule);
 router.post('/waf/rules', requireAuth, wafPermission, waf.storeRule);
+router.post('/waf/rules/test', requireAuth, wafPermission, waf.testRule);
 router.get('/waf/rules/:id/edit', requireAuth, wafPermission, waf.editRule);
 router.post('/waf/rules/:id', requireAuth, wafPermission, waf.updateRule);
 router.post('/waf/rules/:id/delete', requireAuth, wafPermission, waf.deleteRule);

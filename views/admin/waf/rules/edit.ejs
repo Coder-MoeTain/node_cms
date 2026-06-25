@@ -2,14 +2,21 @@
 <%- include('../../partials/sidebar') %>
 <div class="admin-main">
   <%- include('../../partials/topbar') %>
-  <main class="admin-content">
+  <main class="admin-content" id="np-main-content">
     <%- include('../../partials/flash') %>
-    <div class="d-flex justify-content-between align-items-center mb-3"><h2>Edit WAF Rule</h2><a class="btn btn-outline-secondary" href="/admin/waf/rules">Back</a></div>
+    <div class="np-page-header">
+      <div><h1>Edit WAF rule</h1><p class="np-help-text mb-0"><%= rule.rule_key %></p></div>
+      <a class="np-btn np-btn-secondary" href="/admin/waf/rules">Back to rules</a>
+    </div>
+
+    <%- include('../../partials/waf-nav', { activeNav: typeof activeNav !== 'undefined' ? activeNav : 'rules' }) %>
+
     <% const locked = rule.is_system; %>
-    <% if (locked) { %><div class="alert alert-info">This is a system rule. You can tune status, action, severity, score, and description; pattern/category are locked to preserve baseline coverage.</div><% } %>
-    <form class="card" method="post" action="/admin/waf/rules/<%= rule.id %>">
+    <% if (locked) { %><div class="np-alert np-alert-info">System rule: tune status, action, severity, and score. Pattern and category stay locked to preserve baseline coverage.</div><% } %>
+
+    <form class="np-widget" method="post" action="/admin/waf/rules/<%= rule.id %>" id="wafRuleForm">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="card-body row g-3">
+      <div class="np-widget-body row g-3">
         <div class="col-md-6"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= rule.name %>" required></div>
         <div class="col-md-6"><label class="form-label">Rule key</label><input class="form-control" name="rule_key" value="<%= rule.rule_key %>" <%= locked ? 'readonly' : '' %>></div>
         <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="2"><%= rule.description || '' %></textarea></div>
@@ -22,8 +29,10 @@
         <div class="col-md-3 d-flex align-items-end"><label class="form-check"><input class="form-check-input" type="checkbox" name="status" <%= rule.status ? 'checked' : '' %>> Enabled</label></div>
         <div class="col-12"><label class="form-label">Pattern</label><textarea class="form-control font-monospace" name="pattern" rows="4" <%= locked ? 'readonly' : '' %>><%= rule.pattern %></textarea></div>
       </div>
-      <div class="card-footer d-flex justify-content-end"><button class="btn btn-primary">Save Rule</button></div>
+      <div class="np-widget-footer d-flex justify-content-end px-3 py-2 border-top"><button class="np-btn np-btn-primary" type="submit">Save rule</button></div>
     </form>
+
+    <%- include('../../partials/waf-rule-tester') %>
   </main>
 </div>
 <%- include('../../partials/footer') %>

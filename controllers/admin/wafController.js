@@ -2,7 +2,7 @@ const { Op, fn, col } = require('sequelize');
 const { WafRule, WafLog, WafIpList, WafSetting, ActivityLog } = require('../../models');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { createSlug } = require('../../utils/slugGenerator');
-const { validatePattern } = require('../../utils/wafHelper');
+const { validatePattern, normalizeRequestData, matchRuleAgainstRequest, calculateRiskScore, summarizeMatchedRules } = require('../../utils/wafHelper');
 const { clearWafCache } = require('../../middleware/waf');
 
 const categories = ['sql_injection', 'xss', 'command_injection', 'path_traversal', 'file_attack', 'bad_bot', 'scanner', 'brute_force', 'spam', 'cms_probe', 'custom'];
@@ -43,6 +43,16 @@ function flashAndRedirect(req, res, message, path = '/admin/waf') {
   return res.redirect(path);
 }
 
+function parseJsonField(value, fallback = {}) {
+  if (!value) return fallback;
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(String(value));
+  } catch (error) {
+    return fallback;
+  }
+}
+
 async function getSettingsObject() {
   const rows = await WafSetting.findAll({ order: [['setting_key', 'ASC']] });
   return rows.reduce((settings, row) => {
@@ -77,6 +87,30 @@ function buildRulePayload(body, userId, existing = null) {
   };
 }
 
+async function getBlocksLast7Days() {
+  const days = [];
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - offset);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    const count = await WafLog.count({
+      where: {
+        action_taken: { [Op.in]: ['block', 'rate_limit', 'temporary_block'] },
+        created_at: { [Op.gte]: start, [Op.lt]: end }
+      }
+    });
+    days.push({
+      label: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      weekday: start.toLocaleDateString('en-US', { weekday: 'short' }),
+      count
+    });
+  }
+  const max = Math.max(...days.map((day) => day.count), 1);
+  return days.map((day) => ({ ...day, height: Math.max(8, Math.round((day.count / max) * 100)) }));
+}
+
 async function dashboard(req, res, next) {
   try {
     const today = new Date();
@@ -92,7 +126,9 @@ async function dashboard(req, res, next) {
       riskSummary,
       activeBlocks,
       systemRuleCount,
-      customRuleCount
+      customRuleCount,
+      blocksLast7Days,
+      whitelistCount
     ] = await Promise.all([
       WafLog.count({ where: { action_taken: 'block', created_at: { [Op.gte]: today } } }),
       WafLog.count({ where: { created_at: { [Op.gte]: today } } }),
@@ -103,11 +139,14 @@ async function dashboard(req, res, next) {
       WafLog.findAll({ attributes: ['severity', [fn('COUNT', col('id')), 'count']], where: { created_at: { [Op.gte]: today }, severity: { [Op.ne]: null } }, group: ['severity'] }),
       WafIpList.count({ where: { status: true, list_type: ['blacklist', 'temporary_block'] } }),
       WafRule.count({ where: { is_system: true } }),
-      WafRule.count({ where: { is_system: false } })
+      WafRule.count({ where: { is_system: false } }),
+      getBlocksLast7Days(),
+      WafIpList.count({ where: { status: true, list_type: 'whitelist' } })
     ]);
 
     return res.render('admin/waf/dashboard', {
       title: 'WAF Dashboard',
+      activeNav: 'dashboard',
       settings,
       blockedToday,
       loggedToday,
@@ -118,7 +157,9 @@ async function dashboard(req, res, next) {
       riskSummary,
       activeBlocks,
       systemRuleCount,
-      customRuleCount
+      customRuleCount,
+      blocksLast7Days,
+      whitelistCount
     });
   } catch (error) {
     return next(error);
@@ -127,7 +168,7 @@ async function dashboard(req, res, next) {
 
 async function settings(req, res, next) {
   try {
-    return res.render('admin/waf/settings', { title: 'WAF Settings', settings: await getSettingsObject() });
+    return res.render('admin/waf/settings', { title: 'WAF Settings', activeNav: 'settings', settings: await getSettingsObject() });
   } catch (error) {
     return next(error);
   }
@@ -171,14 +212,14 @@ async function rules(req, res, next) {
       ];
     }
     const { rows, count } = await WafRule.findAndCountAll({ where, order: [['category', 'ASC'], ['name', 'ASC']], limit, offset });
-    return res.render('admin/waf/rules/index', { title: 'WAF Rules', rules: rows, meta: pageMeta(count, page, limit), filters: req.query, categories, severities, actions });
+    return res.render('admin/waf/rules/index', { title: 'WAF Rules', activeNav: 'rules', rules: rows, meta: pageMeta(count, page, limit), filters: req.query, categories, severities, actions });
   } catch (error) {
     return next(error);
   }
 }
 
 function createRule(req, res) {
-  return res.render('admin/waf/rules/create', { title: 'Create WAF Rule', categories, targets, actions, severities, patternTypes, rule: {} });
+  return res.render('admin/waf/rules/create', { title: 'Create WAF Rule', activeNav: 'rules', categories, targets, actions, severities, patternTypes, rule: {} });
 }
 
 async function storeRule(req, res, next) {
@@ -200,7 +241,7 @@ async function editRule(req, res, next) {
   try {
     const rule = await WafRule.findByPk(req.params.id);
     if (!rule) return flashAndRedirect(req, res, 'Rule not found.', '/admin/waf/rules');
-    return res.render('admin/waf/rules/edit', { title: 'Edit WAF Rule', rule, categories, targets, actions, severities, patternTypes });
+    return res.render('admin/waf/rules/edit', { title: 'Edit WAF Rule', activeNav: 'rules', rule, categories, targets, actions, severities, patternTypes });
   } catch (error) {
     return next(error);
   }
@@ -271,7 +312,7 @@ async function logs(req, res, next) {
       where.created_at = { [Op.gte]: start, [Op.lt]: end };
     }
     const { rows, count } = await WafLog.findAndCountAll({ where, order: [['created_at', 'DESC']], limit, offset });
-    return res.render('admin/waf/logs/index', { title: 'WAF Logs', logs: rows, meta: pageMeta(count, page, limit), filters: req.query, categories, severities, actions });
+    return res.render('admin/waf/logs/index', { title: 'WAF Logs', activeNav: 'logs', logs: rows, meta: pageMeta(count, page, limit), filters: req.query, categories, severities, actions });
   } catch (error) {
     return next(error);
   }
@@ -281,7 +322,7 @@ async function logDetail(req, res, next) {
   try {
     const log = await WafLog.findByPk(req.params.id, { include: [WafRule] });
     if (!log) return flashAndRedirect(req, res, 'WAF log not found.', '/admin/waf/logs');
-    return res.render('admin/waf/logs/show', { title: 'WAF Log Detail', log });
+    return res.render('admin/waf/logs/show', { title: 'WAF Log Detail', activeNav: 'logs', log });
   } catch (error) {
     return next(error);
   }
@@ -316,7 +357,7 @@ async function ipLists(req, res, next) {
     if (req.query.ip) where.ip_address = { [Op.like]: `%${req.query.ip}%` };
     if (req.query.type) where.list_type = req.query.type;
     const ipLists = await WafIpList.findAll({ where, order: [['created_at', 'DESC']] });
-    return res.render('admin/waf/ip-lists', { title: 'WAF IP Lists', ipLists, filters: req.query, listTypes });
+    return res.render('admin/waf/ip-lists', { title: 'WAF IP Lists', activeNav: 'ip-lists', ipLists, filters: req.query, listTypes });
   } catch (error) {
     return next(error);
   }
@@ -334,6 +375,7 @@ async function addIpList(req, res, next) {
       status: true,
       created_by: req.session.user.id
     });
+    clearWafCache();
     req.flash('success', 'WAF IP list updated.');
     return res.redirect('/admin/waf/ip-lists');
   } catch (error) {
@@ -345,6 +387,7 @@ async function removeIpList(req, res, next) {
   try {
     const row = await WafIpList.findByPk(req.params.id);
     if (row) await row.update({ status: false });
+    clearWafCache();
     req.flash('success', 'IP list entry removed.');
     return res.redirect('/admin/waf/ip-lists');
   } catch (error) {
@@ -364,6 +407,7 @@ async function addIpFromLog(req, res, next, listType) {
       status: true,
       created_by: req.session.user.id
     });
+    clearWafCache();
     await ActivityLog.create({
       user_id: req.session.user.id,
       action: `${listType === 'whitelist' ? 'Whitelisted' : 'Blocked'} IP from WAF log`,
@@ -425,6 +469,71 @@ async function exportLogsCsv(req, res, next) {
   }
 }
 
+async function testRule(req, res, next) {
+  try {
+    const pattern = String(req.body.pattern || '').trim();
+    const patternType = patternTypes.includes(req.body.pattern_type) ? req.body.pattern_type : 'regex';
+    const target = targets.includes(req.body.target) ? req.body.target : 'all';
+    const severity = severities.includes(req.body.severity) ? req.body.severity : 'medium';
+    const score = Math.min(Math.max(Number(req.body.score || 10), 1), 100);
+
+    if (!pattern) {
+      return res.status(400).json({ ok: false, error: 'Pattern is required.' });
+    }
+    if (!validatePattern(pattern, patternType)) {
+      return res.status(400).json({ ok: false, error: 'Invalid pattern for the selected pattern type.' });
+    }
+
+    const fakeReq = {
+      method: String(req.body.method || 'GET').toUpperCase(),
+      originalUrl: String(req.body.url || '/test?sample=1'),
+      url: String(req.body.url || '/test?sample=1'),
+      path: String(req.body.url || '/test').split('?')[0],
+      query: parseJsonField(req.body.query, {}),
+      body: parseJsonField(req.body.body, {}),
+      headers: {
+        'user-agent': String(req.body.user_agent || req.get('user-agent') || 'WAF Rule Tester/1.0')
+      },
+      get(name) {
+        return this.headers[String(name).toLowerCase()] || null;
+      },
+      ip: String(req.body.ip || req.ip || '127.0.0.1'),
+      socket: { remoteAddress: String(req.body.ip || req.ip || '127.0.0.1') }
+    };
+
+    const rule = {
+      id: null,
+      name: String(req.body.name || 'Rule test'),
+      category: categories.includes(req.body.category) ? req.body.category : 'custom',
+      pattern,
+      pattern_type: patternType,
+      target,
+      action: actions.includes(req.body.action) ? req.body.action : 'block',
+      severity,
+      score
+    };
+
+    const normalizedRequest = normalizeRequestData(fakeReq);
+    const match = matchRuleAgainstRequest(rule, normalizedRequest);
+    const matches = match ? [match] : [];
+    const summary = summarizeMatchedRules(matches);
+
+    return res.json({
+      ok: true,
+      matched: Boolean(match),
+      match: match ? {
+        target: match.target?.target || null,
+        key: match.target?.key || null,
+        value: match.target?.value || null
+      } : null,
+      risk_score: calculateRiskScore(matches, fakeReq.path.startsWith('/admin')),
+      summary
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   dashboard,
   settings,
@@ -445,5 +554,6 @@ module.exports = {
   removeIpList,
   blockIpFromLog,
   whitelistIpFromLog,
-  exportLogsCsv
+  exportLogsCsv,
+  testRule
 };

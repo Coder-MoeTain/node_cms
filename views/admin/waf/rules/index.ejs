@@ -8,6 +8,7 @@
       <div><h1 class="mb-1">WAF Rules</h1><p class="np-help-text mb-0">Default rules can be tuned; custom rules can be created and deleted.</p></div>
       <a class="np-btn np-btn-primary" href="/admin/waf/rules/create"><i class="bi bi-plus-lg"></i> Custom Rule</a>
     </div>
+    <%- include('../../partials/waf-nav', { activeNav: typeof activeNav !== 'undefined' ? activeNav : 'rules' }) %>
     <form class="np-widget mb-3" method="get" action="/admin/waf/rules">
       <div class="np-widget-body">
       <div class="row g-2">

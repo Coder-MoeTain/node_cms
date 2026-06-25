@@ -93,8 +93,12 @@ function getSeverityWeight(severity) {
   }[severity] || 10;
 }
 
+const MAX_REGEX_PATTERN_LENGTH = 512;
+const MAX_MATCH_INPUT_LENGTH = 8000;
+
 function safeRegex(pattern) {
   if (!pattern || typeof pattern !== 'string') return null;
+  if (pattern.length > MAX_REGEX_PATTERN_LENGTH) return null;
   try {
     return new RegExp(pattern, 'i');
   } catch (error) {
@@ -102,8 +106,39 @@ function safeRegex(pattern) {
   }
 }
 
+function ipv4ToLong(ip) {
+  const parts = String(ip || '').split('.').map(Number);
+  if (parts.length !== 4 || parts.some((part) => Number.isNaN(part) || part < 0 || part > 255)) return null;
+  return ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>> 0;
+}
+
+function ipMatchesCidr(clientIp, cidr) {
+  const [network, bitsRaw] = String(cidr || '').split('/');
+  const bits = Number(bitsRaw);
+  if (!network || Number.isNaN(bits) || bits < 0 || bits > 32) return false;
+  const client = ipv4ToLong(clientIp);
+  const networkLong = ipv4ToLong(network);
+  if (client === null || networkLong === null) return false;
+  const mask = bits === 0 ? 0 : (~0 << (32 - bits)) >>> 0;
+  return (client & mask) === (networkLong & mask);
+}
+
+function ipMatchesListEntry(clientIp, listEntry) {
+  const normalizedClient = String(clientIp || '').replace(/^::ffff:/, '');
+  const entry = String(listEntry || '').trim();
+  if (!entry) return false;
+  if (entry.includes('/')) return ipMatchesCidr(normalizedClient, entry);
+  return normalizedClient === entry.replace(/^::ffff:/, '');
+}
+
+function findIpListMatches(clientIp, rows = []) {
+  return rows.filter((row) => row.status !== false && !isExpiredIpListItem(row) && ipMatchesListEntry(clientIp, row.ip_address));
+}
+
 function matchPattern(value, rule) {
-  const normalized = normalizeValue(value);
+  const raw = value === null || typeof value === 'undefined' ? '' : String(value);
+  if (raw.length > MAX_MATCH_INPUT_LENGTH) return false;
+  const normalized = normalizeValue(raw);
   if (!normalized) return false;
 
   const patternType = rule.pattern_type || 'regex';
@@ -266,9 +301,43 @@ function getActionForRiskScore(score, settings, isAdminRouteFlag, matches = []) 
   return matches.length ? 'log' : 'allow';
 }
 
+function summarizeMatchedRules(matches = []) {
+  if (!matches.length) return { name: null, category: null, severity: null, ruleId: null };
+  const primary = matches[0].rule;
+  const names = matches.map((match) => match.rule?.name).filter(Boolean);
+  const uniqueNames = [...new Set(names)];
+  let matchedRuleName = uniqueNames[0] || null;
+  if (uniqueNames.length > 1) {
+    matchedRuleName = `${uniqueNames[0]} (+${uniqueNames.length - 1} more)`;
+  }
+  const severities = ['low', 'medium', 'high', 'critical'];
+  const highestSeverity = matches
+    .map((match) => match.rule?.severity)
+    .filter(Boolean)
+    .sort((left, right) => severities.indexOf(right) - severities.indexOf(left))[0] || primary?.severity || null;
+  return {
+    name: matchedRuleName,
+    category: primary?.category || null,
+    severity: highestSeverity,
+    ruleId: primary?.id || null,
+    all: matches.map((match) => ({
+      id: match.rule?.id || null,
+      name: match.rule?.name || null,
+      category: match.rule?.category || null,
+      severity: match.rule?.severity || null,
+      target: match.target?.target || null,
+      key: match.target?.key || null
+    }))
+  };
+}
+
 function buildSafeLogPayload(req, matches, actionTaken, riskScore) {
-  const primary = matches[0];
+  const summary = summarizeMatchedRules(matches);
   const normalized = normalizeRequestData(req);
+  const bodySnapshot = sanitizeLogData(req.body || {});
+  if (summary.all?.length) {
+    bodySnapshot._waf_meta = { matched_rules: summary.all };
+  }
   return {
     request_id: req.wafRequestId || createRequestId(),
     ip_address: normalized.ip,
@@ -279,12 +348,12 @@ function buildSafeLogPayload(req, matches, actionTaken, riskScore) {
     referer: req.get('referer') || null,
     headers_snapshot: sanitizeLogData(req.headers || {}),
     query_snapshot: sanitizeLogData(req.query || {}),
-    body_snapshot: sanitizeLogData(req.body || {}),
+    body_snapshot: bodySnapshot,
     file_snapshot: sanitizeLogData(normalized.files),
-    matched_rule_id: primary?.rule?.id || null,
-    matched_rule_name: primary?.rule?.name || null,
-    category: primary?.rule?.category || null,
-    severity: primary?.rule?.severity || null,
+    matched_rule_id: summary.ruleId,
+    matched_rule_name: summary.name,
+    category: summary.category,
+    severity: summary.severity,
     action_taken: actionTaken,
     risk_score: riskScore || 0,
     is_admin_route: normalized.isAdminRoute,
@@ -294,13 +363,19 @@ function buildSafeLogPayload(req, matches, actionTaken, riskScore) {
 }
 
 function createWafBlockResponse(req, res, message = 'Request blocked by Web Application Firewall.') {
+  const blockMessage = String(message || 'Request blocked by Web Application Firewall.').trim()
+    || 'Request blocked by Web Application Firewall.';
   if (req.xhr || (req.accepts('json') && !req.accepts('html'))) {
-    return res.status(403).json({ message: 'Forbidden' });
+    return res.status(403).json({
+      error: 'waf_blocked',
+      message: blockMessage,
+      request_id: req.wafRequestId || null
+    });
   }
   return res.status(403).render('errors/403', {
     title: 'Access Denied',
     layout: false,
-    message
+    message: blockMessage
   });
 }
 
@@ -322,6 +397,7 @@ function getRouteType(req) {
 
 function validatePattern(pattern, patternType = 'regex') {
   if (!pattern || !String(pattern).trim()) return false;
+  if (String(pattern).length > MAX_REGEX_PATTERN_LENGTH) return false;
   if (patternType === 'regex') return Boolean(safeRegex(pattern));
   return true;
 }
@@ -356,5 +432,10 @@ module.exports = {
   getRouteType,
   validatePattern,
   isDangerousUploadFilename,
-  dangerousUploadExtensions
+  dangerousUploadExtensions,
+  ipMatchesListEntry,
+  ipMatchesCidr,
+  findIpListMatches,
+  summarizeMatchedRules,
+  MAX_REGEX_PATTERN_LENGTH
 };

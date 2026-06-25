@@ -7,29 +7,52 @@
     <div class="np-page-header">
       <div>
         <h1>Web Application Firewall</h1>
-        <p class="np-help-text mb-0">Request inspection, blocking, rate limiting, and WAF event logging.</p>
+        <p class="np-help-text mb-0">Real-time request inspection, threat scoring, IP controls, and audit logging.</p>
       </div>
       <div class="d-flex flex-wrap gap-2">
-        <a class="np-btn np-btn-secondary" href="/admin/waf/logs">Logs</a>
-        <a class="np-btn np-btn-secondary" href="/admin/waf/rules">Rules</a>
-        <a class="np-btn np-btn-primary" href="/admin/waf/settings">Settings</a>
+        <a class="np-btn np-btn-secondary" href="/admin/waf/logs">View logs</a>
+        <a class="np-btn np-btn-primary" href="/admin/waf/settings">Configure</a>
       </div>
     </div>
 
+    <%- include('../partials/waf-nav', { activeNav: typeof activeNav !== 'undefined' ? activeNav : 'dashboard' }) %>
+
+    <% const isEnabled = settings.waf_enabled === 'true'; const mode = settings.waf_mode || 'monitor'; %>
+  <div class="np-alert <%= isEnabled ? (mode === 'block' ? 'np-alert-success' : 'np-alert-info') : 'np-alert-warning' %>">
+      <strong><%= isEnabled ? (mode === 'block' ? 'Protection active' : 'Monitor mode') : 'WAF disabled' %></strong>
+      — <%= isEnabled ? (mode === 'block' ? 'Matched threats are blocked before they reach your application.' : 'Threats are logged only. Switch to block mode when you are confident in your rules.') : 'Enable the WAF in settings to start inspecting traffic.' %>
+    </div>
+
     <div class="np-stat-grid">
-      <div class="np-stat-card"><span class="stat-label">WAF Status</span><h3><span class="np-badge np-badge-<%= settings.waf_enabled === 'true' ? 'success' : 'muted' %>"><%= settings.waf_enabled === 'true' ? 'Enabled' : 'Disabled' %></span></h3></div>
-      <div class="np-stat-card"><span class="stat-label">Mode</span><h3><span class="np-badge np-badge-<%= settings.waf_mode === 'block' ? 'danger' : 'warning' %>"><%= settings.waf_mode || 'monitor' %></span></h3></div>
-      <div class="np-stat-card"><span class="stat-label">Blocked Today</span><h3><%= blockedToday %></h3></div>
-      <div class="np-stat-card"><span class="stat-label">Active Blocks</span><h3><%= activeBlocks %></h3></div>
-      <div class="np-stat-card"><span class="stat-label">Logged Today</span><h3><%= loggedToday %></h3></div>
-      <div class="np-stat-card"><span class="stat-label">System Rules</span><h3><%= systemRuleCount %></h3></div>
-      <div class="np-stat-card"><span class="stat-label">Custom Rules</span><h3><%= customRuleCount %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Status</span><h3><span class="np-badge np-badge-<%= isEnabled ? 'success' : 'muted' %>"><%= isEnabled ? 'Enabled' : 'Disabled' %></span></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Mode</span><h3><span class="np-badge np-badge-<%= mode === 'block' ? 'danger' : mode === 'monitor' ? 'warning' : 'muted' %>"><%= mode %></span></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Blocked today</span><h3><%= blockedToday %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Active blocks</span><h3><%= activeBlocks %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Whitelisted IPs</span><h3><%= whitelistCount %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Logged today</span><h3><%= loggedToday %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">System rules</span><h3><%= systemRuleCount %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Custom rules</span><h3><%= customRuleCount %></h3></div>
     </div>
 
     <div class="row g-3">
       <div class="col-lg-8">
+        <div class="np-widget mb-3">
+          <div class="np-widget-header"><span>Threat activity (7 days)</span><span class="np-badge np-badge-muted">blocks + rate limits</span></div>
+          <div class="np-widget-body">
+            <div class="np-waf-chart" role="img" aria-label="WAF blocks over the last seven days">
+              <% blocksLast7Days.forEach(function(day) { %>
+                <div class="np-waf-chart-bar" title="<%= day.label %>: <%= day.count %> events">
+                  <span class="np-waf-chart-value" style="height:<%= day.height %>%"></span>
+                  <span class="np-waf-chart-label"><%= day.weekday %></span>
+                  <span class="np-waf-chart-count"><%= day.count %></span>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+
         <div class="np-widget">
-          <div class="np-widget-header"><span>Recent Blocked Requests</span><span class="np-badge np-badge-muted"><%= loggedToday %> logged today</span></div>
+          <div class="np-widget-header"><span>Recent blocked requests</span><span class="np-badge np-badge-muted"><%= loggedToday %> logged today</span></div>
           <div class="np-widget-body p-0">
             <div class="table-responsive">
               <table class="np-list-table mb-0">
@@ -54,7 +77,7 @@
       </div>
       <div class="col-lg-4">
         <div class="np-widget">
-          <div class="np-widget-header"><span>Risk Summary Today</span></div>
+          <div class="np-widget-header"><span>Risk summary today</span></div>
           <ul class="list-group list-group-flush">
             <% riskSummary.forEach(function(row) { %>
               <li class="list-group-item d-flex justify-content-between align-items-center"><span><%= row.severity || 'unknown' %></span><span class="np-badge np-badge-muted"><%= row.get('count') %></span></li>
@@ -63,13 +86,14 @@
           </ul>
         </div>
         <div class="np-widget">
-          <div class="np-widget-header"><span>Top Attacking IPs</span></div>
+          <div class="np-widget-header"><span>Top attacking IPs</span></div>
           <ul class="list-group list-group-flush">
             <% topIps.forEach(function(row) { %><li class="list-group-item d-flex justify-content-between align-items-center"><code><%= row.ip_address %></code><span class="np-badge np-badge-danger"><%= row.get('count') %></span></li><% }) %>
+            <% if (!topIps.length) { %><li class="list-group-item text-muted">No attacking IPs recorded.</li><% } %>
           </ul>
         </div>
         <div class="np-widget">
-          <div class="np-widget-header"><span>Top Categories</span></div>
+          <div class="np-widget-header"><span>Top categories</span></div>
           <ul class="list-group list-group-flush">
             <% topCategories.forEach(function(row) { %><li class="list-group-item d-flex justify-content-between align-items-center"><span><%= row.category %></span><span class="np-badge np-badge-muted"><%= row.get('count') %></span></li><% }) %>
           </ul>
@@ -78,9 +102,9 @@
     </div>
 
     <div class="np-widget mt-3">
-      <div class="np-widget-header"><span>Top Matched Rules</span></div>
+      <div class="np-widget-header"><span>Top matched rules</span></div>
       <div class="np-widget-body p-0">
-        <table class="np-list-table mb-0"><tbody><% topRules.forEach(function(row) { %><tr><td><%= row.matched_rule_name %></td><td class="text-end"><span class="np-badge np-badge-muted"><%= row.get('count') %></span></td></tr><% }) %></tbody></table>
+        <table class="np-list-table mb-0"><tbody><% topRules.forEach(function(row) { %><tr><td><%= row.matched_rule_name %></td><td class="text-end"><span class="np-badge np-badge-muted"><%= row.get('count') %></span></td></tr><% }) %><% if (!topRules.length) { %><tr><td colspan="2" class="text-muted py-3 px-3">No rule matches recorded yet.</td></tr><% } %></tbody></table>
       </div>
     </div>
   </main>
