@@ -10,6 +10,9 @@
     </div>
     <h1>Log In</h1>
     <p class="text-muted mb-3">Sign in to your admin dashboard</p>
+    <% if (typeof restored !== 'undefined' && restored) { %>
+      <div class="alert alert-success">Database restored successfully. Sign in with your restored account credentials.</div>
+    <% } %>
     <%- include('../partials/flash') %>
     <form method="post" action="/admin/login">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">

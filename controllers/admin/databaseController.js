@@ -1,6 +1,18 @@
 const { ActivityLog } = require('../../models');
 const dbBackup = require('../../utils/databaseBackup');
 
+async function safeActivityLog(entry) {
+  try {
+    await ActivityLog.create(entry);
+  } catch {
+    // Restored databases may be missing optional tables until schema repair runs.
+  }
+}
+
+function redirectAfterRestore(req, res) {
+  return req.session.destroy(() => res.redirect('/admin/login?restored=1'));
+}
+
 async function index(req, res, next) {
   try {
     const backups = dbBackup.listBackups();
@@ -25,7 +37,7 @@ async function createBackup(req, res, next) {
     const includeUploads = req.body.include_uploads === 'on';
     const { filename } = await dbBackup.createBackup({ includeUploads });
 
-    await ActivityLog.create({
+    await safeActivityLog({
       user_id: req.session.user.id,
       action: 'Database backup created',
       entity_type: 'database',
@@ -46,9 +58,20 @@ async function restoreBackup(req, res, next) {
   try {
     const filename = req.params.filename;
     const includeUploads = req.body.include_uploads === 'on';
-    await dbBackup.restoreBackup(filename, { includeUploads });
 
-    await ActivityLog.create({
+    await safeActivityLog({
+      user_id: req.session.user.id,
+      action: 'Database restore started from backup file',
+      entity_type: 'database',
+      ip_address: req.ip,
+      user_agent: req.get('user-agent'),
+      metadata: { filename, includeUploads }
+    });
+
+    await dbBackup.restoreBackup(filename, { includeUploads });
+    await dbBackup.repairSchemaAfterRestore();
+
+    await safeActivityLog({
       user_id: req.session.user.id,
       action: 'Database restored from backup',
       entity_type: 'database',
@@ -57,8 +80,7 @@ async function restoreBackup(req, res, next) {
       metadata: { filename, includeUploads }
     });
 
-    req.flash('success', `Database restored from ${filename}. You may need to sign in again.`);
-    return res.redirect('/admin/settings/database');
+    return redirectAfterRestore(req, res);
   } catch (error) {
     req.flash('error', `Restore failed. Ensure mysql client is installed and in PATH. ${error.message}`);
     return res.redirect('/admin/settings/database');
@@ -70,7 +92,7 @@ async function destroyBackup(req, res, next) {
     const filename = req.params.filename;
     dbBackup.deleteBackup(filename);
 
-    await ActivityLog.create({
+    await safeActivityLog({
       user_id: req.session.user.id,
       action: 'Database backup deleted',
       entity_type: 'database',
@@ -94,19 +116,30 @@ async function restoreUpload(req, res, next) {
       return res.redirect('/admin/settings/database');
     }
 
-    await dbBackup.restoreFromUploadedFile(req.file.path);
+    const { originalname, size } = req.file;
 
-    await ActivityLog.create({
+    await safeActivityLog({
+      user_id: req.session.user.id,
+      action: 'Database restore started from uploaded SQL file',
+      entity_type: 'database',
+      ip_address: req.ip,
+      user_agent: req.get('user-agent'),
+      metadata: { originalName: originalname, size }
+    });
+
+    await dbBackup.restoreFromUploadedFile(req.file.path);
+    await dbBackup.repairSchemaAfterRestore();
+
+    await safeActivityLog({
       user_id: req.session.user.id,
       action: 'Database restored from uploaded SQL file',
       entity_type: 'database',
       ip_address: req.ip,
       user_agent: req.get('user-agent'),
-      metadata: { originalName: req.file.originalname, size: req.file.size }
+      metadata: { originalName: originalname, size }
     });
 
-    req.flash('success', `Database restored from ${req.file.originalname}. You may need to sign in again.`);
-    return res.redirect('/admin/settings/database');
+    return redirectAfterRestore(req, res);
   } catch (error) {
     dbBackup.removeUploadedSql(req.file?.path);
     req.flash('error', `Restore failed. Ensure mysql client is installed and in PATH. ${error.message}`);
@@ -116,15 +149,15 @@ async function restoreUpload(req, res, next) {
 
 async function resetDatabase(req, res, next) {
   try {
-    await dbBackup.resetDatabase();
-
-    await ActivityLog.create({
+    await safeActivityLog({
       user_id: req.session.user.id,
       action: 'Database reset to defaults',
       entity_type: 'database',
       ip_address: req.ip,
       user_agent: req.get('user-agent')
     });
+
+    await dbBackup.resetDatabase();
 
     req.flash('success', 'Database reset complete. Default admin: admin@example.com / Admin@12345');
     return req.session.destroy(() => res.redirect('/admin/login'));

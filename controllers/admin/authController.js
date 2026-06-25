@@ -18,7 +18,8 @@ const {
 function loginForm(req, res) {
   res.render('admin/auth/login', {
     title: 'Admin Login',
-    loginEmail: req.query.email || ''
+    loginEmail: req.query.email || '',
+    restored: req.query.restored === '1'
   });
 }
 
