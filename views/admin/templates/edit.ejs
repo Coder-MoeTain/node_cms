@@ -1,0 +1,16 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <h1 class="mb-3">Edit template — <%= record.name %></h1>
+    <form method="post" action="/admin/templates/<%= record.id %>?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= record.name %>"></div>
+      <div class="mb-3"><label class="form-label">Block JSON</label><textarea class="form-control font-monospace" name="block_content_json" rows="16"><%= record.block_content_json || '[]' %></textarea></div>
+      <button class="np-btn np-btn-primary" type="submit">Save</button>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

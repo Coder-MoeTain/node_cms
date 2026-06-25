@@ -119,7 +119,8 @@ function canAccessAdmin(user, path = '') {
   }
   return hasPermission(user, 'view_dashboard') || hasAnyPermission(user, [
     'manage_posts', 'create_posts', 'edit_posts', 'manage_pages', 'manage_media', 'upload_media',
-    'manage_comments', 'manage_users', 'manage_settings', 'manage_plugins', 'manage_themes'
+    'manage_comments', 'manage_users', 'manage_settings', 'manage_plugins', 'manage_themes',
+    'manage_custom_post_types', 'manage_custom_content', 'manage_custom_fields'
   ]);
 }
 

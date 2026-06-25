@@ -1,0 +1,36 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header">
+      <h1>Field Groups</h1>
+      <a class="np-btn np-btn-primary" href="/admin/field-groups/create"><i class="bi bi-plus-lg"></i> Add New</a>
+    </div>
+    <div class="np-table-wrap">
+      <table class="np-table">
+        <thead><tr><th>Name</th><th>Location</th><th>Fields</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% if (!groups.length) { %><tr><td colspan="5" class="text-muted">No field groups yet.</td></tr><% } %>
+          <% groups.forEach(function(group) { %>
+            <tr>
+              <td><%= group.name %></td>
+              <td><code><%= group.location_type %>:<%= group.location_value %></code></td>
+              <td><%= (group.fields || []).length %></td>
+              <td><%= group.status %></td>
+              <td class="text-end">
+                <a href="/admin/field-groups/<%= group.id %>/edit" class="np-btn np-btn-link np-btn-small">Edit</a>
+                <form method="post" action="/admin/field-groups/<%= group.id %>?_method=DELETE&_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" onsubmit="return confirm('Delete?');">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="np-btn np-btn-link np-btn-small text-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

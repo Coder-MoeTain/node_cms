@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A modern blog and portal CMS built with Node.js, Express, MySQL, Sequelize, EJS, and Bootstrap 5.",
   "main": "server.js",
+  "bin": {
+    "nodepress": "./bin/nodepress"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",

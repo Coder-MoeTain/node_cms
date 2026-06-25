@@ -1,3 +1,5 @@
+const { loadTranslation, applyManualTranslation } = require('./contentTranslationStore');
+
 function asPlain(value) {
   if (!value) return value;
   return typeof value.get === 'function' ? value.get({ plain: true }) : { ...value };
@@ -18,6 +20,18 @@ async function translateFields(engine, record, fields, { htmlFields = [] } = {})
   );
 
   return plain;
+}
+
+async function translateWithManual(engine, record, resourceType, fields, options = {}) {
+  if (!record) return record;
+  if (!engine?.isActive) return asPlain(record);
+
+  const plain = asPlain(record);
+  const manual = await loadTranslation(resourceType, plain.id, engine.targetLocale);
+  if (manual && (manual.title || manual.content || manual.excerpt || manual.seo_title || manual.seo_description || manual.name || manual.description)) {
+    return applyManualTranslation(plain, manual);
+  }
+  return translateFields(engine, plain, fields, options);
 }
 
 async function translateMenuTree(engine, items = []) {
@@ -45,11 +59,15 @@ async function translateMenus(engine, menus = {}) {
   return translated;
 }
 
-async function translatePost(engine, post) {
+async function translatePost(engine, post, resourceType = 'post') {
   if (!post) return post;
-  const translated = await translateFields(engine, post, ['title', 'excerpt', 'content', 'seo_title', 'seo_description'], {
-    htmlFields: ['content', 'seo_description']
-  });
+  const translated = await translateWithManual(
+    engine,
+    post,
+    resourceType,
+    ['title', 'excerpt', 'content', 'seo_title', 'seo_description'],
+    { htmlFields: ['content', 'seo_description'] }
+  );
   if (translated.Category) {
     translated.Category = await translateCategory(engine, translated.Category);
   }
@@ -65,13 +83,13 @@ async function translatePost(engine, post) {
   return translated;
 }
 
-async function translatePosts(engine, posts = []) {
+async function translatePosts(engine, posts = [], resourceType = 'post') {
   if (!engine?.isActive || !posts.length) return posts;
-  return Promise.all(posts.map((post) => translatePost(engine, post)));
+  return Promise.all(posts.map((post) => translatePost(engine, post, resourceType)));
 }
 
 async function translatePage(engine, page) {
-  return translateFields(engine, page, ['title', 'excerpt', 'content', 'seo_title', 'seo_description'], {
+  return translateWithManual(engine, page, 'page', ['title', 'excerpt', 'content', 'seo_title', 'seo_description'], {
     htmlFields: ['content', 'seo_description']
   });
 }
@@ -82,7 +100,7 @@ async function translatePages(engine, pages = []) {
 }
 
 async function translateCategory(engine, category) {
-  return translateFields(engine, category, ['name', 'description']);
+  return translateWithManual(engine, category, 'category', ['name', 'description']);
 }
 
 async function translateCategories(engine, categories = []) {
@@ -91,7 +109,7 @@ async function translateCategories(engine, categories = []) {
 }
 
 async function translateTag(engine, tag) {
-  return translateFields(engine, tag, ['name', 'description']);
+  return translateWithManual(engine, tag, 'tag', ['name', 'description']);
 }
 
 async function translateTags(engine, tags = []) {

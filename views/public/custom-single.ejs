@@ -1,0 +1,33 @@
+<%- include(themePartial('head')) %>
+<%- include(themePartial('header')) %>
+<main class="<%= isPortal ? 'portal-main portal-page' : '' %>" id="main-content">
+  <div class="container py-4">
+    <nav class="portal-breadcrumb mb-3" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true"> / </span>
+      <a href="/types/<%= type.slug %>"><%= type.name %></a>
+      <span aria-hidden="true"> / </span>
+      <span aria-current="page"><%= post.title %></span>
+    </nav>
+    <article>
+      <% if (post.featured_image) { %><figure class="mb-4"><img src="<%= post.featured_image %>" alt="<%= post.title %>" class="img-fluid rounded"></figure><% } %>
+      <h1><%= post.title %></h1>
+      <% if (post.excerpt) { %><p class="lead text-muted"><%= post.excerpt %></p><% } %>
+      <div class="post-content"><%- content || post.content %></div>
+      <% if (customFields && Object.keys(customFields).length) { %>
+        <section class="mt-4 pt-4 border-top">
+          <h2 class="h5">Details</h2>
+          <dl class="row mb-0">
+            <% Object.keys(customFields).forEach(function(key) {
+              if (!customFields[key]) return;
+            %>
+              <dt class="col-sm-3 text-capitalize"><%= key.replace(/_/g, ' ') %></dt>
+              <dd class="col-sm-9"><%= customFields[key] %></dd>
+            <% }) %>
+          </dl>
+        </section>
+      <% } %>
+    </article>
+  </div>
+</main>
+<%- include(themePartial('footer')) %>

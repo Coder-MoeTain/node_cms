@@ -37,15 +37,15 @@ async function dashboard(req, res, next) {
       activeTheme,
       wafModeSetting
     ] = await Promise.all([
-      Post.count(),
-      Post.count({ where: { status: 'published' } }),
-      Post.count({ where: { status: 'draft' } }),
+      Post.count({ where: { post_type: 'post' } }),
+      Post.count({ where: { status: 'published', post_type: 'post' } }),
+      Post.count({ where: { status: 'draft', post_type: 'post' } }),
       Page.count(),
       User.count(),
       Category.count(),
       Media.count(),
       Comment.count(),
-      Post.findAll({ limit: 8, order: [['created_at', 'DESC']] }),
+      Post.findAll({ where: { post_type: 'post' }, limit: 8, order: [['created_at', 'DESC']] }),
       Comment.findAll({ limit: 8, include: [Post], order: [['created_at', 'DESC']] }),
       LoginAttempt.findAll({ limit: 8, order: [['created_at', 'DESC']] }),
       ActivityLog.findAll({ limit: 8, include: [User], order: [['created_at', 'DESC']] }),
@@ -94,10 +94,11 @@ async function quickDraft(req, res, next) {
       req.flash('error', 'Quick draft requires a title.');
       return res.redirect('/admin');
     }
-    const slug = await createUniqueSlug(Post, title, 'post');
+    const slug = await createUniqueSlug(Post, title, 'post', null, { post_type: 'post' });
     await Post.create({
       title,
       slug,
+      post_type: 'post',
       content: content || '<p></p>',
       status: 'draft',
       author_id: req.session.user.id,

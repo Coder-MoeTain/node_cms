@@ -1,0 +1,73 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<%
+  const isEdit = Boolean(record.id);
+  const action = isEdit
+    ? `/admin/content/${type.slug}/${record.id}?_method=PUT&_csrf=${encodeURIComponent(csrfToken)}`
+    : `/admin/content/${type.slug}?_csrf=${encodeURIComponent(csrfToken)}`;
+  const val = (name, fallback = '') => record[name] == null ? fallback : record[name];
+%>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <form method="post" action="<%= action %>" enctype="multipart/form-data" data-editor-form>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="np-page-header mb-3">
+        <h1><%= isEdit ? 'Edit' : 'Add' %> <%= type.name %></h1>
+      </div>
+      <div class="editor-layout">
+        <div class="editor-main">
+          <% if (type.supports_title) { %>
+            <input class="np-editor-title" name="title" value="<%= val('title') %>" placeholder="Add title" required>
+            <input type="hidden" name="slug" value="<%= val('slug') %>">
+          <% } %>
+          <% if (type.supports_editor) { %>
+            <div class="mb-3"><textarea class="form-control rich-editor" name="content" rows="14"><%- val('content') %></textarea></div>
+          <% } %>
+          <% if (type.supports_excerpt) { %>
+            <div class="np-metabox"><div class="np-metabox-header">Excerpt</div><div class="np-metabox-body"><textarea class="form-control" name="excerpt" rows="3"><%= val('excerpt') %></textarea></div></div>
+          <% } %>
+          <div class="np-metabox">
+            <div class="np-metabox-header">SEO</div>
+            <div class="np-metabox-body">
+              <div class="mb-2"><label class="form-label">SEO Title</label><input class="form-control" name="seo_title" value="<%= val('seo_title') %>"></div>
+              <div><label class="form-label">Meta Description</label><input class="form-control" name="seo_description" value="<%= val('seo_description') %>"></div>
+            </div>
+          </div>
+          <%- include('../partials/content-translations', { translations: typeof translations !== 'undefined' ? translations : {}, translationLocales: typeof translationLocales !== 'undefined' ? translationLocales : ['my', 'zh-CN', 'ru'] }) %>
+          <% if (type.supports_custom_fields && fieldGroups && fieldGroups.length) { %>
+            <%- include('../partials/custom-field-meta-boxes', { fieldGroups, customFieldValues: customFieldValues || {} }) %>
+          <% } %>
+        </div>
+        <aside class="editor-sidebar editor-sidebar-sticky">
+          <div class="np-metabox np-metabox-publish">
+            <div class="np-metabox-header">Publish</div>
+            <div class="np-metabox-body">
+              <select class="form-select mb-2" name="status">
+                <% ['draft','published','private'].forEach(function(s) { %>
+                  <option value="<%= s %>" <%= val('status','draft') === s ? 'selected' : '' %>><%= s %></option>
+                <% }) %>
+              </select>
+              <% if (type.supports_comments) { %>
+                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="allow_comments" id="allow_comments" <%= val('allow_comments', true) ? 'checked' : '' %>><label class="form-check-label" for="allow_comments">Allow comments</label></div>
+              <% } %>
+              <button type="submit" class="np-btn np-btn-primary w-100"><%= isEdit ? 'Update' : 'Publish' %></button>
+            </div>
+          </div>
+          <% if (type.supports_featured_image) { %>
+            <div class="np-metabox mt-3">
+              <div class="np-metabox-header">Featured Image</div>
+              <div class="np-metabox-body">
+                <% if (val('featured_image')) { %><img src="<%= val('featured_image') %>" alt="" class="img-fluid mb-2 rounded"><% } %>
+                <input type="text" class="form-control mb-2" name="featured_image" value="<%= val('featured_image') %>" placeholder="Image URL">
+                <input type="file" class="form-control" name="featured_image_file" accept="image/*">
+              </div>
+            </div>
+          <% } %>
+        </aside>
+      </div>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

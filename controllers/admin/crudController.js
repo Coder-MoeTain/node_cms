@@ -7,6 +7,9 @@ const { createSlug, createUniqueSlug } = require('../../utils/slugGenerator');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const policy = require('../../utils/policy');
 const pluginLoader = require('../../utils/pluginLoader');
+const { saveRevision } = require('../../utils/revisionHelper');
+const { renderBlocks, validateBlockSchema } = require('../../utils/blockRenderer');
+const { loadTranslations, saveTranslations, TRANSLATION_LOCALES } = require('../../utils/contentTranslationStore');
 
 const richTextSanitizeOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
@@ -18,6 +21,32 @@ const richTextSanitizeOptions = {
   },
   allowedIframeHostnames: ['www.youtube.com', 'youtube.com', 'player.vimeo.com']
 };
+
+function applyBlockContent(body, payload) {
+  if (body.content_format === 'block' && body.block_content_json) {
+    const validation = validateBlockSchema(body.block_content_json);
+    if (validation.valid) {
+      payload.content_format = 'block';
+      payload.block_content_json = JSON.stringify(validation.blocks);
+      payload.rendered_content_cache = renderBlocks(validation.blocks);
+      payload.content = payload.rendered_content_cache || payload.content;
+      return payload;
+    }
+  }
+  payload.content_format = body.content_format === 'block' ? 'block' : 'classic';
+  return payload;
+}
+
+async function saveContentRevision(resource, record, userId, transaction) {
+  const type = resource === 'pages' ? 'page' : 'post';
+  await saveRevision(type, record.id, {
+    title: record.title,
+    content: record.content,
+    excerpt: record.excerpt,
+    block_content_json: record.block_content_json,
+    meta_json: { seo_title: record.seo_title, seo_description: record.seo_description }
+  }, userId, transaction);
+}
 
 function normalizeArray(value) {
   if (!value) return [];
@@ -91,9 +120,10 @@ const configs = {
     payload: async (body, req, record = null, transaction = null) => {
       const status = allowedStatus(body, req, record);
       const canAssignAuthor = policy.can(req.session.user, 'manage_posts');
-      return {
+      const payload = applyBlockContent(body, {
         title: sanitizePlainText(body.title, 220),
-        slug: await createUniqueSlug(models.Post, body.slug || body.title, 'post', record?.id),
+        slug: await createUniqueSlug(models.Post, body.slug || body.title, 'post', record?.id, { post_type: 'post' }),
+        post_type: 'post',
         content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
         excerpt: sanitizePlainText(body.excerpt, 1000),
         featured_image: await resolveImageValue(req, {
@@ -111,7 +141,8 @@ const configs = {
         og_image: sanitizePlainText(body.og_image, 255),
         allow_comments: body.allow_comments === 'on',
         published_at: body.published_at || (status === 'published' ? new Date() : null)
-      };
+      });
+      return payload;
     },
     afterSave: async (record, body, transaction = null) => record.setTags(normalizeArray(body.tags), { transaction })
   },
@@ -121,7 +152,7 @@ const configs = {
     permission: 'manage_pages',
     searchFields: ['title', 'slug', 'excerpt'],
     include: [{ model: models.User, as: 'author' }],
-    payload: async (body, req, record = null, transaction = null) => ({
+    payload: async (body, req, record = null, transaction = null) => applyBlockContent(body, {
       title: sanitizePlainText(body.title, 220),
       slug: await createUniqueSlug(models.Page, body.slug || body.title, 'page', record?.id),
       content: sanitizeHtml(body.content || '', richTextSanitizeOptions),
@@ -271,6 +302,7 @@ async function index(req, res, next) {
       ? { [Op.or]: config.searchFields.map((field) => ({ [field]: { [Op.like]: `%${query}%` } })) }
       : {};
     if (resource === 'posts') {
+      where.post_type = 'post';
       if (req.query.status) where.status = req.query.status;
       if (req.query.category_id) where.category_id = req.query.category_id;
       if (!policy.can(req.session.user, 'manage_posts')) where.author_id = req.session.user.id;
@@ -317,7 +349,9 @@ async function create(req, res, next) {
       resource,
       config,
       record: {},
-      extra: config.formData ? await config.formData() : {}
+      extra: config.formData ? await config.formData() : {},
+      translations: {},
+      translationLocales: TRANSLATION_LOCALES
     });
   } catch (error) {
     return next(error);
@@ -347,7 +381,11 @@ async function store(req, res, next) {
       const record = await config.model.create(payload, { transaction });
       if (config.afterSave) await config.afterSave(record, req.body, transaction);
       if (resource === 'posts') {
+        await saveTranslations('post', record.id, req.body, transaction);
         await pluginLoader.doAction('afterPostSave', record, { req, transaction, isNew: true });
+      }
+      if (resource === 'pages') {
+        await saveTranslations('page', record.id, req.body, transaction);
       }
     });
     req.flash('success', `${config.title} saved.`);
@@ -367,12 +405,17 @@ async function edit(req, res, next) {
       req.flash('error', 'You do not have permission to edit that resource.');
       return res.redirect(`/admin/${resource}`);
     }
+    const translations = (resource === 'posts' || resource === 'pages')
+      ? await loadTranslations(resource === 'pages' ? 'page' : 'post', record.id)
+      : {};
     return res.render('admin/crud/form', {
       title: `Edit ${config.title}`,
       resource,
       config,
       record,
-      extra: config.formData ? await config.formData() : {}
+      extra: config.formData ? await config.formData() : {},
+      translations,
+      translationLocales: TRANSLATION_LOCALES
     });
   } catch (error) {
     return next(error);
@@ -404,10 +447,17 @@ async function update(req, res, next) {
         }
         payload = filtered || payload;
       }
+      if (resource === 'posts' || resource === 'pages') {
+        await saveContentRevision(resource, record, req.session.user.id, transaction);
+      }
       await record.update(payload, { transaction });
       if (config.afterSave) await config.afterSave(record, req.body, transaction);
       if (resource === 'posts') {
+        await saveTranslations('post', record.id, req.body, transaction);
         await pluginLoader.doAction('afterPostSave', record, { req, transaction, isNew: false });
+      }
+      if (resource === 'pages') {
+        await saveTranslations('page', record.id, req.body, transaction);
       }
     });
     req.flash('success', `${config.title} updated.`);

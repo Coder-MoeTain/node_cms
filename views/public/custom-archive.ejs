@@ -1,0 +1,34 @@
+<%- include(themePartial('head')) %>
+<%- include(themePartial('header')) %>
+<main class="<%= isPortal ? 'portal-main portal-page' : '' %>" id="main-content">
+  <div class="container py-4">
+    <header class="mb-4">
+      <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span aria-hidden="true"> / </span>
+        <span aria-current="page"><%= type.name %></span>
+      </nav>
+      <h1><%= type.name %></h1>
+      <% if (type.description) { %><p class="text-muted"><%= type.description %></p><% } %>
+    </header>
+    <% if (!posts.length) { %>
+      <p class="text-muted">No published items yet.</p>
+    <% } else { %>
+      <div class="row g-4">
+        <% posts.forEach(function(post) { %>
+          <article class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <% if (post.featured_image) { %><img src="<%= post.featured_image %>" class="card-img-top" alt="<%= post.title %>"><% } %>
+              <div class="card-body">
+                <h2 class="h5 card-title"><a href="/types/<%= type.slug %>/<%= post.slug %>" class="stretched-link text-decoration-none"><%= post.title %></a></h2>
+                <% if (post.excerpt) { %><p class="card-text text-muted small"><%= post.excerpt %></p><% } %>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+      <%- include('../partials/pagination', { pagination, basePath: `/types/${type.slug}` }) %>
+    <% } %>
+  </div>
+</main>
+<%- include(themePartial('footer')) %>

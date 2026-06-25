@@ -1,0 +1,55 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header">
+      <h1><%= type.name %></h1>
+      <a class="np-btn np-btn-primary" href="/admin/content/<%= type.slug %>/create"><i class="bi bi-plus-lg"></i> Add New</a>
+    </div>
+    <ul class="np-subsub list-unstyled">
+      <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/content/<%= type.slug %>">All</a></li>
+      <% ['published','draft','private'].forEach(function(status) { %>
+        <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/content/<%= type.slug %>?status=<%= status %>"><%= status %></a></li>
+      <% }) %>
+    </ul>
+    <div class="list-toolbar mb-3">
+      <form class="admin-search" method="get">
+        <% if (filters.status) { %><input type="hidden" name="status" value="<%= filters.status %>"><% } %>
+        <input type="search" name="q" value="<%= query || '' %>" placeholder="Search…" class="form-control">
+      </form>
+    </div>
+    <div class="np-table-wrap">
+      <table class="np-table">
+        <thead><tr><th>Title</th><th>Status</th><th>Author</th><th>Date</th><th></th></tr></thead>
+        <tbody>
+          <% if (!rows.length) { %><tr><td colspan="5" class="text-muted">No items yet.</td></tr><% } %>
+          <% rows.forEach(function(row) { %>
+            <tr>
+              <td><strong><%= row.title %></strong><div class="text-muted small"><code><%= row.slug %></code></div></td>
+              <td><%= row.status %></td>
+              <td><%= row.author ? row.author.name : '—' %></td>
+              <td><%= row.created_at ? new Date(row.created_at).toLocaleDateString() : '—' %></td>
+              <td class="text-end">
+                <% if (type.has_archive && row.status === 'published') { %>
+                  <a href="/types/<%= type.slug %>/<%= row.slug %>" class="np-btn np-btn-link np-btn-small" target="_blank" rel="noopener">View</a>
+                <% } %>
+                <a href="/admin/content/<%= type.slug %>/<%= row.id %>/edit" class="np-btn np-btn-link np-btn-small">Edit</a>
+                <% if (type.supports_revisions) { %>
+                  <a href="/admin/revisions?resource_type=custom_post&resource_id=<%= row.id %>" class="np-btn np-btn-link np-btn-small">Revisions</a>
+                <% } %>
+                <form method="post" action="/admin/content/<%= type.slug %>/<%= row.id %>?_method=DELETE&_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" onsubmit="return confirm('Delete?');">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="np-btn np-btn-link np-btn-small text-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../../partials/pagination', { pagination, basePath: `/admin/content/${type.slug}` }) %>
+  </main>
+</div>
+<%- include('../partials/footer') %>

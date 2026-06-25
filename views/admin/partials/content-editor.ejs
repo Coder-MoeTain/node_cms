@@ -1,0 +1,26 @@
+<div class="editor-mode-toggle np-metabox mb-3">
+  <div class="np-metabox-header">Editor mode</div>
+  <div class="np-metabox-body">
+    <div class="btn-group" role="group">
+      <input type="radio" class="btn-check" name="editor_mode_ui" id="mode-classic" value="classic" <%= (record.content_format || 'classic') !== 'block' ? 'checked' : '' %> data-editor-mode-toggle>
+      <label class="btn btn-outline-secondary btn-sm" for="mode-classic">Classic</label>
+      <input type="radio" class="btn-check" name="editor_mode_ui" id="mode-block" value="block" <%= record.content_format === 'block' ? 'checked' : '' %> data-editor-mode-toggle>
+      <label class="btn btn-outline-secondary btn-sm" for="mode-block">Blocks</label>
+    </div>
+    <input type="hidden" name="content_format" value="<%= record.content_format || 'classic' %>">
+    <p class="np-help-text mb-0 mt-2"><span data-autosave-status>Saved</span></p>
+  </div>
+</div>
+
+<div data-classic-editor class="<%= record.content_format === 'block' ? 'd-none' : '' %>">
+  <textarea class="form-control rich-editor" name="content" rows="14"><%- record.content || '' %></textarea>
+</div>
+
+<div data-block-editor-wrap class="<%= record.content_format === 'block' ? '' : 'd-none' %>">
+  <input type="hidden" name="block_content_json" data-block-json-input value="">
+  <div data-block-editor data-initial-blocks='<%- JSON.stringify((function(){ try { return JSON.parse(record.block_content_json || "[]"); } catch(e) { return []; } })()) %>'></div>
+  <div class="mt-3">
+    <label class="form-label">Preview</label>
+    <div class="np-block-preview" data-block-preview></div>
+  </div>
+</div>

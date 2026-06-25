@@ -1,0 +1,13 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header"><h1>Network Sites</h1><a href="/admin/network/create" class="np-btn np-btn-primary">Add site</a></div>
+    <div class="np-table-wrap mt-3"><table class="np-table"><thead><tr><th>Name</th><th>Slug</th><th>Domain</th><th>Status</th></tr></thead>
+      <tbody><% sites.forEach(function(s) { %><tr><td><%= s.name %></td><td><%= s.slug %></td><td><%= s.domain || '—' %></td><td><%= s.status %></td></tr><% }) %></tbody>
+    </table></div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

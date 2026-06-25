@@ -25,6 +25,7 @@ const {
   translatePage,
   translatePages,
   translateCategory,
+  translateTag,
   translateBanners,
   translateSliders
 } = require('../../utils/contentTranslator');
@@ -94,7 +95,7 @@ async function postsForCategorySlug(slug, limit = 6) {
   const categoryRow = await Category.findOne({ where: { slug } });
   if (!categoryRow) return [];
   return Post.findAll({
-    where: { category_id: categoryRow.id, status: 'published' },
+    where: { category_id: categoryRow.id, status: 'published', post_type: 'post' },
     include: publishedPostInclude,
     limit,
     order: [['published_at', 'DESC']]
@@ -114,14 +115,14 @@ async function home(req, res, next) {
       hotPosts,
       mediaItems
     ] = await Promise.all([
-      Post.findAll({ where: { status: 'published' }, include: publishedPostInclude, limit: 6, order: [['published_at', 'DESC']] }),
+      Post.findAll({ where: { status: 'published', post_type: 'post' }, include: publishedPostInclude, limit: 6, order: [['published_at', 'DESC']] }),
       Banner.findAll({ where: { active: true }, order: [['display_order', 'ASC']] }),
       Slider.findAll({ where: { active: true }, order: [['display_order', 'ASC']] }),
       postsForCategorySlug('news', 6),
       postsForCategorySlug('announcements', 6),
       postsForCategorySlug('tenders', 5),
       postsForCategorySlug('jobs', 5),
-      Post.findAll({ where: { status: 'published' }, include: publishedPostInclude, limit: 8, order: [['views_count', 'DESC']] }),
+      Post.findAll({ where: { status: 'published', post_type: 'post' }, include: publishedPostInclude, limit: 8, order: [['views_count', 'DESC']] }),
       Media.findAll({ where: { file_type: { [Op.in]: ['image', 'video'] } }, limit: 8, order: [['created_at', 'DESC']] })
     ]);
 
@@ -159,7 +160,7 @@ async function blog(req, res, next) {
   try {
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const { rows, count } = await Post.findAndCountAll({
-      where: { status: 'published' },
+      where: { status: 'published', post_type: 'post' },
       include: publishedPostInclude,
       distinct: true,
       limit,
@@ -174,15 +175,23 @@ async function blog(req, res, next) {
 
 async function loadPostForRender(slug) {
   const row = await Post.findOne({
-    where: { slug, status: 'published' },
-    include: [...publishedPostInclude, { model: Comment, as: 'comments', where: { status: 'approved' }, required: false }]
+    where: { slug, status: 'published', post_type: 'post' },
+    include: [...publishedPostInclude]
   });
   if (!row) return null;
+  const allComments = await Comment.findAll({
+    where: { post_id: row.id, status: 'approved' },
+    order: [['created_at', 'ASC']]
+  });
+  const { buildCommentTree, countComments } = require('../../utils/commentHelper');
+  row.setDataValue('comments', buildCommentTree(allComments));
+  row.setDataValue('commentCount', countComments(buildCommentTree(allComments)));
   const [relatedPosts, prevPost, nextPost] = await Promise.all([
     Post.findAll({
       where: {
         id: { [Op.ne]: row.id },
         status: 'published',
+        post_type: 'post',
         ...(row.category_id ? { category_id: row.category_id } : {})
       },
       include: publishedPostInclude,
@@ -190,12 +199,12 @@ async function loadPostForRender(slug) {
       order: [['published_at', 'DESC']]
     }),
     Post.findOne({
-      where: { status: 'published', published_at: { [Op.lt]: row.published_at || row.created_at } },
+      where: { status: 'published', post_type: 'post', published_at: { [Op.lt]: row.published_at || row.created_at } },
       order: [['published_at', 'DESC']],
       attributes: ['title', 'slug']
     }),
     Post.findOne({
-      where: { status: 'published', published_at: { [Op.gt]: row.published_at || row.created_at } },
+      where: { status: 'published', post_type: 'post', published_at: { [Op.gt]: row.published_at || row.created_at } },
       order: [['published_at', 'ASC']],
       attributes: ['title', 'slug']
     })
@@ -216,6 +225,8 @@ async function post(req, res, next) {
       relatedPosts,
       prevPost,
       nextPost,
+      commentTree: row.comments || [],
+      commentCount: row.commentCount || 0,
       schema: postSchema(row, `${req.protocol}://${req.get('host')}${req.originalUrl}`)
     }, { before: 'beforePostRender', after: 'afterPostRender', template: 'post' });
   } catch (error) {
@@ -229,7 +240,7 @@ async function category(req, res, next) {
     if (!categoryRow) return res.status(404).render('public/error', { title: 'Category Not Found', code: 404, message: 'This category could not be found.' });
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const { rows, count } = await Post.findAndCountAll({
-      where: { category_id: categoryRow.id, status: 'published' },
+      where: { category_id: categoryRow.id, status: 'published', post_type: 'post' },
       include: publishedPostInclude,
       distinct: true,
       limit,
@@ -255,14 +266,21 @@ async function tag(req, res, next) {
     const tagRow = await Tag.findOne({ where: { slug: req.params.slug } });
     if (!tagRow) return res.status(404).render('public/error', { title: 'Tag Not Found', code: 404, message: 'This tag could not be found.' });
     const { rows, count } = await Post.findAndCountAll({
-      where: { status: 'published' },
+      where: { status: 'published', post_type: 'post' },
       include: [...publishedPostInclude, { model: Tag, where: { id: tagRow.id } }],
       distinct: true,
       limit,
       offset,
       order: [['published_at', 'DESC']]
     });
-    return renderPublic(res, 'archive', { title: tagRow.name, seo: meta(tagRow.name), heading: `Tag: ${tagRow.name}`, posts: rows, pagination: pageMeta(count, page, limit) });
+    const translatedTag = await translateTag(res.locals.translationEngine, tagRow);
+    return renderPublic(res, 'archive', {
+      title: translatedTag.name,
+      seo: meta(translatedTag.name, translatedTag.description),
+      heading: translatedTag.name,
+      posts: rows,
+      pagination: pageMeta(count, page, limit)
+    });
   } catch (error) {
     return next(error);
   }
@@ -294,6 +312,7 @@ async function search(req, res, next) {
       const postResult = await Post.findAndCountAll({
         where: {
           status: 'published',
+          post_type: 'post',
           [Op.or]: [
             { title: { [Op.like]: `%${q}%` } },
             { excerpt: { [Op.like]: `%${q}%` } },
@@ -434,6 +453,7 @@ async function comment(req, res, next) {
 
     const commentPayload = {
       post_id: postRow.id,
+      parent_id: req.body.parent_id ? Number(req.body.parent_id) : null,
       name: req.body.name,
       email: req.body.email,
       website: req.body.website,
@@ -471,7 +491,7 @@ async function comment(req, res, next) {
 async function sitemap(req, res, next) {
   try {
     const [posts, pages] = await Promise.all([
-      Post.findAll({ where: { status: 'published' }, attributes: ['slug', 'updated_at'] }),
+      Post.findAll({ where: { status: 'published', post_type: 'post' }, attributes: ['slug', 'updated_at'] }),
       Page.findAll({ where: { status: 'published' }, attributes: ['slug', 'updated_at'] })
     ]);
     const host = `${req.protocol}://${req.get('host')}`;

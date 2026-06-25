@@ -1,0 +1,17 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <h1 class="mb-3">Add network site</h1>
+    <form method="post" action="/admin/network">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="name" required></div>
+      <div class="mb-3"><label class="form-label">Slug</label><input class="form-control" name="slug"></div>
+      <div class="mb-3"><label class="form-label">Domain</label><input class="form-control" name="domain" placeholder="news.example.com"></div>
+      <button class="np-btn np-btn-primary" type="submit">Create site</button>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

@@ -14,6 +14,9 @@ module.exports = {
   corsOrigin: process.env.CORS_ORIGIN || process.env.APP_URL || 'http://localhost:3000',
   uploadsQuarantine: process.env.UPLOADS_QUARANTINE === 'true',
   apiKey: process.env.API_KEY || '',
+  jwtSecret: process.env.JWT_SECRET || process.env.SESSION_SECRET || 'change-this-long-random-secret',
+  updateCheckUrl: process.env.UPDATE_CHECK_URL || '',
+  multisiteEnabled: process.env.MULTISITE_ENABLED === 'true',
   loginBruteForce: {
     enabled: process.env.LOGIN_BRUTE_FORCE !== 'false',
     maxAccountAttempts: Number(process.env.LOGIN_MAX_ATTEMPTS || 5),

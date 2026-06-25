@@ -1,0 +1,51 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header mb-3"><h1>Comments</h1></div>
+    <ul class="np-subsub list-unstyled mb-3">
+      <% ['all','pending','approved','spam','trash'].forEach(function(s) { %>
+        <li class="<%= status === s ? 'active' : '' %>"><a href="/admin/comments?status=<%= s %>"><%= s.charAt(0).toUpperCase()+s.slice(1) %> (<%= counts[s] || 0 %>)</a></li>
+      <% }) %>
+    </ul>
+    <form method="post" action="/admin/comments/bulk">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="np-tablenav mb-2">
+        <select name="action" class="form-select form-select-sm d-inline-block w-auto">
+          <option value="">Bulk actions</option>
+          <option value="approve">Approve</option>
+          <option value="spam">Spam</option>
+          <option value="trash">Trash</option>
+          <option value="delete">Delete permanently</option>
+        </select>
+        <button class="np-btn np-btn-secondary np-btn-small" type="submit">Apply</button>
+      </div>
+      <div class="np-table-wrap">
+        <table class="np-table">
+          <thead><tr><th><input type="checkbox" data-select-all></th><th>Author</th><th>Comment</th><th>In reply to</th><th>Date</th><th></th></tr></thead>
+          <tbody>
+            <% comments.forEach(function(c) { %>
+              <tr>
+                <td><input type="checkbox" name="ids" value="<%= c.id %>"></td>
+                <td><strong><%= c.name %></strong><br><small><%= c.email %></small></td>
+                <td><%= c.content %></td>
+                <td><%= c.Post ? c.Post.title : '—' %></td>
+                <td><%= new Date(c.created_at).toLocaleString() %></td>
+                <td class="text-end">
+                  <a href="/admin/comments/<%= c.id %>/reply" class="np-btn np-btn-link np-btn-small">Reply</a>
+                  <% if (c.status !== 'approved') { %>
+                    <form method="post" action="/admin/comments/<%= c.id %>/moderate" class="d-inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="action" value="approve"><button class="np-btn np-btn-link np-btn-small">Approve</button></form>
+                  <% } %>
+                  <form method="post" action="/admin/comments/<%= c.id %>/moderate" class="d-inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="action" value="spam"><button class="np-btn np-btn-link np-btn-small">Spam</button></form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

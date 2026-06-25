@@ -1,0 +1,50 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header">
+      <h1>Custom Post Types</h1>
+      <% if (can('manage_custom_post_types')) { %>
+        <a class="np-btn np-btn-primary" href="/admin/custom-post-types/create"><i class="bi bi-plus-lg"></i> Add New</a>
+      <% } %>
+    </div>
+    <div class="list-toolbar mb-3">
+      <form class="admin-search" method="get">
+        <input type="search" name="q" value="<%= query || '' %>" placeholder="Search types…" class="form-control">
+      </form>
+    </div>
+    <div class="np-table-wrap">
+      <table class="np-table">
+        <thead>
+          <tr><th>Name</th><th>Slug</th><th>Status</th><th>Menu</th><th>API</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% if (!rows.length) { %>
+            <tr><td colspan="6" class="text-muted">No custom post types yet.</td></tr>
+          <% } %>
+          <% rows.forEach(function(row) { %>
+            <tr>
+              <td><i class="bi <%= row.icon || 'bi-file-earmark' %> me-1"></i> <%= row.name %></td>
+              <td><code><%= row.slug %></code></td>
+              <td><span class="np-badge np-badge-<%= row.status === 'active' ? 'success' : 'muted' %>"><%= row.status %></span></td>
+              <td><%= row.show_in_menu ? 'Yes' : 'No' %></td>
+              <td><%= row.show_in_api ? 'Yes' : 'No' %></td>
+              <td class="text-end">
+                <a href="/admin/content/<%= row.slug %>" class="np-btn np-btn-link np-btn-small">Content</a>
+                <a href="/admin/custom-post-types/<%= row.id %>/edit" class="np-btn np-btn-link np-btn-small">Edit</a>
+                <form method="post" action="/admin/custom-post-types/<%= row.id %>?_method=DELETE&_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" onsubmit="return confirm('Delete this post type?');">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="np-btn np-btn-link np-btn-small text-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../../partials/pagination', { pagination, basePath: '/admin/custom-post-types' }) %>
+  </main>
+</div>
+<%- include('../partials/footer') %>

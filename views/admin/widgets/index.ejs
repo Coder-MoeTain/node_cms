@@ -1,0 +1,24 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header"><h1>Widgets</h1></div>
+    <div class="row g-3">
+      <% areas.forEach(function(area) { %>
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h2 class="h5"><%= area.name %></h2>
+              <p class="text-muted small"><%= area.description || area.slug %></p>
+              <p><%= (area.widgets || []).length %> widget(s)</p>
+              <a href="/admin/widgets/<%= area.slug %>" class="np-btn np-btn-primary np-btn-small">Manage</a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,16 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <h1 class="mb-3">Reply to comment</h1>
+    <blockquote class="border-start ps-3 mb-4"><%= parent.content %><footer class="text-muted small">— <%= parent.name %></footer></blockquote>
+    <form method="post" action="/admin/comments/<%= parent.id %>/reply">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <textarea class="form-control mb-3" name="content" rows="5" required></textarea>
+      <button class="np-btn np-btn-primary" type="submit">Post reply</button>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

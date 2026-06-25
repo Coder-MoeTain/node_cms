@@ -1,0 +1,61 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<%
+  const isEdit = Boolean(record.id);
+  const action = isEdit
+    ? `/admin/custom-post-types/${record.id}?_method=PUT&_csrf=${encodeURIComponent(csrfToken)}`
+    : `/admin/custom-post-types?_csrf=${encodeURIComponent(csrfToken)}`;
+  const val = (name, fallback = '') => record[name] == null ? fallback : record[name];
+  const checked = (name, def = true) => (record.id ? val(name, def) : def) ? 'checked' : '';
+%>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header mb-3">
+      <h1><%= isEdit ? 'Edit' : 'Add' %> Custom Post Type</h1>
+    </div>
+    <form method="post" action="<%= action %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="np-metabox mb-3">
+            <div class="np-metabox-header">General</div>
+            <div class="np-metabox-body">
+              <div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= val('name') %>" required></div>
+              <div class="mb-3"><label class="form-label">Slug</label><input class="form-control" name="slug" value="<%= val('slug') %>" placeholder="auto from name"></div>
+              <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="3"><%= val('description') %></textarea></div>
+              <div class="mb-3"><label class="form-label">Menu icon (Bootstrap Icons class)</label><input class="form-control" name="icon" value="<%= val('icon', 'bi-file-earmark') %>"></div>
+            </div>
+          </div>
+          <div class="np-metabox">
+            <div class="np-metabox-header">Supports</div>
+            <div class="np-metabox-body">
+              <% [
+                ['supports_title','Title'],['supports_editor','Editor'],['supports_excerpt','Excerpt'],
+                ['supports_featured_image','Featured image'],['supports_comments','Comments'],
+                ['supports_revisions','Revisions'],['supports_custom_fields','Custom fields'],
+                ['has_archive','Archive page'],['show_in_menu','Show in admin menu'],['show_in_api','Expose in REST API']
+              ].forEach(function(pair) { %>
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="<%= pair[0] %>" id="<%= pair[0] %>" <%= checked(pair[0], pair[0] !== 'supports_comments') %>><label class="form-check-label" for="<%= pair[0] %>"><%= pair[1] %></label></div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+        <aside class="col-lg-4">
+          <div class="np-metabox">
+            <div class="np-metabox-header">Status</div>
+            <div class="np-metabox-body">
+              <select class="form-select" name="status">
+                <option value="active" <%= val('status','active') === 'active' ? 'selected' : '' %>>Active</option>
+                <option value="inactive" <%= val('status') === 'inactive' ? 'selected' : '' %>>Inactive</option>
+              </select>
+              <button type="submit" class="np-btn np-btn-primary w-100 mt-3"><%= isEdit ? 'Update' : 'Create' %></button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>
