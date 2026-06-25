@@ -172,36 +172,43 @@ async function blog(req, res, next) {
   }
 }
 
+async function loadPostForRender(slug) {
+  const row = await Post.findOne({
+    where: { slug, status: 'published' },
+    include: [...publishedPostInclude, { model: Comment, as: 'comments', where: { status: 'approved' }, required: false }]
+  });
+  if (!row) return null;
+  const [relatedPosts, prevPost, nextPost] = await Promise.all([
+    Post.findAll({
+      where: {
+        id: { [Op.ne]: row.id },
+        status: 'published',
+        ...(row.category_id ? { category_id: row.category_id } : {})
+      },
+      include: publishedPostInclude,
+      limit: 3,
+      order: [['published_at', 'DESC']]
+    }),
+    Post.findOne({
+      where: { status: 'published', published_at: { [Op.lt]: row.published_at || row.created_at } },
+      order: [['published_at', 'DESC']],
+      attributes: ['title', 'slug']
+    }),
+    Post.findOne({
+      where: { status: 'published', published_at: { [Op.gt]: row.published_at || row.created_at } },
+      order: [['published_at', 'ASC']],
+      attributes: ['title', 'slug']
+    })
+  ]);
+  return { row, relatedPosts, prevPost, nextPost };
+}
+
 async function post(req, res, next) {
   try {
-    const row = await Post.findOne({
-      where: { slug: req.params.slug, status: 'published' },
-      include: [...publishedPostInclude, { model: Comment, as: 'comments', where: { status: 'approved' }, required: false }]
-    });
-    if (!row) return res.status(404).render('public/error', { title: 'Post Not Found', code: 404, message: 'This post could not be found or is no longer published.' });
+    const loaded = await loadPostForRender(req.params.slug);
+    if (!loaded) return res.status(404).render('public/error', { title: 'Post Not Found', code: 404, message: 'This post could not be found or is no longer published.' });
+    const { row, relatedPosts, prevPost, nextPost } = loaded;
     await row.increment('views_count');
-    const [relatedPosts, prevPost, nextPost] = await Promise.all([
-      Post.findAll({
-        where: {
-          id: { [Op.ne]: row.id },
-          status: 'published',
-          ...(row.category_id ? { category_id: row.category_id } : {})
-        },
-        include: publishedPostInclude,
-        limit: 3,
-        order: [['published_at', 'DESC']]
-      }),
-      Post.findOne({
-        where: { status: 'published', published_at: { [Op.lt]: row.published_at || row.created_at } },
-        order: [['published_at', 'DESC']],
-        attributes: ['title', 'slug']
-      }),
-      Post.findOne({
-        where: { status: 'published', published_at: { [Op.gt]: row.published_at || row.created_at } },
-        order: [['published_at', 'ASC']],
-        attributes: ['title', 'slug']
-      })
-    ]);
     return renderPublic(res, 'post', {
       title: row.title,
       seo: meta(row.seo_title || row.title, row.seo_description || row.excerpt, row.og_image || row.featured_image),
@@ -331,10 +338,13 @@ async function search(req, res, next) {
 async function contact(req, res, next) {
   try {
     const prefill = {
+      name: '',
+      email: req.query.email || '',
+      phone: '',
       subject: req.query.subject || '',
-      email: req.query.email || ''
+      message: ''
     };
-    return renderPublic(res, 'contact', { title: 'Contact', seo: meta('Contact'), prefill });
+    return renderPublic(res, 'contact', { title: 'Contact', seo: meta('Contact'), prefill, fieldErrors: {} });
   } catch (error) {
     return next(error);
   }
@@ -342,10 +352,21 @@ async function contact(req, res, next) {
 
 async function submitContact(req, res, next) {
   try {
+    const prefill = {
+      name: req.body.name || '',
+      email: req.body.email || '',
+      phone: req.body.phone || '',
+      subject: req.body.subject || '',
+      message: req.body.message || ''
+    };
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      req.flash('error', errors.array()[0].msg || 'Please check the contact form.');
-      return res.redirect('/contact');
+      return renderPublic(res, 'contact', {
+        title: 'Contact',
+        seo: meta('Contact'),
+        prefill,
+        fieldErrors: errors.mapped()
+      });
     }
 
     const messagePayload = {
@@ -357,8 +378,12 @@ async function submitContact(req, res, next) {
     };
     const allowed = await pluginLoader.applyFilters('beforeContactSubmit', messagePayload, { req, res });
     if (!allowed) {
-      req.flash('error', 'Your message was flagged as spam.');
-      return res.redirect('/contact');
+      return renderPublic(res, 'contact', {
+        title: 'Contact',
+        seo: meta('Contact'),
+        prefill,
+        formError: 'Your message was flagged as spam.'
+      });
     }
 
     await ContactMessage.create({
@@ -377,17 +402,36 @@ async function submitContact(req, res, next) {
 
 async function comment(req, res, next) {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      req.flash('error', errors.array()[0].msg || 'Please check your comment.');
-      return res.redirect('back');
-    }
-
     const postRow = await Post.findByPk(req.params.id);
     if (!postRow || !postRow.allow_comments) {
       req.flash('error', 'Comments are closed.');
       return res.redirect('back');
     }
+
+    const commentPrefill = {
+      name: req.body.name || '',
+      email: req.body.email || '',
+      website: req.body.website || '',
+      content: req.body.content || ''
+    };
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const loaded = await loadPostForRender(postRow.slug);
+      if (!loaded) return res.redirect('back');
+      const { row, relatedPosts, prevPost, nextPost } = loaded;
+      return renderPublic(res, 'post', {
+        title: row.title,
+        seo: meta(row.seo_title || row.title, row.seo_description || row.excerpt, row.og_image || row.featured_image),
+        post: row,
+        relatedPosts,
+        prevPost,
+        nextPost,
+        commentPrefill,
+        fieldErrors: errors.mapped(),
+        schema: postSchema(row, `${req.protocol}://${req.get('host')}/post/${row.slug}`)
+      }, { before: 'beforePostRender', after: 'afterPostRender', template: 'post' });
+    }
+
     const commentPayload = {
       post_id: postRow.id,
       name: req.body.name,
@@ -400,13 +444,25 @@ async function comment(req, res, next) {
     };
     const allowed = await pluginLoader.applyFilters('beforeCommentSave', commentPayload, { req, res, post: postRow });
     if (!allowed) {
-      req.flash('error', 'Your comment was flagged as spam.');
-      return res.redirect('back');
+      const loaded = await loadPostForRender(postRow.slug);
+      if (!loaded) return res.redirect('back');
+      const { row, relatedPosts, prevPost, nextPost } = loaded;
+      return renderPublic(res, 'post', {
+        title: row.title,
+        seo: meta(row.seo_title || row.title, row.seo_description || row.excerpt, row.og_image || row.featured_image),
+        post: row,
+        relatedPosts,
+        prevPost,
+        nextPost,
+        commentPrefill,
+        formError: 'Your comment was flagged as spam.',
+        schema: postSchema(row, `${req.protocol}://${req.get('host')}/post/${row.slug}`)
+      }, { before: 'beforePostRender', after: 'afterPostRender', template: 'post' });
     }
-    const comment = await Comment.create(allowed);
-    await pluginLoader.doAction('afterCommentSave', comment, { req, res, post: postRow });
+    const savedComment = await Comment.create(allowed);
+    await pluginLoader.doAction('afterCommentSave', savedComment, { req, res, post: postRow });
     req.flash('success', 'Comment submitted for moderation.');
-    return res.redirect(`/post/${postRow.slug}`);
+    return res.redirect(`/post/${postRow.slug}#comments`);
   } catch (error) {
     return next(error);
   }

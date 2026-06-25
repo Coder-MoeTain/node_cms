@@ -51,7 +51,15 @@
                     <td><%= post.created_at ? post.created_at.toLocaleDateString() : '' %></td>
                   </tr>
                 <% }) %>
-                <% if (!recentPosts.length) { %><tr><td colspan="3" class="text-muted">No posts yet.</td></tr><% } %>
+                <% if (!recentPosts.length) { %>
+                  <tr><td colspan="3">
+                    <div class="empty-state py-4 text-center">
+                      <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                      <p class="mb-2">No posts yet.</p>
+                      <% if (canManageResource('posts', 'create')) { %><a class="np-btn np-btn-primary np-btn-small" href="/admin/posts/create">Create your first post</a><% } %>
+                    </div>
+                  </td></tr>
+                <% } %>
               </tbody>
             </table>
           </div>
@@ -65,13 +73,14 @@
               <% recentComments.slice(0, 5).forEach(function(comment) { %>
                 <li class="mb-2"><strong><%= comment.name %></strong> on <%= comment.Post ? comment.Post.title : 'Deleted post' %> <span class="np-badge np-badge-muted"><%= comment.status %></span></li>
               <% }) %>
-              <% if (!recentComments.length) { %><li class="text-muted">No comments yet.</li><% } %>
+              <% if (!recentComments.length) { %><li class="empty-state py-2"><i class="bi bi-chat-dots" aria-hidden="true"></i><span class="text-muted">No comments yet.</span></li><% } %>
             </ul>
             <h6 class="mb-2">Recent Activity</h6>
             <ul class="list-unstyled mb-0">
               <% recentActivity.slice(0, 5).forEach(function(log) { %>
                 <li class="mb-1 text-muted"><%= log.action %> — <%= log.User ? log.User.name : 'System' %></li>
               <% }) %>
+              <% if (!recentActivity.length) { %><li class="empty-state py-2"><i class="bi bi-activity" aria-hidden="true"></i><span class="text-muted">No recent activity.</span></li><% } %>
             </ul>
           </div>
         </div>

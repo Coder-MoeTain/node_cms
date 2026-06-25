@@ -24,19 +24,55 @@
         <div class="np-widget-body p-0">
           <table class="np-form-table np-settings-table">
             <tbody>
-              <% settings.forEach(function(setting) { %>
+              <% const bruteForceNumeric = ['login_max_account_attempts', 'login_lockout_minutes', 'login_max_ip_attempts', 'login_ip_window_minutes', 'login_auto_block_ip_attempts']; %>
+              <% const securityFeatureLabels = {
+                enable_login_attempt_logging: 'Log all login attempts',
+                enable_ip_blocking: 'Block IPs after repeated failures',
+                enable_activity_logging: 'Record admin activity in audit log',
+                enable_csrf_protection: 'Require CSRF tokens on forms',
+                enable_rate_limiting: 'Rate-limit sensitive endpoints',
+                enable_upload_validation: 'Validate file uploads (type & size)',
+                enable_security_headers: 'Send security headers (Helmet)',
+                enable_waf: 'Web Application Firewall (WAF)'
+              }; %>
+              <% settings.filter(function(setting) { return !bruteForceNumeric.includes(setting.key); }).forEach(function(setting) { %>
                 <tr>
-                  <th scope="row"><%= setting.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }) %></th>
+                  <th scope="row"><%= securityFeatureLabels[setting.key] || setting.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }) %></th>
                   <td>
                     <label class="form-check">
                       <input class="form-check-input" type="checkbox" name="<%= setting.key %>" <%= setting.enabled ? 'checked' : '' %>>
-                      Enable <%= setting.key.replace(/_/g, ' ') %>
+                      Enable
                     </label>
                   </td>
                 </tr>
               <% }) %>
             </tbody>
           </table>
+        </div>
+      </div>
+      <div class="np-widget mt-3">
+        <div class="np-widget-header"><span>Login Brute-Force Protection</span></div>
+        <div class="np-widget-body p-0">
+          <table class="np-form-table np-settings-table">
+            <tbody>
+              <% const bruteLabels = {
+                login_max_account_attempts: 'Max failed attempts per account',
+                login_lockout_minutes: 'Account lockout duration (minutes)',
+                login_max_ip_attempts: 'Max failed attempts per IP (window)',
+                login_ip_window_minutes: 'IP tracking window (minutes)',
+                login_auto_block_ip_attempts: 'Auto-block IP after failures'
+              }; %>
+              <% settings.filter(function(setting) { return bruteForceNumeric.includes(setting.key); }).forEach(function(setting) { %>
+                <tr>
+                  <th scope="row"><%= bruteLabels[setting.key] || setting.key %></th>
+                  <td>
+                    <input class="form-control" type="number" min="1" name="<%= setting.key %>" value="<%= setting.value %>" required>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <p class="np-help-text px-3 pb-3 mb-0">Failed logins are rate-limited per IP, accounts lock after repeated failures, and abusive IPs can be auto-blocked.</p>
         </div>
       </div>
       <p class="mt-3"><button class="np-btn np-btn-primary" type="submit">Save Security Settings</button></p>

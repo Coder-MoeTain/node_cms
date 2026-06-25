@@ -1,4 +1,6 @@
 const request = require('supertest');
+const bcrypt = require('bcrypt');
+const loginBruteForce = require('../utils/loginBruteForce');
 const { app, models } = require('../server');
 const { login, getCsrf } = require('./helpers');
 
@@ -50,18 +52,77 @@ test('reset password form accepts token query param', async () => {
 });
 
 test('account lockout blocks login after repeated failures', async () => {
+  const adminRole = await models.Role.findOne({ where: { slug: 'super-admin' } });
+  const lockoutEmail = `lockout-${Date.now()}@test.local`;
+  await models.User.create({
+    name: 'Lockout Test User',
+    email: lockoutEmail,
+    password: await bcrypt.hash('Lockout@12345', 12),
+    role_id: adminRole.id,
+    status: 'active',
+    force_password_change: false
+  });
+
   const agent = request.agent(app);
   for (let i = 0; i < 5; i++) {
     const page = await agent.get('/admin/login');
     const csrf = page.text.match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
     await agent.post('/admin/login').type('form').send({
-      email: 'admin@example.com',
+      email: lockoutEmail,
       password: 'wrong-password-lockout',
       _csrf: csrf
     });
   }
-  const user = await models.User.findOne({ where: { email: 'admin@example.com' } });
+  const user = await models.User.findOne({ where: { email: lockoutEmail } });
   expect(user.failed_login_count).toBeGreaterThanOrEqual(5);
   expect(user.locked_until).toBeTruthy();
-  await user.update({ failed_login_count: 0, locked_until: null });
+  await user.destroy({ force: true });
+});
+
+test('repeated failed logins from one IP are throttled', async () => {
+  await models.SecuritySetting.upsert({
+    key: 'login_max_ip_attempts',
+    value: '3',
+    enabled: true
+  });
+  await models.SecuritySetting.upsert({
+    key: 'login_attempt_limiter',
+    value: 'true',
+    enabled: true
+  });
+  loginBruteForce.clearSettingsCache();
+
+  const agent = request.agent(app);
+  for (let i = 0; i < 3; i++) {
+    const page = await agent.get('/admin/login');
+    const csrf = page.text.match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
+    await agent.post('/admin/login').type('form').send({
+      email: `unknown-${i}@test.local`,
+      password: 'wrong-password',
+      _csrf: csrf
+    });
+  }
+
+  const page = await agent.get('/admin/login');
+  const csrf = page.text.match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
+  const blocked = await agent.post('/admin/login').type('form').send({
+    email: 'admin@example.com',
+    password: 'wrong-password',
+    _csrf: csrf
+  });
+  expect(blocked.status).toBe(302);
+  expect(blocked.headers.location).toBe('/admin/login');
+
+  await models.SecuritySetting.upsert({
+    key: 'login_max_ip_attempts',
+    value: '10',
+    enabled: true
+  });
+  await models.LoginAttempt.destroy({
+    where: {
+      ip_address: ['::ffff:127.0.0.1', '127.0.0.1', '::1']
+    },
+    force: true
+  });
+  loginBruteForce.clearSettingsCache();
 });

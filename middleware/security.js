@@ -5,11 +5,18 @@ const { BlockedIp } = require('../models');
 const appConfig = require('../config/app');
 
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 8,
+  windowMs: (appConfig.loginBruteForce.rateLimitWindowMinutes || 15) * 60 * 1000,
+  max: process.env.NODE_ENV === 'test' ? 1000 : appConfig.loginBruteForce.rateLimitMax || 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Too many login attempts. Try again later.'
+  message: 'Too many login attempts. Try again later.',
+  handler(req, res) {
+    if (req.flash) {
+      req.flash('error', 'Too many login attempts. Try again later.');
+      return res.redirect('/admin/login');
+    }
+    return res.status(429).send('Too many login attempts. Try again later.');
+  }
 });
 
 const apiLimiter = rateLimit({

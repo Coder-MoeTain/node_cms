@@ -1,0 +1,38 @@
+<% if (pagination && pagination.pages > 1) {
+  const page = pagination.page;
+  const pages = pagination.pages;
+  const base = typeof paginationBase !== 'undefined' ? paginationBase : '?';
+  const join = base.includes('?') && !base.endsWith('?') ? '&' : '';
+  const href = (p) => base + (base.endsWith('?') ? '' : join) + 'page=' + p;
+  const window = 2;
+  const start = Math.max(1, page - window);
+  const end = Math.min(pages, page + window);
+%>
+<nav class="<%= typeof paginationClass !== 'undefined' ? paginationClass : 'np-pagination' %>" aria-label="<%= typeof paginationLabel !== 'undefined' ? paginationLabel : 'Pagination' %>">
+  <ul class="pagination mb-0">
+    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+      <a class="page-link" href="<%= page > 1 ? href(page - 1) : '#' %>" <%= page <= 1 ? 'tabindex="-1" aria-disabled="true"' : '' %>>
+        <span aria-hidden="true">&laquo;</span> Prev
+      </a>
+    </li>
+    <% if (start > 1) { %>
+      <li class="page-item"><a class="page-link" href="<%= href(1) %>">1</a></li>
+      <% if (start > 2) { %><li class="page-item disabled"><span class="page-link">&hellip;</span></li><% } %>
+    <% } %>
+    <% for (let i = start; i <= end; i++) { %>
+      <li class="page-item <%= i === page ? 'active' : '' %>">
+        <a class="page-link" href="<%= href(i) %>" <%= i === page ? 'aria-current="page"' : '' %>><%= i %></a>
+      </li>
+    <% } %>
+    <% if (end < pages) { %>
+      <% if (end < pages - 1) { %><li class="page-item disabled"><span class="page-link">&hellip;</span></li><% } %>
+      <li class="page-item"><a class="page-link" href="<%= href(pages) %>"><%= pages %></a></li>
+    <% } %>
+    <li class="page-item <%= page >= pages ? 'disabled' : '' %>">
+      <a class="page-link" href="<%= page < pages ? href(page + 1) : '#' %>" <%= page >= pages ? 'tabindex="-1" aria-disabled="true"' : '' %>>
+        Next <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+<% } %>

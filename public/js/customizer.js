@@ -61,6 +61,37 @@
       faviconPreview.src = faviconInput.value;
       faviconPreview.hidden = false;
     }
+
+    syncLogoPresentation();
+  }
+
+  function syncLogoPresentation() {
+    const maxHeight = document.querySelector('[data-logo-max-height]')?.value || 64;
+    const maxWidth = document.querySelector('[data-logo-max-width]')?.value || 180;
+    const placement = document.querySelector('[data-logo-placement]')?.value || 'left';
+
+    document.querySelectorAll('[data-logo-preview], [data-preview-logo]').forEach((img) => {
+      img.style.maxHeight = `${maxHeight}px`;
+      img.style.maxWidth = `${maxWidth}px`;
+    });
+
+    const header = preview?.querySelector('[data-preview-logo-wrap]');
+    if (!header) return;
+
+    header.style.display = 'flex';
+    header.style.gap = '8px';
+    header.style.justifyContent = placement === 'center' ? 'center' : 'flex-start';
+
+    if (placement === 'above') {
+      header.style.flexDirection = 'column';
+      header.style.alignItems = 'flex-start';
+    } else if (placement === 'right') {
+      header.style.flexDirection = 'row-reverse';
+      header.style.alignItems = 'center';
+    } else {
+      header.style.flexDirection = 'row';
+      header.style.alignItems = 'center';
+    }
   }
 
   function syncIdentityPreviews() {
@@ -215,6 +246,18 @@
 
   document.querySelector('[name="logo"]')?.addEventListener('change', syncIdentityPreviews);
   document.querySelector('[name="favicon"]')?.addEventListener('change', syncIdentityPreviews);
+  document.querySelector('[data-logo-max-height]')?.addEventListener('input', () => {
+    syncLogoPresentation();
+    schedulePreviewDraft();
+  });
+  document.querySelector('[data-logo-max-width]')?.addEventListener('input', () => {
+    syncLogoPresentation();
+    schedulePreviewDraft();
+  });
+  document.querySelector('[data-logo-placement]')?.addEventListener('change', () => {
+    syncLogoPresentation();
+    schedulePreviewDraft();
+  });
 
   function buildCustomizerDraftPayload() {
     const cssField = form.querySelector('#custom_css');
@@ -248,6 +291,9 @@
       site_layout: form.querySelector('[name="site_layout"]')?.value,
       dark_mode: form.querySelector('[name="dark_mode"]')?.checked || false,
       logo: form.querySelector('[name="logo"]')?.value || '',
+      logo_max_height: form.querySelector('[data-logo-max-height]')?.value,
+      logo_max_width: form.querySelector('[data-logo-max-width]')?.value,
+      logo_placement: form.querySelector('[data-logo-placement]')?.value || 'left',
       favicon: form.querySelector('[name="favicon"]')?.value || '',
       custom_css: customCss,
       custom_js: form.querySelector('[name="custom_js"]')?.value || ''

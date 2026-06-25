@@ -136,7 +136,7 @@
   text-decoration: none;
 }
 
-.portal-brand-logo { max-height: 64px; max-width: 180px; object-fit: contain; }
+.portal-brand-logo { max-height: var(--site-logo-max-height, 64px); max-width: var(--site-logo-max-width, 180px); object-fit: contain; }
 
 .portal-brand-mark {
   align-items: center;
@@ -648,6 +648,12 @@
 }
 
 .portal-footer-title { font-size: 1.15rem; margin-bottom: 8px; }
+
+.portal-footer-logo {
+  max-height: var(--site-logo-max-height, 64px);
+  max-width: var(--site-logo-max-width, 180px);
+  object-fit: contain;
+}
 
 .portal-footer-desc,
 .portal-footer-apps { color: rgba(255, 255, 255, .75); font-size: 0.875rem; }

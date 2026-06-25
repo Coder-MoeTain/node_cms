@@ -37,7 +37,30 @@ The WAF is defensive only. It detects suspicious requests, logs them, scores ris
 | Feature | Location | Purpose |
 |---------|----------|---------|
 | Legacy blocked IPs | `middleware/security.js` + `BlockedIp` | Early global block list |
-| Login attempts | `LoginAttempt` + `loginLimiter` | Auth brute-force tracking |
+| Login attempts | `LoginAttempt` + `loginLimiter` + `loginBruteForce` | Per-IP throttling, account lockout, auto IP block |
+
+### Login brute-force protection
+
+Admin login uses layered defenses:
+
+| Layer | Default | Purpose |
+|-------|---------|---------|
+| Rate limit | 10 POSTs / 15 min per IP | Fast in-memory cap (`loginLimiter`) |
+| IP failure window | 10 failures / 15 min | Blocks further logins from abusive IPs |
+| Account lockout | 5 failures / 15 min lock | Locks the targeted user account |
+| Auto IP block | 25 failures | Adds IP to `blocked_ips` |
+
+Configure under **Admin → Security → Login Brute-Force Protection**, or via `.env`:
+
+```env
+LOGIN_MAX_ATTEMPTS=5
+LOGIN_LOCKOUT_MINUTES=15
+LOGIN_MAX_IP_ATTEMPTS=10
+LOGIN_IP_WINDOW_MINUTES=15
+LOGIN_AUTO_BLOCK_IP_ATTEMPTS=25
+```
+
+Toggle the whole feature with **Login Attempt Limiter** on the security settings page.
 | Activity logs | `activityLog.js` | Admin mutation audit trail |
 | WAF IP lists | `WafIpList` | Whitelist, blacklist, temporary blocks |
 | WAF logs | `WafLog` | Request inspection events |

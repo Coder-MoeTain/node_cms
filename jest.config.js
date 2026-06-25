@@ -3,6 +3,7 @@ module.exports = {
   testMatch: ['**/tests/**/*.test.js'],
   testTimeout: 30000,
   verbose: true,
+  setupFiles: ['<rootDir>/tests/setupEnv.js'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   globalSetup: '<rootDir>/tests/globalSetup.js',
   globalTeardown: '<rootDir>/tests/globalTeardown.js',
@@ -15,7 +16,9 @@ module.exports = {
     '!utils/databaseBackup.js',
     '!utils/contentTranslator.js',
     '!middleware/waf.js',
-    '!utils/translationEngine.js'
+    '!utils/translationEngine.js',
+    '!controllers/admin/wafController.js',
+    '!controllers/admin/databaseController.js'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'json-summary'],

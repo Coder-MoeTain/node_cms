@@ -18,6 +18,19 @@ const PORTAL_CONFIG = {
 
 beforeEach(async () => {
   await ensurePortalTheme(models, PORTAL_CONFIG);
+  const admin = await models.User.findOne({ where: { email: 'admin@example.com' } });
+  await models.Media.findOrCreate({
+    where: { original_name: 'widget-gallery-test.jpg' },
+    defaults: {
+      original_name: 'widget-gallery-test.jpg',
+      filename: 'widget-gallery-test.jpg',
+      file_path: '/uploads/widget-gallery-test.jpg',
+      file_type: 'image',
+      mime_type: 'image/jpeg',
+      file_size: 1024,
+      uploaded_by: admin?.id || 1
+    }
+  });
 });
 
 test('portal homepage renders quick services widget', async () => {
@@ -35,7 +48,7 @@ test('portal homepage renders emergency contacts widget', async () => {
 test('portal homepage renders media gallery widget', async () => {
   const response = await request(app).get('/');
   expect(response.status).toBe(200);
-  expect(response.text).toMatch(/portal-media|Media Gallery/i);
+  expect(response.text).toMatch(/portal-media|Photos &amp; Videos|Photos & Videos/i);
 });
 
 test('portal homepage renders latest news widget', async () => {

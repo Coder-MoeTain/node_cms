@@ -6,6 +6,7 @@ public/uploads/*
 database/backups/
 coverage/
 tmp/
+tests/.test-runtime.json
 plugins/.tmp-extract-*/
 themes/.tmp-extract-*/
 plugins/lifecycle-test-plugin/

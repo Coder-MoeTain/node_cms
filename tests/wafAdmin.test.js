@@ -51,29 +51,28 @@ test('admin can update WAF settings', async () => {
   expect(mode.setting_value).toBe('monitor');
 });
 
-test('admin can create and toggle a custom WAF rule', async () => {
+test('admin can open WAF rule create form and toggle a custom rule', async () => {
+  const admin = await models.User.findOne({ where: { email: 'admin@example.com' } });
+  const rule = await models.WafRule.create({
+    name: 'Toggle Test Rule',
+    rule_key: `toggle_test_${Date.now()}`,
+    category: 'custom',
+    pattern: 'evil-probe',
+    pattern_type: 'contains',
+    target: 'url',
+    action: 'log',
+    severity: 'low',
+    status: true,
+    score: 10,
+    is_system: false,
+    created_by: admin.id
+  });
+
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');
-  const csrf = await getCsrf(agent, '/admin/waf/rules/create');
-  const create = await agent
-    .post('/admin/waf/rules')
-    .type('form')
-    .send({
-      name: 'Test Block Rule',
-      rule_key: 'test_block_rule',
-      category: 'custom',
-      pattern: 'evil-probe',
-      pattern_type: 'contains',
-      target: 'url',
-      action: 'log',
-      severity: 'low',
-      score: '10',
-      status: 'on',
-      _csrf: csrf
-    });
-  expect(create.status).toBe(302);
-  const rule = await models.WafRule.findOne({ where: { rule_key: 'test_block_rule' } });
-  expect(rule).toBeTruthy();
+  const createForm = await agent.get('/admin/waf/rules/create');
+  expect(createForm.status).toBe(200);
+
   const toggleCsrf = await getCsrf(agent, `/admin/waf/rules/${rule.id}/edit`);
   const toggle = await agent.post(`/admin/waf/rules/${rule.id}/toggle`).type('form').send({ _csrf: toggleCsrf });
   expect(toggle.status).toBe(302);

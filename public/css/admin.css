@@ -477,7 +477,19 @@
   text-align: center;
 }
 
-.empty-state i { color: var(--np-text-muted); font-size: 24px; margin-bottom: 8px; }
+.empty-state i { color: var(--np-text-muted); font-size: 24px; margin-bottom: 8px; display: block; }
+
+.np-permission-group-title {
+  color: var(--np-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.np-toast .btn-close { flex-shrink: 0; opacity: 0.85; }
+.np-toast-success .btn-close { filter: invert(1); }
 
 /* Post editor layout → public/css/editor.css */
 

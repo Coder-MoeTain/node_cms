@@ -5,7 +5,7 @@
 <article class="site-post-item<%= hasThumb ? ' has-thumb' : '' %>">
   <% if (hasThumb) { %>
     <a class="site-post-thumb" href="/post/<%= post.slug %>" aria-hidden="true" tabindex="-1">
-      <img src="<%= post.featured_image %>" alt="" loading="lazy">
+      <img src="<%= post.featured_image %>" alt="<%= post.title %>" loading="lazy">
     </a>
   <% } %>
   <div class="site-post-main">

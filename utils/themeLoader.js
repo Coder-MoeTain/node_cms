@@ -17,7 +17,10 @@ const BASE_THEME_DEFAULTS = {
   sidebar_position: 'right',
   blog_layout: 'grid',
   site_layout: 'full-width',
-  dark_mode: false
+  dark_mode: false,
+  logo_max_height: 64,
+  logo_max_width: 180,
+  logo_placement: 'left'
 };
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
@@ -182,9 +185,13 @@ async function syncInstalledThemes() {
 }
 
 async function getActiveThemeManifest() {
-  const activeSetting = await ThemeSetting.findOne({ where: { active: true } });
-  const slug = activeSetting?.theme_name || 'classic-blog';
-  return getThemeBySlug(slug);
+  try {
+    const activeSetting = await ThemeSetting.findOne({ where: { active: true } });
+    const slug = activeSetting?.theme_name || 'classic-blog';
+    return getThemeBySlug(slug);
+  } catch {
+    return getThemeBySlug('classic-blog');
+  }
 }
 
 function templateExistsInChain(chain, template) {
@@ -241,7 +248,8 @@ function getLayoutClasses(themeSetting = {}) {
     `header-layout-${themeSetting.header_layout || 'standard'}`,
     `footer-layout-${themeSetting.footer_layout || 'four-columns'}`,
     `sidebar-${themeSetting.sidebar_position || 'right'}`,
-    `blog-layout-${themeSetting.blog_layout || 'grid'}`
+    `blog-layout-${themeSetting.blog_layout || 'grid'}`,
+    `logo-placement-${themeSetting.logo_placement || 'left'}`
   ].filter(Boolean).join(' ');
 }
 

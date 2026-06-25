@@ -47,8 +47,9 @@ Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment 
 <p align="center">
   <a href="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml"><img src="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
   <a href="https://codecov.io/gh/Coder-MoeTain/node_cms"><img src="https://codecov.io/gh/Coder-MoeTain/node_cms/graph/badge.svg" alt="Codecov coverage"></a>
-  <img src="https://img.shields.io/badge/coverage-lines%20%E2%89%A580%25-brightgreen?style=flat-square" alt="Coverage lines threshold">
-  <img src="https://img.shields.io/badge/coverage-statements%20%E2%89%A577%25-brightgreen?style=flat-square" alt="Statements threshold">
+  <img src="https://img.shields.io/badge/coverage-lines-82%25-brightgreen?style=flat-square" alt="Coverage lines 82%">
+  <img src="https://img.shields.io/badge/coverage-statements-79%25-brightgreen?style=flat-square" alt="Coverage statements 79%">
+  <img src="https://img.shields.io/badge/tests-244%20passing-brightgreen?style=flat-square" alt="244 tests passing">
   <img src="https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
   <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
   <img src="https://img.shields.io/badge/ORM-Sequelize-52B0E7?style=for-the-badge&logo=sequelize&logoColor=white" alt="Sequelize">
@@ -81,13 +82,11 @@ Admin Panel  -> http://localhost:3000/admin/login
 ### Demo video
 
 <p align="center">
-  <video src="docs/assets/nodepress-demo.mp4" poster="docs/assets/screenshots/public-home.png" controls width="90%" style="max-width:960px;border-radius:12px;">
-    Your browser does not support HTML5 video. See the screenshot gallery above.
-  </video>
+  <a href="docs/DEMO.md"><img src="docs/assets/screenshots/public-home.png" alt="NodePress demo — open docs/DEMO.md for recording steps" width="90%" style="max-width:960px;border-radius:12px;"></a>
 </p>
 
 <p align="center">
-  <em>Add a walkthrough recording at <code>docs/assets/nodepress-demo.mp4</code> (steps in <a href="docs/DEMO.md">docs/DEMO.md</a>).</em>
+  <em>Live screenshots above. For a walkthrough video, follow the recording steps in <a href="docs/DEMO.md">docs/DEMO.md</a>.</em>
 </p>
 
 ## Highlights
@@ -255,6 +254,21 @@ API_KEY=your-long-random-api-key
 | `npm run lint` | Run ESLint |
 | `npm run backup` | Create database and uploads backup |
 | `npm run health` | Check application health |
+
+## Documentation
+
+| Guide | Description |
+| --- | --- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, request flow, plugins, themes, WAF |
+| [docs/API.md](docs/API.md) | REST API endpoints and authentication |
+| [docs/PLUGIN_DEVELOPMENT.md](docs/PLUGIN_DEVELOPMENT.md) | Plugin hooks, lifecycle, migrations, packaging |
+| [docs/THEME_DEVELOPMENT.md](docs/THEME_DEVELOPMENT.md) | Theme structure, customizer, child themes |
+| [docs/TESTING.md](docs/TESTING.md) | Jest suite, coverage, CI database bootstrap |
+| [docs/SECURITY.md](docs/SECURITY.md) | RBAC, WAF, 2FA, login lockout, IP blocking |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production deployment (Nginx, PM2, Docker) |
+| [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) | Pre-launch security and ops checklist |
+| [docs/BACKUP_AND_RESTORE.md](docs/BACKUP_AND_RESTORE.md) | Database backup and restore procedures |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common errors and fixes |
 
 ## Web Application Firewall
 

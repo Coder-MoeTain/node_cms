@@ -352,6 +352,11 @@ async function seed({ closeConnection = false } = {}) {
 
   const securitySettings = {
     login_attempt_limiter: 'true',
+    login_max_account_attempts: '5',
+    login_lockout_minutes: '15',
+    login_max_ip_attempts: '10',
+    login_ip_window_minutes: '15',
+    login_auto_block_ip_attempts: '25',
     csrf_protection: 'true',
     xss_protection: 'true',
     file_upload_validation: 'true',

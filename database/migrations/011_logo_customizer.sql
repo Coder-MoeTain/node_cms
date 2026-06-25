@@ -1,0 +1,4 @@
+ALTER TABLE theme_settings
+  ADD COLUMN IF NOT EXISTS logo_max_height INT UNSIGNED NOT NULL DEFAULT 64 AFTER logo,
+  ADD COLUMN IF NOT EXISTS logo_max_width INT UNSIGNED NOT NULL DEFAULT 180 AFTER logo_max_height,
+  ADD COLUMN IF NOT EXISTS logo_placement VARCHAR(20) NOT NULL DEFAULT 'left' AFTER logo_max_width;

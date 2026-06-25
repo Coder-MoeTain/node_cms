@@ -1,5 +1,25 @@
 const { SecuritySetting, LoginAttempt, BlockedIp, ActivityLog } = require('../../models');
 const dbBackup = require('../../utils/databaseBackup');
+const loginBruteForce = require('../../utils/loginBruteForce');
+
+const BOOLEAN_SETTINGS = [
+  'login_attempt_limiter',
+  'csrf_protection',
+  'xss_protection',
+  'file_upload_validation',
+  'admin_session_timeout',
+  'force_strong_password',
+  'two_factor_auth',
+  'maintenance_mode'
+];
+
+const NUMERIC_SETTINGS = [
+  'login_max_account_attempts',
+  'login_lockout_minutes',
+  'login_max_ip_attempts',
+  'login_ip_window_minutes',
+  'login_auto_block_ip_attempts'
+];
 
 async function index(req, res, next) {
   try {
@@ -17,19 +37,16 @@ async function index(req, res, next) {
 
 async function updateSettings(req, res, next) {
   try {
-    const keys = [
-      'login_attempt_limiter',
-      'csrf_protection',
-      'xss_protection',
-      'file_upload_validation',
-      'admin_session_timeout',
-      'force_strong_password',
-      'two_factor_auth',
-      'maintenance_mode'
-    ];
-    for (const key of keys) {
+    for (const key of BOOLEAN_SETTINGS) {
       await SecuritySetting.upsert({ key, value: req.body[key] === 'on' ? 'true' : 'false', enabled: req.body[key] === 'on' });
     }
+    for (const key of NUMERIC_SETTINGS) {
+      const raw = String(req.body[key] || '').trim();
+      if (!raw) continue;
+      const value = Math.max(1, Number.parseInt(raw, 10) || 1);
+      await SecuritySetting.upsert({ key, value: String(value), enabled: true });
+    }
+    loginBruteForce.clearSettingsCache();
     req.flash('success', 'Security settings updated.');
     return res.redirect('/admin/security');
   } catch (error) {

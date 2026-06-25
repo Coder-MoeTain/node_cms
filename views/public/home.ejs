@@ -83,7 +83,7 @@
         <% if (posts.length) { %>
           <% posts.forEach(function(post) { %><div class="col-md-6 col-lg-4"><%- include(themePartial('post-card'), { post }) %></div><% }) %>
         <% } else { %>
-          <div class="col-12"><div class="site-empty-state"><i class="bi bi-journal-x" aria-hidden="true"></i><p>No published posts yet.</p><a class="site-btn" href="/admin/posts/create">Create your first post</a></div></div>
+          <div class="col-12"><div class="site-empty-state"><i class="bi bi-journal-x" aria-hidden="true"></i><p>No published posts yet.</p><a class="site-btn" href="/blog">Browse the blog</a></div></div>
         <% } %>
       </div>
     </section>

@@ -178,7 +178,7 @@ async function resetDatabase() {
   const SequelizeStore = require('connect-session-sequelize')(session.Store);
 
   await sequelize.drop({ cascade: true });
-  await sequelize.sync({ alter: true });
+  await sequelize.sync();
 
   const sessionStore = new SequelizeStore({ db: sequelize, tableName: 'sessions' });
   await sessionStore.sync();

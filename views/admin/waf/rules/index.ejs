@@ -4,22 +4,25 @@
   <%- include('../../partials/topbar') %>
   <main class="admin-content">
     <%- include('../../partials/flash') %>
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-      <div><h2 class="mb-1">WAF Rules</h2><p class="text-muted mb-0">Default rules can be tuned; custom rules can be created and deleted.</p></div>
-      <a class="btn btn-primary" href="/admin/waf/rules/create"><i class="bi bi-plus-lg"></i> Custom Rule</a>
+    <div class="np-page-header mb-3">
+      <div><h1 class="mb-1">WAF Rules</h1><p class="np-help-text mb-0">Default rules can be tuned; custom rules can be created and deleted.</p></div>
+      <a class="np-btn np-btn-primary" href="/admin/waf/rules/create"><i class="bi bi-plus-lg"></i> Custom Rule</a>
     </div>
-    <form class="card card-body mb-3" method="get" action="/admin/waf/rules">
+    <form class="np-widget mb-3" method="get" action="/admin/waf/rules">
+      <div class="np-widget-body">
       <div class="row g-2">
         <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search rules"></div>
         <div class="col-md-2"><select class="form-select" name="category"><option value="">All categories</option><% categories.forEach(function(category) { %><option value="<%= category %>" <%= filters.category === category ? 'selected' : '' %>><%= category %></option><% }) %></select></div>
         <div class="col-md-2"><select class="form-select" name="severity"><option value="">All severities</option><% severities.forEach(function(severity) { %><option value="<%= severity %>" <%= filters.severity === severity ? 'selected' : '' %>><%= severity %></option><% }) %></select></div>
         <div class="col-md-2"><select class="form-select" name="action"><option value="">All actions</option><% actions.forEach(function(action) { %><option value="<%= action %>" <%= filters.action === action ? 'selected' : '' %>><%= action %></option><% }) %></select></div>
-        <div class="col-md-2"><button class="btn btn-outline-primary w-100">Filter</button></div>
+        <div class="col-md-2"><button class="np-btn np-btn-secondary w-100">Filter</button></div>
+      </div>
       </div>
     </form>
-    <div class="card">
+    <div class="np-widget">
+      <div class="np-widget-body p-0">
       <div class="table-responsive">
-        <table class="table align-middle mb-0">
+        <table class="np-list-table mb-0">
           <thead><tr><th>Name</th><th>Category</th><th>Target</th><th>Severity</th><th>Action</th><th>Status</th><th></th></tr></thead>
           <tbody>
             <% rules.forEach(function(rule) { %>
@@ -31,17 +34,18 @@
                 <td><span class="badge <%= rule.action === 'block' ? 'text-bg-danger' : 'text-bg-light' %>"><%= rule.action %></span></td>
                 <td><span class="badge <%= rule.status ? 'text-bg-success' : 'text-bg-secondary' %>"><%= rule.status ? 'enabled' : 'disabled' %></span></td>
                 <td class="text-end">
-                  <a class="btn btn-sm btn-outline-primary" href="/admin/waf/rules/<%= rule.id %>/edit">Edit</a>
-                  <form class="d-inline" method="post" action="/admin/waf/rules/<%= rule.id %>/toggle"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-outline-secondary"><%= rule.status ? 'Disable' : 'Enable' %></button></form>
-                  <% if (rule.category === 'custom') { %><form class="d-inline" method="post" action="/admin/waf/rules/<%= rule.id %>/delete" onsubmit="return confirm('Delete this custom rule?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-outline-danger">Delete</button></form><% } %>
+                  <a class="np-btn np-btn-small np-btn-secondary" href="/admin/waf/rules/<%= rule.id %>/edit">Edit</a>
+                  <form class="d-inline" method="post" action="/admin/waf/rules/<%= rule.id %>/toggle"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="np-btn np-btn-small np-btn-secondary"><%= rule.status ? 'Disable' : 'Enable' %></button></form>
+                  <% if (rule.category === 'custom') { %><form class="d-inline" method="post" action="/admin/waf/rules/<%= rule.id %>/delete" data-confirm="Delete this custom rule?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="np-btn np-btn-small np-btn-danger">Delete</button></form><% } %>
                 </td>
               </tr>
             <% }) %>
-            <% if (!rules.length) { %><tr><td colspan="7" class="text-center text-muted py-4">No rules found.</td></tr><% } %>
+            <% if (!rules.length) { %><tr><td colspan="7"><div class="empty-state py-4"><i class="bi bi-shield-x" aria-hidden="true"></i><p class="mb-0">No rules found.</p></div></td></tr><% } %>
           </tbody>
         </table>
       </div>
-      <div class="card-footer d-flex justify-content-between"><span>Page <%= meta.page %> of <%= meta.pages %></span><div class="btn-group"><a class="btn btn-sm btn-outline-secondary <%= meta.page <= 1 ? 'disabled' : '' %>" href="?page=<%= meta.page - 1 %>">Previous</a><a class="btn btn-sm btn-outline-secondary <%= meta.page >= meta.pages ? 'disabled' : '' %>" href="?page=<%= meta.page + 1 %>">Next</a></div></div>
+      <div class="np-widget-footer d-flex justify-content-between align-items-center px-3 py-2 border-top"><span class="text-muted">Page <%= meta.page %> of <%= meta.pages %></span><div class="d-flex gap-2"><a class="np-btn np-btn-small np-btn-secondary <%= meta.page <= 1 ? 'disabled' : '' %>" href="?page=<%= meta.page - 1 %>">Previous</a><a class="np-btn np-btn-small np-btn-secondary <%= meta.page >= meta.pages ? 'disabled' : '' %>" href="?page=<%= meta.page + 1 %>">Next</a></div></div>
+      </div>
     </div>
   </main>
 </div>

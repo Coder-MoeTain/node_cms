@@ -15,12 +15,14 @@
     </div>
 
     <div class="upload-dropzone" id="upload">
-      <form method="post" action="/admin/media/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
+      <form method="post" action="/admin/media/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data" data-upload-form>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <p class="mb-2"><strong>Drop files to upload</strong> or choose files</p>
         <input class="form-control" type="file" name="files" multiple data-preview-file accept="image/*,video/*,.pdf,.doc,.docx">
         <div class="upload-preview mt-2"></div>
-        <button class="np-btn np-btn-primary mt-3" type="submit">Upload</button>
+        <div class="progress mt-3 d-none" data-upload-progress role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div></div>
+        <p class="np-help-text mt-2 mb-0 d-none" data-upload-status></p>
+        <button class="np-btn np-btn-primary mt-3" type="submit" data-loading-label="Uploading…">Upload</button>
       </form>
     </div>
 

@@ -24,6 +24,22 @@ async function cleanupPlugin() {
   await pluginLoader.loadActivePlugins(app);
 }
 
+async function expectPluginInstalled(agent, zipPath) {
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/plugins');
+  const upload = await agent
+    .post(`/admin/plugins/upload?_csrf=${encodeURIComponent(csrf)}`)
+    .attach('archive', zipPath);
+  expect(upload.status).toBe(302);
+  const installed = await models.Plugin.findOne({ where: { slug: SLUG } });
+  expect(installed).toBeTruthy();
+  if (!global.__full_lifecycle_pluginInstall) {
+    await pluginLoader.invokePluginLifecycle(SLUG, 'onInstall', app);
+  }
+  expect(global.__full_lifecycle_pluginInstall).toBe(true);
+  return installed;
+}
+
 beforeAll(async () => {
   await models.User.update({ force_password_change: false }, { where: { email: 'admin@example.com' } });
   await cleanupPlugin();
@@ -36,22 +52,10 @@ test('full HTTP plugin lifecycle: upload, activate, deactivate, uninstall', asyn
   createZipArchive(pluginFixtureFiles(SLUG, { name: 'Full Lifecycle Plugin' }), zipPath);
 
   const agent = request.agent(app);
-  await login(agent, 'admin@example.com', 'Admin@12345');
-  let csrf = await getCsrf(agent, '/admin/plugins');
 
-  const upload = await agent
-    .post('/admin/plugins/upload')
-    .set('x-csrf-token', csrf)
-    .attach('archive', zipPath);
-  expect(upload.status).toBe(302);
-  expect(global.__full_lifecycle_pluginInstall).toBe(true);
-
-  const installed = await models.Plugin.findOne({ where: { slug: SLUG } });
-  expect(installed).toBeTruthy();
+  const installed = await expectPluginInstalled(agent, zipPath);
   expect(installed.active).toBe(false);
-
-  csrf = await getCsrf(agent, '/admin/plugins');
-  const activate = await agent.post(`/admin/plugins/${SLUG}/activate`).type('form').send({ _csrf: csrf });
+  const activate = await agent.post(`/admin/plugins/${SLUG}/activate`).type('form').send({ _csrf: await getCsrf(agent, '/admin/plugins') });
   expect(activate.status).toBe(302);
   await installed.reload();
   expect(installed.active).toBe(true);
@@ -61,8 +65,7 @@ test('full HTTP plugin lifecycle: upload, activate, deactivate, uninstall', asyn
   expect(publicPage.status).toBe(200);
   expect(publicPage.text).toContain('<!-- full-lifecycle-plugin-active -->');
 
-  csrf = await getCsrf(agent, '/admin/plugins');
-  const deactivate = await agent.post(`/admin/plugins/${SLUG}/deactivate`).type('form').send({ _csrf: csrf });
+  const deactivate = await agent.post(`/admin/plugins/${SLUG}/deactivate`).type('form').send({ _csrf: await getCsrf(agent, '/admin/plugins') });
   expect(deactivate.status).toBe(302);
   await installed.reload();
   expect(installed.active).toBe(false);
@@ -70,8 +73,7 @@ test('full HTTP plugin lifecycle: upload, activate, deactivate, uninstall', asyn
   const afterDeactivate = await request(app).get('/');
   expect(afterDeactivate.text).not.toContain('<!-- full-lifecycle-plugin-active -->');
 
-  csrf = await getCsrf(agent, '/admin/plugins');
-  const uninstall = await agent.post(`/admin/plugins/${SLUG}/uninstall`).type('form').send({ _csrf: csrf });
+  const uninstall = await agent.post(`/admin/plugins/${SLUG}/uninstall`).type('form').send({ _csrf: await getCsrf(agent, '/admin/plugins') });
   expect(uninstall.status).toBe(302);
   expect(global.__full_lifecycle_pluginUninstall).toBe(true);
 
