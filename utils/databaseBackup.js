@@ -143,6 +143,47 @@ async function restoreUploadsArchive(archiveName) {
   await execFileAsync('tar', ['-xzf', archivePath, '-C', uploadsParent], { env: process.env });
 }
 
+function getSqlUploadDir() {
+  return path.join(process.cwd(), 'tmp', 'uploads');
+}
+
+function isSafeUploadedSqlPath(filePath) {
+  if (typeof filePath !== 'string' || !filePath) return false;
+  const resolved = path.resolve(filePath);
+  const uploadDir = path.resolve(getSqlUploadDir());
+  return resolved.startsWith(`${uploadDir}${path.sep}`) && resolved.endsWith('.sql');
+}
+
+function assertValidSqlUpload(filePath) {
+  if (!isSafeUploadedSqlPath(filePath)) {
+    throw new Error('Invalid upload path.');
+  }
+  if (!fs.existsSync(filePath)) {
+    throw new Error('Upload file not found.');
+  }
+  const stats = fs.statSync(filePath);
+  if (!stats.isFile() || stats.size === 0) {
+    throw new Error('SQL file is empty.');
+  }
+}
+
+function removeUploadedSql(filePath) {
+  if (!isSafeUploadedSqlPath(filePath)) return;
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+}
+
+async function restoreFromUploadedFile(filePath) {
+  assertValidSqlUpload(filePath);
+  try {
+    await runMysqlImport(filePath);
+  } finally {
+    removeUploadedSql(filePath);
+  }
+  return { restored: true };
+}
+
 async function restoreBackup(filename, { includeUploads = false } = {}) {
   const sqlPath = resolveBackupPath(filename);
   await runMysqlImport(sqlPath);
@@ -189,12 +230,16 @@ async function resetDatabase() {
 
 module.exports = {
   getBackupDir,
+  getSqlUploadDir,
   getDbConfig,
   formatFileSize,
   listBackups,
   createBackup,
   restoreBackup,
+  restoreFromUploadedFile,
   deleteBackup,
   resetDatabase,
-  isSafeBackupFilename
+  isSafeBackupFilename,
+  isSafeUploadedSqlPath,
+  removeUploadedSql
 };

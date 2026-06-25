@@ -17,6 +17,7 @@ NodePress CMS ships CLI backup scripts and an admin backup panel. All automated 
 | --- | --- | --- |
 | `BACKUP_RETENTION_DAYS` | `14` | Days to keep scheduled backups |
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | from `.env` | Database connection for dumps |
+| `SQL_RESTORE_MAX_SIZE_MB` | `100` | Max upload size for SQL restore in admin |
 
 ## Manual Database Backup
 
@@ -59,6 +60,12 @@ mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < database/backups
 1. Sign in as an administrator with **Manage Settings** or **Manage Security**.
 2. Open **Admin → Settings → Database** (or **Security → Backup**).
 3. Choose a backup file from `database/backups/` and confirm restore.
+
+### Admin UI restore from upload
+
+1. Open **Admin → Settings → Database**.
+2. Under **Restore from SQL File**, choose a `.sql` dump (max size set by `SQL_RESTORE_MAX_SIZE_MB`, default 100 MB).
+3. Confirm the restore prompt. The file is imported via the `mysql` client and then deleted from `tmp/uploads`.
 
 ## Restore Uploads
 
