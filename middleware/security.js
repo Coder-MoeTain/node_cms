@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -35,23 +36,66 @@ const publicMutationLimiter = rateLimit({
   message: 'Too many submissions. Try again later.'
 });
 
+function createCspNonce(req, res, next) {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+}
+
+function buildCspDirectives(req, res) {
+  const nonce = res.locals.cspNonce ? `'nonce-${res.locals.cspNonce}'` : null;
+  const isAdmin = req.path === '/admin' || req.path.startsWith('/admin/');
+
+  const scriptSrc = ["'self'", 'https://cdn.jsdelivr.net'];
+  if (isAdmin) {
+    scriptSrc.push("'unsafe-inline'");
+  } else if (nonce) {
+    scriptSrc.push(nonce);
+  }
+
+  const styleSrc = ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'];
+  if (isAdmin) {
+    styleSrc.push("'unsafe-inline'");
+  } else if (nonce) {
+    styleSrc.push(nonce);
+  }
+
+  return {
+    defaultSrc: ["'self'"],
+    scriptSrc,
+    styleSrc,
+    fontSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com', 'data:'],
+    imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+    frameSrc: ["'self'", 'https://www.youtube.com', 'https://youtube.com', 'https://player.vimeo.com'],
+    connectSrc: ["'self'"],
+    objectSrc: ["'none'"],
+    baseUri: ["'self'"],
+    formAction: ["'self'"],
+    frameAncestors: ["'self'"]
+  };
+}
+
 function applySecurityMiddleware(app) {
+  app.use(createCspNonce);
+  app.use((req, res, next) => {
+    helmet.contentSecurityPolicy({
+      useDefaults: false,
+      directives: buildCspDirectives(req, res)
+    })(req, res, next);
+  });
   app.use(
     helmet({
-      contentSecurityPolicy: {
-        useDefaults: true,
-        directives: {
-          "default-src": ["'self'"],
-          "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'],
-          "style-src": ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
-          "font-src": ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com', 'data:'],
-          "img-src": ["'self'", 'data:', 'blob:', 'https:'],
-          "frame-src": ["'self'", 'https://www.youtube.com', 'https://youtube.com', 'https://player.vimeo.com'],
-          "connect-src": ["'self'"]
-        }
-      }
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      hsts: appConfig.env === 'production'
+        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+        : false
     })
   );
+  app.use((req, res, next) => {
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+    next();
+  });
   app.use(cors({ origin: appConfig.corsOrigin, credentials: true }));
   app.use(async (req, res, next) => {
     try {
@@ -64,4 +108,11 @@ function applySecurityMiddleware(app) {
   });
 }
 
-module.exports = { applySecurityMiddleware, loginLimiter, apiLimiter, publicMutationLimiter };
+module.exports = {
+  applySecurityMiddleware,
+  loginLimiter,
+  apiLimiter,
+  publicMutationLimiter,
+  buildCspDirectives,
+  createCspNonce
+};

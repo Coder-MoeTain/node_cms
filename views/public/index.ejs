@@ -42,6 +42,19 @@
           <a class="site-btn portal-btn" href="/category/news">Latest news</a>
           <a class="site-btn portal-btn portal-btn-outline" href="/contact">Contact us</a>
         </div>
+        <% if ((cfg.header || {}).showSearch !== false) { %>
+        <form class="portal-hero-search portal-header-search" action="/search" role="search">
+          <label class="visually-hidden" for="hero-search">Search the portal</label>
+          <input class="form-control" id="hero-search" name="q" type="search" placeholder="Search news, services, documents…" aria-label="Search the portal">
+          <button class="portal-search-btn" type="submit" aria-label="Submit search"><i class="bi bi-search" aria-hidden="true"></i></button>
+        </form>
+        <% } %>
+        <% if (typeof portalStats !== 'undefined' && portalStats) { %>
+        <div class="portal-hero-stats" aria-label="Portal highlights">
+          <% if (portalStats.visitors != null) { %><span class="portal-hero-stat-chip"><strong><%= portalStats.visitors.toLocaleString('en-US') %></strong> visitors</span><% } %>
+          <% if (portalStats.registeredUsers != null) { %><span class="portal-hero-stat-chip"><strong><%= portalStats.registeredUsers.toLocaleString('en-US') %></strong> registered users</span><% } %>
+        </div>
+        <% } %>
       </div>
     </div>
   </section>

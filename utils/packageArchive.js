@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const unzipper = require('unzipper');
+const { isZipMagicBytes, scanExtractedDirectory, MAX_ARCHIVE_FILES } = require('./packageScan');
 
 const MAX_ARCHIVE_BYTES = 25 * 1024 * 1024;
 const MAX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024;
@@ -8,6 +9,7 @@ const MAX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024;
 function isSafeEntryName(entryName) {
   const normalized = String(entryName || '').replace(/\\/g, '/');
   if (!normalized || normalized.startsWith('/') || normalized.includes('..')) return false;
+  if (/^[a-zA-Z]:/.test(normalized)) return false;
   const parts = normalized.split('/').filter(Boolean);
   if (parts.some((part) => part === '..' || part.startsWith('.'))) return false;
   return true;
@@ -39,8 +41,50 @@ function moveDirectory(source, destination) {
   }
 }
 
+async function extractSafeEntries(directory, tempDir) {
+  let totalUncompressed = 0;
+  let fileCount = 0;
+
+  for (const entry of directory.files) {
+    if (!isSafeEntryName(entry.path)) {
+      throw new Error(`Unsafe archive entry blocked: ${entry.path}`);
+    }
+    if (entry.type === 'SymbolicLink' || entry.type === 'symlink') {
+      throw new Error(`Symlink entries are not allowed: ${entry.path}`);
+    }
+    if (entry.type === 'File') {
+      fileCount += 1;
+      if (fileCount > MAX_ARCHIVE_FILES) {
+        throw new Error(`Archive contains too many files (max ${MAX_ARCHIVE_FILES}).`);
+      }
+      totalUncompressed += Number(entry.uncompressedSize || 0);
+      if (totalUncompressed > MAX_UNCOMPRESSED_BYTES) {
+        throw new Error('Archive uncompressed size exceeds maximum allowed limit (100 MB).');
+      }
+    }
+  }
+
+  for (const entry of directory.files) {
+    if (entry.type !== 'File') continue;
+    const destination = path.join(tempDir, entry.path.replace(/\\/g, '/'));
+    ensureParent(destination);
+    await new Promise((resolve, reject) => {
+      entry.stream()
+        .pipe(fs.createWriteStream(destination))
+        .on('finish', resolve)
+        .on('error', reject);
+    });
+  }
+}
+
+function ensureParent(filePath) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
 async function extractZipArchive(zipPath, targetRoot, manifestName) {
   if (!fs.existsSync(zipPath)) throw new Error('Archive file not found.');
+  if (!isZipMagicBytes(zipPath)) throw new Error('File is not a valid ZIP archive.');
+
   const stat = fs.statSync(zipPath);
   if (stat.size > MAX_ARCHIVE_BYTES) throw new Error('Archive exceeds maximum allowed size (25 MB).');
 
@@ -48,18 +92,15 @@ async function extractZipArchive(zipPath, targetRoot, manifestName) {
   fs.mkdirSync(tempDir, { recursive: true });
 
   try {
-    let totalUncompressed = 0;
     const directory = await unzipper.Open.file(zipPath);
-    for (const entry of directory.files) {
-      if (!isSafeEntryName(entry.path)) continue;
-      if (entry.type === 'File') {
-        totalUncompressed += Number(entry.uncompressedSize || 0);
-        if (totalUncompressed > MAX_UNCOMPRESSED_BYTES) {
-          throw new Error('Archive uncompressed size exceeds maximum allowed limit (100 MB).');
-        }
-      }
+    await extractSafeEntries(directory, tempDir);
+
+    const scanIssues = scanExtractedDirectory(tempDir, {
+      archiveType: manifestName === 'theme.json' ? 'theme' : 'plugin'
+    });
+    if (scanIssues.length) {
+      throw new Error(scanIssues.slice(0, 3).join('; '));
     }
-    await directory.extract({ path: tempDir });
 
     const found = await findManifestInDir(tempDir, manifestName);
     if (!found) throw new Error(`${manifestName} was not found in the archive.`);

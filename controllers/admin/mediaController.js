@@ -2,6 +2,7 @@ const { Media } = require('../../models');
 const pluginLoader = require('../../utils/pluginLoader');
 const policy = require('../../utils/policy');
 const { buildMediaPayload, removeMediaFiles, filterExistingMedia } = require('../../utils/mediaHelper');
+const { finalizeQuarantinedUpload } = require('../../utils/uploadSecurity');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 
 async function index(req, res, next) {
@@ -23,7 +24,14 @@ async function upload(req, res, next) {
     const files = req.files || (req.file ? [req.file] : []);
     let uploaded = 0;
     for (const file of files) {
-      const allowed = await pluginLoader.applyFilters('beforeMediaUpload', file, {
+      let processedFile;
+      try {
+        processedFile = await finalizeQuarantinedUpload(file);
+      } catch (validationError) {
+        req.flash('error', validationError.message);
+        continue;
+      }
+      const allowed = await pluginLoader.applyFilters('beforeMediaUpload', processedFile, {
         req,
         user: req.session.user
       });
@@ -71,7 +79,14 @@ async function update(req, res, next) {
       description: req.body.description
     };
     if (req.file) {
-      const allowed = await pluginLoader.applyFilters('beforeMediaUpload', req.file, {
+      let processedFile;
+      try {
+        processedFile = await finalizeQuarantinedUpload(req.file);
+      } catch (validationError) {
+        req.flash('error', validationError.message);
+        return res.redirect(`/admin/media/${media.id}/edit`);
+      }
+      const allowed = await pluginLoader.applyFilters('beforeMediaUpload', processedFile, {
         req,
         user: req.session.user
       });

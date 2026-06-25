@@ -43,7 +43,7 @@ test('admin can save theme color settings', async () => {
       footer_layout: 'standard',
       sidebar_position: 'right',
       blog_layout: 'list',
-      site_layout: 'wide',
+      site_layout: 'full-width',
       _csrf: csrf
     });
   expect(response.status).toBe(302);

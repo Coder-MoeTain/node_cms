@@ -67,6 +67,11 @@
   <% if (hdr.showUtilityBar) { %>
   <div class="portal-utility-bar">
     <div class="container portal-utility-inner">
+      <div class="portal-font-controls" role="group" aria-label="Font size">
+        <button type="button" class="portal-font-btn" data-font-scale="small" aria-label="Decrease font size">A-</button>
+        <button type="button" class="portal-font-btn active" data-font-scale="normal" aria-label="Default font size">A</button>
+        <button type="button" class="portal-font-btn" data-font-scale="large" aria-label="Increase font size">A+</button>
+      </div>
       <div class="portal-utility-right">
         <% if (themePreset === 'myanmar-portal') { %>
         <div class="portal-mnp-socials" aria-label="Social media">
@@ -108,7 +113,7 @@
       <% if (hdr.showSearch) { %>
       <form class="portal-header-search" action="/search" role="search">
         <label class="visually-hidden" for="portal-search">Search</label>
-        <input class="form-control" id="portal-search" name="q" type="search" placeholder="Search news, services, documents…" aria-label="Search">
+        <input class="form-control" id="portal-search" name="q" type="search" placeholder="Search news, services, documents…" aria-label="Search" autocomplete="off">
         <button class="portal-search-btn" type="submit" aria-label="Submit search"><i class="bi bi-search" aria-hidden="true"></i></button>
       </form>
       <% } %>

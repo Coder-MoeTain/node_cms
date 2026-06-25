@@ -1,5 +1,61 @@
 # NodePress CMS Security
 
+## Secret management
+
+- **Never commit `.env`** — only `.env.example` belongs in the repository.
+- If secrets were ever committed, **rotate them immediately**: `SESSION_SECRET`, database passwords, `API_KEY`, and SMTP credentials.
+- Use a unique, strong `SESSION_SECRET` (32+ random bytes) per environment.
+- Production startup is blocked by `config/env.js` when required variables are missing or weak defaults are used.
+- Remove tracked secrets with: `git rm --cached .env`
+
+## Dependency policy
+
+- Production dependencies are **pinned semver versions** in `package.json` (no `"latest"`).
+- Commit `package-lock.json` and install with `npm ci` in production.
+- Run `npm run audit` locally and in CI (`npm audit --audit-level=high`).
+- High-severity issues in runtime dependencies should be patched promptly (e.g. keep `nodemailer` current).
+
+## API authentication
+
+- When `API_KEY` is set, REST routes require authentication.
+- Accepted transports: `X-API-Key` header or `Authorization: Bearer <token>`.
+- **Query string API keys (`?api_key=`) are rejected** to prevent log/referrer leakage.
+- API keys are masked in helper utilities and must never appear in logs.
+
+## Content Security Policy
+
+| Surface | Policy |
+|---------|--------|
+| Public site | Strict CSP with per-request nonce; no `unsafe-eval` |
+| Admin area | `unsafe-inline` allowed for TinyMCE/Bootstrap compatibility; no `unsafe-eval` |
+
+Additional headers: `Referrer-Policy`, `Permissions-Policy`, HSTS (production), `X-Content-Type-Options`, frame protection.
+
+Documented CSP exceptions live in `middleware/security.js`.
+
+## Upload security
+
+1. Extension and MIME allowlists (`middleware/upload.js`)
+2. Quarantine directory (`tmp/quarantine/`) before public promotion
+3. Magic-byte validation (`utils/uploadSecurity.js`)
+4. Double-extension and dangerous filename blocking
+5. SVG/HTML/PHP/script uploads blocked from media library
+
+## ZIP / plugin / theme upload security
+
+- ZIP magic-byte validation
+- Safe per-entry extraction (Zip Slip prevention, no symlinks)
+- Extracted size and file-count limits
+- Post-extract scan: plugins allow `.js`; themes block `.js` and server-side extensions
+- Manifest validation before install
+
+## Import / export safety
+
+- JSON schema key allowlist and record-count limits
+- Prototype-pollution key stripping
+- HTML sanitization on imported post/page content
+- Outbound update checks use SSRF guard (`utils/ssrfGuard.js`)
+
 ## Current Security Status
 
 NodePress CMS uses layered Express protections:

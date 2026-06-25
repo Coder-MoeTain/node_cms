@@ -9,6 +9,7 @@
         { icon: 'bi-ui-checks', title: 'Forms', desc: 'Downloadable application forms', url: '/search?q=forms', tone: 'green' },
         { icon: 'bi-folder2-open', title: 'Documents', desc: 'Policies and publications', url: '/category/documents', tone: 'purple' },
         { icon: 'bi-calendar-event', title: 'Public Holidays', desc: 'National holiday calendar', url: '/page/public-holidays', tone: 'orange' },
+        { icon: 'bi-telephone-fill', title: 'Emergency Contacts', desc: 'Hotlines and urgent support', url: '#portal-emergency', tone: 'red' },
         { icon: 'bi-phone', title: 'Mobile App Gallery', desc: 'Official mobile applications', url: '#portal-mobile-app', tone: 'teal' }
       ];
        const tones = ['blue', 'green', 'purple', 'orange', 'teal', 'red'];
@@ -31,15 +32,15 @@
         <p class="portal-section-subtitle">Shortcut access to common government resources</p>
       </div>
     <% } %>
-    <div class="row g-3 portal-service-grid portal-mnp-service-grid">
+    <div class="row g-4 portal-service-grid portal-mnp-service-grid">
       <% services.forEach(function(item) { %>
-        <div class="col-6 col-md-4 col-lg-2">
+        <div class="col-12 col-sm-6 col-lg-4">
           <a class="portal-service-card portal-mnp-service-card portal-card-<%= cardStyle %>" href="<%= item.url %>">
             <span class="portal-mnp-icon-wrap portal-mnp-icon-<%= item.tone %>" aria-hidden="true">
               <i class="bi <%= item.icon %>"></i>
             </span>
             <strong class="portal-service-title portal-mnp-service-title"><%= item.title %></strong>
-            <% if (!isMnp && item.desc) { %><span class="portal-service-desc"><%= item.desc %></span><% } %>
+            <% if (item.desc) { %><span class="portal-service-desc"><%= item.desc %></span><% } %>
           </a>
         </div>
       <% }) %>
