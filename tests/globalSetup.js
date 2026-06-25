@@ -1,6 +1,5 @@
 module.exports = async () => {
   const { execSync } = require('child_process');
-  const { sequelize, models } = require('../server');
 
   if (process.env.NODE_ENV === 'test') {
     process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || 'nodepress_cms_test';
@@ -15,6 +14,8 @@ module.exports = async () => {
   const env = { ...process.env };
   execSync('node database/bootstrapTestDatabase.js', { stdio: 'inherit', env });
   execSync('node database/seed.js', { stdio: 'inherit', env });
+
+  const { sequelize, models } = require('../server');
   await sequelize.authenticate();
   await models.User.update(
     { force_password_change: false },
