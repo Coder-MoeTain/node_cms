@@ -16,6 +16,7 @@ test('admin can view database backup page', async () => {
   expect(page.status).toBe(200);
   expect(page.text).toMatch(/Backup|Database/i);
   expect(page.text).toMatch(/Restore from SQL File/i);
+  expect(page.text).toMatch(/restore-upload\?_csrf=/);
 });
 
 test('restore upload requires an sql file', async () => {
