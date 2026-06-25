@@ -15,16 +15,10 @@ module.exports = {
     '!controllers/admin/wafController.js',
     '!controllers/admin/databaseController.js',
     '!controllers/admin/securityController.js',
-    '!controllers/admin/pluginController.js',
-    '!controllers/admin/themeController.js',
     '!utils/databaseBackup.js',
     '!utils/contentTranslator.js',
     '!middleware/waf.js',
-    '!utils/packageArchive.js',
-    '!utils/translationEngine.js',
-    '!middleware/zipUpload.js',
-    '!utils/themePartials.js',
-    '!utils/wafHelper.js'
+    '!utils/translationEngine.js'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'json-summary'],

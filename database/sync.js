@@ -4,7 +4,8 @@ const { sequelize } = require('../models');
 
 async function syncDatabase() {
   await sequelize.authenticate();
-  await sequelize.sync({ alter: true });
+  // Schema changes are applied via migrations; avoid alter:true (can exceed MySQL index limits).
+  await sequelize.sync();
   const sessionStore = new SequelizeStore({ db: sequelize, tableName: 'sessions' });
   await sessionStore.sync();
   console.log('Database tables synced.');

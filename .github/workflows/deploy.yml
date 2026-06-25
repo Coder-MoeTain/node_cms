@@ -47,8 +47,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node database/ensureDatabase.js
-      - run: npm run db:sync
       - run: npm run test:ci
 
   deploy:
@@ -59,10 +57,53 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build production image
         run: docker build -t nodepress-cms:${{ github.sha }} .
-      - name: Deployment checklist
+
+      - name: Check deploy secrets
+        id: deploy_ready
+        run: |
+          if [ -n "${{ secrets.DEPLOY_HOST }}" ] && [ -n "${{ secrets.DEPLOY_USER }}" ] && [ -n "${{ secrets.DEPLOY_SSH_KEY }}" ] && [ -n "${{ secrets.DEPLOY_PATH }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy over SSH
+        if: steps.deploy_ready.outputs.ready == 'true'
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_REF: ${{ github.ref_name == 'main' && 'main' || github.ref_name }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script_stop: true
+          envs: DEPLOY_PATH,DEPLOY_REF
+          script: |
+            set -euo pipefail
+            export NODE_ENV=production
+            cd "$DEPLOY_PATH"
+            git fetch origin "$DEPLOY_REF"
+            git checkout "$DEPLOY_REF"
+            git pull --ff-only origin "$DEPLOY_REF"
+            npm ci --omit=dev
+            npm run migrate
+            if command -v pm2 >/dev/null 2>&1 && pm2 describe nodepress-cms >/dev/null 2>&1; then
+              npm run pm2:reload
+            elif command -v pm2 >/dev/null 2>&1; then
+              npm run pm2:start:prod
+            else
+              echo "pm2 not installed on target; run npm start manually"
+            fi
+            if [ -f scripts/health-check.js ]; then
+              node scripts/health-check.js || true
+            fi
+
+      - name: Deployment skipped (secrets not configured)
+        if: steps.deploy_ready.outputs.ready != 'true'
         run: |
           echo "Image built: nodepress-cms:${{ github.sha }}"
-          echo "Run on server:"
-          echo "  npm run migrate"
-          echo "  npm run pm2:reload"
-          echo "Configure DEPLOY_HOST / SSH secrets to automate remote rollout."
+          echo "Configure repository secrets to enable automated SSH deploy:"
+          echo "  DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_PATH (optional DEPLOY_PORT)"
+          echo "Or run scripts/remote-deploy.sh on the server after pulling this tag."

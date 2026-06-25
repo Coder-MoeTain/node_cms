@@ -1,9 +1,20 @@
 module.exports = async () => {
   const { execSync } = require('child_process');
   const { sequelize, models } = require('../server');
-  execSync('node database/ensureDatabase.js', { stdio: 'inherit', env: process.env });
-  execSync('node database/sync.js', { stdio: 'inherit', env: process.env });
-  execSync('node database/seed.js', { stdio: 'inherit', env: process.env });
+
+  if (process.env.NODE_ENV === 'test') {
+    process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || 'nodepress_cms_test';
+    process.env.TEST_DB_HOST = process.env.TEST_DB_HOST || process.env.DB_HOST || '127.0.0.1';
+    process.env.TEST_DB_USER = process.env.TEST_DB_USER || process.env.DB_USER || 'root';
+    if (process.env.TEST_DB_PASSWORD === undefined) {
+      process.env.TEST_DB_PASSWORD = process.env.DB_PASSWORD || '';
+    }
+    process.env.TEST_DB_PORT = process.env.TEST_DB_PORT || process.env.DB_PORT || '3306';
+  }
+
+  const env = { ...process.env };
+  execSync('node database/bootstrapTestDatabase.js', { stdio: 'inherit', env });
+  execSync('node database/seed.js', { stdio: 'inherit', env });
   await sequelize.authenticate();
   await models.User.update(
     { force_password_change: false },
