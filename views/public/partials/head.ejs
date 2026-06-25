@@ -85,6 +85,8 @@
       --site-link: <%= linkColor %>;
       --site-button: <%= buttonColor %>;
       --site-button-hover: var(--gov-primary-dark);
+      --site-logo-max-height: <%= activeTheme.logo_max_height || 64 %>px;
+      --site-logo-max-width: <%= activeTheme.logo_max_width || 180 %>px;
     }
   </style>
   <% if (activeTheme.custom_css) { %><style id="theme-custom-css"><%- activeTheme.custom_css %></style><% } %>
@@ -92,3 +94,4 @@
   <% (pluginPublicHead || []).forEach(function(snippet) { %><%- snippet %><% }) %>
 </head>
 <body class="<%= typeof themeLayoutClasses !== 'undefined' ? themeLayoutClasses : '' %> portal-preset-<%= themePreset || 'default' %> <%= isPortalLayout ? 'portal-layout-active' : 'standard-layout-active' %><% if (typeof isCustomizerPreview !== 'undefined' && isCustomizerPreview) { %> customizer-preview-active<% } %>">
+<a class="np-skip-link" href="#main-content">Skip to main content</a>

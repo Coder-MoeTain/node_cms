@@ -156,9 +156,44 @@ a:hover {
 }
 
 .site-logo {
-  max-height: 40px;
-  max-width: 180px;
+  max-height: var(--site-logo-max-height, 64px);
+  max-width: var(--site-logo-max-width, 180px);
   object-fit: contain;
+}
+
+.logo-placement-center .site-navbar .container,
+.logo-placement-center .portal-identity-inner {
+  justify-content: center;
+}
+
+.logo-placement-center .navbar-brand,
+.logo-placement-center .portal-brand {
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+.logo-placement-right .navbar-brand,
+.logo-placement-right .portal-brand {
+  flex-direction: row-reverse;
+}
+
+.logo-placement-above .navbar-brand,
+.logo-placement-above .portal-brand {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.logo-placement-above.logo-placement-center .navbar-brand,
+.logo-placement-above.logo-placement-center .portal-brand {
+  align-items: center;
+}
+
+.logo-placement-right.logo-placement-above .navbar-brand,
+.logo-placement-right.logo-placement-above .portal-brand {
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .site-navbar .dropdown-menu {
@@ -693,7 +728,7 @@ a:hover {
 
 .post-title {
   color: #0f172a;
-  font-size: clamp(calc(1.75rem - 5pt), calc(4vw - 5pt), calc(2.65rem - 5pt));
+  font-size: clamp(calc(1.75rem - 8pt), calc(4vw - 8pt), calc(2.65rem - 8pt));
   font-weight: 800;
   letter-spacing: -.03em;
   line-height: 1.15;
@@ -1258,8 +1293,8 @@ a:hover {
 
 .footer-logo {
   display: block;
-  max-height: 58px;
-  max-width: 220px;
+  max-height: var(--site-logo-max-height, 64px);
+  max-width: var(--site-logo-max-width, 180px);
   object-fit: contain;
   margin-bottom: 1rem;
 }

@@ -8,7 +8,7 @@
     <%- include('../partials/settings-nav') %>
     <form method="post" action="/admin/settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <% const order = groupOrder || []; const labels = groupLabels || {}; %>
+      <% const order = groupOrder || []; const labels = groupLabels || {}; const defs = settingDefinitions || {}; %>
       <% order.forEach(function(groupKey) { %>
         <% const groupRows = (grouped && grouped[groupKey]) || []; if (!groupRows.length) return; %>
         <div class="np-widget mb-3">
@@ -17,17 +17,22 @@
             <table class="np-form-table np-settings-table">
               <tbody>
                 <% groupRows.forEach(function(row) { %>
+                  <% const def = defs[row.key] || {}; const label = def.label || row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }); %>
                   <tr>
-                    <th scope="row"><label for="setting-<%= row.key %>"><%= row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }) %></label></th>
+                    <th scope="row"><label for="setting-<%= row.key %>"><%= label %></label></th>
                     <td>
                       <% if (['site_logo','favicon'].includes(row.key)) { %>
-                        <%- include('../partials/image-upload-field', {
-                          label: row.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }),
-                          name: row.key,
-                          fileName: row.key + '_file',
-                          value: row.value
-                        }) %>
+                        <%- include('../partials/image-upload-field', { label: label, name: row.key, fileName: row.key + '_file', value: row.value }) %>
                         <p class="np-help-text">Upload an image or choose one from the Media Library.</p>
+                      <% } else if (row.key === 'contact_email') { %>
+                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="email" value="<%= row.value %>">
+                      <% } else if (row.key.includes('link') || row.key.includes('url')) { %>
+                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="url" value="<%= row.value %>">
+                      <% } else if (row.key === 'contact_phone' || row.key.startsWith('emergency_')) { %>
+                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="tel" value="<%= row.value %>">
+                      <% } else if (row.key === 'posts_per_page' || row.key.startsWith('stat_') || row.key === 'portal_visit_count') { %>
+                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="number" min="0" value="<%= row.value %>" <%= row.key.startsWith('stat_') ? 'readonly' : '' %>>
+                        <% if (row.key.startsWith('stat_')) { %><p class="np-help-text mb-0">Updated automatically from site activity.</p><% } %>
                       <% } else { %>
                         <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" value="<%= row.value %>">
                       <% } %>
@@ -39,7 +44,7 @@
           </div>
         </div>
       <% }) %>
-      <p class="mt-3"><button class="np-btn np-btn-primary" type="submit">Save Changes</button></p>
+      <p class="mt-3"><button class="np-btn np-btn-primary" type="submit" data-loading-label="Saving…">Save Changes</button></p>
     </form>
   </main>
 </div>

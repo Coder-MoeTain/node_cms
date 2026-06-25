@@ -20,13 +20,7 @@
         <% } %>
       </div>
       <% if (pagination && pagination.pages > 1) { %>
-        <nav class="portal-pagination mt-4" aria-label="Blog pagination">
-          <ul class="pagination">
-            <% for (let i = 1; i <= pagination.pages; i++) { %>
-              <li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?page=<%= i %>"><%= i %></a></li>
-            <% } %>
-          </ul>
-        </nav>
+        <%- include('../partials/pagination', { pagination, paginationBase: '?', paginationClass: 'portal-pagination mt-4', paginationLabel: 'Blog pagination' }) %>
       <% } %>
     </section>
     <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include(themePartial('sidebar')) %></div><% } %>
@@ -51,16 +45,10 @@
           <% }) %>
         </div>
       <% } else { %>
-        <div class="np-card p-4 text-center text-muted">No published posts yet.</div>
+        <div class="site-empty-state"><i class="bi bi-journal-x" aria-hidden="true"></i><p>No published posts yet.</p></div>
       <% } %>
       <% if (pagination && pagination.pages > 1) { %>
-        <nav class="portal-pagination mt-4" aria-label="Blog pagination">
-          <ul class="pagination">
-            <% for (let i = 1; i <= pagination.pages; i++) { %>
-              <li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?page=<%= i %>"><%= i %></a></li>
-            <% } %>
-          </ul>
-        </nav>
+        <%- include('../partials/pagination', { pagination, paginationBase: '?', paginationClass: 'portal-pagination mt-4', paginationLabel: 'Blog pagination' }) %>
       <% } %>
     </section>
     <% if (activeTheme.sidebar_position !== 'none') { %><div class="col-lg-4"><%- include(themePartial('standard-sidebar')) %></div><% } %>

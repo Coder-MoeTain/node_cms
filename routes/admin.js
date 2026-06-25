@@ -2,7 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const { requireAuth, guestOnly } = require('../middleware/auth');
 const { can, canAny, policy } = require('../middleware/permission');
-const { loginLimiter } = require('../middleware/security');
+const { loginBruteForceGuard, conditionalLoginLimiter } = require('../middleware/loginBruteForce');
 const { activityLogMiddleware } = require('../middleware/activityLog');
 const upload = require('../middleware/upload');
 const { zipUpload } = require('../middleware/zipUpload');
@@ -32,7 +32,7 @@ const waf = require('../controllers/admin/wafController');
 const router = express.Router();
 
 router.get('/login', guestOnly, auth.loginForm);
-router.post('/login', loginLimiter, guestOnly, [body('email').isEmail().withMessage('Valid email is required.'), body('password').notEmpty().withMessage('Password is required.')], auth.login);
+router.post('/login', conditionalLoginLimiter, loginBruteForceGuard, guestOnly, [body('email').isEmail().withMessage('Valid email is required.'), body('password').notEmpty().withMessage('Password is required.')], auth.login);
 router.post('/logout', requireAuth, auth.logout);
 router.get('/forgot-password', guestOnly, auth.forgotPasswordForm);
 router.post('/forgot-password', guestOnly, auth.forgotPassword);

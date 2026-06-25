@@ -6,9 +6,18 @@ const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
 const { User, Role, Permission, LoginAttempt, ActivityLog, PasswordResetToken } = require('../../models');
 const pluginLoader = require('../../utils/pluginLoader');
+const loginBruteForce = require('../../utils/loginBruteForce');
 
 function loginForm(req, res) {
-  res.render('admin/auth/login', { title: 'Admin Login' });
+  res.render('admin/auth/login', {
+    title: 'Admin Login',
+    loginEmail: req.query.email || ''
+  });
+}
+
+function loginRedirect(res, email) {
+  const q = email ? `?email=${encodeURIComponent(email)}` : '';
+  return res.redirect(`/admin/login${q}`);
 }
 
 async function login(req, res, next) {
@@ -16,38 +25,49 @@ async function login(req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       req.flash('error', errors.array()[0].msg);
-      return res.redirect('/admin/login');
+      return loginRedirect(res, req.body.email);
     }
 
     const { email, password } = req.body;
+    const bruteForce = await loginBruteForce.getBruteForceSettings();
     const user = await User.findOne({
       where: { email, status: 'active' },
       include: [{ model: Role, include: [Permission] }]
     });
     if (user?.locked_until && user.locked_until > new Date()) {
-      req.flash('error', 'This account is temporarily locked. Try again later.');
-      return res.redirect('/admin/login');
+      const minutesLeft = Math.max(1, Math.ceil((user.locked_until - Date.now()) / 60000));
+      req.flash('error', `This account is temporarily locked. Try again in ${minutesLeft} minute(s).`);
+      return loginRedirect(res, email);
     }
     const valid = user && (await bcrypt.compare(password, user.password));
 
-    await LoginAttempt.create({
-      email,
-      ip_address: req.ip,
-      user_agent: req.get('user-agent'),
-      success: Boolean(valid),
-      reason: valid ? 'success' : 'invalid_credentials'
-    });
+    try {
+      await LoginAttempt.create({
+        email,
+        ip_address: req.ip,
+        user_agent: req.get('user-agent'),
+        success: Boolean(valid),
+        reason: valid ? 'success' : 'invalid_credentials'
+      });
+    } catch {
+      // Login attempt logging should not block authentication flow.
+    }
 
     if (!valid) {
       if (user) {
         const failedCount = (user.failed_login_count || 0) + 1;
         await user.update({
           failed_login_count: failedCount,
-          locked_until: failedCount >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null
+          locked_until: loginBruteForce.accountLockUntil(
+            failedCount,
+            bruteForce.lockoutMinutes,
+            bruteForce.maxAccountAttempts
+          )
         });
       }
+      await loginBruteForce.maybeAutoBlockIp(req);
       req.flash('error', 'Invalid email or password.');
-      return res.redirect('/admin/login');
+      return loginRedirect(res, email);
     }
 
     if (user.two_factor_enabled) {
@@ -59,7 +79,7 @@ async function login(req, res, next) {
       });
       if (!verified) {
         req.flash('error', 'A valid two-factor code is required.');
-        return res.redirect('/admin/login');
+        return loginRedirect(res, email);
       }
     }
 

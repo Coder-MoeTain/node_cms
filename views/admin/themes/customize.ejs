@@ -74,6 +74,29 @@
             <div class="row g-3">
               <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Logo', name: 'logo', fileName: 'logo_file', value: themeSetting.logo || '' }) %></div>
               <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Favicon', name: 'favicon', fileName: 'favicon_file', value: themeSetting.favicon || '' }) %></div>
+              <div class="col-md-4">
+                <label class="form-label" for="logo_max_height">Logo max height (px)</label>
+                <input class="form-control" id="logo_max_height" name="logo_max_height" type="number" min="24" max="240" step="1" value="<%= themeSetting.logo_max_height || 64 %>" data-logo-max-height>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="logo_max_width">Logo max width (px)</label>
+                <input class="form-control" id="logo_max_width" name="logo_max_width" type="number" min="48" max="480" step="1" value="<%= themeSetting.logo_max_width || 180 %>" data-logo-max-width>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="logo_placement">Logo placement</label>
+                <select class="form-select" id="logo_placement" name="logo_placement" data-logo-placement>
+                  <% const logoPlacement = themeSetting.logo_placement || 'left';
+                     const placements = [
+                       { value: 'left', label: 'Left of site title' },
+                       { value: 'center', label: 'Centered in header' },
+                       { value: 'right', label: 'Right of site title' },
+                       { value: 'above', label: 'Above site title' }
+                     ];
+                     placements.forEach(function(option) { %>
+                    <option value="<%= option.value %>" <%= logoPlacement === option.value ? 'selected' : '' %>><%= option.label %></option>
+                  <% }) %>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -178,10 +201,10 @@
               <button type="button" data-preview-mode="iframe" aria-selected="false">Live site</button>
             </div>
             <div class="theme-preview-site" data-theme-preview>
-              <div class="theme-preview-header" data-preview-header>
+              <div class="theme-preview-header" data-preview-header data-preview-logo-wrap>
                 <img data-preview-logo src="<%= themeSetting.logo || '' %>" alt="" <%= themeSetting.logo ? '' : 'hidden' %>>
                 <img data-preview-favicon src="<%= themeSetting.favicon || '' %>" alt="" width="20" height="20" <%= themeSetting.favicon ? '' : 'hidden' %>>
-                <span>NodePress Site</span>
+                <span data-preview-brand-text>NodePress Site</span>
               </div>
               <div class="theme-preview-body">
                 <div class="portal-preview-mini-card" data-preview-accent-sample style="color:#d71920;font-size:11px;margin-bottom:8px;">Hot news label</div>

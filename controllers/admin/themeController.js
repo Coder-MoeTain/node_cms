@@ -6,6 +6,17 @@ const { resolvePortalConfig, stripManagedBlocks, parseThemeVars } = require('../
 const { resolveImageValue } = require('../../utils/uploadHelper');
 const { zipUpload } = require('../../middleware/zipUpload');
 
+function clampLogoDimension(value, fallback, min, max) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
+}
+
+function normalizeLogoPlacement(value) {
+  const allowed = ['left', 'center', 'right', 'above'];
+  return allowed.includes(value) ? value : 'left';
+}
+
 async function index(req, res, next) {
   try {
     await themeManager.syncInstalledThemes();
@@ -102,6 +113,9 @@ async function updateSettings(req, res, next) {
       site_layout: req.body.site_layout,
       dark_mode: req.body.dark_mode === 'on',
       logo,
+      logo_max_height: clampLogoDimension(req.body.logo_max_height, 64, 24, 240),
+      logo_max_width: clampLogoDimension(req.body.logo_max_width, 180, 48, 480),
+      logo_placement: normalizeLogoPlacement(req.body.logo_placement),
       favicon,
       custom_css: req.body.custom_css || '',
       custom_js: req.body.custom_js || ''
@@ -129,6 +143,9 @@ async function previewDraft(req, res, next) {
       site_layout: req.body.site_layout,
       dark_mode: req.body.dark_mode === 'on' || req.body.dark_mode === true,
       logo: req.body.logo || '',
+      logo_max_height: clampLogoDimension(req.body.logo_max_height, 64, 24, 240),
+      logo_max_width: clampLogoDimension(req.body.logo_max_width, 180, 48, 480),
+      logo_placement: normalizeLogoPlacement(req.body.logo_placement),
       favicon: req.body.favicon || '',
       custom_css: req.body.custom_css || '',
       custom_js: req.body.custom_js || ''

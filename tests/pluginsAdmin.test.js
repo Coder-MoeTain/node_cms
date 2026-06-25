@@ -124,7 +124,14 @@ test('plugin lifecycle invokes install activate and uninstall hooks', async () =
 });
 
 test('active plugin cannot be uninstalled', async () => {
-  await models.Plugin.update({ active: true }, { where: { slug: 'seo-booster' } });
+  await pluginLoader.syncInstalledPlugins();
+  let plugin = await models.Plugin.findOne({ where: { slug: 'seo-booster' } });
+  expect(plugin).toBeTruthy();
+  await models.Plugin.update({ active: false }, { where: { slug: 'seo-booster' } });
+  await pluginLoader.activatePlugin('seo-booster', app);
+  plugin = await models.Plugin.findOne({ where: { slug: 'seo-booster' } });
+  expect(plugin.active).toBe(true);
+
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');
   const csrf = await getCsrf(agent, '/admin/plugins');
@@ -156,8 +163,7 @@ test('admin can upload a plugin zip and trigger onInstall lifecycle', async () =
   await login(agent, 'admin@example.com', 'Admin@12345');
   const csrf = await getCsrf(agent, '/admin/plugins');
   const response = await agent
-    .post('/admin/plugins/upload')
-    .set('x-csrf-token', csrf)
+    .post(`/admin/plugins/upload?_csrf=${encodeURIComponent(csrf)}`)
     .attach('archive', zipPath);
 
   expect(response.status).toBe(302);

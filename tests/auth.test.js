@@ -69,4 +69,9 @@ test('invalid login increments lockout tracking', async () => {
   }
   const attempts = await request(app).get('/admin/login');
   expect(attempts.status).toBe(200);
+  const { models } = require('../server');
+  await models.User.update(
+    { failed_login_count: 0, locked_until: null },
+    { where: { email: 'admin@example.com' } }
+  );
 });

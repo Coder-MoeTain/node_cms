@@ -40,13 +40,7 @@
           <% } %>
         </div>
         <% if (pagination && pagination.pages > 1) { %>
-          <nav class="<%= isPortal ? 'portal-pagination' : 'site-pagination' %> mt-4" aria-label="Search pagination">
-            <ul class="pagination">
-              <% for (let i = 1; i <= pagination.pages; i++) { %>
-                <li class="page-item <%= i === pagination.page ? 'active' : '' %>"><a class="page-link" href="?q=<%= encodeURIComponent(q) %>&page=<%= i %>"><%= i %></a></li>
-              <% } %>
-            </ul>
-          </nav>
+          <%- include('../partials/pagination', { pagination, paginationBase: q ? ('?q=' + encodeURIComponent(q)) : '?', paginationClass: (isPortal ? 'portal-pagination' : 'site-pagination') + ' mt-4', paginationLabel: 'Search pagination' }) %>
         <% } %>
       </section>
       <% if (activeTheme.sidebar_position !== 'none') { %>

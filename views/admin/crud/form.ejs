@@ -140,11 +140,24 @@
           <% } %>
           <% if (resource === 'roles') { %>
             <label class="form-label">Permissions</label>
-            <div class="row">
-              <% (extra.permissions || []).forEach(function(permission) { %>
-                <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="permissions" value="<%= permission.id %>" <%= selectedPermissions.includes(String(permission.id)) ? 'checked' : '' %>> <%= permission.name %></label></div>
-              <% }) %>
-            </div>
+            <% const permGroups = {};
+               (extra.permissions || []).forEach(function(permission) {
+                 const parts = (permission.slug || permission.name || '').split('_');
+                 const groupKey = parts.length > 1 ? parts.slice(1).join(' ') : 'general';
+                 const groupLabel = groupKey.replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+                 if (!permGroups[groupLabel]) permGroups[groupLabel] = [];
+                 permGroups[groupLabel].push(permission);
+               });
+               Object.keys(permGroups).sort().forEach(function(groupLabel) { %>
+              <div class="np-permission-group mb-3">
+                <h6 class="np-permission-group-title"><%= groupLabel %></h6>
+                <div class="row">
+                  <% permGroups[groupLabel].forEach(function(permission) { %>
+                    <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="permissions" value="<%= permission.id %>" <%= selectedPermissions.includes(String(permission.id)) ? 'checked' : '' %>> <%= permission.name %></label></div>
+                  <% }) %>
+                </div>
+              </div>
+            <% }) %>
           <% } %>
         <% } else if (resource === 'users') { %>
           <div class="row g-3">

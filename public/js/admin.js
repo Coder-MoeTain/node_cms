@@ -291,7 +291,34 @@ document.querySelectorAll('[data-copy-url]').forEach((button) => {
 });
 
 document.querySelectorAll('.toast.show').forEach((toast) => {
-  setTimeout(() => toast.classList.remove('show'), 4000);
+  const persist = toast.classList.contains('np-toast-persist');
+  toast.querySelector('.np-toast-close')?.addEventListener('click', () => toast.remove());
+  if (!persist) {
+    setTimeout(() => toast.classList.remove('show'), 5000);
+  }
+});
+
+document.querySelectorAll('form').forEach((form) => {
+  form.addEventListener('submit', () => {
+    const submit = form.querySelector('[type="submit"]:not([disabled])');
+    if (!submit || submit.dataset.loading) return;
+    const label = submit.dataset.loadingLabel;
+    if (label) {
+      submit.dataset.loading = '1';
+      submit.disabled = true;
+      submit.dataset.originalText = submit.textContent;
+      submit.textContent = label;
+    }
+  });
+});
+
+document.querySelectorAll('[data-upload-form]').forEach((form) => {
+  form.addEventListener('submit', () => {
+    const bar = form.querySelector('[data-upload-progress]');
+    const status = form.querySelector('[data-upload-status]');
+    if (bar) bar.classList.remove('d-none');
+    if (status) status.textContent = 'Uploading…';
+  });
 });
 
 const selectAll = document.querySelector('[data-select-all]');

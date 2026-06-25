@@ -56,6 +56,7 @@ Admin **Themes → Activate** or `themeManager.activateTheme(id)`. Updates `them
 - **Themes → Customize** edits colors, layout, custom CSS/JS
 - **Preview** stores draft in session (`POST /admin/theme-settings/preview`)
 - **Live preview** opens public site with `?customizer_preview=1`
+- **Logo options** in Site identity: max height/width (px) and placement (left, center, right, above title)
 
 ## Safe uploads
 

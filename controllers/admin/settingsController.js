@@ -1,5 +1,5 @@
 const { SiteSetting, Media } = require('../../models');
-const { ensurePortalSettings, SETTING_GROUP_LABELS, SETTING_GROUP_ORDER, getSettingGroup } = require('../../utils/portalSettings');
+const { ensurePortalSettings, SETTING_GROUP_LABELS, SETTING_GROUP_ORDER, PORTAL_SETTING_DEFINITIONS, getSettingGroup } = require('../../utils/portalSettings');
 const { resolveImageValue } = require('../../utils/uploadHelper');
 
 async function settings(req, res, next) {
@@ -17,7 +17,8 @@ async function settings(req, res, next) {
       rows,
       grouped,
       groupLabels: SETTING_GROUP_LABELS,
-      groupOrder: SETTING_GROUP_ORDER
+      groupOrder: SETTING_GROUP_ORDER,
+      settingDefinitions: PORTAL_SETTING_DEFINITIONS
     });
   } catch (error) {
     return next(error);

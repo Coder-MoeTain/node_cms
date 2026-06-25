@@ -281,3 +281,16 @@ function initNavbarScroll() {
 }
 
 initNavbarScroll();
+
+document.querySelectorAll('form').forEach((form) => {
+  form.addEventListener('submit', () => {
+    const submit = form.querySelector('[type="submit"]:not([disabled])');
+    if (!submit || submit.dataset.loading) return;
+    const label = submit.dataset.loadingLabel;
+    if (label) {
+      submit.dataset.loading = '1';
+      submit.disabled = true;
+      submit.textContent = label;
+    }
+  });
+});

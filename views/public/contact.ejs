@@ -1,5 +1,6 @@
 <%- include(themePartial('head')) %>
 <%- include(themePartial('header')) %>
+<% const pre = typeof prefill !== 'undefined' ? prefill : {}; const errs = typeof fieldErrors !== 'undefined' ? fieldErrors : {}; %>
 <main class="<%= isPortal ? 'container portal-page portal-main py-4' : 'site-page site-main py-5' %>" id="main-content">
   <div class="<%= isPortal ? '' : 'container' %>">
     <nav class="<%= isPortal ? 'portal-breadcrumb' : 'site-breadcrumb' %>" aria-label="Breadcrumb">
@@ -7,7 +8,7 @@
     </nav>
     <h1 class="<%= isPortal ? 'portal-page-title mb-4' : 'site-page-title mb-4' %>">Contact Us</h1>
     <% if (success && success.length) { %><div class="np-alert np-alert-success <%= isPortal ? 'portal-alert' : 'site-alert' %>" role="status"><%= success[0] %></div><% } %>
-    <% if (error && error.length) { %><div class="np-alert np-alert-danger <%= isPortal ? 'portal-alert' : 'site-alert' %>" role="alert"><%= error[0] %></div><% } %>
+    <% if (typeof formError !== 'undefined' && formError) { %><div class="np-alert np-alert-danger <%= isPortal ? 'portal-alert' : 'site-alert' %>" role="alert"><%= formError %></div><% } %>
     <div class="row g-4">
       <div class="col-lg-4">
         <div class="<%= isPortal ? 'portal-widget portal-card-bordered' : 'site-panel' %>">
@@ -17,24 +18,43 @@
             <% if (siteSettings.contact_phone) { %><p><i class="bi bi-telephone" aria-hidden="true"></i> <a href="tel:<%= siteSettings.contact_phone %>"><%= siteSettings.contact_phone %></a></p><% } %>
             <% if (siteSettings.contact_address) { %><p><i class="bi bi-geo-alt" aria-hidden="true"></i> <%= siteSettings.contact_address %></p><% } %>
             <% if (!siteSettings.contact_email && !siteSettings.contact_phone && !siteSettings.contact_address) { %>
-              <%- include(themePartial('portal-empty'), { icon: 'envelope', message: 'Add contact details in Admin → Settings.' }) %>
+              <%- include(themePartial('portal-empty'), { icon: 'envelope', message: 'Contact details will appear here once configured.' }) %>
             <% } %>
           </div>
         </div>
       </div>
       <div class="col-lg-8">
-        <form class="<%= isPortal ? 'portal-widget portal-card-bordered portal-contact-form' : 'site-panel site-contact-form' %>" method="post" action="/contact">
+        <form class="<%= isPortal ? 'portal-widget portal-card-bordered portal-contact-form' : 'site-panel site-contact-form' %>" method="post" action="/contact" novalidate>
           <header class="<%= isPortal ? 'portal-widget-header' : 'site-panel-header' %>"><h2 class="<%= isPortal ? 'portal-widget-title' : 'site-panel-title' %>">Send a message</h2></header>
           <div class="<%= isPortal ? 'portal-widget-body' : 'site-panel-body' %>">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div class="row g-3">
-              <div class="col-md-6"><label class="form-label" for="contact-name">Name</label><input class="form-control" id="contact-name" name="name" placeholder="Your name" required></div>
-              <div class="col-md-6"><label class="form-label" for="contact-email">Email</label><input class="form-control" id="contact-email" name="email" type="email" placeholder="you@example.com" value="<%= (prefill && prefill.email) || '' %>" required></div>
-              <div class="col-md-6"><label class="form-label" for="contact-phone">Phone</label><input class="form-control" id="contact-phone" name="phone" placeholder="Optional"></div>
-              <div class="col-md-6"><label class="form-label" for="contact-subject">Subject</label><input class="form-control" id="contact-subject" name="subject" placeholder="How can we help?" value="<%= (prefill && prefill.subject) || '' %>" required></div>
-              <div class="col-12"><label class="form-label" for="contact-message">Message</label><textarea class="form-control" id="contact-message" name="message" rows="6" placeholder="Your message" required></textarea></div>
+              <div class="col-md-6">
+                <label class="form-label" for="contact-name">Name</label>
+                <input class="form-control<%= errs.name ? ' is-invalid' : '' %>" id="contact-name" name="name" placeholder="Your name" value="<%= pre.name || '' %>" required>
+                <% if (errs.name) { %><div class="invalid-feedback"><%= errs.name.msg %></div><% } %>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="contact-email">Email</label>
+                <input class="form-control<%= errs.email ? ' is-invalid' : '' %>" id="contact-email" name="email" type="email" placeholder="you@example.com" value="<%= pre.email || '' %>" required>
+                <% if (errs.email) { %><div class="invalid-feedback"><%= errs.email.msg %></div><% } %>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="contact-phone">Phone</label>
+                <input class="form-control" id="contact-phone" name="phone" placeholder="Optional" value="<%= pre.phone || '' %>">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="contact-subject">Subject</label>
+                <input class="form-control<%= errs.subject ? ' is-invalid' : '' %>" id="contact-subject" name="subject" placeholder="How can we help?" value="<%= pre.subject || '' %>" required>
+                <% if (errs.subject) { %><div class="invalid-feedback"><%= errs.subject.msg %></div><% } %>
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="contact-message">Message</label>
+                <textarea class="form-control<%= errs.message ? ' is-invalid' : '' %>" id="contact-message" name="message" rows="6" placeholder="Your message" required><%= pre.message || '' %></textarea>
+                <% if (errs.message) { %><div class="invalid-feedback"><%= errs.message.msg %></div><% } %>
+              </div>
             </div>
-            <button class="site-btn <%= isPortal ? 'portal-btn' : '' %> mt-3" type="submit">Send Message</button>
+            <button class="site-btn <%= isPortal ? 'portal-btn' : '' %> mt-3" type="submit" data-loading-label="Sending…">Send Message</button>
           </div>
         </form>
       </div>

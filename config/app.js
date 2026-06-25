@@ -13,5 +13,19 @@ module.exports = {
   trustProxy: process.env.TRUST_PROXY === 'true' ? 1 : false,
   corsOrigin: process.env.CORS_ORIGIN || process.env.APP_URL || 'http://localhost:3000',
   uploadsQuarantine: process.env.UPLOADS_QUARANTINE === 'true',
-  apiKey: process.env.API_KEY || ''
+  apiKey: process.env.API_KEY || '',
+  loginBruteForce: {
+    enabled: process.env.LOGIN_BRUTE_FORCE !== 'false',
+    maxAccountAttempts: Number(process.env.LOGIN_MAX_ATTEMPTS || 5),
+    lockoutMinutes: Number(process.env.LOGIN_LOCKOUT_MINUTES || 15),
+    maxIpAttempts: Number(
+      process.env.LOGIN_MAX_IP_ATTEMPTS || (process.env.NODE_ENV === 'test' ? 1000 : 10)
+    ),
+    ipWindowMinutes: Number(process.env.LOGIN_IP_WINDOW_MINUTES || 15),
+    autoBlockIpAttempts: Number(
+      process.env.LOGIN_AUTO_BLOCK_IP_ATTEMPTS || (process.env.NODE_ENV === 'test' ? 1000 : 25)
+    ),
+    rateLimitMax: Number(process.env.LOGIN_RATE_LIMIT_MAX || 10),
+    rateLimitWindowMinutes: Number(process.env.LOGIN_RATE_LIMIT_WINDOW_MINUTES || 15)
+  }
 };
