@@ -27,7 +27,13 @@ INSERT INTO waf_rules (name, rule_key, description, category, pattern, target, a
 ('CMS Adminer Probe', 'cms_adminer_probe', 'Detects adminer.php probes.', 'cms_probe', 'adminer\\.php', 'url', 'block', 'critical', TRUE, 50),
 ('Dangerous PHP Upload', 'file_php_upload', 'Detects dangerous PHP upload filenames.', 'file_attack', '\\.(php|phtml)$', 'file_name', 'block', 'critical', TRUE, 60),
 ('Dangerous Executable Upload', 'file_exe_upload', 'Detects executable upload filenames.', 'file_attack', '\\.(exe|bat|cmd|sh)$', 'file_name', 'block', 'critical', TRUE, 60),
-('Dangerous Script Upload', 'file_script_upload', 'Detects server script upload filenames.', 'file_attack', '\\.(jsp|asp|aspx)$', 'file_name', 'block', 'critical', TRUE, 60)
+('Dangerous Script Upload', 'file_script_upload', 'Detects server script upload filenames.', 'file_attack', '\\.(jsp|asp|aspx)$', 'file_name', 'block', 'critical', TRUE, 60),
+('Bad Bot Ahrefs', 'bad_bot_ahrefs', 'Blocks Ahrefs SEO crawler user agents.', 'bad_bot', 'ahrefsbot', 'user_agent', 'block', 'medium', TRUE, 25),
+('Bad Bot Semrush', 'bad_bot_semrush', 'Blocks Semrush crawler user agents.', 'bad_bot', 'semrushbot', 'user_agent', 'block', 'medium', TRUE, 25),
+('Bad Bot MJ12', 'bad_bot_mj12', 'Blocks MJ12bot crawler user agents.', 'bad_bot', 'mj12bot', 'user_agent', 'block', 'medium', TRUE, 25),
+('Bad Bot DotBot', 'bad_bot_dotbot', 'Blocks DotBot crawler user agents.', 'bad_bot', 'dotbot', 'user_agent', 'block', 'medium', TRUE, 25),
+('Bad Bot PetalBot', 'bad_bot_petalbot', 'Blocks PetalBot crawler user agents.', 'bad_bot', 'petalbot', 'user_agent', 'block', 'medium', TRUE, 25),
+('Bad Bot Headless Chrome', 'bad_bot_headless', 'Detects common headless automation user agents.', 'bad_bot', 'headlesschrome|phantomjs|selenium', 'user_agent', 'block', 'high', TRUE, 35)
 ON DUPLICATE KEY UPDATE
 name = VALUES(name),
 description = VALUES(description),

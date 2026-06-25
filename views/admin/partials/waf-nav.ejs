@@ -1,0 +1,8 @@
+<% const current = typeof activeNav === 'string' ? activeNav : ''; %>
+<nav class="np-waf-nav" aria-label="WAF sections">
+  <a class="np-waf-nav-link <%= current === 'dashboard' ? 'is-active' : '' %>" href="/admin/waf"><i class="bi bi-speedometer2" aria-hidden="true"></i> Dashboard</a>
+  <a class="np-waf-nav-link <%= current === 'rules' ? 'is-active' : '' %>" href="/admin/waf/rules"><i class="bi bi-shield-check" aria-hidden="true"></i> Rules</a>
+  <a class="np-waf-nav-link <%= current === 'logs' ? 'is-active' : '' %>" href="/admin/waf/logs"><i class="bi bi-journal-text" aria-hidden="true"></i> Logs</a>
+  <a class="np-waf-nav-link <%= current === 'ip-lists' ? 'is-active' : '' %>" href="/admin/waf/ip-lists"><i class="bi bi-hdd-network" aria-hidden="true"></i> IP Lists</a>
+  <a class="np-waf-nav-link <%= current === 'settings' ? 'is-active' : '' %>" href="/admin/waf/settings"><i class="bi bi-gear" aria-hidden="true"></i> Settings</a>
+</nav>

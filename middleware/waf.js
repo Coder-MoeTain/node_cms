@@ -18,14 +18,17 @@ const {
   buildSafeLogPayload,
   createWafBlockResponse,
   isExpiredIpListItem,
+  findIpListMatches,
   getRouteType,
-  isDangerousUploadFilename
+  isDangerousUploadFilename,
+  ipMatchesListEntry
 } = require('../utils/wafHelper');
 
 const cache = {
   loadedAt: 0,
   settings: null,
-  rules: null
+  rules: null,
+  ipLists: null
 };
 
 const DEFAULT_SETTINGS = {
@@ -75,6 +78,19 @@ function clearWafCache() {
   cache.loadedAt = 0;
   cache.settings = null;
   cache.rules = null;
+  cache.ipLists = null;
+}
+
+async function loadActiveIpLists() {
+  if (cache.ipLists && Date.now() - cache.loadedAt < 30000) return cache.ipLists;
+  const rows = await WafIpList.findAll({
+    where: {
+      status: true,
+      [Op.or]: [{ expires_at: null }, { expires_at: { [Op.gt]: new Date() } }]
+    }
+  });
+  cache.ipLists = rows.filter((row) => !isExpiredIpListItem(row));
+  return cache.ipLists;
 }
 
 async function loadWafConfig() {
@@ -220,14 +236,7 @@ async function applyAutoBlock(ipAddress, settings, userId = null) {
   const threshold = Number(settings.auto_block_threshold || 5);
   if (criticalCount < threshold && highCount < threshold * 2) return;
 
-  const whitelist = await WafIpList.findOne({
-    where: {
-      ip_address: ipAddress,
-      list_type: 'whitelist',
-      status: true,
-      [Op.or]: [{ expires_at: null }, { expires_at: { [Op.gt]: new Date() } }]
-    }
-  });
+  const whitelist = (await loadActiveIpLists()).find((row) => row.list_type === 'whitelist' && ipMatchesListEntry(ipAddress, row.ip_address));
   if (whitelist) return;
 
   const expiresAt = new Date(Date.now() + Number(settings.auto_block_duration_minutes || 60) * 60 * 1000);
@@ -275,13 +284,7 @@ async function wafMiddleware(req, res, next) {
     if (!adminRoute && !settings.public_protection_enabled) return next();
 
     const ipAddress = getClientIp(req, settings.trusted_proxy_enabled);
-    const activeIpRows = await WafIpList.findAll({
-      where: {
-        ip_address: ipAddress,
-        status: true,
-        [Op.or]: [{ expires_at: null }, { expires_at: { [Op.gt]: new Date() } }]
-      }
-    }).then((rows) => rows.filter((row) => !isExpiredIpListItem(row)));
+    const activeIpRows = findIpListMatches(ipAddress, await loadActiveIpLists());
 
     if (activeIpRows.some((row) => row.list_type === 'whitelist')) return next();
 
@@ -366,4 +369,4 @@ async function wafMiddleware(req, res, next) {
   }
 }
 
-module.exports = { wafMiddleware, loadWafConfig, clearWafCache };
+module.exports = { wafMiddleware, loadWafConfig, clearWafCache, loadActiveIpLists };

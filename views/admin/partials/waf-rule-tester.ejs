@@ -1,0 +1,22 @@
+<div class="np-widget mt-3" id="wafRuleTester">
+  <div class="np-widget-header"><span>Rule sandbox</span><span class="np-badge np-badge-muted">no traffic logged</span></div>
+  <div class="np-widget-body">
+    <p class="np-help-text">Test this pattern against a sample request before saving.</p>
+    <form data-waf-rule-test>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="row g-3">
+        <div class="col-md-8"><label class="form-label">Sample URL</label><input class="form-control font-monospace" name="test_url" value="/?search=1%20OR%201%3D1"></div>
+        <div class="col-md-4"><label class="form-label">Method</label><select class="form-select" name="test_method"><option>GET</option><option>POST</option></select></div>
+        <div class="col-md-6"><label class="form-label">User-Agent</label><input class="form-control font-monospace" name="test_user_agent" value="sqlmap/1.0"></div>
+        <div class="col-md-6"><label class="form-label">Client IP</label><input class="form-control font-monospace" name="test_ip" value="203.0.113.10"></div>
+        <div class="col-md-6"><label class="form-label">Query JSON</label><textarea class="form-control font-monospace" id="wafTestQuery" rows="3">{"search":"1 OR 1=1"}</textarea></div>
+        <div class="col-md-6"><label class="form-label">Body JSON</label><textarea class="form-control font-monospace" id="wafTestBody" rows="3">{}</textarea></div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <button class="np-btn np-btn-secondary" type="submit">Run test</button>
+      </div>
+      <div class="mt-3" id="wafRuleTestResult" hidden></div>
+    </form>
+  </div>
+</div>
+<script src="/js/waf-rule-test.js" defer></script>
