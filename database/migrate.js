@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const { ensureDatabase } = require('./ensureDatabase');
+const { ensureBaseSchema } = require('./ensureBaseSchema');
 const { executeMigrationStatement } = require('./migrationHelpers');
 
 const migrationsDir = path.join(__dirname, 'migrations');
@@ -24,7 +26,11 @@ function splitStatements(sql) {
 }
 
 async function run() {
+  await ensureDatabase();
   await sequelize.authenticate();
+  if (await ensureBaseSchema(sequelize)) {
+    console.log('Applied base schema from database/schema.sql');
+  }
   await ensureMigrationTable();
   const completed = await sequelize.query('SELECT name FROM migrations', { type: QueryTypes.SELECT });
   const completedNames = new Set(completed.map((row) => row.name));
@@ -45,6 +51,7 @@ async function run() {
 }
 
 async function status() {
+  await ensureDatabase();
   await sequelize.authenticate();
   await ensureMigrationTable();
   const completed = await sequelize.query('SELECT name, ran_at FROM migrations ORDER BY name', { type: QueryTypes.SELECT });
