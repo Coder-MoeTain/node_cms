@@ -1,0 +1,36 @@
+<%#
+  First-time admin onboarding checklist — Phase 10
+  Uses stats passed from dashboard; no backend changes required.
+%>
+<% const checklist = [
+  { label: 'Set site title and tagline', done: false, href: '/admin/settings', can: can('manage_settings') },
+  { label: 'Upload site logo', done: false, href: '/admin/themes/customize', can: can('manage_themes') },
+  { label: 'Choose and activate a theme', done: (typeof stats !== 'undefined' && stats.posts >= 0), href: '/admin/themes', can: can('manage_themes') },
+  { label: 'Create your first page', done: (typeof stats !== 'undefined' && stats.pages > 0), href: '/admin/pages/create', can: can('manage_pages') },
+  { label: 'Publish your first post', done: (typeof stats !== 'undefined' && stats.publishedPosts > 0), href: '/admin/posts/create', can: canManageResource('posts', 'create') },
+  { label: 'Configure navigation menu', done: false, href: '/admin/menus', can: can('manage_menus') },
+  { label: 'Review security settings', done: false, href: '/admin/security', can: can('manage_security') },
+  { label: 'Enable WAF protection', done: (typeof siteHealth !== 'undefined' && siteHealth.wafMode === 'block'), href: '/admin/waf/settings', can: can('manage_waf') }
+].filter(function(item) { return item.can !== false; });
+const pendingCount = checklist.filter(function(item) { return !item.done; }).length;
+const showOnboarding = pendingCount > 0 && currentPath === '/admin';
+%>
+<% if (showOnboarding) { %>
+<section class="dashboard-onboarding" aria-labelledby="onboarding-title">
+  <div class="dashboard-onboarding-header">
+    <div>
+      <h2 class="h5 mb-1" id="onboarding-title">Welcome to NodePress</h2>
+      <p class="np-help-text mb-0">Complete these steps to launch your site. <%= pendingCount %> task<%= pendingCount === 1 ? '' : 's' %> remaining.</p>
+    </div>
+    <button class="np-btn np-btn-secondary np-btn-small" type="button" data-onboarding-dismiss aria-label="Dismiss setup checklist">Dismiss</button>
+  </div>
+  <ul class="dashboard-checklist">
+    <% checklist.forEach(function(item) { %>
+      <li class="<%= item.done ? 'is-done' : '' %>">
+        <i class="bi <%= item.done ? 'bi-check-circle-fill' : 'bi-circle' %>" aria-hidden="true"></i>
+        <% if (item.done) { %><span><%= item.label %></span><% } else { %><a href="<%= item.href %>"><%= item.label %></a><% } %>
+      </li>
+    <% }) %>
+  </ul>
+</section>
+<% } %>

@@ -3,7 +3,7 @@ const path = require('path');
 const { Theme, ThemeSetting } = require('../../models');
 const themeManager = require('../../utils/themeManager');
 const themeLoader = require('../../utils/themeLoader');
-const { resolvePortalConfig, stripManagedBlocks, parseThemeVars } = require('../../utils/portalConfig');
+const { resolvePortalConfig, stripManagedBlocks, parseThemeVars, parseDesignTokens } = require('../../utils/portalConfig');
 const { resolveImageValue } = require('../../utils/uploadHelper');
 const { zipUpload } = require('../../middleware/zipUpload');
 
@@ -100,6 +100,7 @@ async function customize(req, res, next) {
       themeSetting: themePlain,
       portalConfig: resolvePortalConfig(themePlain),
       themeVars: parseThemeVars(themePlain.custom_css || ''),
+      designTokens: parseDesignTokens(themePlain.custom_css || ''),
       cssWithoutManaged: stripManagedBlocks(themePlain.custom_css || '')
     });
   } catch (error) {

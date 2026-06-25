@@ -19,7 +19,8 @@
        const cardColor = (themeVars && themeVars.card) || '#ffffff';
        const footerColor = (themeVars && themeVars.footer) || '#0b2f47';
        const mutedColor = (themeVars && themeVars.muted) || '#6b7280';
-       const cssWithoutVars = typeof cssWithoutManaged !== 'undefined' ? cssWithoutManaged : customCss.replace(/\/\* np-theme-vars \*\/[\s\S]*?\}\s*/g, '').replace(/\/\* np-portal-config \*\/[\s\S]*?(?=\n\n|$)/g, '').trim();
+       const cssWithoutVars = typeof cssWithoutManaged !== 'undefined' ? cssWithoutManaged : customCss.replace(/\/\* np-theme-vars \*\/[\s\S]*?\}\s*/g, '').replace(/\/\* np-design-tokens \*\/[\s\S]*?\}\s*/g, '').replace(/\/\* np-portal-config \*\/[\s\S]*?(?=\n\n|$)/g, '').trim();
+       const designTokenSettings = designTokens || { radius: 'default', shadow: 'soft', spacing: 'default' };
        const pc = portalConfig || {};
        const ph = pc.homepage || {};
        const phdr = pc.header || {};
@@ -134,6 +135,38 @@
               <div class="col-md-6"><label class="form-label" for="blog_layout">Blog layout</label><select class="form-select" id="blog_layout" name="blog_layout"><% ['grid','list','masonry'].forEach(function(value) { %><option value="<%= value %>" <%= themeSetting.blog_layout === value ? 'selected' : '' %>><%= value %></option><% }) %></select></div>
               <div class="col-md-6"><label class="form-label" for="site_layout">Site layout</label><select class="form-select" id="site_layout" name="site_layout"><option value="full-width" <%= ['full-width','wide'].includes(themeSetting.site_layout) ? 'selected' : '' %>>Full width</option><option value="boxed" <%= themeSetting.site_layout === 'boxed' ? 'selected' : '' %>>Boxed</option></select></div>
               <div class="col-md-6 d-flex align-items-end"><label class="form-check"><input class="form-check-input" name="dark_mode" type="checkbox" <%= themeSetting.dark_mode ? 'checked' : '' %>> Enable dark mode</label></div>
+            </div>
+          </div>
+
+          <div class="np-customizer-section">
+            <p class="np-customizer-section-title">Design tokens</p>
+            <p class="np-help-text mb-3">Adjust corner radius, shadows, and section spacing across the public site. Stored in Additional CSS as <code>np-design-tokens</code>.</p>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label" for="design_radius">Corner radius</label>
+                <select class="form-select" id="design_radius" data-design-radius>
+                  <option value="compact" <%= designTokenSettings.radius === 'compact' ? 'selected' : '' %>>Compact</option>
+                  <option value="default" <%= designTokenSettings.radius === 'default' ? 'selected' : '' %>>Default</option>
+                  <option value="rounded" <%= designTokenSettings.radius === 'rounded' ? 'selected' : '' %>>Rounded</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="design_shadow">Card shadow</label>
+                <select class="form-select" id="design_shadow" data-design-shadow>
+                  <option value="none" <%= designTokenSettings.shadow === 'none' ? 'selected' : '' %>>None</option>
+                  <option value="soft" <%= designTokenSettings.shadow === 'soft' ? 'selected' : '' %>>Soft</option>
+                  <option value="medium" <%= designTokenSettings.shadow === 'medium' ? 'selected' : '' %>>Medium</option>
+                  <option value="strong" <%= designTokenSettings.shadow === 'strong' ? 'selected' : '' %>>Strong</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="design_spacing">Section spacing</label>
+                <select class="form-select" id="design_spacing" data-design-spacing>
+                  <option value="compact" <%= designTokenSettings.spacing === 'compact' ? 'selected' : '' %>>Compact</option>
+                  <option value="default" <%= designTokenSettings.spacing === 'default' ? 'selected' : '' %>>Default</option>
+                  <option value="spacious" <%= designTokenSettings.spacing === 'spacious' ? 'selected' : '' %>>Spacious</option>
+                </select>
+              </div>
             </div>
           </div>
 

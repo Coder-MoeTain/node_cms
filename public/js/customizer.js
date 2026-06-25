@@ -263,8 +263,82 @@
     schedulePreviewDraft();
   });
 
-  function buildCustomizerDraftPayload() {
-    const cssField = form.querySelector('#custom_css');
+  function getDesignTokenPresets() {
+    return {
+      radius: document.querySelector('[data-design-radius]')?.value || 'default',
+      shadow: document.querySelector('[data-design-shadow]')?.value || 'soft',
+      spacing: document.querySelector('[data-design-spacing]')?.value || 'default'
+    };
+  }
+
+  const DESIGN_TOKEN_MAP = {
+    radius: {
+      compact: { sm: '6px', md: '10px', lg: '16px' },
+      default: { sm: '8px', md: '14px', lg: '22px' },
+      rounded: { sm: '12px', md: '18px', lg: '28px' }
+    },
+    shadow: {
+      none: { sm: 'none', md: 'none', lg: 'none' },
+      soft: {
+        sm: '0 4px 12px rgba(15, 23, 42, 0.06)',
+        md: '0 12px 30px rgba(15, 23, 42, 0.10)',
+        lg: '0 20px 40px rgba(15, 23, 42, 0.12)'
+      },
+      medium: {
+        sm: '0 6px 16px rgba(15, 23, 42, 0.08)',
+        md: '0 16px 36px rgba(15, 23, 42, 0.12)',
+        lg: '0 24px 48px rgba(15, 23, 42, 0.14)'
+      },
+      strong: {
+        sm: '0 8px 20px rgba(15, 23, 42, 0.12)',
+        md: '0 20px 44px rgba(15, 23, 42, 0.16)',
+        lg: '0 28px 56px rgba(15, 23, 42, 0.18)'
+      }
+    },
+    spacing: {
+      compact: { section: '2rem', sectionMobile: '1.5rem' },
+      default: { section: '3.5rem', sectionMobile: '2rem' },
+      spacious: { section: '5rem', sectionMobile: '3rem' }
+    }
+  };
+
+  function buildDesignTokensBlock(presets) {
+    const radius = DESIGN_TOKEN_MAP.radius[presets.radius] || DESIGN_TOKEN_MAP.radius.default;
+    const shadow = DESIGN_TOKEN_MAP.shadow[presets.shadow] || DESIGN_TOKEN_MAP.shadow.soft;
+    const spacing = DESIGN_TOKEN_MAP.spacing[presets.spacing] || DESIGN_TOKEN_MAP.spacing.default;
+    return `/* np-design-tokens */
+:root {
+  --site-radius-sm: ${radius.sm};
+  --site-radius-md: ${radius.md};
+  --site-radius-lg: ${radius.lg};
+  --site-shadow-sm: ${shadow.sm};
+  --site-shadow-md: ${shadow.md};
+  --site-shadow-lg: ${shadow.lg};
+  --site-section-pad: ${spacing.section};
+  --site-section-pad-mobile: ${spacing.sectionMobile};
+}`;
+  }
+
+  function syncDesignTokenPreview() {
+    if (!preview) return;
+    const presets = getDesignTokenPresets();
+    const radius = DESIGN_TOKEN_MAP.radius[presets.radius] || DESIGN_TOKEN_MAP.radius.default;
+    const shadow = DESIGN_TOKEN_MAP.shadow[presets.shadow] || DESIGN_TOKEN_MAP.shadow.soft;
+    preview.style.setProperty('--site-radius-md', radius.md);
+    preview.style.setProperty('--site-shadow-md', shadow.md);
+    preview.querySelector('.portal-preview-mini-card')?.style.setProperty('border-radius', radius.md);
+    preview.querySelector('.portal-preview-mini-card')?.style.setProperty('box-shadow', shadow.md);
+  }
+
+  function stripManagedCss(css) {
+    return (css || '')
+      .replace(/\/\* np-theme-vars \*\/[\s\S]*?\}\s*/g, '')
+      .replace(/\/\* np-design-tokens \*\/[\s\S]*?\}\s*/g, '')
+      .replace(/\/\* np-portal-config \*\/[\s\S]*?(?=\n\n|$)/g, '')
+      .trim();
+  }
+
+  function buildManagedCssBlocks(cssFieldValue) {
     const link = form.querySelector('[data-preview-link]')?.value || form.querySelector('[data-preview-primary]')?.value;
     const button = form.querySelector('[data-preview-button-color]')?.value || form.querySelector('[data-preview-primary]')?.value;
     const accent = form.querySelector('[data-preview-accent]')?.value || '#d71920';
@@ -272,17 +346,23 @@
     const footer = form.querySelector('[data-preview-footer]')?.value || '#0b2f47';
     const muted = form.querySelector('[data-preview-muted]')?.value || '#6b7280';
     const border = '#d7dde5';
-    let css = (cssField?.value || '')
-      .replace(/\/\* np-theme-vars \*\/[\s\S]*?\}\s*/g, '')
-      .replace(/\/\* np-portal-config \*\/[\s\S]*?(?=\n\n|$)/g, '')
-      .trim();
     const fontSelectEl = document.querySelector('[data-font-select]');
     const fontCustomEl = document.querySelector('[data-font-custom]');
     const fontFamily = fontSelectEl?.value === '__custom__' ? fontCustomEl?.value : fontSelectEl?.value;
     const fontStack = fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const css = stripManagedCss(cssFieldValue);
     const vars = `/* np-theme-vars */\n:root { --site-link: ${link}; --site-button: ${button}; --site-accent: ${accent}; --site-card: ${card}; --site-footer-bg: ${footer}; --site-muted: ${muted}; --site-border: ${border}; --site-font-family: ${fontStack}; }`;
+    const designTokens = buildDesignTokensBlock(getDesignTokenPresets());
     const portalBlock = `/* np-portal-config */\n${JSON.stringify(buildPortalConfig(), null, 2)}`;
-    const customCss = [vars, portalBlock, css].filter(Boolean).join('\n\n');
+    return [vars, designTokens, portalBlock, css].filter(Boolean).join('\n\n');
+  }
+
+  function buildCustomizerDraftPayload() {
+    const cssField = form.querySelector('#custom_css');
+    const fontSelectEl = document.querySelector('[data-font-select]');
+    const fontCustomEl = document.querySelector('[data-font-custom]');
+    const fontFamily = fontSelectEl?.value === '__custom__' ? fontCustomEl?.value : fontSelectEl?.value;
+    const customCss = buildManagedCssBlocks(cssField?.value || '');
     return {
       primary_color: form.querySelector('[data-preview-primary]')?.value,
       secondary_color: form.querySelector('[data-preview-secondary]')?.value,
@@ -334,30 +414,19 @@
   form.addEventListener('submit', () => {
     const cssField = form.querySelector('#custom_css');
     if (!cssField) return;
-    const link = form.querySelector('[data-preview-link]')?.value || form.querySelector('[data-preview-primary]')?.value;
-    const button = form.querySelector('[data-preview-button-color]')?.value || form.querySelector('[data-preview-primary]')?.value;
-    const accent = form.querySelector('[data-preview-accent]')?.value || '#d71920';
-    const card = form.querySelector('[data-preview-card]')?.value || '#ffffff';
-    const footer = form.querySelector('[data-preview-footer]')?.value || '#0b2f47';
-    const muted = form.querySelector('[data-preview-muted]')?.value || '#6b7280';
-    const border = '#d7dde5';
+    cssField.value = buildManagedCssBlocks(cssField.value);
+  });
 
-    let css = cssField.value
-      .replace(/\/\* np-theme-vars \*\/[\s\S]*?\}\s*/g, '')
-      .replace(/\/\* np-portal-config \*\/[\s\S]*?(?=\n\n|$)/g, '')
-      .trim();
-
-    const fontSelectEl = document.querySelector('[data-font-select]');
-    const fontCustomEl = document.querySelector('[data-font-custom]');
-    const fontFamily = fontSelectEl?.value === '__custom__' ? fontCustomEl?.value : fontSelectEl?.value;
-    const fontStack = fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    const vars = `/* np-theme-vars */\n:root { --site-link: ${link}; --site-button: ${button}; --site-accent: ${accent}; --site-card: ${card}; --site-footer-bg: ${footer}; --site-muted: ${muted}; --site-border: ${border}; --site-font-family: ${fontStack}; }`;
-    const portalBlock = `/* np-portal-config */\n${JSON.stringify(buildPortalConfig(), null, 2)}`;
-    cssField.value = [vars, portalBlock, css].filter(Boolean).join('\n\n');
+  document.querySelectorAll('[data-design-radius], [data-design-shadow], [data-design-spacing]').forEach((input) => {
+    input.addEventListener('change', () => {
+      syncDesignTokenPreview();
+      schedulePreviewDraft();
+    });
   });
 
   syncIdentityPreviews();
   syncThemePreview();
+  syncDesignTokenPreview();
 
   const resetBtn = document.querySelector('[data-customizer-reset]');
   const resetForm = document.querySelector('[data-customizer-reset-form]');

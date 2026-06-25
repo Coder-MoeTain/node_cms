@@ -48,11 +48,3 @@
     <button class="site-btn portal-btn post-comment-submit mt-3" type="submit">Post comment</button>
   </form>
 </section>
-<script>
-document.querySelectorAll('[data-reply-to]').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    document.getElementById('comment-parent-id').value = btn.getAttribute('data-reply-to');
-    document.getElementById('comment-content').focus();
-  });
-});
-</script>

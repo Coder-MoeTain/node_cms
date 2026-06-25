@@ -1,0 +1,13 @@
+<%#
+  Contextual help partial — Phase 10
+  Locals: helpTitle (optional), helpText (required), helpLink (optional), helpLinkLabel (optional)
+%>
+<% if (typeof helpText !== 'undefined' && helpText) { %>
+<div class="np-help-panel mb-3" role="note">
+  <% if (typeof helpTitle !== 'undefined' && helpTitle) { %><strong class="d-block mb-1"><%= helpTitle %></strong><% } %>
+  <p class="np-help-text mb-<%= typeof helpLink !== 'undefined' && helpLink ? '2' : '0' %>"><%= helpText %></p>
+  <% if (typeof helpLink !== 'undefined' && helpLink) { %>
+    <a class="np-btn np-btn-link np-btn-small" href="<%= helpLink %>"><%= helpLinkLabel || 'Learn more' %></a>
+  <% } %>
+</div>
+<% } %>

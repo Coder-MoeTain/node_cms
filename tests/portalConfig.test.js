@@ -2,6 +2,7 @@ const {
   resolvePortalConfig,
   parseBlock,
   stripManagedBlocks,
+  buildDesignTokensBlock,
   MYANMAR_PORTAL_DEFAULTS,
   buildPortalConfigBlock
 } = require('../utils/portalConfig');
@@ -29,5 +30,12 @@ describe('portalConfig', () => {
     const stripped = stripManagedBlocks(css);
     expect(stripped).not.toContain('np-portal-config');
     expect(stripped).not.toContain('np-theme-vars');
+  });
+
+  test('stripManagedBlocks removes design token block', () => {
+    const css = `${buildDesignTokensBlock({ radius: 'compact', shadow: 'none', spacing: 'compact' })}\n.foo { color: blue; }`;
+    const stripped = stripManagedBlocks(css);
+    expect(stripped).not.toContain('np-design-tokens');
+    expect(stripped).toContain('.foo');
   });
 });

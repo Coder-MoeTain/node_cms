@@ -78,7 +78,8 @@ async function dashboard(req, res, next) {
         database: true,
         uploadsWritable,
         wafMode: wafModeSetting?.setting_value || 'monitor',
-        activeTheme: activeTheme?.theme_name || 'classic-blog'
+        activeTheme: activeTheme?.theme_name || 'classic-blog',
+        https: Boolean(req.secure || req.headers['x-forwarded-proto'] === 'https')
       }
     });
   } catch (error) {

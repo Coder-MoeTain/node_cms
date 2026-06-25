@@ -1,0 +1,14 @@
+<%# Post action toolbar — Phase 7/12 %>
+<div class="post-toolbar" role="toolbar" aria-label="Article actions">
+  <button type="button" class="post-toolbar-btn" data-copy-url aria-label="Copy link to this article">
+    <i class="bi bi-link-45deg" aria-hidden="true"></i> Copy link
+  </button>
+  <% if (typeof post !== 'undefined' && post) { %>
+  <button type="button" class="post-toolbar-btn" data-share-post data-share-title="<%= post.title %>" aria-label="Share this article">
+    <i class="bi bi-share" aria-hidden="true"></i> Share
+  </button>
+  <% } %>
+  <button type="button" class="post-toolbar-btn" data-print-page aria-label="Print this article">
+    <i class="bi bi-printer" aria-hidden="true"></i> Print
+  </button>
+</div>

@@ -1,27 +1,57 @@
 <header class="admin-topbar">
   <div class="topbar-left">
     <button class="topbar-icon-button d-lg-none" data-sidebar-toggle type="button" aria-label="Open menu"><i class="bi bi-list"></i></button>
-    <a class="topbar-brand" href="/admin"><i class="bi bi-grid-1x2-fill"></i> NodePress</a>
-    <a class="topbar-link d-none d-md-inline-flex" href="/" target="_blank"><i class="bi bi-box-arrow-up-right"></i> View Site</a>
-    <% if (canManageResource('posts', 'create')) { %>
-      <a class="topbar-link d-none d-md-inline-flex" href="/admin/posts/create"><i class="bi bi-plus-lg"></i> New Post</a>
-    <% } %>
+    <a class="topbar-brand d-lg-none" href="/admin"><i class="bi bi-grid-1x2-fill"></i> NodePress</a>
+    <a class="topbar-link d-none d-md-inline-flex" href="/" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> View Site</a>
+
+    <div class="topbar-dropdown d-none d-md-block" data-topbar-dropdown>
+      <button class="topbar-link" type="button" aria-haspopup="true" aria-expanded="false" data-topbar-dropdown-toggle>
+        <i class="bi bi-plus-lg"></i> New
+      </button>
+      <div class="topbar-dropdown-menu" role="menu">
+        <% if (canManageResource('posts', 'create')) { %><a href="/admin/posts/create" role="menuitem">Post</a><% } %>
+        <% if (can('manage_pages')) { %><a href="/admin/pages/create" role="menuitem">Page</a><% } %>
+        <% if (canAny(['manage_media', 'upload_media'])) { %><a href="/admin/media#upload" role="menuitem">Media</a><% } %>
+        <% (customPostTypes || []).forEach(function(cpt) { %>
+          <% if (canAny(['manage_custom_content','manage_posts','create_posts'])) { %>
+            <a href="/admin/content/<%= cpt.slug %>/create" role="menuitem"><%= cpt.name %></a>
+          <% } %>
+        <% }) %>
+      </div>
+    </div>
   </div>
+
+  <div class="topbar-center d-none d-lg-flex flex-grow-1 justify-content-center px-3">
+    <div class="topbar-search-wrap" data-admin-search>
+      <i class="bi bi-search topbar-search-icon" aria-hidden="true"></i>
+      <input class="topbar-search-input" type="search" placeholder="Search admin… (Ctrl+K)" aria-label="Search admin" data-admin-search-input autocomplete="off">
+      <div class="topbar-search-results" data-admin-search-results role="listbox" aria-label="Search results"></div>
+    </div>
+  </div>
+
   <div class="topbar-right">
+    <% if (typeof securityAlerts !== 'undefined' && securityAlerts > 0 && can('manage_security')) { %>
+      <a class="topbar-badge-alert d-none d-sm-inline-flex" href="/admin/security" title="Recent failed login attempts">
+        <i class="bi bi-shield-exclamation" aria-hidden="true"></i> <%= securityAlerts %>
+      </a>
+    <% } %>
     <% if (typeof unreadMessages !== 'undefined' && unreadMessages > 0) { %>
-      <a class="topbar-link" href="/admin/messages" title="Unread messages"><i class="bi bi-envelope"></i><span class="badge-count"><%= unreadMessages %></span></a>
+      <a class="topbar-link" href="/admin/messages" title="Unread messages" aria-label="<%= unreadMessages %> unread messages">
+        <i class="bi bi-envelope"></i><span class="badge-count"><%= unreadMessages %></span>
+      </a>
     <% } %>
     <div class="user-menu" data-user-menu>
-      <button class="user-chip" type="button" aria-haspopup="true" aria-expanded="false">
-        <span class="user-avatar"><%= currentUser && currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'A' %></span>
+      <button class="user-chip" type="button" aria-haspopup="true" aria-expanded="false" aria-label="User menu">
+        <span class="user-avatar" aria-hidden="true"><%= currentUser && currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'A' %></span>
         <span class="d-none d-sm-inline"><%= currentUser ? currentUser.name : 'Admin' %></span>
-        <i class="bi bi-chevron-down"></i>
+        <i class="bi bi-chevron-down" aria-hidden="true"></i>
       </button>
-      <div class="user-dropdown">
-        <a href="/admin/profile">Profile</a>
+      <div class="user-dropdown" role="menu">
+        <a href="/admin/profile" role="menuitem">Profile</a>
+        <% if (can('manage_settings')) { %><a href="/admin/settings" role="menuitem">Settings</a><% } %>
         <form action="/admin/logout" method="post">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button type="submit">Log Out</button>
+          <button type="submit" role="menuitem">Log Out</button>
         </form>
       </div>
     </div>

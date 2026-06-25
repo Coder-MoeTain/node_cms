@@ -1,0 +1,25 @@
+<%#
+  Inner page header (Phases 6–10)
+  Locals: title, subtitle (optional), crumbs (optional array of {label, url}), isPortal (optional)
+%>
+<% const portalPage = typeof isPortal !== 'undefined' ? isPortal : false;
+   const crumbItems = typeof crumbs !== 'undefined' ? crumbs : [];
+%>
+<header class="inner-page-header <%= portalPage ? 'portal-page-header' : 'site-page-header' %>">
+  <% if (crumbItems.length) { %>
+    <nav class="portal-breadcrumb site-breadcrumb" aria-label="Breadcrumb">
+      <% crumbItems.forEach(function(crumb, index) { %>
+        <% if (index > 0) { %><span class="breadcrumb-sep" aria-hidden="true">/</span><% } %>
+        <% if (crumb.url && index < crumbItems.length - 1) { %>
+          <a href="<%= crumb.url %>"><%= crumb.label %></a>
+        <% } else { %>
+          <span <%= index === crumbItems.length - 1 ? 'aria-current="page"' : '' %>><%= crumb.label %></span>
+        <% } %>
+      <% }) %>
+    </nav>
+  <% } %>
+  <h1 class="<%= portalPage ? 'portal-page-title' : 'site-page-title' %>"><%= title %></h1>
+  <% if (typeof subtitle !== 'undefined' && subtitle) { %>
+    <p class="inner-page-lead"><%= subtitle %></p>
+  <% } %>
+</header>
