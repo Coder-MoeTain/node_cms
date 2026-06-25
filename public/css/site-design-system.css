@@ -1,0 +1,339 @@
+/**
+ * NodePress CMS — Public Design System (Phase 2)
+ * Tokens live in theme-vars.css; this file provides base typography,
+ * layout primitives, and reusable component classes for the public site.
+ */
+
+/* --- Base typography --- */
+body.site-design-system,
+.site-design-system body,
+.portal-layout-active,
+.standard-layout-active {
+  font-family: var(--site-font-family, var(--np-font));
+  font-size: var(--site-font-body);
+  line-height: var(--site-line-body);
+  color: var(--site-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html[data-font-scale="small"] { font-size: 14px; }
+html[data-font-scale="normal"] { font-size: 16px; }
+html[data-font-scale="large"] { font-size: 18px; }
+
+.ds-text-muted,
+.site-text-muted {
+  color: var(--site-muted);
+}
+
+.ds-heading-section,
+.site-heading-section,
+.portal-section-title,
+.site-page-title {
+  color: var(--site-text);
+  font-size: var(--site-title-section);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: var(--site-line-heading);
+  margin: 0;
+}
+
+.ds-heading-card,
+.site-heading-card {
+  color: var(--site-text);
+  font-size: var(--site-title-card);
+  font-weight: 600;
+  line-height: var(--site-line-heading);
+  margin: 0;
+}
+
+.ds-heading-article,
+.site-heading-article,
+.post-title {
+  color: var(--site-text);
+  font-size: var(--site-title-article);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: var(--site-line-heading);
+}
+
+.ds-lead,
+.site-lead,
+.post-lead {
+  color: var(--site-muted);
+  font-size: var(--site-font-body-lg);
+  line-height: var(--site-line-body);
+  max-width: 65ch;
+}
+
+.ds-prose,
+.entry-content,
+.post-content {
+  font-size: var(--site-font-body-lg);
+  line-height: var(--site-line-body);
+  max-width: 72ch;
+}
+
+/* --- Layout --- */
+.ds-container,
+.site-container-inner {
+  margin-inline: auto;
+  max-width: var(--site-container);
+  padding-inline: var(--bs-gutter-x, 0.75rem);
+  width: 100%;
+}
+
+.ds-section,
+.site-section,
+.portal-section {
+  padding-block: var(--site-section-pad);
+}
+
+@media (max-width: 767.98px) {
+  .ds-section,
+  .site-section,
+  .portal-section {
+    padding-block: var(--site-section-pad-mobile);
+  }
+}
+
+.ds-grid {
+  display: grid;
+  gap: var(--site-grid-gap);
+}
+
+.ds-grid-lg {
+  gap: var(--site-grid-gap-lg);
+}
+
+.ds-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ds-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 991.98px) {
+  .ds-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .ds-grid-2,
+  .ds-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Surfaces & cards --- */
+.ds-surface,
+.site-surface {
+  background: var(--site-surface);
+}
+
+.ds-surface-soft,
+.site-surface-soft {
+  background: var(--site-surface-soft);
+}
+
+.ds-card,
+.site-card {
+  background: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius-md);
+  box-shadow: var(--site-shadow-sm);
+  padding: var(--site-card-pad);
+  transition: box-shadow var(--site-transition-base), transform var(--site-transition-base);
+}
+
+.ds-card-lg {
+  padding: var(--site-card-pad-lg);
+}
+
+.ds-card-hover:hover,
+.site-card-hover:hover {
+  box-shadow: var(--site-shadow-md);
+  transform: translateY(-3px);
+}
+
+.ds-card-flat {
+  box-shadow: none;
+}
+
+.ds-card-shadow {
+  box-shadow: var(--site-shadow-md);
+}
+
+/* Bridge existing portal/site card classes to design system */
+.portal-card-bordered,
+.portal-card-shadow,
+.portal-card-flat,
+.site-panel,
+.portal-widget {
+  border-radius: var(--site-radius-md);
+}
+
+.portal-card-bordered,
+.site-panel {
+  background: var(--site-surface);
+  border-color: var(--site-border);
+}
+
+.portal-card-shadow {
+  box-shadow: var(--site-shadow-md);
+}
+
+/* --- Buttons --- */
+.ds-btn,
+.site-btn {
+  align-items: center;
+  border-radius: var(--site-radius-sm);
+  display: inline-flex;
+  font-size: var(--site-font-body);
+  font-weight: 600;
+  gap: 0.4rem;
+  justify-content: center;
+  line-height: 1.3;
+  min-height: 44px;
+  padding: 0.55rem 1.25rem;
+  text-decoration: none;
+  transition:
+    background var(--site-transition-fast),
+    border-color var(--site-transition-fast),
+    box-shadow var(--site-transition-fast),
+    transform var(--site-transition-fast),
+    color var(--site-transition-fast);
+}
+
+.ds-btn:focus-visible,
+.site-btn:focus-visible {
+  box-shadow: var(--site-focus-ring);
+  outline: none;
+}
+
+.ds-btn-primary,
+.site-btn:not(.site-btn-outline):not(.site-btn-light):not(.portal-btn-outline) {
+  background: var(--site-button, var(--site-primary));
+  border: 1px solid var(--site-button, var(--site-primary));
+  color: #fff;
+}
+
+.ds-btn-primary:hover,
+.site-btn:hover {
+  background: var(--site-button-hover, var(--site-primary-dark));
+  border-color: var(--site-button-hover, var(--site-primary-dark));
+  box-shadow: var(--site-shadow-sm);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.ds-btn-secondary {
+  background: var(--site-secondary);
+  border: 1px solid var(--site-secondary);
+  color: var(--site-text);
+}
+
+.ds-btn-outline {
+  background: transparent;
+  border: 1px solid var(--site-primary);
+  color: var(--site-primary);
+}
+
+.ds-btn-outline:hover {
+  background: var(--site-surface-soft);
+}
+
+.ds-btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--site-primary);
+}
+
+.ds-btn-block {
+  display: flex;
+  width: 100%;
+}
+
+/* --- Badges & labels --- */
+.ds-badge,
+.site-badge {
+  background: var(--site-surface-soft);
+  border-radius: 999px;
+  color: var(--site-primary);
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  padding: 0.25rem 0.65rem;
+}
+
+.ds-badge-accent {
+  background: rgba(215, 25, 32, 0.1);
+  color: var(--site-accent);
+}
+
+.ds-badge-muted {
+  background: var(--site-surface-soft);
+  color: var(--site-muted);
+}
+
+/* --- Forms (public) --- */
+.ds-input,
+.site-design-system .form-control {
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius-sm);
+  font-size: var(--site-font-body);
+  min-height: 44px;
+  transition: border-color var(--site-transition-fast), box-shadow var(--site-transition-fast);
+}
+
+.ds-input:focus,
+.site-design-system .form-control:focus {
+  border-color: var(--site-primary);
+  box-shadow: var(--site-focus-ring);
+}
+
+/* --- Links --- */
+.ds-link,
+.site-design-system a:not(.site-btn):not(.portal-nav-link):not(.portal-service-card):not(.post-card):not(.navbar-brand) {
+  color: var(--site-link, var(--site-primary));
+  text-decoration-color: rgba(11, 95, 138, 0.35);
+  text-underline-offset: 0.15em;
+}
+
+.ds-link:hover {
+  color: var(--site-primary-dark);
+}
+
+/* --- Shadows & radius utilities --- */
+.ds-radius-sm { border-radius: var(--site-radius-sm); }
+.ds-radius-md { border-radius: var(--site-radius-md); }
+.ds-radius-lg { border-radius: var(--site-radius-lg); }
+.ds-shadow-sm { box-shadow: var(--site-shadow-sm); }
+.ds-shadow-md { box-shadow: var(--site-shadow-md); }
+.ds-shadow-lg { box-shadow: var(--site-shadow-lg); }
+
+/* --- Container width --- */
+.portal-layout-active .container,
+.standard-layout-active .container {
+  max-width: var(--site-container);
+}
+
+/* --- Reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  .ds-card,
+  .ds-btn,
+  .site-btn,
+  .portal-service-card,
+  .post-card {
+    transition: none !important;
+  }
+
+  .ds-card-hover:hover,
+  .site-card-hover:hover {
+    transform: none;
+  }
+}

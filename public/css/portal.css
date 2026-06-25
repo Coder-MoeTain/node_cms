@@ -5,11 +5,11 @@
 
 .portal-layout-active {
   background: var(--gov-bg, var(--site-bg, #f5f7fa));
-  scroll-padding-top: 72px;
+  scroll-padding-top: var(--site-scroll-offset, 72px);
 }
 
 .portal-layout-active [id^="portal-"] {
-  scroll-margin-top: 72px;
+  scroll-margin-top: var(--site-scroll-offset, 72px);
 }
 
 .portal-main {

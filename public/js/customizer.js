@@ -29,7 +29,11 @@
     preview.style.setProperty('--preview-link', link);
     preview.style.setProperty('--preview-button', button);
     preview.style.setProperty('--preview-accent', accent);
-    if (font) preview.style.setProperty('--preview-font', font);
+    if (font) {
+      preview.style.setProperty('--preview-font', font);
+      preview.style.setProperty('--site-font-family', font);
+      preview.style.fontFamily = font;
+    }
     preview.style.background = bg;
     preview.style.color = text;
 
@@ -272,12 +276,13 @@
       .replace(/\/\* np-theme-vars \*\/[\s\S]*?\}\s*/g, '')
       .replace(/\/\* np-portal-config \*\/[\s\S]*?(?=\n\n|$)/g, '')
       .trim();
-    const vars = `/* np-theme-vars */\n:root { --site-link: ${link}; --site-button: ${button}; --site-accent: ${accent}; --site-card: ${card}; --site-footer-bg: ${footer}; --site-muted: ${muted}; --site-border: ${border}; }`;
-    const portalBlock = `/* np-portal-config */\n${JSON.stringify(buildPortalConfig(), null, 2)}`;
-    const customCss = [vars, portalBlock, css].filter(Boolean).join('\n\n');
     const fontSelectEl = document.querySelector('[data-font-select]');
     const fontCustomEl = document.querySelector('[data-font-custom]');
     const fontFamily = fontSelectEl?.value === '__custom__' ? fontCustomEl?.value : fontSelectEl?.value;
+    const fontStack = fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const vars = `/* np-theme-vars */\n:root { --site-link: ${link}; --site-button: ${button}; --site-accent: ${accent}; --site-card: ${card}; --site-footer-bg: ${footer}; --site-muted: ${muted}; --site-border: ${border}; --site-font-family: ${fontStack}; }`;
+    const portalBlock = `/* np-portal-config */\n${JSON.stringify(buildPortalConfig(), null, 2)}`;
+    const customCss = [vars, portalBlock, css].filter(Boolean).join('\n\n');
     return {
       primary_color: form.querySelector('[data-preview-primary]')?.value,
       secondary_color: form.querySelector('[data-preview-secondary]')?.value,
@@ -342,7 +347,11 @@
       .replace(/\/\* np-portal-config \*\/[\s\S]*?(?=\n\n|$)/g, '')
       .trim();
 
-    const vars = `/* np-theme-vars */\n:root { --site-link: ${link}; --site-button: ${button}; --site-accent: ${accent}; --site-card: ${card}; --site-footer-bg: ${footer}; --site-muted: ${muted}; --site-border: ${border}; }`;
+    const fontSelectEl = document.querySelector('[data-font-select]');
+    const fontCustomEl = document.querySelector('[data-font-custom]');
+    const fontFamily = fontSelectEl?.value === '__custom__' ? fontCustomEl?.value : fontSelectEl?.value;
+    const fontStack = fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const vars = `/* np-theme-vars */\n:root { --site-link: ${link}; --site-button: ${button}; --site-accent: ${accent}; --site-card: ${card}; --site-footer-bg: ${footer}; --site-muted: ${muted}; --site-border: ${border}; --site-font-family: ${fontStack}; }`;
     const portalBlock = `/* np-portal-config */\n${JSON.stringify(buildPortalConfig(), null, 2)}`;
     cssField.value = [vars, portalBlock, css].filter(Boolean).join('\n\n');
   });

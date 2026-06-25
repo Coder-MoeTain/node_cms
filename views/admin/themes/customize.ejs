@@ -120,7 +120,7 @@
                     { value: 'Merriweather, Georgia, serif', label: 'Merriweather' },
                     { value: 'Lora, Georgia, serif', label: 'Lora' }
                   ];
-                  const currentFont = themeSetting.font_family || 'Georgia, serif';
+                  const currentFont = themeSetting.font_family || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
                   fonts.forEach(function(font) { %>
                     <option value="<%= font.value %>" <%= currentFont === font.value ? 'selected' : '' %>><%= font.label %></option>
                   <% }); %>

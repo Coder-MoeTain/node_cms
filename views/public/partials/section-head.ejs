@@ -1,0 +1,9 @@
+<div class="portal-section-head site-section-head<%= typeof inline !== 'undefined' && inline ? ' portal-section-head-inline site-section-head-inline' : '' %><%= typeof headClass !== 'undefined' && headClass ? ' ' + headClass : '' %>">
+  <div>
+    <h2 class="portal-section-title site-section-title"><%= title %></h2>
+    <% if (typeof subtitle !== 'undefined' && subtitle) { %><p class="portal-section-subtitle site-section-subtitle"><%= subtitle %></p><% } %>
+  </div>
+  <% if (typeof viewAllUrl !== 'undefined' && viewAllUrl) { %>
+    <a class="portal-view-all site-view-all" href="<%= viewAllUrl %>"><%= typeof viewAllLabel !== 'undefined' ? viewAllLabel : 'View all' %></a>
+  <% } %>
+</div>

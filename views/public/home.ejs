@@ -9,60 +9,33 @@
     <%- include(themePartial('home-portal')) %>
   <% } else { %>
     <% if (sliders.length) { %>
-      <div id="homeSlider" class="carousel slide site-hero-carousel" data-bs-ride="carousel">
-        <div class="carousel-inner">
-          <% sliders.forEach(function(slide, index) { %>
-            <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-              <div class="hero-slide" style="<%= slide.image ? `--hero-image: url(${slide.image})` : '' %>">
-                <div class="container hero-content">
-                  <h1><%= slide.title %></h1>
-                  <p><%= slide.description %></p>
-                  <% if (slide.button_text) { %><a class="site-btn site-btn-lg" href="<%= slide.button_url %>"><%= slide.button_text %></a><% } %>
-                </div>
-              </div>
-            </div>
-          <% }) %>
-        </div>
-        <% if (sliders.length > 1) { %>
-        <button class="carousel-control-prev" type="button" data-bs-target="#homeSlider" data-bs-slide="prev" aria-label="Previous slide"><span class="carousel-control-prev-icon" aria-hidden="true"></span></button>
-        <button class="carousel-control-next" type="button" data-bs-target="#homeSlider" data-bs-slide="next" aria-label="Next slide"><span class="carousel-control-next-icon" aria-hidden="true"></span></button>
-        <% } %>
-      </div>
+      <%- include('partials/hero-carousel', { sliders, variant: 'site' }) %>
     <% } else { %>
-      <section class="site-hero-default">
-        <div class="container hero-content">
-          <span class="eyebrow">Welcome</span>
-          <h1><%= siteSettings.site_title || 'NodePress CMS' %></h1>
-          <p><%= siteSettings.site_tagline || 'Publishing tools for modern content teams.' %></p>
-          <div class="hero-actions">
-            <a class="site-btn site-btn-lg" href="/blog">Explore articles</a>
-            <a class="site-btn site-btn-outline site-btn-lg" href="/contact">Get in touch</a>
-          </div>
-        </div>
-      </section>
+      <%- include('partials/hero-fallback', { variant: 'site', siteSettings, portalConfig }) %>
     <% } %>
     <% banners.forEach(function(banner) { %>
       <section class="container py-4"><div class="banner-box"><h2><%= banner.title %></h2><p><%= banner.subtitle %></p><% if (banner.button_text) { %><a class="site-btn" href="<%= banner.button_link %>"><%= banner.button_text %></a><% } %></div></section>
     <% }) %>
-    <section class="site-features">
+    <section class="site-features site-widget-section">
       <div class="container">
-        <div class="row g-4">
+        <%- include('partials/section-head', { title: 'Why NodePress', subtitle: 'Everything you need to publish and manage content at scale.' }) %>
+        <div class="row g-4 site-feature-grid">
           <div class="col-md-4">
-            <div class="site-feature-card">
+            <div class="site-feature-card site-widget-card">
               <div class="site-feature-icon"><i class="bi bi-journal-richtext" aria-hidden="true"></i></div>
               <h3>Rich content</h3>
               <p>Publish articles, pages, and media with a powerful editor built for teams.</p>
             </div>
           </div>
           <div class="col-md-4">
-            <div class="site-feature-card">
+            <div class="site-feature-card site-widget-card">
               <div class="site-feature-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></div>
               <h3>Secure &amp; reliable</h3>
               <p>Enterprise-grade security with role-based access and activity logging.</p>
             </div>
           </div>
           <div class="col-md-4">
-            <div class="site-feature-card">
+            <div class="site-feature-card site-widget-card">
               <div class="site-feature-icon"><i class="bi bi-palette" aria-hidden="true"></i></div>
               <h3>Beautiful themes</h3>
               <p>Switch themes and customize colors, layouts, and branding in minutes.</p>
@@ -71,19 +44,13 @@
         </div>
       </div>
     </section>
-    <section class="container py-5">
-      <div class="section-heading d-flex justify-content-between align-items-end mb-4">
-        <div>
-          <span class="eyebrow site-eyebrow">Latest</span>
-          <h2 class="h3 mb-0">Recent articles</h2>
-        </div>
-        <a class="section-heading-link" href="/blog">View all posts <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-      </div>
-      <div class="row g-4">
+    <section class="container py-5 site-widget-section">
+      <%- include('partials/section-head', { title: 'Recent articles', subtitle: 'Latest stories from the blog.', viewAllUrl: '/blog', viewAllLabel: 'View all posts', inline: true, headClass: 'mb-4' }) %>
+      <div class="row g-4 site-post-grid">
         <% if (posts.length) { %>
           <% posts.forEach(function(post) { %><div class="col-md-6 col-lg-4"><%- include(themePartial('post-card'), { post }) %></div><% }) %>
         <% } else { %>
-          <div class="col-12"><div class="site-empty-state"><i class="bi bi-journal-x" aria-hidden="true"></i><p>No published posts yet.</p><a class="site-btn" href="/blog">Browse the blog</a></div></div>
+          <div class="col-12"><div class="site-empty-state site-empty-box"><i class="bi bi-journal-x" aria-hidden="true"></i><p>No published posts yet.</p><a class="site-btn" href="/blog">Browse the blog</a></div></div>
         <% } %>
       </div>
     </section>

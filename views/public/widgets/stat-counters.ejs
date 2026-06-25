@@ -1,13 +1,10 @@
-<section class="portal-section portal-statistics" id="portal-stats" aria-label="Government directory and statistics">
+<section class="portal-section portal-statistics site-section" id="portal-stats" aria-label="Government directory and statistics">
   <div class="container py-4">
-    <div class="portal-section-head mb-3">
-      <h2 class="portal-section-title">Government Directory &amp; Statistics</h2>
-      <p class="portal-section-subtitle">Live portal metrics updated from site activity</p>
-    </div>
+    <%- include('../partials/section-head', { title: 'Government Directory & Statistics', subtitle: 'Live portal metrics updated from site activity' }) %>
     <div class="portal-stat-grid portal-card-<%= (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered' %>">
       <% const stats = (portalStats && portalStats.items) || []; %>
       <% stats.forEach(function(stat) { %>
-        <a class="portal-stat-item" href="<%= stat.url %>">
+        <a class="portal-stat-item site-stat-item" href="<%= stat.url %>">
           <span class="portal-stat-value" data-count-up="<%= stat.value %>" data-count-raw="<%= String(stat.value).replace(/[^0-9]/g, '') %>"><%= stat.value %></span>
           <span class="portal-stat-label"><%= stat.label %></span>
         </a>

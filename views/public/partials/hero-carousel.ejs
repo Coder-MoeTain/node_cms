@@ -1,0 +1,53 @@
+<%#
+  Shared hero carousel partial (Phase 4)
+  Locals: sliders, variant ('portal'|'site'), isMnp (optional)
+%>
+<% const heroVariant = typeof variant !== 'undefined' ? variant : 'portal';
+   const isPortalHero = heroVariant === 'portal';
+   const heroSectionClass = isPortalHero ? 'portal-hero' : 'site-hero';
+   const carouselClass = isPortalHero ? 'portal-hero-carousel' : 'site-hero-carousel';
+   const contentClass = isPortalHero ? 'portal-hero-content' : 'site-hero-content';
+   const mnp = typeof isMnp !== 'undefined' && isMnp;
+%>
+<% if (sliders && sliders.length) { %>
+<section class="<%= heroSectionClass %> <%= mnp ? 'portal-hero-mnp' : '' %>" id="<%= isPortalHero ? 'portal-hero' : 'site-hero' %>" aria-label="Featured slider">
+  <div id="homeSlider" class="carousel slide <%= carouselClass %>" data-hero-carousel <%= isPortalHero ? 'data-portal-carousel' : '' %> data-bs-ride="carousel">
+    <% if (sliders.length > 1) { %>
+      <div class="carousel-indicators hero-carousel-indicators <%= isPortalHero ? 'portal-carousel-indicators' : 'site-carousel-indicators' %>">
+        <% sliders.forEach(function(slide, index) { %>
+          <button type="button" data-bs-target="#homeSlider" data-bs-slide-to="<%= index %>" class="<%= index === 0 ? 'active' : '' %>" aria-label="Slide <%= index + 1 %>: <%= slide.title %>" <%= index === 0 ? 'aria-current="true"' : '' %>></button>
+        <% }) %>
+      </div>
+    <% } %>
+    <div class="carousel-inner">
+      <% sliders.forEach(function(slide, index) { %>
+        <div class="carousel-item <%= index === 0 ? 'active' : '' %>" data-hero-title="<%= slide.title %>">
+          <div class="hero-slide <%= isPortalHero ? 'portal-hero-slide' : 'site-hero-slide' %>" style="<%= slide.image ? `--hero-image: url(${slide.image})` : '' %>">
+            <div class="site-hero-shade <%= isPortalHero ? 'portal-hero-shade' : '' %>" aria-hidden="true"></div>
+            <div class="container hero-content <%= contentClass %>">
+              <div class="hero-body">
+                <% if (slide.description && !isPortalHero) { %><span class="hero-eyebrow site-eyebrow-light">Featured</span><% } %>
+                <h1 class="<%= mnp ? 'portal-mnp-hero-title' : '' %>"><%= slide.title %></h1>
+                <% if (slide.description) { %><p class="hero-lead"><%= slide.description %></p><% } %>
+                <% if (slide.button_text && slide.button_url) { %>
+                  <div class="hero-actions <%= isPortalHero ? 'portal-hero-actions' : '' %>">
+                    <a class="site-btn <%= isPortalHero ? 'portal-btn' : 'site-btn-lg' %>" href="<%= slide.button_url %>"><%= slide.button_text %></a>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    <% if (sliders.length > 1) { %>
+      <div class="hero-carousel-meta" aria-hidden="true">
+        <span class="hero-slide-counter" data-hero-counter>1 / <%= sliders.length %></span>
+      </div>
+      <button class="carousel-control-prev hero-carousel-control <%= isPortalHero ? 'portal-carousel-control' : 'site-carousel-control' %>" type="button" data-bs-target="#homeSlider" data-bs-slide="prev" aria-label="Previous slide"><span class="carousel-control-prev-icon"></span></button>
+      <button class="carousel-control-next hero-carousel-control <%= isPortalHero ? 'portal-carousel-control' : 'site-carousel-control' %>" type="button" data-bs-target="#homeSlider" data-bs-slide="next" aria-label="Next slide"><span class="carousel-control-next-icon"></span></button>
+      <div class="visually-hidden" aria-live="polite" data-hero-live></div>
+    <% } %>
+  </div>
+</section>
+<% } %>

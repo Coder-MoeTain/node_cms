@@ -1,18 +1,12 @@
 <% const items = (mediaItems || []).slice(0, 4); const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
 <% if (items.length) { %>
-<section class="portal-section portal-media-gallery" id="portal-media" aria-label="Photos and videos">
+<section class="portal-section portal-media-gallery site-section" id="portal-media" aria-label="Photos and videos">
   <div class="container py-4">
-    <div class="portal-section-head portal-section-head-inline">
-      <div>
-        <h2 class="portal-section-title">Photos &amp; Videos</h2>
-        <p class="portal-section-subtitle">Media from the site library</p>
-      </div>
-      <a class="portal-view-all" href="/blog">Explore more</a>
-    </div>
+    <%- include('../partials/section-head', { title: 'Photos & Videos', subtitle: 'Media from the site library', viewAllUrl: '/blog', viewAllLabel: 'Explore more', inline: true }) %>
     <div class="row g-3 portal-media-grid">
       <% items.forEach(function(item) { %>
         <div class="col-6 col-md-3">
-          <article class="portal-media-card portal-card-<%= cardStyle %>">
+          <article class="portal-media-card site-media-card portal-card-<%= cardStyle %>">
             <a href="<%= item.file_path %>" target="_blank" rel="noopener" class="portal-media-thumb-wrap">
               <span class="portal-media-badge portal-media-badge-<%= item.file_type === 'video' ? 'video' : 'image' %>"><%= item.file_type === 'video' ? 'Video' : 'Photo' %></span>
               <% if (item.file_type === 'image') { %>

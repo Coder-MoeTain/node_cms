@@ -20,6 +20,7 @@
   <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="/vendor/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/theme-vars.css">
+  <link rel="stylesheet" href="/css/site-design-system.css">
   <link rel="stylesheet" href="/css/components.css">
   <link rel="stylesheet" href="/css/ui-modern.css">
   <link rel="stylesheet" href="/css/site.css">
@@ -33,8 +34,14 @@
   <% if (themePreset === 'myanmar-portal') { %>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;600;700&family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/mnp-portal.css">
-  <% } else { %>
+  <% } else if ((activeTheme.font_family || '').includes('Inter')) { %>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <% } else if ((activeTheme.font_family || '').includes('Source Sans')) { %>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <% } else if ((activeTheme.font_family || '').includes('Merriweather')) { %>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+  <% } else if ((activeTheme.font_family || '').includes('Lora')) { %>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
   <% } %>
   <% const tv = themeVars || {};
      const accent = tv.accent || activeTheme.primary_color || '#d71920';
@@ -74,9 +81,12 @@
       --np-text: <%= activeTheme.text_color || '#1f2933' %>;
       --np-font: <%= activeTheme.font_family || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' %>;
       --site-primary: var(--portal-primary);
+      --site-primary-dark: var(--portal-primary-dark);
       --site-secondary: var(--portal-secondary);
       --site-accent: var(--portal-accent);
       --site-bg: var(--portal-bg);
+      --site-surface: var(--portal-card);
+      --site-surface-soft: #eef4f8;
       --site-card: var(--portal-card);
       --site-border: var(--portal-border);
       --site-text: var(--portal-text);
@@ -86,6 +96,15 @@
       --site-link: <%= linkColor %>;
       --site-button: <%= buttonColor %>;
       --site-button-hover: var(--gov-primary-dark);
+      --site-font-family: <%= activeTheme.font_family || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' %>;
+      --site-radius-sm: 8px;
+      --site-radius-md: 14px;
+      --site-radius-lg: 22px;
+      --site-shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.06);
+      --site-shadow-md: 0 12px 30px rgba(15, 23, 42, 0.10);
+      --site-container: 1180px;
+      --site-header-z: 1030;
+      --site-scroll-offset: 72px;
       --site-logo-max-height: <%= activeTheme.logo_max_height || 64 %>px;
       --site-logo-max-width: <%= activeTheme.logo_max_width || 180 %>px;
     }
@@ -94,5 +113,5 @@
   <% if (typeof schema !== 'undefined' && schema) { %><script type="application/ld+json"><%- schema %></script><% } %>
   <% (pluginPublicHead || []).forEach(function(snippet) { %><%- snippet %><% }) %>
 </head>
-<body class="<%= typeof themeLayoutClasses !== 'undefined' ? themeLayoutClasses : '' %> portal-preset-<%= themePreset || 'default' %> <%= isPortalLayout ? 'portal-layout-active' : 'standard-layout-active' %><% if (typeof isCustomizerPreview !== 'undefined' && isCustomizerPreview) { %> customizer-preview-active<% } %>">
+<body class="site-design-system <%= typeof themeLayoutClasses !== 'undefined' ? themeLayoutClasses : '' %> portal-preset-<%= themePreset || 'default' %> <%= isPortalLayout ? 'portal-layout-active' : 'standard-layout-active' %><% if (typeof isCustomizerPreview !== 'undefined' && isCustomizerPreview) { %> customizer-preview-active<% } %>">
 <a class="np-skip-link" href="#main-content">Skip to main content</a>
