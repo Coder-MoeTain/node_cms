@@ -8,7 +8,7 @@
       <% const stats = (portalStats && portalStats.items) || []; %>
       <% stats.forEach(function(stat) { %>
         <a class="portal-stat-item" href="<%= stat.url %>">
-          <span class="portal-stat-value"><%= stat.value %></span>
+          <span class="portal-stat-value" data-count-up="<%= stat.value %>" data-count-raw="<%= String(stat.value).replace(/[^0-9]/g, '') %>"><%= stat.value %></span>
           <span class="portal-stat-label"><%= stat.label %></span>
         </a>
       <% }) %>

@@ -3,10 +3,13 @@
 <% const pre = typeof prefill !== 'undefined' ? prefill : {}; const errs = typeof fieldErrors !== 'undefined' ? fieldErrors : {}; %>
 <main class="<%= isPortal ? 'container portal-page portal-main py-4' : 'site-page site-main py-5' %>" id="main-content">
   <div class="<%= isPortal ? '' : 'container' %>">
+    <header class="contact-hero <%= isPortal ? 'portal-contact-hero' : 'site-contact-hero' %>">
+      <h1 class="<%= isPortal ? 'portal-page-title mb-2' : 'site-page-title mb-2' %>">Contact Us</h1>
+      <p class="mb-0">Reach our team for support, feedback, and service requests.</p>
+    </header>
     <nav class="<%= isPortal ? 'portal-breadcrumb' : 'site-breadcrumb' %>" aria-label="Breadcrumb">
       <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Contact</span>
     </nav>
-    <h1 class="<%= isPortal ? 'portal-page-title mb-4' : 'site-page-title mb-4' %>">Contact Us</h1>
     <% if (success && success.length) { %><div class="np-alert np-alert-success <%= isPortal ? 'portal-alert' : 'site-alert' %>" role="status"><%= success[0] %></div><% } %>
     <% if (typeof formError !== 'undefined' && formError) { %><div class="np-alert np-alert-danger <%= isPortal ? 'portal-alert' : 'site-alert' %>" role="alert"><%= formError %></div><% } %>
     <div class="row g-4">

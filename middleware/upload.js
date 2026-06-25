@@ -1,10 +1,11 @@
 const path = require('path');
 const multer = require('multer');
 const appConfig = require('../config/app');
-const { ensureDirectory, publicUploadPath } = require('../utils/fileHelper');
+const { ensureDirectory } = require('../utils/fileHelper');
+const { quarantineUploadPath } = require('../utils/uploadSecurity');
 
-const blockedExtensions = new Set(['.exe', '.bat', '.cmd', '.sh', '.php', '.phtml', '.js', '.mjs', '.jar', '.svg', '.html', '.htm']);
-const blockedFileNames = new Set(['.env', 'wp-config.php', 'phpinfo.php', 'config.php', 'backup.sql', 'database.sql']);
+const blockedExtensions = new Set(['.exe', '.bat', '.cmd', '.sh', '.php', '.phtml', '.js', '.mjs', '.jar', '.svg', '.html', '.htm', '.jsp', '.asp', '.aspx']);
+const blockedFileNames = new Set(['.env', 'wp-config.php', 'phpinfo.php', 'config.php', 'backup.sql', 'database.sql', 'shell.php', 'config']);
 const allowedImageMimeTypes = new Map([
   ['image/jpeg', ['.jpg', '.jpeg']],
   ['image/png', ['.png']],
@@ -22,13 +23,17 @@ const allowedMimeTypes = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ];
 
+function uploadDestination() {
+  const now = new Date();
+  const folder = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const destination = quarantineUploadPath(folder);
+  ensureDirectory(destination);
+  return destination;
+}
+
 const storage = multer.diskStorage({
   destination(req, file, callback) {
-    const now = new Date();
-    const folder = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const destination = publicUploadPath(folder);
-    ensureDirectory(destination);
-    callback(null, destination);
+    callback(null, uploadDestination());
   },
   filename(req, file, callback) {
     const extension = path.extname(file.originalname).toLowerCase();
@@ -39,7 +44,12 @@ const storage = multer.diskStorage({
 function hasUnsafeFileName(originalName) {
   const normalized = String(originalName || '').toLowerCase().replace(/\\/g, '/');
   const baseName = path.basename(normalized);
-  return normalized.includes('../') || normalized.includes('..') || blockedFileNames.has(baseName);
+  const stem = baseName.replace(path.extname(baseName), '');
+  if (normalized.includes('../') || normalized.includes('..\\') || normalized.startsWith('..')) return true;
+  if (blockedFileNames.has(baseName) || blockedFileNames.has(stem)) return true;
+  const parts = baseName.split('.');
+  if (parts.length > 2 && parts.slice(0, -1).some((part) => blockedExtensions.has(`.${part}`))) return true;
+  return false;
 }
 
 function fileFilter(req, file, callback) {

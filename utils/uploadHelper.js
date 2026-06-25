@@ -2,17 +2,19 @@ const fs = require('fs');
 const path = require('path');
 const models = require('../models');
 const { buildMediaPayload } = require('./mediaHelper');
-
-function getUploadedFile(req, fieldName) {
-  return req.files?.[fieldName]?.[0] || (req.file?.fieldname === fieldName ? req.file : null);
-}
+const { finalizeQuarantinedUpload } = require('./uploadSecurity');
 
 async function saveUploadedImage(file, userId, transaction = null) {
   if (!file) return null;
 
-  const payload = await buildMediaPayload(file, userId);
+  const processed = await finalizeQuarantinedUpload(file);
+  const payload = await buildMediaPayload(processed, userId);
   await models.Media.create(payload, { transaction });
   return payload.file_path;
+}
+
+function getUploadedFile(req, fieldName) {
+  return req.files?.[fieldName]?.[0] || (req.file?.fieldname === fieldName ? req.file : null);
 }
 
 function isValidUploadPath(publicPath) {

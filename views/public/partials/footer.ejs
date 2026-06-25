@@ -76,6 +76,9 @@
   </div>
 </footer>
 <% } else { %>
+<button type="button" class="portal-back-to-top site-back-to-top" data-portal-back-top aria-label="Back to top" hidden>
+  <i class="bi bi-arrow-up" aria-hidden="true"></i>
+</button>
 <footer class="site-footer mt-5 footer-layout-<%= activeTheme.footer_layout || 'four-columns' %>">
   <div class="container py-5">
     <% if ((activeTheme.footer_layout || 'four-columns') !== 'minimal') { %>

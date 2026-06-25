@@ -2,6 +2,8 @@ const pkg = require('../package.json');
 const appConfig = require('../config/app');
 const models = require('../models');
 
+const { assertSafeOutboundUrlResolved } = require('./ssrfGuard');
+
 async function checkCoreUpdates() {
   const current = pkg.version;
   let latest = current;
@@ -10,6 +12,7 @@ async function checkCoreUpdates() {
 
   if (appConfig.updateCheckUrl) {
     try {
+      await assertSafeOutboundUrlResolved(appConfig.updateCheckUrl, { allowHttp: appConfig.env !== 'production' });
       const res = await fetch(appConfig.updateCheckUrl, { signal: AbortSignal.timeout(8000) });
       if (res.ok) {
         const data = await res.json();

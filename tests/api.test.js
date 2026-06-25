@@ -42,6 +42,16 @@ describe('apiAuth middleware', () => {
       expect(next).toHaveBeenCalled();
     });
   });
+
+  test('rejects API key in query string', () => {
+    withApiKey('secret-key', (apiAuth) => {
+      const next = jest.fn();
+      const res = mockRes();
+      apiAuth({ get: () => null, query: { api_key: 'secret-key' } }, res, next);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('REST API routes', () => {

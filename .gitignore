@@ -1,5 +1,8 @@
 node_modules/
+.env
 .env.local
+.env.*.local
+tmp/quarantine/
 npm-debug.log*
 public/uploads/*
 !public/uploads/.gitkeep

@@ -141,6 +141,100 @@
   --site-button-hover: #3c434a;
 }
 
+[data-theme-preset="government-modern"] {
+  --portal-primary: #0b5f8a;
+  --portal-primary-dark: #06466a;
+  --portal-secondary: #f4b000;
+  --portal-accent: #d71920;
+  --portal-bg: #f6f8fb;
+  --portal-card: #ffffff;
+  --portal-border: #d7dde5;
+  --portal-text: #1f2933;
+  --portal-muted: #6b7280;
+  --portal-footer: #0b2f47;
+  --site-primary: var(--portal-primary);
+  --site-secondary: var(--portal-secondary);
+  --site-accent: var(--portal-accent);
+  --site-bg: var(--portal-bg);
+  --site-surface: var(--portal-card);
+  --site-footer-bg: var(--portal-footer);
+}
+
+[data-theme-preset="corporate-blue"] {
+  --portal-primary: #1e40af;
+  --portal-primary-dark: #1e3a8a;
+  --portal-secondary: #0ea5e9;
+  --portal-accent: #0369a1;
+  --portal-bg: #f8fafc;
+  --portal-card: #ffffff;
+  --portal-footer: #0f172a;
+  --site-primary: var(--portal-primary);
+  --site-bg: var(--portal-bg);
+  --site-footer-bg: var(--portal-footer);
+}
+
+[data-theme-preset="news-magazine"] {
+  --portal-primary: #111827;
+  --portal-primary-dark: #030712;
+  --portal-secondary: #ef4444;
+  --portal-accent: #ef4444;
+  --portal-bg: #ffffff;
+  --portal-card: #ffffff;
+  --portal-footer: #111827;
+  --site-primary: var(--portal-primary);
+  --site-accent: var(--portal-accent);
+  --site-footer-bg: var(--portal-footer);
+}
+
+[data-theme-preset="clean-minimal"] {
+  --portal-primary: #374151;
+  --portal-primary-dark: #1f2937;
+  --portal-secondary: #9ca3af;
+  --portal-accent: #6b7280;
+  --portal-bg: #fafafa;
+  --portal-card: #ffffff;
+  --portal-footer: #374151;
+  --site-primary: var(--portal-primary);
+  --site-bg: var(--portal-bg);
+  --site-footer-bg: var(--portal-footer);
+}
+
+[data-theme-preset="dark-elegant"] {
+  --portal-primary: #818cf8;
+  --portal-primary-dark: #6366f1;
+  --portal-secondary: #a78bfa;
+  --portal-accent: #f472b6;
+  --portal-bg: #0f172a;
+  --portal-card: #1e293b;
+  --portal-border: #334155;
+  --portal-text: #f8fafc;
+  --portal-muted: #94a3b8;
+  --portal-footer: #020617;
+  --site-primary: var(--portal-primary);
+  --site-bg: var(--portal-bg);
+  --site-text: var(--portal-text);
+  --site-surface: var(--portal-card);
+  --site-footer-bg: var(--portal-footer);
+}
+
+[data-theme-preset="myanmar-portal-modern"] {
+  --portal-primary: #006ba6;
+  --portal-primary-dark: #004d7a;
+  --portal-secondary: #ffcc00;
+  --portal-accent: #e4282c;
+  --portal-bg: #eef2f6;
+  --portal-card: #ffffff;
+  --portal-border: #c5d3de;
+  --portal-text: #2b2b2b;
+  --portal-muted: #5a6570;
+  --portal-footer: #0c3d5c;
+  --site-primary: var(--portal-primary);
+  --site-secondary: var(--portal-secondary);
+  --site-accent: var(--portal-accent);
+  --site-bg: var(--portal-bg);
+  --site-footer-bg: var(--portal-footer);
+}
+
 [data-theme-preset="myanmar-portal"] {
   --portal-primary: #006ba6;
   --portal-primary-dark: #004d7a;

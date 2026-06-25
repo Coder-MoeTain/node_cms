@@ -9,7 +9,10 @@ const compression = require('compression');
 const morgan = require('morgan');
 const expressLayouts = require('express-ejs-layouts');
 
+const { validateProductionEnv } = require('./config/env');
 const appConfig = require('./config/app');
+
+validateProductionEnv({ env: process.env.NODE_ENV || appConfig.env });
 const pkg = require('./package.json');
 const sequelize = require('./config/database');
 const models = require('./models');
@@ -33,10 +36,6 @@ const { apiAuth } = require('./middleware/apiAuth');
 
 const app = express();
 const sessionStore = new SequelizeStore({ db: sequelize, tableName: 'sessions' });
-
-if (appConfig.env === 'production' && appConfig.sessionSecret === 'change-this-long-random-secret') {
-  throw new Error('SESSION_SECRET must be set to a strong value in production.');
-}
 
 app.set('trust proxy', appConfig.trustProxy);
 app.set('view engine', 'ejs');

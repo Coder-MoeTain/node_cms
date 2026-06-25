@@ -272,6 +272,71 @@ function initBackToTop() {
 initPortalCarousel();
 initBackToTop();
 
+function initCountUp() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const nodes = document.querySelectorAll('[data-count-up]');
+  if (!nodes.length) return;
+
+  const animate = (node) => {
+    const raw = node.dataset.countRaw || node.textContent.replace(/[^0-9]/g, '');
+    const target = Number(raw);
+    if (!target || Number.isNaN(target)) return;
+    const suffix = (node.dataset.countUp || '').replace(/[0-9,.\s]/g, '');
+    const duration = 900;
+    const start = performance.now();
+    const step = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const value = Math.floor(target * progress);
+      node.textContent = `${value.toLocaleString()}${suffix}`;
+      if (progress < 1) requestAnimationFrame(step);
+      else node.textContent = node.dataset.countUp;
+    };
+    requestAnimationFrame(step);
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      animate(entry.target);
+      observer.unobserve(entry.target);
+    });
+  }, { threshold: 0.35 });
+
+  nodes.forEach((node) => observer.observe(node));
+}
+
+initCountUp();
+
+function initSmoothAnchors() {
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const href = link.getAttribute('href');
+      if (!href || href === '#') return;
+      const target = document.querySelector(href);
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+initSmoothAnchors();
+
+function initOutsideClickClose() {
+  document.addEventListener('click', (event) => {
+    const header = document.querySelector('[data-portal-header]');
+    if (header && !header.contains(event.target)) {
+      header.querySelectorAll('.portal-nav-item.is-open').forEach((item) => {
+        item.classList.remove('is-open');
+        const toggle = item.querySelector('.portal-nav-submenu-toggle');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+}
+
+initOutsideClickClose();
+
 function initNavbarScroll() {
   const navbar = document.querySelector('.site-navbar');
   if (!navbar) return;
