@@ -36,4 +36,12 @@ describe('databaseBackup upload restore', () => {
     expect(fs.existsSync(outside)).toBe(true);
     fs.unlinkSync(outside);
   });
+
+  test('repairSchemaAfterRestore recreates missing activity_logs', async () => {
+    const { sequelize } = require('../models');
+    const { tableExists } = require('../database/ensureBaseSchema');
+    await sequelize.query('DROP TABLE IF EXISTS activity_logs');
+    await expect(dbBackup.repairSchemaAfterRestore()).resolves.toBeUndefined();
+    expect(await tableExists(sequelize, 'activity_logs')).toBe(true);
+  });
 });

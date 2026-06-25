@@ -2,6 +2,9 @@ const { ActivityLog } = require('../models');
 
 function activityLogMiddleware(moduleName = 'admin') {
   return async (req, res, next) => {
+    const skip = /\/settings\/database\/restore/i.test(req.originalUrl);
+    if (skip) return next();
+
     res.on('finish', async () => {
       if (!req.session?.user || !['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return;
       try {

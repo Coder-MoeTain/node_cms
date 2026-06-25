@@ -10,7 +10,10 @@ async function safeActivityLog(entry) {
 }
 
 function redirectAfterRestore(req, res) {
-  return req.session.destroy(() => res.redirect('/admin/login?restored=1'));
+  req.session.destroy((error) => {
+    if (error) console.error('Session destroy after restore:', error.message);
+    res.redirect('/admin/login?restored=1');
+  });
 }
 
 async function index(req, res, next) {
@@ -54,34 +57,21 @@ async function createBackup(req, res, next) {
   }
 }
 
+async function finishDatabaseRestore(req, res) {
+  await dbBackup.repairSchemaAfterRestore();
+  return redirectAfterRestore(req, res);
+}
+
 async function restoreBackup(req, res, next) {
+  let imported = false;
   try {
     const filename = req.params.filename;
     const includeUploads = req.body.include_uploads === 'on';
-
-    await safeActivityLog({
-      user_id: req.session.user.id,
-      action: 'Database restore started from backup file',
-      entity_type: 'database',
-      ip_address: req.ip,
-      user_agent: req.get('user-agent'),
-      metadata: { filename, includeUploads }
-    });
-
     await dbBackup.restoreBackup(filename, { includeUploads });
-    await dbBackup.repairSchemaAfterRestore();
-
-    await safeActivityLog({
-      user_id: req.session.user.id,
-      action: 'Database restored from backup',
-      entity_type: 'database',
-      ip_address: req.ip,
-      user_agent: req.get('user-agent'),
-      metadata: { filename, includeUploads }
-    });
-
-    return redirectAfterRestore(req, res);
+    imported = true;
+    return finishDatabaseRestore(req, res);
   } catch (error) {
+    if (imported) return finishDatabaseRestore(req, res);
     req.flash('error', `Restore failed. Ensure mysql client is installed and in PATH. ${error.message}`);
     return res.redirect('/admin/settings/database');
   }
@@ -110,38 +100,19 @@ async function destroyBackup(req, res, next) {
 }
 
 async function restoreUpload(req, res, next) {
+  let imported = false;
   try {
     if (!req.file) {
       req.flash('error', 'Upload an .sql file to restore.');
       return res.redirect('/admin/settings/database');
     }
 
-    const { originalname, size } = req.file;
-
-    await safeActivityLog({
-      user_id: req.session.user.id,
-      action: 'Database restore started from uploaded SQL file',
-      entity_type: 'database',
-      ip_address: req.ip,
-      user_agent: req.get('user-agent'),
-      metadata: { originalName: originalname, size }
-    });
-
     await dbBackup.restoreFromUploadedFile(req.file.path);
-    await dbBackup.repairSchemaAfterRestore();
-
-    await safeActivityLog({
-      user_id: req.session.user.id,
-      action: 'Database restored from uploaded SQL file',
-      entity_type: 'database',
-      ip_address: req.ip,
-      user_agent: req.get('user-agent'),
-      metadata: { originalName: originalname, size }
-    });
-
-    return redirectAfterRestore(req, res);
+    imported = true;
+    return finishDatabaseRestore(req, res);
   } catch (error) {
     dbBackup.removeUploadedSql(req.file?.path);
+    if (imported) return finishDatabaseRestore(req, res);
     req.flash('error', `Restore failed. Ensure mysql client is installed and in PATH. ${error.message}`);
     return res.redirect('/admin/settings/database');
   }
