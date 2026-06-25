@@ -1,29 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const { ensureDatabase } = require('./ensureDatabase');
 const { ensureBaseSchema } = require('./ensureBaseSchema');
-const { executeMigrationStatement } = require('./migrationHelpers');
+const { applyPendingMigrations } = require('./migrationRunner');
 
 const migrationsDir = path.join(__dirname, 'migrations');
-
-async function ensureMigrationTable() {
-  await sequelize.query(`
-    CREATE TABLE IF NOT EXISTS migrations (
-      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(255) NOT NULL UNIQUE,
-      ran_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-}
-
-function splitStatements(sql) {
-  return sql
-    .split(/;\s*(?:\r?\n|$)/)
-    .map((statement) => statement.trim())
-    .filter(Boolean);
-}
 
 async function run() {
   await ensureDatabase();
@@ -31,30 +13,17 @@ async function run() {
   if (await ensureBaseSchema(sequelize)) {
     console.log('Applied base schema from database/schema.sql');
   }
-  await ensureMigrationTable();
-  const completed = await sequelize.query('SELECT name FROM migrations', { type: QueryTypes.SELECT });
-  const completedNames = new Set(completed.map((row) => row.name));
-  const files = fs.readdirSync(migrationsDir).filter((file) => file.endsWith('.sql')).sort();
-
-  for (const file of files) {
-    if (completedNames.has(file)) continue;
-    const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
-    await sequelize.transaction(async (transaction) => {
-      for (const statement of splitStatements(sql)) {
-        await executeMigrationStatement(sequelize, statement, transaction);
-      }
-      await sequelize.query('INSERT INTO migrations (name) VALUES (?)', { replacements: [file], transaction });
-    });
-    console.log(`Migrated ${file}`);
-  }
+  const applied = await applyPendingMigrations(sequelize);
+  applied.forEach((file) => console.log(`Migrated ${file}`));
   await sequelize.close();
 }
 
 async function status() {
   await ensureDatabase();
   await sequelize.authenticate();
-  await ensureMigrationTable();
-  const completed = await sequelize.query('SELECT name, ran_at FROM migrations ORDER BY name', { type: QueryTypes.SELECT });
+  const { ensureMigrationTable } = require('./migrationRunner');
+  await ensureMigrationTable(sequelize);
+  const completed = await sequelize.query('SELECT name, ran_at FROM migrations ORDER BY name', { type: require('sequelize').QueryTypes.SELECT });
   const completedNames = new Set(completed.map((row) => row.name));
   const files = fs.readdirSync(migrationsDir).filter((file) => file.endsWith('.sql')).sort();
   const pending = files.filter((file) => !completedNames.has(file));

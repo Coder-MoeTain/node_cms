@@ -228,6 +228,13 @@ async function resetDatabase() {
   await seed();
 }
 
+async function repairSchemaAfterRestore() {
+  const { sequelize } = require('../models');
+  const { applyPendingMigrations } = require('../database/migrationRunner');
+  await sequelize.sync();
+  await applyPendingMigrations(sequelize);
+}
+
 module.exports = {
   getBackupDir,
   getSqlUploadDir,
@@ -237,6 +244,7 @@ module.exports = {
   createBackup,
   restoreBackup,
   restoreFromUploadedFile,
+  repairSchemaAfterRestore,
   deleteBackup,
   resetDatabase,
   isSafeBackupFilename,

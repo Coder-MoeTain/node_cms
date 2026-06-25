@@ -61,8 +61,8 @@ test('restore upload accepts sql file and attempts restore', async () => {
     .attach('sql_file', tmp, { filename: 'restore.sql', contentType: 'application/sql' });
 
   expect(response.status).toBe(302);
-  expect(response.headers.location).toBe('/admin/settings/database');
-  const page = await agent.get('/admin/settings/database');
-  expect(page.text).toMatch(/Restore failed|restored from restore\.sql/i);
+  expect(response.headers.location).toBe('/admin/login?restored=1');
+  const page = await agent.get('/admin/login?restored=1');
+  expect(page.text).toMatch(/Database restored successfully/i);
   if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
 });
