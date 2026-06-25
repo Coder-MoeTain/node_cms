@@ -98,6 +98,7 @@
             <% if (can('manage_themes')) { %><a class="nav-link <%= isActive('/admin/themes') ? 'active' : '' %>" href="/admin/themes">Themes</a><% } %>
             <% if (can('manage_themes')) { %><a class="nav-link <%= isActive('/admin/templates') ? 'active' : '' %>" href="/admin/templates">Templates</a><% } %>
             <% if (can('manage_menus')) { %><a class="nav-link <%= isActive('/admin/menus') ? 'active' : '' %>" href="/admin/menus">Menus</a><% } %>
+            <% if (can('manage_menus')) { %><a class="nav-link <%= isActive('/admin/menu-items') ? 'active' : '' %>" href="/admin/menu-items">Menu Items</a><% } %>
             <% if (can('manage_sliders')) { %><a class="nav-link <%= isActive('/admin/sliders') ? 'active' : '' %>" href="/admin/sliders">Sliders</a><% } %>
             <% if (can('manage_banners')) { %><a class="nav-link <%= isActive('/admin/banners') ? 'active' : '' %>" href="/admin/banners">Banners</a><% } %>
           </div>

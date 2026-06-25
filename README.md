@@ -21,8 +21,9 @@ Health endpoints:
 
 - `GET /health`
 - `GET /ready`
+- `GET /version`
 
-Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. CI runs migrations, seed data, and `npm run test:ci` with global coverage thresholds (lines ≥ 73%, statements ≥ 70%, functions ≥ 75%, branches ≥ 55%) across **313** integration tests. See `.env.example`, `docs/DEPLOYMENT.md`, `docs/DEMO.md`, and `docs/BACKUP_AND_RESTORE.md`.
+Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. CI runs migrations, seed data, and `npm run test:ci` with global coverage thresholds (lines ≥ 73%, statements ≥ 70%, functions ≥ 75%, branches ≥ 55%) across **321** integration tests. See [COMMERCIAL_READINESS.md](docs/COMMERCIAL_READINESS.md), [INSTALLATION.md](docs/INSTALLATION.md), and [TESTING.md](docs/TESTING.md).
 
 <p align="center">
   <img src="docs/assets/nodepress-cover.svg" alt="NodePress CMS cover" width="100%">
@@ -49,7 +50,8 @@ Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment 
   <a href="https://codecov.io/gh/Coder-MoeTain/node_cms"><img src="https://codecov.io/gh/Coder-MoeTain/node_cms/graph/badge.svg" alt="Codecov coverage"></a>
   <img src="https://img.shields.io/badge/coverage-lines-74%25-brightgreen?style=flat-square" alt="Coverage lines 74%">
   <img src="https://img.shields.io/badge/coverage-statements-71%25-brightgreen?style=flat-square" alt="Coverage statements 71%">
-  <img src="https://img.shields.io/badge/tests-313%20passing-brightgreen?style=flat-square" alt="313 tests passing">
+  <img src="https://img.shields.io/badge/tests-318%2B%20passing-brightgreen?style=flat-square" alt="318+ tests passing">
+  <img src="https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 20+">
   <img src="https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
   <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
   <img src="https://img.shields.io/badge/ORM-Sequelize-52B0E7?style=for-the-badge&logo=sequelize&logoColor=white" alt="Sequelize">

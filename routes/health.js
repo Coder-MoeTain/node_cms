@@ -1,10 +1,21 @@
 const express = require('express');
 const sequelize = require('../config/database');
+const pkg = require('../package.json');
 
 const router = express.Router();
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
+router.get('/version', (req, res) => {
+  res.json({
+    name: pkg.name,
+    version: pkg.version,
+    node: process.version,
+    env: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
 });
 
 router.get('/ready', async (req, res) => {

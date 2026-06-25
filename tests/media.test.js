@@ -1,6 +1,6 @@
 const request = require('supertest');
 const { app, models } = require('../server');
-const { login, getCsrf, TEST_IMAGE, writeTestUpload, removeTestUpload } = require('./helpers');
+const { login, getCsrf, putForm, TEST_IMAGE, writeTestUpload, removeTestUpload } = require('./helpers');
 
 beforeAll(async () => {
   await models.User.update({ force_password_change: false }, { where: { email: 'admin@example.com' } });
@@ -30,16 +30,11 @@ test('admin can edit media metadata', async () => {
   });
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');
-  const csrf = await getCsrf(agent, `/admin/media/${media.id}/edit`);
-  const response = await agent
-    .put(`/admin/media/${media.id}`)
-    .type('form')
-    .send({
-      alt_text: 'Alt text for test',
-      caption: 'Test caption',
-      description: 'Test description',
-      _csrf: csrf
-    });
+  const response = await putForm(agent, `/admin/media/${media.id}`, {
+    alt_text: 'Alt text for test',
+    caption: 'Test caption',
+    description: 'Test description'
+  }, `/admin/media/${media.id}/edit`);
   expect(response.status).toBe(302);
   await media.reload();
   expect(media.alt_text).toBe('Alt text for test');

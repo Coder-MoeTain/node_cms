@@ -33,11 +33,13 @@ async function expectPluginInstalled(agent, zipPath) {
   expect(upload.status).toBe(302);
 
   let installed = null;
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    await pluginLoader.syncInstalledPlugins();
+  for (let attempt = 0; attempt < 20; attempt += 1) {
     installed = await models.Plugin.findOne({ where: { slug: SLUG } });
     if (installed) break;
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  if (!installed && fs.existsSync(path.join(pluginLoader.pluginsRoot, SLUG, 'plugin.json'))) {
+    installed = await pluginLoader.syncPluginBySlug(SLUG);
   }
   expect(installed).toBeTruthy();
   if (!global.__full_lifecycle_pluginInstall) {

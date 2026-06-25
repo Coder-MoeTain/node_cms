@@ -57,6 +57,11 @@ async function putForm(agent, url, fields, csrfPageUrl) {
     .send({ ...fields, _csrf: csrf });
 }
 
+async function logout(agent) {
+  const csrf = await getCsrf(agent, '/admin');
+  return agent.post('/admin/logout').type('form').send({ _csrf: csrf });
+}
+
 async function login(agent, email, password, totp) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const csrf = await getCsrf(agent, '/admin/login');
@@ -95,4 +100,4 @@ async function ensurePortalTheme(models, portalConfig) {
   return active;
 }
 
-module.exports = { getCsrf, postForm, putForm, login, ensurePortalTheme, TEST_IMAGE, writeTestUpload, removeTestUpload };
+module.exports = { getCsrf, postForm, putForm, login, logout, ensurePortalTheme, TEST_IMAGE, writeTestUpload, removeTestUpload };

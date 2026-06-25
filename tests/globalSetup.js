@@ -7,7 +7,7 @@ module.exports = async () => {
   const { execSync } = require('child_process');
 
   if (process.env.NODE_ENV === 'test') {
-    process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || `nodepress_cms_test_${process.pid}`;
+    process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || 'nodepress_cms_test';
     process.env.TEST_DB_HOST = process.env.TEST_DB_HOST || process.env.DB_HOST || '127.0.0.1';
     process.env.TEST_DB_USER = process.env.TEST_DB_USER || process.env.DB_USER || 'root';
     if (process.env.TEST_DB_PASSWORD === undefined) {
@@ -27,6 +27,4 @@ module.exports = async () => {
     { force_password_change: false },
     { where: { email: 'admin@example.com' } }
   );
-  const pluginLoader = require('../utils/pluginLoader');
-  await pluginLoader.syncInstalledPlugins();
 };

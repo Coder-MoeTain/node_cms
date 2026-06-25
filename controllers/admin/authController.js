@@ -8,6 +8,12 @@ const { User, Role, Permission, LoginAttempt, ActivityLog, PasswordResetToken } 
 const pluginLoader = require('../../utils/pluginLoader');
 const loginBruteForce = require('../../utils/loginBruteForce');
 const { sendPasswordResetEmail } = require('../../utils/mailer');
+const {
+  generateRecoveryCodes,
+  replaceRecoveryCodes,
+  consumeRecoveryCode,
+  clearRecoveryCodes
+} = require('../../utils/twoFactorRecovery');
 
 function loginForm(req, res) {
   res.render('admin/auth/login', {
@@ -19,6 +25,69 @@ function loginForm(req, res) {
 function loginRedirect(res, email) {
   const q = email ? `?email=${encodeURIComponent(email)}` : '';
   return res.redirect(`/admin/login${q}`);
+}
+
+function regenerateSession(req) {
+  return new Promise((resolve, reject) => {
+    const snapshot = {
+      user: req.session.user,
+      csrfToken: req.session.csrfToken,
+      lastActivity: req.session.lastActivity,
+      lastUserRefresh: req.session.lastUserRefresh,
+      pendingTwoFactorSecret: req.session.pendingTwoFactorSecret,
+      twoFactorRecoveryCodes: req.session.twoFactorRecoveryCodes
+    };
+    req.session.regenerate((error) => {
+      if (error) return reject(error);
+      if (snapshot.user) req.session.user = snapshot.user;
+      if (snapshot.csrfToken) req.session.csrfToken = snapshot.csrfToken;
+      if (snapshot.lastActivity) req.session.lastActivity = snapshot.lastActivity;
+      if (snapshot.lastUserRefresh) req.session.lastUserRefresh = snapshot.lastUserRefresh;
+      if (snapshot.pendingTwoFactorSecret) req.session.pendingTwoFactorSecret = snapshot.pendingTwoFactorSecret;
+      if (snapshot.twoFactorRecoveryCodes) req.session.twoFactorRecoveryCodes = snapshot.twoFactorRecoveryCodes;
+      return resolve();
+    });
+  });
+}
+
+async function finalizeLogin(req, res, user) {
+  const permissions = user.Role?.Permissions?.map((permission) => permission.slug) || [];
+  req.session.user = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.Role?.slug,
+    roleName: user.Role?.name,
+    permissions,
+    forcePasswordChange: user.force_password_change
+  };
+  req.session.lastActivity = Date.now();
+  req.session.lastUserRefresh = Date.now();
+
+  await regenerateSession(req);
+
+  await user.update({ last_login: new Date(), failed_login_count: 0, locked_until: null });
+  await ActivityLog.create({
+    user_id: user.id,
+    action: 'Logged in',
+    entity_type: 'auth',
+    ip_address: req.ip,
+    user_agent: req.get('user-agent')
+  });
+
+  await pluginLoader.doAction('afterUserLogin', user, { req, res });
+
+  if (user.force_password_change) {
+    req.flash('error', 'Please change the default password.');
+    return res.redirect('/admin/profile');
+  }
+
+  if (user.Role?.slug === 'subscriber') {
+    req.flash('success', 'You are signed in.');
+    return res.redirect('/');
+  }
+
+  return res.redirect('/admin');
 }
 
 async function login(req, res, next) {
@@ -72,52 +141,24 @@ async function login(req, res, next) {
     }
 
     if (user.two_factor_enabled) {
-      const verified = speakeasy.totp.verify({
-        secret: user.two_factor_secret,
-        encoding: 'base32',
-        token: req.body.totp,
-        window: 1
-      });
+      let verified = false;
+      if (req.body.totp) {
+        verified = speakeasy.totp.verify({
+          secret: user.two_factor_secret,
+          encoding: 'base32',
+          token: req.body.totp,
+          window: 1
+        });
+      } else if (req.body.recovery_code) {
+        verified = await consumeRecoveryCode(user.id, req.body.recovery_code);
+      }
       if (!verified) {
-        req.flash('error', 'A valid two-factor code is required.');
+        req.flash('error', 'A valid two-factor or recovery code is required.');
         return loginRedirect(res, email);
       }
     }
 
-    const permissions = user.Role?.Permissions?.map((permission) => permission.slug) || [];
-    req.session.user = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.Role?.slug,
-      roleName: user.Role?.name,
-      permissions,
-      forcePasswordChange: user.force_password_change
-    };
-    req.session.lastActivity = Date.now();
-
-    await user.update({ last_login: new Date(), failed_login_count: 0, locked_until: null });
-    await ActivityLog.create({
-      user_id: user.id,
-      action: 'Logged in',
-      entity_type: 'auth',
-      ip_address: req.ip,
-      user_agent: req.get('user-agent')
-    });
-
-    await pluginLoader.doAction('afterUserLogin', user, { req, res });
-
-    if (user.force_password_change) {
-      req.flash('error', 'Please change the default password.');
-      return res.redirect('/admin/profile');
-    }
-
-    if (user.Role?.slug === 'subscriber') {
-      req.flash('success', 'You are signed in.');
-      return res.redirect('/');
-    }
-
-    return res.redirect('/admin');
+    return finalizeLogin(req, res, user);
   } catch (error) {
     return next(error);
   }
@@ -171,6 +212,7 @@ async function resetPassword(req, res, next) {
     }
     const user = await User.findByPk(row.user_id);
     await user.update({ password: await bcrypt.hash(req.body.password, 12), force_password_change: false, failed_login_count: 0, locked_until: null });
+    await PasswordResetToken.update({ used_at: new Date() }, { where: { user_id: user.id, used_at: null } });
     await row.update({ used_at: new Date() });
     req.flash('success', 'Password reset complete. You can log in now.');
     return res.redirect('/admin/login');
@@ -199,6 +241,7 @@ async function updateProfile(req, res, next) {
     if (req.body.password) {
       payload.password = await bcrypt.hash(req.body.password, 12);
       payload.force_password_change = false;
+      await PasswordResetToken.update({ used_at: new Date() }, { where: { user_id: user.id, used_at: null } });
     }
     await user.update(payload);
     req.session.user.name = user.name;
@@ -217,10 +260,18 @@ async function twoFactorForm(req, res, next) {
     let qrCode = null;
     let secret = user.two_factor_secret;
     if (!user.two_factor_enabled) {
-      const generated = speakeasy.generateSecret({ name: `NodePress CMS (${user.email})` });
-      secret = generated.base32;
-      req.session.pendingTwoFactorSecret = secret;
-      qrCode = await qrcode.toDataURL(generated.otpauth_url);
+      secret = req.session.pendingTwoFactorSecret;
+      if (!secret) {
+        const generated = speakeasy.generateSecret({ name: `NodePress CMS (${user.email})` });
+        secret = generated.base32;
+        req.session.pendingTwoFactorSecret = secret;
+      }
+      const otpauthUrl = speakeasy.otpauthURL({
+        secret,
+        label: `NodePress CMS (${user.email})`,
+        encoding: 'base32'
+      });
+      qrCode = await qrcode.toDataURL(otpauthUrl);
     }
     return res.render('admin/auth/2fa', { title: 'Two-Factor Authentication', user, qrCode, secret });
   } catch (error) {
@@ -238,9 +289,12 @@ async function enableTwoFactor(req, res, next) {
       return res.redirect('/admin/profile/2fa');
     }
     await user.update({ two_factor_enabled: true, two_factor_secret: secret });
+    const recoveryCodes = generateRecoveryCodes(10);
+    await replaceRecoveryCodes(user.id, recoveryCodes);
     delete req.session.pendingTwoFactorSecret;
-    req.flash('success', 'Two-factor authentication enabled.');
-    return res.redirect('/admin/profile');
+    req.session.twoFactorRecoveryCodes = recoveryCodes;
+    req.flash('success', 'Two-factor authentication enabled. Save your recovery codes now.');
+    return res.redirect('/admin/profile/2fa/recovery-codes');
   } catch (error) {
     return next(error);
   }
@@ -250,11 +304,27 @@ async function disableTwoFactor(req, res, next) {
   try {
     const user = await User.findByPk(req.session.user.id);
     await user.update({ two_factor_enabled: false, two_factor_secret: null });
+    await clearRecoveryCodes(user.id);
+    delete req.session.twoFactorRecoveryCodes;
     req.flash('success', 'Two-factor authentication disabled.');
     return res.redirect('/admin/profile');
   } catch (error) {
     return next(error);
   }
+}
+
+function recoveryCodesView(req, res) {
+  const codes = req.session.twoFactorRecoveryCodes;
+  if (!codes?.length) {
+    req.flash('error', 'Recovery codes are only shown once after enabling 2FA.');
+    return res.redirect('/admin/profile/2fa');
+  }
+  const plainCodes = [...codes];
+  delete req.session.twoFactorRecoveryCodes;
+  return res.render('admin/auth/2fa-recovery-codes', {
+    title: '2FA Recovery Codes',
+    recoveryCodes: plainCodes
+  });
 }
 
 function logout(req, res) {
@@ -275,5 +345,6 @@ module.exports = {
   twoFactorForm,
   enableTwoFactor,
   disableTwoFactor,
+  recoveryCodesView,
   logout
 };
