@@ -52,7 +52,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run test:ci
+      - name: Run test suite
+        run: |
+          set -o pipefail
+          npm run test:ci 2>&1 | tee /tmp/jest.log
+          if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+            echo "--- Jest failure summary ---"
+            grep -E "FAIL |● |threshold|Error:" /tmp/jest.log | tail -80 || tail -80 /tmp/jest.log
+            exit 1
+          fi
       - name: Report coverage summary
         run: node scripts/coverage-summary.js
       - name: Upload coverage to Codecov

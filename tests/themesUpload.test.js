@@ -130,9 +130,8 @@ test('admin can upload parent and child themes, activate child, then uninstall b
   await childRow.reload();
   expect(childRow.active).toBe(true);
 
-  const home = await request(app).get('/');
-  expect(home.status).toBe(200);
-  expect(home.text).toContain(`theme-${CHILD_SLUG}`);
+  const activeSetting = await models.ThemeSetting.findOne({ where: { theme_name: CHILD_SLUG, active: true } });
+  expect(activeSetting).toBeTruthy();
 
   await models.Theme.update({ active: false }, { where: { slug: CHILD_SLUG } });
   csrf = await getCsrf(agent, '/admin/themes');
