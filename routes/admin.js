@@ -7,6 +7,7 @@ const { activityLogMiddleware } = require('../middleware/activityLog');
 const upload = require('../middleware/upload');
 const { zipUpload } = require('../middleware/zipUpload');
 const { jsonUpload } = require('../middleware/jsonUpload');
+const { sqlUpload } = require('../middleware/sqlUpload');
 
 const crudImageUpload = upload.image.fields([
   { name: 'featured_image_file', maxCount: 1 },
@@ -52,6 +53,16 @@ function handleImageUpload(req, res, next) {
   });
 }
 
+function handleSqlUpload(req, res, next) {
+  sqlUpload.single('sql_file')(req, res, (error) => {
+    if (error) {
+      req.flash('error', error.message || 'SQL upload failed.');
+      return res.redirect('/admin/settings/database');
+    }
+    return next();
+  });
+}
+
 router.get('/login', guestOnly, auth.loginForm);
 router.post('/login', conditionalLoginLimiter, loginBruteForceGuard, guestOnly, [body('email').isEmail().withMessage('Valid email is required.'), body('password').notEmpty().withMessage('Password is required.')], auth.login);
 router.post('/logout', requireAuth, auth.logout);
@@ -93,6 +104,7 @@ router.get('/settings/media-gallery', requireAuth, canAny(['manage_settings', 'm
 router.get('/settings/database', requireAuth, canAny(['manage_settings', 'manage_security']), database.index);
 router.post('/settings/database/backup', requireAuth, canAny(['manage_settings', 'manage_security']), database.createBackup);
 router.post('/settings/database/restore/:filename', requireAuth, canAny(['manage_settings', 'manage_security']), database.restoreBackup);
+router.post('/settings/database/restore-upload', requireAuth, canAny(['manage_settings', 'manage_security']), handleSqlUpload, database.restoreUpload);
 router.delete('/settings/database/backup/:filename', requireAuth, canAny(['manage_settings', 'manage_security']), database.destroyBackup);
 router.post('/settings/database/reset', requireAuth, canAny(['manage_settings', 'manage_security']), database.resetDatabase);
 router.get('/settings', requireAuth, can('manage_settings'), settings.settings);

@@ -87,6 +87,33 @@ async function destroyBackup(req, res, next) {
   }
 }
 
+async function restoreUpload(req, res, next) {
+  try {
+    if (!req.file) {
+      req.flash('error', 'Upload an .sql file to restore.');
+      return res.redirect('/admin/settings/database');
+    }
+
+    await dbBackup.restoreFromUploadedFile(req.file.path);
+
+    await ActivityLog.create({
+      user_id: req.session.user.id,
+      action: 'Database restored from uploaded SQL file',
+      entity_type: 'database',
+      ip_address: req.ip,
+      user_agent: req.get('user-agent'),
+      metadata: { originalName: req.file.originalname, size: req.file.size }
+    });
+
+    req.flash('success', `Database restored from ${req.file.originalname}. You may need to sign in again.`);
+    return res.redirect('/admin/settings/database');
+  } catch (error) {
+    dbBackup.removeUploadedSql(req.file?.path);
+    req.flash('error', `Restore failed. Ensure mysql client is installed and in PATH. ${error.message}`);
+    return res.redirect('/admin/settings/database');
+  }
+}
+
 async function resetDatabase(req, res, next) {
   try {
     await dbBackup.resetDatabase();
@@ -107,4 +134,4 @@ async function resetDatabase(req, res, next) {
   }
 }
 
-module.exports = { index, createBackup, restoreBackup, destroyBackup, resetDatabase };
+module.exports = { index, createBackup, restoreBackup, restoreUpload, destroyBackup, resetDatabase };
