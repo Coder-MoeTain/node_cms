@@ -1,0 +1,19 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header mb-3"><h1>Tools</h1></div>
+    <div class="row g-3">
+      <div class="col-md-6 col-lg-4"><a class="card h-100 text-decoration-none" href="/admin/tools/health"><div class="card-body"><h2 class="h5">Site Health</h2><p class="small text-muted mb-0">Environment checks</p></div></a></div>
+      <div class="col-md-6 col-lg-4"><a class="card h-100 text-decoration-none" href="/admin/tools/export"><div class="card-body"><h2 class="h5">Export</h2><p class="small text-muted mb-0">JSON site export</p></div></a></div>
+      <div class="col-md-6 col-lg-4"><a class="card h-100 text-decoration-none" href="/admin/tools/import"><div class="card-body"><h2 class="h5">Import</h2><p class="small text-muted mb-0">Import JSON with preview</p></div></a></div>
+      <div class="col-md-6 col-lg-4"><a class="card h-100 text-decoration-none" href="/admin/updates"><div class="card-body"><h2 class="h5">Updates</h2><p class="small text-muted mb-0">Core/plugin/theme versions</p></div></a></div>
+      <div class="col-md-6 col-lg-4"><a class="card h-100 text-decoration-none" href="/admin/widgets"><div class="card-body"><h2 class="h5">Widgets</h2><p class="small text-muted mb-0">Sidebar & footer areas</p></div></a></div>
+      <div class="col-md-6 col-lg-4"><a class="card h-100 text-decoration-none" href="/admin/templates"><div class="card-body"><h2 class="h5">Templates</h2><p class="small text-muted mb-0">Block-based site templates</p></div></a></div>
+      <div class="col-md-6 col-lg-4"><a class="card h-100 text-decoration-none" href="/admin/settings/database"><div class="card-body"><h2 class="h5">Database</h2><p class="small text-muted mb-0">Backup & restore</p></div></a></div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

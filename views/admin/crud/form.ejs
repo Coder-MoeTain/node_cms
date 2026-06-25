@@ -20,7 +20,7 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <form method="post" action="<%= action %>" enctype="multipart/form-data" data-editor-form>
+    <form method="post" action="<%= action %>" enctype="multipart/form-data" data-editor-form data-autosave-form data-resource-type="<%= resource === 'pages' ? 'page' : 'post' %>" data-resource-id="<%= record.id || '' %>">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div>
         <% if (['posts','pages'].includes(resource)) { %>
@@ -42,7 +42,7 @@
                 </span>
               </div>
               <input type="hidden" name="slug" value="<%= val('slug') %>" data-slug-target>
-              <div class="mb-3"><textarea class="form-control rich-editor" name="content" rows="14"><%- val('content') %></textarea></div>
+              <%- include('../partials/content-editor', { record: record }) %>
               <div class="np-metabox">
                 <div class="np-metabox-header" data-metabox-toggle aria-expanded="true">Excerpt</div>
                 <div class="np-metabox-body"><textarea class="form-control" name="excerpt" rows="3" placeholder="Optional excerpt"><%= val('excerpt') %></textarea><p class="np-help-text">Excerpts are optional hand-crafted summaries.</p></div>
@@ -54,6 +54,7 @@
                   <div><label class="form-label">Meta Description</label><input class="form-control" name="seo_description" value="<%= val('seo_description') %>"></div>
                 </div>
               </div>
+              <%- include('../partials/content-translations', { translations: typeof translations !== 'undefined' ? translations : {}, translationLocales: typeof translationLocales !== 'undefined' ? translationLocales : ['my', 'zh-CN', 'ru'] }) %>
             </div>
             <aside class="editor-sidebar editor-sidebar-sticky">
               <div class="np-metabox np-metabox-publish">

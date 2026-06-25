@@ -1,0 +1,100 @@
+#!/usr/bin/env node
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+const args = process.argv.slice(2);
+const [command, ...rest] = args;
+
+async function main() {
+  if (!command || command === 'help' || command === '--help') {
+    console.log(`NodePress CLI
+
+Usage:
+  nodepress health                 Site health checks
+  nodepress migrate                Run database migrations
+  nodepress cache:clear            Clear translation cache
+  nodepress seed                   Seed database
+  nodepress user:reset-password <email> <password>
+  nodepress plugin:list            List installed plugins
+  nodepress theme:list             List installed themes
+  nodepress export [file.json]     Export site JSON
+`);
+    process.exit(0);
+  }
+
+  if (command === 'health') {
+    const { runChecks } = require('../utils/siteHealth');
+    const report = await runChecks();
+    console.log(JSON.stringify(report, null, 2));
+    process.exit(report.status === 'critical' ? 1 : 0);
+  }
+
+  if (command === 'migrate') {
+    require('../database/migrate');
+    return;
+  }
+
+  if (command === 'cache:clear') {
+    const { TranslationCache } = require('../models');
+    await require('../config/database').authenticate();
+    await TranslationCache.destroy({ where: {}, truncate: true });
+    console.log('Translation cache cleared.');
+    process.exit(0);
+  }
+
+  if (command === 'seed') {
+    require('../database/seed');
+    return;
+  }
+
+  if (command === 'user:reset-password') {
+    const [email, password] = rest;
+    if (!email || !password) {
+      console.error('Usage: nodepress user:reset-password <email> <password>');
+      process.exit(1);
+    }
+    const bcrypt = require('bcrypt');
+    const { User } = require('../models');
+    await require('../config/database').authenticate();
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      console.error('User not found.');
+      process.exit(1);
+    }
+    await user.update({ password: await bcrypt.hash(password, 12), force_password_change: false });
+    console.log(`Password updated for ${email}`);
+    process.exit(0);
+  }
+
+  if (command === 'plugin:list') {
+    const { Plugin } = require('../models');
+    await require('../config/database').authenticate();
+    const plugins = await Plugin.findAll({ order: [['name', 'ASC']] });
+    plugins.forEach((p) => console.log(`${p.slug}\t${p.version}\t${p.active ? 'active' : 'inactive'}`));
+    process.exit(0);
+  }
+
+  if (command === 'theme:list') {
+    const { discoverThemes } = require('../utils/themeLoader');
+    discoverThemes().forEach((t) => console.log(`${t.manifest.slug}\t${t.manifest.version || '1.0.0'}`));
+    process.exit(0);
+  }
+
+  if (command === 'export') {
+    const fs = require('fs');
+    const { exportSite } = require('../utils/exporter');
+    await require('../config/database').authenticate();
+    const out = rest[0] || `nodepress-export-${Date.now()}.json`;
+    fs.writeFileSync(out, JSON.stringify(await exportSite(), null, 2));
+    console.log(`Exported to ${out}`);
+    process.exit(0);
+  }
+
+  console.error(`Unknown command: ${command}`);
+  process.exit(1);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

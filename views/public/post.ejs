@@ -126,58 +126,9 @@
         <% } %>
 
         <% if (post.allow_comments) { %>
-          <% const cp = typeof commentPrefill !== 'undefined' ? commentPrefill : {}; const errs = typeof fieldErrors !== 'undefined' ? fieldErrors : {}; %>
-          <section class="post-comments" id="comments">
-            <div class="post-comments-header">
-              <h2 class="h4 mb-0">Comments</h2>
-              <span class="post-comments-count"><%= (post.comments || []).length %> <%= (post.comments || []).length === 1 ? 'reply' : 'replies' %></span>
-            </div>
-            <% if (success && success.length) { %><div class="np-alert np-alert-success site-alert mb-3" role="status"><%= success[0] %></div><% } %>
-            <% if (typeof formError !== 'undefined' && formError) { %><div class="np-alert np-alert-danger site-alert mb-3" role="alert"><%= formError %></div><% } %>
-            <% if ((post.comments || []).length) { %>
-              <div class="post-comment-list">
-                <% (post.comments || []).forEach(function(comment) { %>
-                  <article class="post-comment">
-                    <div class="post-comment-avatar" aria-hidden="true"><%= comment.name.trim().charAt(0).toUpperCase() %></div>
-                    <div class="post-comment-body">
-                      <header class="post-comment-meta">
-                        <strong><%= comment.name %></strong>
-                      </header>
-                      <p class="mb-0"><%= comment.content %></p>
-                    </div>
-                  </article>
-                <% }) %>
-              </div>
-            <% } else { %>
-              <p class="post-comments-empty text-muted">No comments yet. Be the first to share your thoughts.</p>
-            <% } %>
-            <form class="post-comment-form" method="post" action="/post/<%= post.id %>/comment" novalidate>
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <h3 class="h5 post-comment-form-title">Leave a reply</h3>
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label" for="comment-name">Name</label>
-                  <input class="form-control<%= errs.name ? ' is-invalid' : '' %>" id="comment-name" name="name" value="<%= cp.name || '' %>" required>
-                  <% if (errs.name) { %><div class="invalid-feedback"><%= errs.name.msg %></div><% } %>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label" for="comment-email">Email</label>
-                  <input class="form-control<%= errs.email ? ' is-invalid' : '' %>" id="comment-email" name="email" type="email" value="<%= cp.email || '' %>" required>
-                  <% if (errs.email) { %><div class="invalid-feedback"><%= errs.email.msg %></div><% } %>
-                </div>
-                <div class="col-12">
-                  <label class="form-label" for="comment-website">Website</label>
-                  <input class="form-control" id="comment-website" name="website" value="<%= cp.website || '' %>">
-                </div>
-                <div class="col-12">
-                  <label class="form-label" for="comment-content">Comment</label>
-                  <textarea class="form-control<%= errs.content ? ' is-invalid' : '' %>" id="comment-content" name="content" rows="4" required><%= cp.content || '' %></textarea>
-                  <% if (errs.content) { %><div class="invalid-feedback"><%= errs.content.msg %></div><% } %>
-                </div>
-              </div>
-              <button class="site-btn portal-btn post-comment-submit" type="submit" data-loading-label="Posting…">Post comment</button>
-            </form>
-          </section>
+          <% if (success && success.length) { %><div class="np-alert np-alert-success site-alert mb-3" role="status"><%= success[0] %></div><% } %>
+          <% if (typeof formError !== 'undefined' && formError) { %><div class="np-alert np-alert-danger site-alert mb-3" role="alert"><%= formError %></div><% } %>
+          <%- include('partials/comments-thread', { post, commentTree: commentTree || post.comments || [], commentCount: commentCount || 0, commentPrefill: typeof commentPrefill !== 'undefined' ? commentPrefill : {} }) %>
         <% } %>
       </article>
       <% if (activeTheme.sidebar_position !== 'none') { %>

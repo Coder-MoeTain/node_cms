@@ -1,0 +1,36 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header mb-3"><h1>Widgets — <%= area.name %></h1><a href="/admin/widgets" class="np-btn np-btn-secondary">Back</a></div>
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <% (area.widgets || []).forEach(function(w) { %>
+          <div class="np-metabox mb-3">
+            <div class="np-metabox-header d-flex justify-content-between"><span><%= w.title || w.widget_type %></span>
+              <form method="post" action="/admin/widgets/instance/<%= w.id %>?_method=DELETE"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="np-btn np-btn-link text-danger np-btn-small">Remove</button></form>
+            </div>
+            <div class="np-metabox-body"><code><%= w.widget_type %></code></div>
+          </div>
+        <% }) %>
+      </div>
+      <div class="col-lg-5">
+        <div class="np-metabox">
+          <div class="np-metabox-header">Add widget</div>
+          <div class="np-metabox-body">
+            <form method="post" action="/admin/widgets/<%= area.slug %>">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="mb-2"><label class="form-label">Type</label><select class="form-select" name="widget_type"><% widgetTypes.forEach(function(t) { %><option value="<%= t %>"><%= t %></option><% }) %></select></div>
+              <div class="mb-2"><label class="form-label">Title</label><input class="form-control" name="title"></div>
+              <div class="mb-2"><label class="form-label">Content / settings</label><textarea class="form-control" name="content" rows="3"></textarea></div>
+              <button class="np-btn np-btn-primary" type="submit">Add widget</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

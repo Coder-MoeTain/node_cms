@@ -1,0 +1,36 @@
+<% fieldGroups.forEach(function(group) { %>
+  <div class="np-metabox mt-3">
+    <div class="np-metabox-header"><%= group.name %></div>
+    <div class="np-metabox-body">
+      <% if (group.description) { %><p class="np-help-text"><%= group.description %></p><% } %>
+      <% (group.fields || []).forEach(function(field) {
+        const fname = `cf_${field.name}`;
+        const fval = customFieldValues[field.name] != null ? customFieldValues[field.name] : (field.default_value || '');
+      %>
+        <div class="mb-3">
+          <label class="form-label"><%= field.label %><% if (field.is_required) { %> <span class="text-danger">*</span><% } %></label>
+          <% if (field.type === 'textarea' || field.type === 'rich_text') { %>
+            <textarea class="form-control<%= field.type === 'rich_text' ? ' rich-editor' : '' %>" name="<%= fname %>" rows="<%= field.type === 'rich_text' ? 6 : 3 %>" <%= field.is_required ? 'required' : '' %>><%= fval %></textarea>
+          <% } else if (field.type === 'select') { %>
+            <select class="form-select" name="<%= fname %>" <%= field.is_required ? 'required' : '' %>>
+              <option value="">— Select —</option>
+              <% try {
+                const opts = JSON.parse(field.options_json || '[]');
+                (Array.isArray(opts) ? opts : opts.options || []).forEach(function(opt) {
+                  const v = typeof opt === 'object' ? opt.value : opt;
+                  const l = typeof opt === 'object' ? opt.label : opt;
+              %>
+                <option value="<%= v %>" <%= String(fval) === String(v) ? 'selected' : '' %>><%= l %></option>
+              <% }); } catch(e) {} %>
+            </select>
+          <% } else if (field.type === 'checkbox') { %>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="<%= fname %>" value="1" id="<%= fname %>" <%= fval === '1' || fval === 'on' || fval === 'true' ? 'checked' : '' %>><label class="form-check-label" for="<%= fname %>"><%= field.placeholder || 'Yes' %></label></div>
+          <% } else { %>
+            <input class="form-control" type="<%= ['number','date','datetime','email','url','color'].includes(field.type) ? field.type === 'datetime' ? 'datetime-local' : field.type : 'text' %>" name="<%= fname %>" value="<%= fval %>" placeholder="<%= field.placeholder || '' %>" <%= field.is_required ? 'required' : '' %>>
+          <% } %>
+          <% if (field.help_text) { %><p class="np-help-text mb-0"><%= field.help_text %></p><% } %>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+<% }) %>

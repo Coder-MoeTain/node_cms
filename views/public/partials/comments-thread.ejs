@@ -1,0 +1,58 @@
+<% function renderComments(list, depth) { list.forEach(function(comment) { %>
+  <article class="post-comment<%= depth ? ' post-comment-reply' : '' %>" style="margin-left:<%= depth * 24 %>px">
+    <img class="post-comment-avatar rounded-circle" src="<%= gravatarUrl(comment.email, 48) %>" alt="" width="48" height="48">
+    <div class="post-comment-body">
+      <header class="post-comment-meta">
+        <strong><%= comment.name %></strong>
+        <time datetime="<%= comment.created_at %>"><%= new Date(comment.created_at).toLocaleDateString() %></time>
+      </header>
+      <p class="mb-0"><%= comment.content %></p>
+      <button type="button" class="btn btn-link btn-sm p-0 mt-1" data-reply-to="<%= comment.id %>">Reply</button>
+    </div>
+  </article>
+  <% if (comment.replies && comment.replies.length) { renderComments(comment.replies, depth + 1); } %>
+<% }) } %>
+
+<section class="post-comments" id="comments">
+  <div class="post-comments-header">
+    <h2 class="h4 mb-0">Comments</h2>
+    <span class="post-comments-count"><%= commentCount || 0 %> replies</span>
+  </div>
+  <% if (commentTree && commentTree.length) { %>
+    <div class="post-comment-list"><% renderComments(commentTree, 0); %></div>
+  <% } else { %>
+    <p class="post-comments-empty text-muted">No comments yet. Be the first to share your thoughts.</p>
+  <% } %>
+  <form class="post-comment-form" method="post" action="/post/<%= post.id %>/comment" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="parent_id" id="comment-parent-id" value="">
+    <h3 class="h5 post-comment-form-title">Leave a reply</h3>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label" for="comment-name">Name</label>
+        <input class="form-control" id="comment-name" name="name" value="<%= (commentPrefill && commentPrefill.name) || '' %>" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="comment-email">Email</label>
+        <input class="form-control" id="comment-email" name="email" type="email" value="<%= (commentPrefill && commentPrefill.email) || '' %>" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="comment-website">Website</label>
+        <input class="form-control" id="comment-website" name="website" value="<%= (commentPrefill && commentPrefill.website) || '' %>">
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="comment-content">Comment</label>
+        <textarea class="form-control" id="comment-content" name="content" rows="4" required><%= (commentPrefill && commentPrefill.content) || '' %></textarea>
+      </div>
+    </div>
+    <button class="site-btn portal-btn post-comment-submit mt-3" type="submit">Post comment</button>
+  </form>
+</section>
+<script>
+document.querySelectorAll('[data-reply-to]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.getElementById('comment-parent-id').value = btn.getAttribute('data-reply-to');
+    document.getElementById('comment-content').focus();
+  });
+});
+</script>

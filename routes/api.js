@@ -2,10 +2,17 @@ const express = require('express');
 const { Post, Page, Category, Tag } = require('../models');
 
 const router = express.Router();
+const v1 = require('./api/v1');
+
+router.use('/v1', v1);
 
 router.get('/posts', async (req, res, next) => {
   try {
-    const posts = await Post.findAll({ where: { status: 'published' }, include: [Category, Tag], order: [['published_at', 'DESC']] });
+    const posts = await Post.findAll({
+      where: { status: 'published', post_type: 'post' },
+      include: [Category, Tag],
+      order: [['published_at', 'DESC']]
+    });
     res.json(posts);
   } catch (error) {
     next(error);
@@ -14,7 +21,7 @@ router.get('/posts', async (req, res, next) => {
 
 router.get('/posts/:slug', async (req, res, next) => {
   try {
-    const post = await Post.findOne({ where: { slug: req.params.slug, status: 'published' }, include: [Category, Tag] });
+    const post = await Post.findOne({ where: { slug: req.params.slug, status: 'published', post_type: 'post' }, include: [Category, Tag] });
     if (!post) return res.status(404).json({ message: 'Post not found' });
     return res.json(post);
   } catch (error) {

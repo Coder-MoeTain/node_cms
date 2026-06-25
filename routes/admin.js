@@ -28,6 +28,18 @@ const themes = require('../controllers/admin/themeController');
 const security = require('../controllers/admin/securityController');
 const database = require('../controllers/admin/databaseController');
 const waf = require('../controllers/admin/wafController');
+const customPostTypes = require('../controllers/admin/customPostTypeController');
+const customContent = require('../controllers/admin/customContentController');
+const fieldGroups = require('../controllers/admin/fieldGroupController');
+const revisions = require('../controllers/admin/revisionController');
+const tools = require('../controllers/admin/toolsController');
+const widgets = require('../controllers/admin/widgetController');
+const importExport = require('../controllers/admin/importExportController');
+const updates = require('../controllers/admin/updateController');
+const templates = require('../controllers/admin/templateController');
+const network = require('../controllers/admin/networkController');
+const autosave = require('../controllers/admin/autosaveController');
+const comments = require('../controllers/admin/commentController');
 
 const router = express.Router();
 
@@ -113,6 +125,65 @@ router.post('/waf/ip-lists', requireAuth, wafPermission, waf.addIpList);
 router.post('/waf/ip-lists/:id/delete', requireAuth, wafPermission, waf.removeIpList);
 router.post('/waf/logs/:id/block-ip', requireAuth, wafPermission, waf.blockIpFromLog);
 router.post('/waf/logs/:id/whitelist-ip', requireAuth, wafPermission, waf.whitelistIpFromLog);
+
+router.get('/custom-post-types', requireAuth, can('manage_custom_post_types'), customPostTypes.index);
+router.get('/custom-post-types/create', requireAuth, can('manage_custom_post_types'), customPostTypes.create);
+router.post('/custom-post-types', requireAuth, can('manage_custom_post_types'), customPostTypes.store);
+router.get('/custom-post-types/:id/edit', requireAuth, can('manage_custom_post_types'), customPostTypes.edit);
+router.put('/custom-post-types/:id', requireAuth, can('manage_custom_post_types'), customPostTypes.update);
+router.delete('/custom-post-types/:id', requireAuth, can('manage_custom_post_types'), customPostTypes.destroy);
+
+router.get('/content/:typeSlug', requireAuth, canAny(['manage_custom_content', 'manage_posts', 'create_posts', 'edit_posts']), customContent.index);
+router.get('/content/:typeSlug/create', requireAuth, canAny(['manage_custom_content', 'create_posts', 'manage_posts']), customContent.create);
+router.post('/content/:typeSlug', requireAuth, canAny(['manage_custom_content', 'create_posts', 'manage_posts']), crudImageUpload, customContent.store);
+router.get('/content/:typeSlug/:id/edit', requireAuth, canAny(['manage_custom_content', 'manage_posts', 'edit_posts', 'create_posts']), customContent.edit);
+router.put('/content/:typeSlug/:id', requireAuth, canAny(['manage_custom_content', 'manage_posts', 'edit_posts', 'create_posts']), crudImageUpload, customContent.update);
+router.delete('/content/:typeSlug/:id', requireAuth, canAny(['manage_custom_content', 'delete_posts', 'manage_posts']), customContent.destroy);
+
+router.get('/field-groups', requireAuth, can('manage_custom_fields'), fieldGroups.index);
+router.get('/field-groups/create', requireAuth, can('manage_custom_fields'), fieldGroups.create);
+router.post('/field-groups', requireAuth, can('manage_custom_fields'), fieldGroups.store);
+router.get('/field-groups/:id/edit', requireAuth, can('manage_custom_fields'), fieldGroups.edit);
+router.put('/field-groups/:id', requireAuth, can('manage_custom_fields'), fieldGroups.update);
+router.delete('/field-groups/:id', requireAuth, can('manage_custom_fields'), fieldGroups.destroy);
+
+router.get('/revisions', requireAuth, canAny(['manage_posts', 'manage_pages', 'manage_custom_content']), revisions.index);
+router.post('/revisions/:id/restore', requireAuth, canAny(['manage_posts', 'manage_pages', 'manage_custom_content']), revisions.restore);
+
+router.get('/tools', requireAuth, can('manage_settings'), tools.index);
+router.get('/tools/health', requireAuth, canAny(['manage_settings', 'manage_security']), tools.siteHealth);
+router.get('/tools/export', requireAuth, can('manage_settings'), importExport.exportForm);
+router.get('/tools/export/download', requireAuth, can('manage_settings'), importExport.exportDownload);
+router.get('/tools/import', requireAuth, can('manage_settings'), importExport.importForm);
+router.post('/tools/import/preview', requireAuth, can('manage_settings'), upload.single('file'), importExport.importPreview);
+router.post('/tools/import', requireAuth, can('manage_settings'), importExport.importRun);
+
+router.get('/updates', requireAuth, can('manage_settings'), updates.index);
+router.post('/updates/check', requireAuth, can('manage_settings'), updates.check);
+
+router.get('/widgets', requireAuth, can('manage_settings'), widgets.index);
+router.get('/widgets/:slug', requireAuth, can('manage_settings'), widgets.editArea);
+router.post('/widgets/:slug', requireAuth, can('manage_settings'), widgets.addWidget);
+router.delete('/widgets/instance/:id', requireAuth, can('manage_settings'), widgets.deleteWidget);
+
+router.get('/templates', requireAuth, can('manage_themes'), templates.index);
+router.post('/templates/defaults', requireAuth, can('manage_themes'), templates.createDefault);
+router.get('/templates/:id/edit', requireAuth, can('manage_themes'), templates.edit);
+router.put('/templates/:id', requireAuth, can('manage_themes'), templates.update);
+
+router.get('/network', requireAuth, network.index);
+router.get('/network/create', requireAuth, network.create);
+router.post('/network', requireAuth, network.store);
+
+router.post('/autosave', requireAuth, autosave.store);
+router.get('/autosave', requireAuth, autosave.show);
+router.delete('/autosave', requireAuth, autosave.destroy);
+
+router.get('/comments', requireAuth, can('manage_comments'), comments.index);
+router.post('/comments/:id/moderate', requireAuth, can('manage_comments'), comments.moderate);
+router.get('/comments/:id/reply', requireAuth, can('manage_comments'), comments.reply);
+router.post('/comments/:id/reply', requireAuth, can('manage_comments'), comments.storeReply);
+router.post('/comments/bulk', requireAuth, can('manage_comments'), comments.bulk);
 
 function resourcePermission(req, res, next) {
   try {

@@ -1,0 +1,6 @@
+.np-block-toolbar { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.np-block-card { border: 1px solid var(--np-border, #dee2e6); border-radius: 8px; padding: 0.75rem; background: #fff; }
+.np-block-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.np-block-actions button { border: none; background: transparent; cursor: pointer; padding: 0 0.35rem; }
+.np-block-preview { border: 1px dashed var(--np-border, #dee2e6); border-radius: 8px; padding: 1rem; min-height: 80px; background: #fafafa; }
+.editor-mode-toggle { margin-bottom: 1rem; }

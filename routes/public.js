@@ -2,8 +2,12 @@ const express = require('express');
 const { body } = require('express-validator');
 const { publicMutationLimiter } = require('../middleware/security');
 const site = require('../controllers/public/siteController');
+const customContent = require('../controllers/public/customContentController');
 
 const router = express.Router();
+
+router.get('/types/:typeSlug', customContent.archive);
+router.get('/types/:typeSlug/:itemSlug', customContent.single);
 
 router.get('/', site.home);
 router.get('/blog', site.blog);

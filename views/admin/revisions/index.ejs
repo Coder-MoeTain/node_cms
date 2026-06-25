@@ -1,0 +1,31 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header mb-3"><h1>Revisions</h1></div>
+    <div class="np-table-wrap">
+      <table class="np-table">
+        <thead><tr><th>Date</th><th>Author</th><th>Title</th><th></th></tr></thead>
+        <tbody>
+          <% if (!revisions.length) { %><tr><td colspan="4" class="text-muted">No revisions saved yet.</td></tr><% } %>
+          <% revisions.forEach(function(rev) { %>
+            <tr>
+              <td><%= rev.created_at ? new Date(rev.created_at).toLocaleString() : '—' %></td>
+              <td><%= rev.author ? rev.author.name : '—' %></td>
+              <td><%= rev.title || '—' %></td>
+              <td class="text-end">
+                <form method="post" action="/admin/revisions/<%= rev.id %>/restore?_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" onsubmit="return confirm('Restore this revision?');">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="np-btn np-btn-link np-btn-small">Restore</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

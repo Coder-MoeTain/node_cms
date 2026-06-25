@@ -1,0 +1,27 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header mb-3">
+      <h1>Site Health</h1>
+      <span class="np-badge np-badge-<%= report.status === 'good' ? 'success' : report.status === 'critical' ? 'danger' : 'warning' %>"><%= report.status %></span>
+    </div>
+    <div class="np-table-wrap">
+      <table class="np-table">
+        <thead><tr><th>Check</th><th>Status</th><th>Details</th></tr></thead>
+        <tbody>
+          <% report.checks.forEach(function(check) { %>
+            <tr>
+              <td><%= check.label %></td>
+              <td><span class="np-badge np-badge-<%= check.status === 'good' ? 'success' : check.status === 'critical' ? 'danger' : 'warning' %>"><%= check.status %></span></td>
+              <td><%= check.value %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,15 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header"><h1>Site Templates</h1><form method="post" action="/admin/templates/defaults" class="d-inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="np-btn np-btn-secondary">Create defaults</button></form></div>
+    <div class="np-table-wrap mt-3">
+      <table class="np-table"><thead><tr><th>Name</th><th>Type</th><th>Status</th><th></th></tr></thead>
+        <tbody><% templates.forEach(function(t) { %><tr><td><%= t.name %></td><td><%= t.template_type %></td><td><%= t.status %></td><td><a href="/admin/templates/<%= t.id %>/edit">Edit</a></td></tr><% }) %></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

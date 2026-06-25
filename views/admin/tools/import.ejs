@@ -1,0 +1,28 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <h1 class="mb-3">Import</h1>
+    <form method="post" action="/admin/tools/import/preview" enctype="multipart/form-data" class="mb-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="file" name="file" accept="application/json,.json" class="form-control mb-2" required>
+      <button class="np-btn np-btn-primary" type="submit">Preview import</button>
+    </form>
+    <% if (preview) { %>
+      <div class="np-metabox mb-3">
+        <div class="np-metabox-header">Preview</div>
+        <div class="np-metabox-body">
+          <ul><% Object.keys(preview).forEach(function(k) { %><li><%= k %>: <%= preview[k] %></li><% }) %></ul>
+          <form method="post" action="/admin/tools/import">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="dry_run" id="dry_run"><label class="form-check-label" for="dry_run">Dry run only</label></div>
+            <button class="np-btn np-btn-primary" type="submit">Run import</button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+  </main>
+</div>
+<%- include('../partials/footer') %>

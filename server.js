@@ -99,11 +99,23 @@ app.use((req, res, next) => {
 app.use(localeMiddleware);
 app.use(portalVisitMiddleware);
 app.use(loadSiteContext);
+const { siteResolver } = require('./middleware/siteResolver');
+app.use(siteResolver);
 app.use(async (req, res, next) => {
   if (req.path.startsWith('/admin') && req.session?.user) {
     res.locals.pluginAdminMenuItems = await pluginLoader.collectHook('adminMenuItems', { req, res });
+    try {
+      const { CustomPostType } = models;
+      res.locals.customPostTypes = await CustomPostType.findAll({
+        where: { status: 'active', show_in_menu: true },
+        order: [['name', 'ASC']]
+      });
+    } catch {
+      res.locals.customPostTypes = [];
+    }
   } else {
     res.locals.pluginAdminMenuItems = [];
+    res.locals.customPostTypes = [];
   }
   next();
 });

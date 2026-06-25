@@ -33,6 +33,23 @@ const WafIpList = require('./WafIpList')(sequelize);
 const WafSetting = require('./WafSetting')(sequelize);
 const WafRateLimit = require('./WafRateLimit')(sequelize);
 const TranslationCache = require('./TranslationCache')(sequelize);
+const CustomPostType = require('./CustomPostType')(sequelize);
+const FieldGroup = require('./FieldGroup')(sequelize);
+const CustomField = require('./CustomField')(sequelize);
+const CustomFieldValue = require('./CustomFieldValue')(sequelize);
+const Revision = require('./Revision')(sequelize);
+const Autosave = require('./Autosave')(sequelize);
+const ContentTranslation = require('./ContentTranslation')(sequelize);
+const WidgetArea = require('./WidgetArea')(sequelize);
+const WidgetInstance = require('./WidgetInstance')(sequelize);
+const SiteTemplate = require('./SiteTemplate')(sequelize);
+const TemplatePart = require('./TemplatePart')(sequelize);
+const ImportJob = require('./ImportJob')(sequelize);
+const UpdateLog = require('./UpdateLog')(sequelize);
+const Site = require('./Site')(sequelize);
+const SiteDomain = require('./SiteDomain')(sequelize);
+const SiteUser = require('./SiteUser')(sequelize);
+const NetworkSiteSetting = require('./NetworkSiteSetting')(sequelize);
 
 Role.belongsToMany(Permission, { through: 'role_permissions', foreignKey: 'role_id', otherKey: 'permission_id' });
 Permission.belongsToMany(Role, { through: 'role_permissions', foreignKey: 'permission_id', otherKey: 'role_id' });
@@ -84,6 +101,25 @@ PasswordResetToken.belongsTo(User, { foreignKey: 'user_id' });
 User.hasMany(TwoFactorRecoveryCode, { foreignKey: 'user_id', as: 'twoFactorRecoveryCodes' });
 TwoFactorRecoveryCode.belongsTo(User, { foreignKey: 'user_id' });
 
+FieldGroup.hasMany(CustomField, { foreignKey: 'field_group_id', as: 'fields' });
+CustomField.belongsTo(FieldGroup, { foreignKey: 'field_group_id' });
+CustomField.hasMany(CustomFieldValue, { foreignKey: 'custom_field_id', as: 'values' });
+CustomFieldValue.belongsTo(CustomField, { foreignKey: 'custom_field_id' });
+User.hasMany(Revision, { foreignKey: 'created_by', as: 'revisions' });
+Revision.belongsTo(User, { foreignKey: 'created_by', as: 'author' });
+
+WidgetArea.hasMany(WidgetInstance, { foreignKey: 'widget_area_id', as: 'widgets' });
+WidgetInstance.belongsTo(WidgetArea, { foreignKey: 'widget_area_id' });
+Site.hasMany(SiteDomain, { foreignKey: 'site_id', as: 'domains' });
+SiteDomain.belongsTo(Site, { foreignKey: 'site_id' });
+Site.hasMany(SiteUser, { foreignKey: 'site_id', as: 'members' });
+SiteUser.belongsTo(Site, { foreignKey: 'site_id' });
+SiteUser.belongsTo(User, { foreignKey: 'user_id' });
+Site.hasMany(NetworkSiteSetting, { foreignKey: 'site_id', as: 'settings' });
+Comment.belongsTo(Comment, { foreignKey: 'parent_id', as: 'parent' });
+Comment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(Comment, { foreignKey: 'user_id', as: 'comments' });
+
 module.exports = {
   sequelize,
   Role,
@@ -118,5 +154,22 @@ module.exports = {
   WafIpList,
   WafSetting,
   WafRateLimit,
-  TranslationCache
+  TranslationCache,
+  CustomPostType,
+  FieldGroup,
+  CustomField,
+  CustomFieldValue,
+  Revision,
+  Autosave,
+  WidgetArea,
+  WidgetInstance,
+  SiteTemplate,
+  TemplatePart,
+  ImportJob,
+  UpdateLog,
+  Site,
+  SiteDomain,
+  SiteUser,
+  NetworkSiteSetting,
+  ContentTranslation
 };

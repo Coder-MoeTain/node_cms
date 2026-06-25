@@ -36,7 +36,7 @@ async function sidebarPostsForCategory(slug, limit = 5) {
   const categoryRow = await Category.findOne({ where: { slug } });
   if (!categoryRow) return [];
   return Post.findAll({
-    where: { category_id: categoryRow.id, status: 'published' },
+    where: { category_id: categoryRow.id, status: 'published', post_type: 'post' },
     limit,
     order: [['published_at', 'DESC']],
     attributes: ['id', 'title', 'slug', 'published_at']
@@ -61,8 +61,8 @@ async function loadSiteContext(req, res, next) {
         order: [[{ model: MenuItem, as: 'items' }, 'display_order', 'ASC']]
       }),
       Category.findAll({ limit: 20, order: [['name', 'ASC']] }),
-      Post.findAll({ where: { status: 'published' }, limit: 5, order: [['published_at', 'DESC']] }),
-      Post.findAll({ where: { status: 'published' }, limit: 5, order: [['views_count', 'DESC']] }),
+      Post.findAll({ where: { status: 'published', post_type: 'post' }, limit: 5, order: [['published_at', 'DESC']] }),
+      Post.findAll({ where: { status: 'published', post_type: 'post' }, limit: 5, order: [['views_count', 'DESC']] }),
       sidebarPostsForCategory('announcements', 5),
       Plugin.findAll({ where: { active: true }, attributes: ['slug'] })
     ]);
@@ -90,6 +90,8 @@ async function loadSiteContext(req, res, next) {
       return date.toLocaleDateString(res.locals.locale || undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     };
     const engine = res.locals.translationEngine;
+    const { gravatarUrl } = require('../utils/commentHelper');
+    res.locals.gravatarUrl = gravatarUrl;
     const siteMenus = menus.reduce((map, menu) => {
       const tree = buildMenuTree(menu.items || []);
       map[menu.location] = tree;
@@ -107,6 +109,8 @@ async function loadSiteContext(req, res, next) {
     res.locals.siteSettings = await translateSiteSettings(engine, res.locals.siteSettings);
     res.locals.portalStats = await getPortalStats(res.locals.siteSettings);
     res.locals.activePluginSlugs = activePlugins.map((row) => row.slug);
+    const { loadAllWidgetAreas } = require('../utils/widgetRenderer');
+    res.locals.widgetAreas = await loadAllWidgetAreas({ recentPosts });
     res.locals.pluginPublicHead = await pluginLoader.collectHook('publicHead', { req, res });
     res.locals.pluginPublicFooter = await pluginLoader.collectHook('publicFooter', { req, res });
     res.locals.currentPath = req.path;

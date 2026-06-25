@@ -1,0 +1,31 @@
+<% const locales = typeof translationLocales !== 'undefined' ? translationLocales : ['my', 'zh-CN', 'ru']; %>
+<% const labels = { my: 'Myanmar (မြန်မာ)', 'zh-CN': 'Chinese (中文)', ru: 'Russian (Русский)' }; %>
+<% const store = typeof translations !== 'undefined' ? translations : {}; %>
+
+<div class="np-metabox mt-3">
+  <div class="np-metabox-header">Translations (no Google Translate)</div>
+  <div class="np-metabox-body">
+    <p class="np-help-text">Enter human-written translations for each language. When a visitor selects a language, these override the default English content. Leave blank to use the glossary auto-translation fallback.</p>
+    <ul class="nav nav-tabs mb-3" role="tablist">
+      <% locales.forEach(function(locale, idx) { %>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link<%= idx === 0 ? ' active' : '' %>" type="button" data-bs-toggle="tab" data-bs-target="#tr-tab-<%= locale.replace(/[^a-z]/gi, '') %>" role="tab"><%= labels[locale] || locale %></button>
+        </li>
+      <% }) %>
+    </ul>
+    <div class="tab-content">
+      <% locales.forEach(function(locale, idx) {
+        const row = store[locale] || {};
+        const key = locale;
+      %>
+        <div class="tab-pane fade<%= idx === 0 ? ' show active' : '' %>" id="tr-tab-<%= locale.replace(/[^a-z]/gi, '') %>" role="tabpanel">
+          <div class="mb-2"><label class="form-label">Title</label><input class="form-control" name="tr[<%= key %>][title]" value="<%= row.title || '' %>"></div>
+          <div class="mb-2"><label class="form-label">Excerpt</label><textarea class="form-control" name="tr[<%= key %>][excerpt]" rows="2"><%= row.excerpt || '' %></textarea></div>
+          <div class="mb-2"><label class="form-label">Content</label><textarea class="form-control rich-editor" name="tr[<%= key %>][content]" rows="8"><%- row.content || '' %></textarea></div>
+          <div class="mb-2"><label class="form-label">SEO Title</label><input class="form-control" name="tr[<%= key %>][seo_title]" value="<%= row.seo_title || '' %>"></div>
+          <div><label class="form-label">SEO Description</label><textarea class="form-control" name="tr[<%= key %>][seo_description]" rows="2"><%= row.seo_description || '' %></textarea></div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,18 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header mb-3"><h1>Updates</h1><form method="post" action="/admin/updates/check" class="d-inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="np-btn np-btn-secondary">Check again</button></form></div>
+    <div class="np-metabox mb-3">
+      <div class="np-metabox-header">NodePress Core</div>
+      <div class="np-metabox-body">
+        <p>Installed: <strong><%= version %></strong> — <%= report.core.message %></p>
+        <% if (report.core.available) { %><p class="text-warning">Update available: <%= report.core.latest %>. Manual update recommended — back up before upgrading.</p><% } %>
+      </div>
+    </div>
+    <div class="np-alert np-alert-info">Updates are checked safely without remote code execution. Download and apply updates manually.</div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

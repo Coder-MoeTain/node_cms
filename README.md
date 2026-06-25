@@ -389,8 +389,10 @@ NodePress uses an **internal translation engine** instead of Google Translate:
 - **Glossaries:** `data/glossaries/en-my.json`, `en-zh.json`, `en-ru.json` (extend these to add terms)
 - **Cache:** `translation_cache` table stores translated strings for performance
 - **Scope:** Menus, posts, pages, categories, banners, sliders, and site settings are translated on the server before render
+- **Manual content translations:** On each post, page, or custom post type item, use the **Translations** panel in the admin editor to enter human-written Myanmar, Chinese, or Russian versions (title, excerpt, body, SEO). These are stored in `content_translations` and take priority over glossary auto-translation.
+- **Fallback:** If no manual translation exists for a field, the glossary engine still applies phrase/word matching automatically.
 
-To add or improve translations, edit the JSON glossary files under `data/glossaries/`. Run `npm run migrate` to create the translation cache table on existing installs.
+To add UI labels and common phrases, edit the JSON glossary files under `data/glossaries/`. For full post bodies, use the admin **Translations** panel. Run `npm run migrate` to apply translation-related database migrations on existing installs.
 
 ### Portal Statistics
 

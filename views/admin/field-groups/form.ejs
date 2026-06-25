@@ -1,0 +1,111 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<%
+  const isEdit = Boolean(record.id);
+  const action = isEdit
+    ? `/admin/field-groups/${record.id}?_method=PUT&_csrf=${encodeURIComponent(csrfToken)}`
+    : `/admin/field-groups?_csrf=${encodeURIComponent(csrfToken)}`;
+  const val = (name, fallback = '') => record[name] == null ? fallback : record[name];
+%>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <form method="post" action="<%= action %>" id="field-group-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="np-page-header mb-3"><h1><%= isEdit ? 'Edit' : 'Add' %> Field Group</h1></div>
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="np-metabox mb-3">
+            <div class="np-metabox-header">Group</div>
+            <div class="np-metabox-body">
+              <div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= val('name') %>" required></div>
+              <div class="mb-3"><label class="form-label">Slug</label><input class="form-control" name="slug" value="<%= val('slug') %>"></div>
+              <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="2"><%= val('description') %></textarea></div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Location type</label>
+                  <select class="form-select" name="location_type">
+                    <% ['custom_post_type','post_type','page','category','tag'].forEach(function(t) { %>
+                      <option value="<%= t %>" <%= val('location_type','custom_post_type') === t ? 'selected' : '' %>><%= t %></option>
+                    <% }) %>
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Location value (post type slug, page slug, etc.)</label>
+                  <input class="form-control" name="location_value" value="<%= val('location_value') %>" list="cpt-slugs" required>
+                  <datalist id="cpt-slugs">
+                    <option value="post">
+                    <option value="page">
+                    <% postTypes.forEach(function(pt) { %><option value="<%= pt.slug %>"><% }) %>
+                  </datalist>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="np-metabox">
+            <div class="np-metabox-header d-flex justify-content-between align-items-center">
+              <span>Fields</span>
+              <button type="button" class="np-btn np-btn-secondary np-btn-small" data-add-field>Add field</button>
+            </div>
+            <div class="np-metabox-body" id="field-rows">
+              <% const fieldList = fields.length ? fields : [{ label: '', name: '', type: 'text' }]; %>
+              <% fieldList.forEach(function(field, idx) { %>
+                <div class="border rounded p-3 mb-3 field-row" data-field-row>
+                  <% if (field.id) { %><input type="hidden" name="field_id" value="<%= field.id %>"><% } else { %><input type="hidden" name="field_id" value=""><% } %>
+                  <div class="row g-2">
+                    <div class="col-md-4"><input class="form-control" name="field_label" placeholder="Label" value="<%= field.label || '' %>"></div>
+                    <div class="col-md-3"><input class="form-control" name="field_name" placeholder="name" value="<%= field.name || '' %>"></div>
+                    <div class="col-md-3">
+                      <select class="form-select" name="field_type">
+                        <% fieldTypes.forEach(function(t) { %>
+                          <option value="<%= t %>" <%= field.type === t ? 'selected' : '' %>><%= t %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                    <div class="col-md-2"><button type="button" class="np-btn np-btn-link text-danger w-100" data-remove-field>Remove</button></div>
+                  </div>
+                  <div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="field_required" value="on" <%= field.is_required ? 'checked' : '' %>><label class="form-check-label">Required</label></div>
+                  <input class="form-control mt-2" name="field_help" placeholder="Help text" value="<%= field.help_text || '' %>">
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+        <aside class="col-lg-4">
+          <div class="np-metabox">
+            <div class="np-metabox-header">Status</div>
+            <div class="np-metabox-body">
+              <select class="form-select" name="status">
+                <option value="active" <%= val('status','active') === 'active' ? 'selected' : '' %>>Active</option>
+                <option value="inactive" <%= val('status') === 'inactive' ? 'selected' : '' %>>Inactive</option>
+              </select>
+              <button type="submit" class="np-btn np-btn-primary w-100 mt-3">Save</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </form>
+  </main>
+</div>
+<script>
+document.querySelector('[data-add-field]')?.addEventListener('click', function () {
+  const tpl = document.querySelector('[data-field-row]');
+  if (!tpl) return;
+  const clone = tpl.cloneNode(true);
+  clone.querySelectorAll('input:not([type=hidden]), select').forEach(function (el) {
+    if (el.type === 'checkbox') el.checked = false;
+    else el.value = '';
+  });
+  const hidden = clone.querySelector('input[name="field_id"]');
+  if (hidden) hidden.value = '';
+  document.getElementById('field-rows').appendChild(clone);
+});
+document.getElementById('field-rows')?.addEventListener('click', function (e) {
+  if (e.target.matches('[data-remove-field]')) {
+    const rows = document.querySelectorAll('[data-field-row]');
+    if (rows.length > 1) e.target.closest('[data-field-row]').remove();
+  }
+});
+</script>
+<%- include('../partials/footer') %>

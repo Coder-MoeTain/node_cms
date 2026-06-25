@@ -44,7 +44,10 @@ const permissions = [
   'manage_plugins',
   'manage_settings',
   'manage_security',
-  'manage_waf'
+  'manage_waf',
+  'manage_custom_post_types',
+  'manage_custom_content',
+  'manage_custom_fields'
 ];
 
 const wafSettings = {
@@ -121,7 +124,10 @@ const roles = [
       'manage_categories',
       'manage_tags',
       'manage_media',
-      'manage_comments'
+      'manage_comments',
+      'manage_custom_post_types',
+      'manage_custom_content',
+      'manage_custom_fields'
     ]
   ],
   ['Author', 'author', ['view_dashboard', 'create_posts', 'edit_posts', 'upload_media']],
