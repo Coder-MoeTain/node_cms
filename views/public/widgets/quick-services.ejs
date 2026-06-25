@@ -1,4 +1,4 @@
-<section class="portal-section portal-quick-services portal-mnp-services" id="portal-quick-services" aria-label="Quick services">
+<section class="portal-section portal-quick-services portal-mnp-services site-section" id="portal-quick-services" aria-label="Quick services">
   <div class="container py-4">
     <% const isMnp = themePreset === 'myanmar-portal';
        const menuItems = (typeof quickServiceItems !== 'undefined' && quickServiceItems.length)
@@ -27,15 +27,12 @@
       const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered';
     %>
     <% if (!isMnp) { %>
-      <div class="portal-section-head">
-        <h2 class="portal-section-title">Quick Services</h2>
-        <p class="portal-section-subtitle">Shortcut access to common government resources</p>
-      </div>
+      <%- include('../partials/section-head', { title: 'Quick Services', subtitle: 'Shortcut access to common government resources' }) %>
     <% } %>
     <div class="row g-4 portal-service-grid portal-mnp-service-grid">
       <% services.forEach(function(item) { %>
         <div class="col-12 col-sm-6 col-lg-4">
-          <a class="portal-service-card portal-mnp-service-card portal-card-<%= cardStyle %>" href="<%= item.url %>">
+          <a class="portal-service-card portal-mnp-service-card site-service-card portal-card-<%= cardStyle %>" href="<%= item.url %>">
             <span class="portal-mnp-icon-wrap portal-mnp-icon-<%= item.tone %>" aria-hidden="true">
               <i class="bi <%= item.icon %>"></i>
             </span>

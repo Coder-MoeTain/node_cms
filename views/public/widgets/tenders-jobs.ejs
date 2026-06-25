@@ -1,13 +1,10 @@
 <% const tenders = tenderPosts || []; const jobs = jobPosts || []; const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
-<section class="portal-section portal-tenders-jobs" id="portal-tenders" aria-label="Tenders and jobs">
+<section class="portal-section portal-tenders-jobs site-section" id="portal-tenders" aria-label="Tenders and jobs">
   <div class="container py-4">
     <div class="row g-4">
       <div class="col-lg-6">
-        <section class="portal-widget portal-card-<%= cardStyle %>">
-          <header class="portal-widget-header">
-            <h2 class="portal-widget-title">Tenders</h2>
-            <a class="portal-view-all" href="/category/tenders">View all</a>
-          </header>
+        <section class="portal-widget site-widget portal-card-<%= cardStyle %>">
+          <%- include('../partials/widget-header', { title: 'Tenders', viewAllUrl: '/category/tenders', viewAllLabel: 'View all' }) %>
           <div class="portal-widget-body">
             <% if (tenders.length) { %>
               <ul class="portal-post-list portal-post-list-compact">
@@ -22,11 +19,8 @@
         </section>
       </div>
       <div class="col-lg-6">
-        <section class="portal-widget portal-card-<%= cardStyle %>">
-          <header class="portal-widget-header">
-            <h2 class="portal-widget-title">Jobs &amp; Vacancies</h2>
-            <a class="portal-view-all" href="/category/jobs">View all</a>
-          </header>
+        <section class="portal-widget site-widget portal-card-<%= cardStyle %>">
+          <%- include('../partials/widget-header', { title: 'Jobs & Vacancies', viewAllUrl: '/category/jobs', viewAllLabel: 'View all' }) %>
           <div class="portal-widget-body">
             <% if (jobs.length) { %>
               <ul class="portal-post-list portal-post-list-compact">

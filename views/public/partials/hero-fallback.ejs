@@ -1,0 +1,37 @@
+<%#
+  Hero fallback when no slider items (Phase 4)
+  Locals: variant ('portal'|'site'), isMnp, siteSettings, portalConfig, portalStats (optional)
+%>
+<% const heroVariant = typeof variant !== 'undefined' ? variant : 'portal';
+   const isPortalHero = heroVariant === 'portal';
+   const cfg = portalConfig || {};
+   const hdr = cfg.header || {};
+   const mnp = typeof isMnp !== 'undefined' && isMnp;
+   const contentClass = isPortalHero ? 'portal-hero-content' : 'site-hero-content';
+%>
+<section class="<%= isPortalHero ? 'portal-hero portal-hero-fallback' : 'site-hero site-hero-default' %> <%= mnp ? 'portal-hero-mnp' : '' %>" id="<%= isPortalHero ? 'portal-hero' : 'site-hero' %>" aria-label="Welcome banner">
+  <div class="<%= isPortalHero ? 'portal-hero-fallback-inner' : 'site-hero-default-inner' %>">
+    <div class="container hero-content <%= contentClass %> <%= isPortalHero ? 'text-center' : '' %>">
+      <span class="hero-eyebrow <%= isPortalHero ? 'portal-hero-badge' : 'eyebrow' %>"><%= isPortalHero ? 'NodePress Portal' : 'Welcome' %></span>
+      <h1 class="<%= mnp ? 'portal-mnp-hero-title' : '' %>"><%= siteSettings.site_title || 'NodePress CMS' %></h1>
+      <p class="hero-lead"><%= siteSettings.site_tagline || (isPortalHero ? 'Your gateway to news, services, documents, and citizen information.' : 'Publishing tools for modern content teams.') %></p>
+      <div class="hero-actions <%= isPortalHero ? 'portal-hero-actions' : '' %>">
+        <a class="site-btn <%= isPortalHero ? 'portal-btn' : 'site-btn-lg' %>" href="<%= isPortalHero ? '/category/news' : '/blog' %>"><%= isPortalHero ? 'Latest news' : 'Explore articles' %></a>
+        <a class="site-btn <%= isPortalHero ? 'portal-btn portal-btn-outline' : 'site-btn-outline site-btn-lg' %>" href="/contact"><%= isPortalHero ? 'Contact us' : 'Get in touch' %></a>
+      </div>
+      <% if (isPortalHero && hdr.showSearch !== false) { %>
+      <form class="portal-hero-search portal-header-search hero-search" action="/search" role="search">
+        <label class="visually-hidden" for="hero-search">Search the portal</label>
+        <input class="form-control" id="hero-search" name="q" type="search" placeholder="Search news, services, documents…" aria-label="Search the portal" autocomplete="off">
+        <button class="portal-search-btn" type="submit" aria-label="Submit search"><i class="bi bi-search" aria-hidden="true"></i></button>
+      </form>
+      <% } %>
+      <% if (isPortalHero && typeof portalStats !== 'undefined' && portalStats) { %>
+      <div class="portal-hero-stats hero-stats" aria-label="Portal highlights">
+        <% if (portalStats.visitors != null) { %><span class="portal-hero-stat-chip hero-stat-chip"><strong><%= portalStats.visitors.toLocaleString('en-US') %></strong> visitors</span><% } %>
+        <% if (portalStats.registeredUsers != null) { %><span class="portal-hero-stat-chip hero-stat-chip"><strong><%= portalStats.registeredUsers.toLocaleString('en-US') %></strong> registered users</span><% } %>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</section>

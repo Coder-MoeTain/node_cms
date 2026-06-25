@@ -1,9 +1,6 @@
 <% const list = posts || []; const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
-<section class="portal-widget portal-widget-hot portal-hot-accent portal-card-<%= cardStyle %>" id="portal-hot" aria-label="Hot news">
-  <header class="portal-widget-header portal-hot-header">
-    <h2 class="portal-widget-title"><span class="portal-hot-label">HOT NEWS</span></h2>
-    <a class="portal-view-all" href="/blog">More</a>
-  </header>
+<section class="portal-widget site-widget portal-widget-hot portal-hot-accent portal-card-<%= cardStyle %>" id="portal-hot" aria-label="Hot news">
+  <%- include('../partials/widget-header', { title: '<span class="portal-hot-label">HOT NEWS</span>', viewAllUrl: '/blog', headerClass: 'portal-hot-header' }) %>
   <div class="portal-widget-body">
     <% if (list.length) { %>
       <ul class="portal-post-list portal-hot-list">

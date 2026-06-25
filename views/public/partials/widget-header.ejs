@@ -1,0 +1,6 @@
+<header class="portal-widget-header site-widget-header<%= typeof headerClass !== 'undefined' && headerClass ? ' ' + headerClass : '' %>">
+  <h2 class="portal-widget-title site-widget-title"><%- title %></h2>
+  <% if (typeof viewAllUrl !== 'undefined' && viewAllUrl) { %>
+    <a class="portal-view-all site-view-all" href="<%= viewAllUrl %>"><%= typeof viewAllLabel !== 'undefined' ? viewAllLabel : 'More' %></a>
+  <% } %>
+</header>

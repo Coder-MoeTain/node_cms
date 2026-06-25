@@ -26,7 +26,7 @@
   --np-info: #2271b1;
   --np-sidebar-width: 220px;
   --np-topbar-height: 48px;
-  --np-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --np-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --np-radius: 8px;
   --np-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
   --np-content-max: 1400px;
@@ -36,12 +36,58 @@
   --portal-primary-dark: #06466a;
   --portal-secondary: #f4b000;
   --portal-accent: #d71920;
-  --portal-bg: #f5f7fa;
+  --portal-bg: #f6f8fb;
   --portal-card: #ffffff;
   --portal-border: #d7dde5;
   --portal-text: #1f2933;
   --portal-muted: #6b7280;
   --portal-footer: #0b2f47;
+
+  /* Public design system — Phase 2 tokens */
+  --site-surface: #ffffff;
+  --site-surface-soft: #eef4f8;
+  --site-radius-sm: 8px;
+  --site-radius-md: 14px;
+  --site-radius-lg: 22px;
+  --site-shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --site-shadow-md: 0 12px 30px rgba(15, 23, 42, 0.10);
+  --site-shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.12);
+  --site-container: 1180px;
+  --site-section-pad: 3.5rem;
+  --site-section-pad-mobile: 2rem;
+  --site-card-pad: 1.25rem;
+  --site-card-pad-lg: 1.75rem;
+  --site-grid-gap: 1.25rem;
+  --site-grid-gap-lg: 1.75rem;
+  --site-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --site-font-body: 15px;
+  --site-font-body-lg: 16px;
+  --site-line-body: 1.65;
+  --site-line-heading: 1.2;
+  --site-title-section: clamp(1.75rem, 2.5vw, 2.25rem);
+  --site-title-card: clamp(1.125rem, 1.5vw, 1.375rem);
+  --site-title-article: clamp(1.75rem, 3vw, 2.75rem);
+  --site-transition-fast: 0.15s ease;
+  --site-transition-base: 0.22s ease;
+  --site-focus-ring: 0 0 0 3px rgba(11, 95, 138, 0.25);
+  --site-header-z: 1030;
+  --site-nav-height: 48px;
+  --site-scroll-offset: 72px;
+
+  /* Hero — Phase 4 tokens */
+  --site-hero-min-height: clamp(320px, 42vw, 520px);
+  --site-hero-min-height-compact: clamp(280px, 38vw, 440px);
+  --site-hero-overlay: linear-gradient(105deg, rgba(6, 70, 106, 0.88) 0%, rgba(11, 47, 71, 0.55) 55%, rgba(11, 47, 71, 0.35) 100%);
+  --site-hero-overlay-soft: linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(15, 23, 42, 0.45) 60%, rgba(15, 23, 42, 0.25) 100%);
+  --site-hero-fallback-bg: linear-gradient(135deg, var(--site-primary-dark) 0%, var(--site-primary) 55%, #0b2f47 100%);
+  --site-hero-title-max: 18ch;
+
+  /* Widgets — Phase 5 tokens */
+  --site-widget-header-pad: 1rem 1.25rem;
+  --site-widget-body-pad: 1rem 1.25rem 1.25rem;
+  --site-widget-gap: 1rem;
+  --site-service-icon-size: 48px;
+  --site-post-list-divider: var(--site-border);
 
   /* Legacy aliases */
   --gov-primary: var(--portal-primary);
@@ -56,9 +102,11 @@
   --gov-footer: var(--portal-footer);
 
   --site-primary: var(--portal-primary);
+  --site-primary-dark: var(--portal-primary-dark);
   --site-secondary: var(--portal-secondary);
   --site-accent: var(--portal-accent);
   --site-bg: var(--portal-bg);
+  --site-surface: var(--portal-card);
   --site-card: var(--portal-card);
   --site-border: var(--portal-border);
   --site-text: var(--portal-text);

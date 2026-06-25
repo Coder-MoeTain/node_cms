@@ -5,8 +5,9 @@
 body {
   background: var(--site-bg, var(--np-bg, #ffffff));
   color: var(--site-text, var(--np-text, #1d2327));
-  font-family: var(--np-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-  line-height: 1.6;
+  font-family: var(--site-font-family, var(--np-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif));
+  font-size: var(--site-font-body, 15px);
+  line-height: var(--site-line-body, 1.65);
 }
 
 a {
@@ -22,7 +23,7 @@ a:hover {
 .btn-primary {
   background: var(--site-button, var(--np-primary, #2271b1));
   border: 1px solid var(--site-button, var(--np-primary, #2271b1));
-  border-radius: var(--np-radius-sm, 6px);
+  border-radius: var(--site-radius-sm, var(--np-radius-sm, 6px));
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -118,7 +119,7 @@ a:hover {
 }
 
 .site-navbar .nav-link {
-  border-radius: var(--np-radius-sm, 6px);
+  border-radius: var(--site-radius-sm, var(--np-radius-sm, 6px));
   font-family: var(--np-font-sans, var(--np-font));
   font-size: 14px;
   font-weight: 500;
@@ -1862,7 +1863,7 @@ a:hover {
 }
 
 .site-post-thumb {
-  border-radius: var(--np-radius-sm, 6px);
+  border-radius: var(--site-radius-sm, var(--np-radius-sm, 6px));
   flex-shrink: 0;
   overflow: hidden;
   width: 120px;
@@ -1916,7 +1917,7 @@ a:hover {
 }
 
 .site-pagination .page-link {
-  border-radius: var(--np-radius-sm, 6px);
+  border-radius: var(--site-radius-sm, var(--np-radius-sm, 6px));
   color: var(--site-primary, var(--np-primary));
   font-weight: 500;
 }

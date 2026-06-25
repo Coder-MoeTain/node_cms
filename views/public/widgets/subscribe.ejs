@@ -1,8 +1,6 @@
 <% const cardStyle = (portalConfig.widgets && portalConfig.widgets.cardStyle) || 'bordered'; %>
-<section class="portal-widget portal-widget-subscribe portal-card-<%= cardStyle %>" id="portal-subscribe" aria-label="Subscribe">
-  <header class="portal-widget-header">
-    <h2 class="portal-widget-title">Subscribe</h2>
-  </header>
+<section class="portal-widget site-widget portal-widget-subscribe portal-card-<%= cardStyle %>" id="portal-subscribe" aria-label="Subscribe">
+  <%- include('../partials/widget-header', { title: 'Subscribe' }) %>
   <div class="portal-widget-body">
     <p class="portal-subscribe-text">Get updates from <%= siteSettings.site_title || 'NodePress CMS' %> delivered to your inbox.</p>
     <form class="portal-subscribe-form" action="/contact" method="get">
