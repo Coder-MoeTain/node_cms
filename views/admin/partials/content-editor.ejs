@@ -13,7 +13,8 @@
 </div>
 
 <div data-classic-editor class="<%= record.content_format === 'block' ? 'd-none' : '' %>">
-  <textarea class="form-control rich-editor" name="content" rows="14"><%- record.content || '' %></textarea>
+  <textarea class="form-control rich-editor" name="content" rows="14" data-main-content-editor><%- record.content || '' %></textarea>
+  <%- include('content-translate-toolbar') %>
 </div>
 
 <div data-block-editor-wrap class="<%= record.content_format === 'block' ? '' : 'd-none' %>">

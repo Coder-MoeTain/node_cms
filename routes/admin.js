@@ -41,6 +41,7 @@ const templates = require('../controllers/admin/templateController');
 const network = require('../controllers/admin/networkController');
 const autosave = require('../controllers/admin/autosaveController');
 const comments = require('../controllers/admin/commentController');
+const translation = require('../controllers/admin/translationController');
 
 const router = express.Router();
 
@@ -71,6 +72,7 @@ router.get('/', requireAuth, can('view_dashboard'), dashboard.dashboard);
 router.post('/quick-draft', requireAuth, canAny(['manage_posts', 'create_posts']), dashboard.quickDraft);
 
 router.get('/media', requireAuth, canAny(['manage_media', 'upload_media']), media.index);
+router.get('/media/gallery', requireAuth, canAny(['manage_media', 'upload_media']), media.gallery);
 router.post('/media/upload', requireAuth, canAny(['manage_media', 'upload_media']), upload.array('files', 20), media.upload);
 router.post('/media/upload-json', requireAuth, canAny(['manage_media', 'upload_media']), handleImageUpload, media.uploadJson);
 router.get('/media/:id/edit', requireAuth, canAny(['manage_media', 'upload_media']), media.edit);
@@ -87,7 +89,7 @@ router.post('/plugins/:slug/uninstall', requireAuth, can('manage_plugins'), plug
 router.get('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.settings);
 router.put('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.updateSettings);
 
-router.get('/settings/media-gallery', requireAuth, can('manage_settings'), settings.mediaGallery);
+router.get('/settings/media-gallery', requireAuth, canAny(['manage_settings', 'manage_media', 'upload_media']), settings.mediaGallery);
 router.get('/settings/database', requireAuth, canAny(['manage_settings', 'manage_security']), database.index);
 router.post('/settings/database/backup', requireAuth, canAny(['manage_settings', 'manage_security']), database.createBackup);
 router.post('/settings/database/restore/:filename', requireAuth, canAny(['manage_settings', 'manage_security']), database.restoreBackup);
@@ -190,6 +192,8 @@ router.post('/network', requireAuth, network.store);
 router.post('/autosave', requireAuth, autosave.store);
 router.get('/autosave', requireAuth, autosave.show);
 router.delete('/autosave', requireAuth, autosave.destroy);
+
+router.post('/translate-content', requireAuth, translation.translateContent);
 
 router.get('/comments', requireAuth, can('manage_comments'), comments.index);
 router.post('/comments/:id/moderate', requireAuth, can('manage_comments'), comments.moderate);

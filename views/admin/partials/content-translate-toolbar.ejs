@@ -1,0 +1,14 @@
+<div class="content-translate-toolbar mt-2 mb-3" data-content-translate-toolbar>
+  <button type="button" class="np-btn np-btn-secondary np-btn-small" data-auto-translate>
+    <i class="bi bi-translate" aria-hidden="true"></i> Auto-fill translations
+  </button>
+  <label class="visually-hidden" for="translate-source-locale">Source language</label>
+  <select class="form-select form-select-sm d-inline-block w-auto ms-2" id="translate-source-locale" data-translate-source-locale>
+    <option value="en" <%= (typeof contentLocale !== 'undefined' ? contentLocale : 'en') === 'en' ? 'selected' : '' %>>Source: English</option>
+    <option value="my" <%= (typeof contentLocale !== 'undefined' ? contentLocale : 'en') === 'my' ? 'selected' : '' %>>Source: Myanmar</option>
+    <option value="zh-CN" <%= (typeof contentLocale !== 'undefined' ? contentLocale : 'en') === 'zh-CN' ? 'selected' : '' %>>Source: Chinese</option>
+    <option value="ru" <%= (typeof contentLocale !== 'undefined' ? contentLocale : 'en') === 'ru' ? 'selected' : '' %>>Source: Russian</option>
+  </select>
+  <span class="np-help-text ms-2" data-translate-status role="status" aria-live="polite"></span>
+  <p class="np-help-text mt-2 mb-0">Match the source language to what you wrote in the main editor. English and Myanmar are fully supported; other pairs use the English glossary as a bridge.</p>
+</div>

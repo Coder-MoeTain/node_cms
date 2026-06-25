@@ -32,6 +32,11 @@ describe('translationEngine', () => {
     expect(translated).toBe('Государственные праздники');
   });
 
+  test('translates Myanmar source to other locales via English pivot', () => {
+    const translated = translatePlainText('အများပြည်သူရုံးပိတ်ရက်များ', 'my', 'zh-CN');
+    expect(translated).toBe('公共假期');
+  });
+
   test('translates via engine without database', async () => {
     const engine = new TranslationEngine({ targetLocale: 'my', useDatabase: false });
     await expect(engine.translate('Contact')).resolves.toBe('ဆက်သွယ်ရန်');

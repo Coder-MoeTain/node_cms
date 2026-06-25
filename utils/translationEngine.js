@@ -24,6 +24,33 @@ function glossaryFileKey(targetLocale) {
   return targetLocale;
 }
 
+function parseGlossaryFile(raw) {
+  const phrases = Object.entries(raw.phrases || {})
+    .map(([sourceText, translatedText]) => ({ sourceText, translatedText }))
+    .sort((a, b) => b.sourceText.length - a.sourceText.length);
+  const words = new Map(
+    Object.entries(raw.words || {}).map(([sourceText, translatedText]) => [sourceText.toLowerCase(), translatedText])
+  );
+  return { phrases, words };
+}
+
+function reverseGlossary(glossary) {
+  const phrases = glossary.phrases
+    .map(({ sourceText, translatedText }) => ({ sourceText: translatedText, translatedText: sourceText }))
+    .sort((a, b) => b.sourceText.length - a.sourceText.length);
+  const words = new Map();
+  for (const [sourceWord, translatedWord] of glossary.words.entries()) {
+    if (translatedWord) words.set(String(translatedWord).toLowerCase(), sourceWord);
+  }
+  return { phrases, words };
+}
+
+function readGlossaryFile(filename) {
+  const filePath = path.join(GLOSSARY_DIR, filename);
+  if (!fs.existsSync(filePath)) return null;
+  return parseGlossaryFile(JSON.parse(fs.readFileSync(filePath, 'utf8')));
+}
+
 function loadGlossary(sourceLocale, targetLocale) {
   const source = normalizeLocale(sourceLocale);
   const target = normalizeLocale(targetLocale);
@@ -35,18 +62,15 @@ function loadGlossary(sourceLocale, targetLocale) {
     return empty;
   }
 
-  const filePath = path.join(GLOSSARY_DIR, `${source}-${glossaryFileKey(target)}.json`);
   let glossary = { phrases: [], words: new Map() };
-  if (fs.existsSync(filePath)) {
-    const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const phrases = Object.entries(raw.phrases || {})
-      .map(([sourceText, translatedText]) => ({ sourceText, translatedText }))
-      .sort((a, b) => b.sourceText.length - a.sourceText.length);
-    const words = new Map(
-      Object.entries(raw.words || {}).map(([sourceText, translatedText]) => [sourceText.toLowerCase(), translatedText])
-    );
-    glossary = { phrases, words };
+  if (source === 'en') {
+    const forward = readGlossaryFile(`en-${glossaryFileKey(target)}.json`);
+    if (forward) glossary = forward;
+  } else if (target === 'en') {
+    const forward = readGlossaryFile(`en-${glossaryFileKey(source)}.json`);
+    if (forward) glossary = reverseGlossary(forward);
   }
+
   glossaryCache.set(cacheKey, glossary);
   return glossary;
 }
@@ -67,17 +91,29 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function replacePreserveCase(match, translatedText) {
+  if (match === match.toUpperCase() && match.length > 1) return translatedText.toUpperCase();
+  if (match[0] === match[0].toUpperCase()) {
+    return translatedText.charAt(0).toUpperCase() + translatedText.slice(1);
+  }
+  return translatedText;
+}
+
 function applyPhrases(text, phrases) {
   let output = text;
   for (const { sourceText, translatedText } of phrases) {
-    const pattern = new RegExp(`\\b${escapeRegExp(sourceText)}\\b`, 'gi');
-    output = output.replace(pattern, (match) => {
-      if (match === match.toUpperCase() && match.length > 1) return translatedText.toUpperCase();
-      if (match[0] === match[0].toUpperCase()) {
-        return translatedText.charAt(0).toUpperCase() + translatedText.slice(1);
+    if (!sourceText) continue;
+    const useWordBoundary = /^[\w\s'&.,;:!?()/+-]+$/i.test(sourceText);
+    if (useWordBoundary) {
+      const pattern = new RegExp(`\\b${escapeRegExp(sourceText)}\\b`, 'gi');
+      output = output.replace(pattern, (match) => replacePreserveCase(match, translatedText));
+    } else {
+      let index = output.indexOf(sourceText);
+      while (index !== -1) {
+        output = `${output.slice(0, index)}${translatedText}${output.slice(index + sourceText.length)}`;
+        index = output.indexOf(sourceText, index + translatedText.length);
       }
-      return translatedText;
-    });
+    }
   }
   return output;
 }
@@ -97,15 +133,28 @@ function normalizeWhitespace(text) {
   return text.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:!?])/g, '$1').trim();
 }
 
+function applyGlossary(text, glossary) {
+  let output = applyPhrases(text, glossary.phrases);
+  output = applyWords(output, glossary.words);
+  return output;
+}
+
 function translatePlainText(text, sourceLocale, targetLocale) {
   const source = normalizeLocale(sourceLocale);
   const target = normalizeLocale(targetLocale);
   if (!text || source === target) return text;
 
   const glossary = loadGlossary(source, target);
-  let output = applyPhrases(text, glossary.phrases);
-  output = applyWords(output, glossary.words);
-  return normalizeWhitespace(output);
+  if (glossary.phrases.length || glossary.words.size) {
+    return normalizeWhitespace(applyGlossary(text, glossary));
+  }
+
+  if (source !== 'en' && target !== 'en') {
+    const english = translatePlainText(text, source, 'en');
+    return translatePlainText(english, 'en', target);
+  }
+
+  return normalizeWhitespace(applyGlossary(text, glossary));
 }
 
 function translateHtmlSegment(html, sourceLocale, targetLocale) {

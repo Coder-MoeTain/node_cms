@@ -87,20 +87,6 @@ if (editorForm) {
   });
 }
 
-function hideTinyMceImageSourceField() {
-  const dialog = document.querySelector('.tox-dialog');
-  if (!dialog) return;
-  dialog.querySelectorAll('.tox-form__group').forEach((group) => {
-    const label = group.querySelector('label');
-    const input = group.querySelector('input');
-    if (!label || !input) return;
-    const labelText = label.textContent.trim().toLowerCase();
-    if (labelText === 'source' || labelText === 'url' || input.type === 'url') {
-      group.style.display = 'none';
-    }
-  });
-}
-
 function normalizeEditorUploadUrls(html) {
   if (!html) return html;
   return String(html)
@@ -112,16 +98,29 @@ function normalizeEditorUploadUrls(html) {
     );
 }
 
-if (window.tinymce && document.querySelector('.rich-editor')) {
+function openMediaPickerForEditor(editor, tinymceCallback) {
+  if (typeof window.npOpenMediaPicker !== 'function') return;
+  window.npOpenMediaPicker((item) => {
+    if (editor && typeof window.npInsertEditorImage === 'function') {
+      window.npInsertEditorImage(editor, item);
+      return;
+    }
+    if (typeof tinymceCallback === 'function') {
+      tinymceCallback(item.filePath, { alt: item.originalName || item.name || '' });
+    }
+  });
+}
+
+if (window.tinymce && document.querySelector('textarea.rich-editor:not([data-translation-field]), textarea[data-main-content-editor]')) {
   tinymce.init({
-    selector: '.rich-editor',
+    selector: 'textarea[data-main-content-editor], textarea.rich-editor:not([data-translation-field])',
     license_key: 'gpl',
     base_url: '/vendor/tinymce',
     suffix: '.min',
     height: 420,
     menubar: false,
     plugins: 'link image media table lists code autoresize',
-    toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code',
+    toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link npmedialibrary image media | code',
     relative_urls: false,
     remove_script_host: false,
     convert_urls: false,
@@ -139,25 +138,24 @@ if (window.tinymce && document.querySelector('.rich-editor')) {
       const blob = blobInfo.blob();
       const file = new File([blob], blobInfo.filename(), { type: blob.type });
       window.npUploadImage(file)
-        .then((data) => resolve(data.location))
+        .then((data) => resolve(data.location || data.filePath))
         .catch((error) => reject(error.message || 'Upload failed.'));
     }),
     file_picker_callback: (callback) => {
-      window.npOpenMediaPicker((item) => {
-        callback(item.filePath, { alt: item.originalName || '' });
-      });
+      const editor = tinymce.activeEditor;
+      openMediaPickerForEditor(editor, callback);
     },
     setup(editor) {
+      editor.ui.registry.addButton('npmedialibrary', {
+        icon: 'gallery',
+        tooltip: 'Insert from media library',
+        onAction: () => openMediaPickerForEditor(editor)
+      });
       editor.on('BeforeSetContent', (event) => {
         if (event.content) event.content = normalizeEditorUploadUrls(event.content);
       });
       editor.on('GetContent', (event) => {
         if (event.content) event.content = normalizeEditorUploadUrls(event.content);
-      });
-      editor.on('ExecCommand', (event) => {
-        if (event.command === 'mceImage') {
-          setTimeout(hideTinyMceImageSourceField, 50);
-        }
       });
     }
   });
