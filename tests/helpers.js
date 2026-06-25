@@ -6,12 +6,11 @@ async function getCsrf(agent, url) {
   return match?.[1] || '';
 }
 
-async function login(agent, email, password) {
+async function login(agent, email, password, totp) {
   const csrf = await getCsrf(agent, '/admin/login');
-  return agent
-    .post('/admin/login')
-    .type('form')
-    .send({ email, password, _csrf: csrf });
+  const payload = { email, password, _csrf: csrf };
+  if (totp) payload.totp = totp;
+  return agent.post('/admin/login').type('form').send(payload);
 }
 
 async function ensurePortalTheme(models, portalConfig) {

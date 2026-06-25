@@ -271,3 +271,13 @@ function initBackToTop() {
 
 initPortalCarousel();
 initBackToTop();
+
+function initNavbarScroll() {
+  const navbar = document.querySelector('.site-navbar');
+  if (!navbar) return;
+  const onScroll = () => navbar.classList.toggle('scrolled', window.scrollY > 8);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+initNavbarScroll();
