@@ -228,7 +228,8 @@ const configs = {
     title: 'Menus',
     permission: 'manage_menus',
     searchFields: ['name', 'slug'],
-    include: [{ model: models.MenuItem, as: 'items' }],
+    include: [{ model: models.MenuItem, as: 'items', separate: true, order: [['display_order', 'ASC'], ['title', 'ASC']] }],
+    formData: async () => ({ menus: await models.Menu.findAll({ order: [['name', 'ASC']] }) }),
     payload: async (body, req, record = null) => ({ name: sanitizePlainText(body.name, 120), slug: await createUniqueSlug(models.Menu, body.slug || body.name, 'menu', record?.id), location: body.location || 'header', active: body.active === 'on' })
   },
   'menu-items': {
@@ -236,7 +237,8 @@ const configs = {
     title: 'Menu Items',
     permission: 'manage_menus',
     searchFields: ['title', 'url'],
-    formData: async () => ({ menus: await models.Menu.findAll(), menuItems: await models.MenuItem.findAll() }),
+    include: [{ model: models.Menu }],
+    formData: async () => ({ menus: await models.Menu.findAll({ order: [['name', 'ASC']] }), menuItems: await models.MenuItem.findAll({ order: [['title', 'ASC']] }) }),
     payload: (body) => ({ menu_id: body.menu_id, parent_id: body.parent_id || null, title: sanitizePlainText(body.title, 120), url: sanitizePlainText(body.url, 255), item_type: body.item_type || 'custom', reference_id: body.reference_id || null, target: body.target || '_self', display_order: body.display_order || 0, active: body.active === 'on' })
   },
   users: {
@@ -315,13 +317,21 @@ async function index(req, res, next) {
     if (resource === 'pages' && req.query.status) {
       where.status = req.query.status;
     }
+    if (resource === 'menu-items' && req.query.menu_id) {
+      where.menu_id = req.query.menu_id;
+    }
+    const order = resource === 'menu-items'
+      ? [['display_order', 'ASC'], ['title', 'ASC']]
+      : resource === 'menus'
+        ? [['name', 'ASC']]
+        : [['created_at', 'DESC']];
     const { rows, count } = await config.model.findAndCountAll({
       where,
       include: config.include || [],
       distinct: true,
       limit,
       offset,
-      order: [['created_at', 'DESC']],
+      order,
       paranoid: !trashed
     });
     return res.render('admin/crud/index', {
@@ -334,7 +344,8 @@ async function index(req, res, next) {
       pagination: pageMeta(count, page, limit),
       filters: {
         status: req.query.status || '',
-        category_id: req.query.category_id || ''
+        category_id: req.query.category_id || '',
+        menu_id: req.query.menu_id || ''
       },
       extra: config.formData ? await config.formData() : {}
     });
@@ -351,11 +362,15 @@ async function create(req, res, next) {
       req.flash('error', 'You do not have permission to create that resource.');
       return res.redirect(`/admin/${resource}`);
     }
+    const defaults = {};
+    if (resource === 'menu-items' && req.query.menu_id) {
+      defaults.menu_id = req.query.menu_id;
+    }
     return res.render('admin/crud/form', {
       title: `Add ${config.title}`,
       resource,
       config,
-      record: {},
+      record: defaults,
       extra: config.formData ? await config.formData() : {},
       translations: {},
       translationLocales: TRANSLATION_LOCALES

@@ -1,10 +1,26 @@
+const fs = require('fs');
+const path = require('path');
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 const isTest = process.env.NODE_ENV === 'test';
 
+function resolveTestDatabaseName() {
+  if (process.env.TEST_DB_NAME) return process.env.TEST_DB_NAME;
+  try {
+    const runtimeFile = path.join(__dirname, '..', 'tests', '.test-runtime.json');
+    if (fs.existsSync(runtimeFile)) {
+      const runtime = JSON.parse(fs.readFileSync(runtimeFile, 'utf8'));
+      if (runtime.TEST_DB_NAME) return runtime.TEST_DB_NAME;
+    }
+  } catch {
+    // Fall back to the default isolated test database name.
+  }
+  return 'nodepress_cms_test';
+}
+
 const sequelize = new Sequelize(
-  (isTest && process.env.TEST_DB_NAME) || process.env.DB_NAME || 'nodepress_cms',
+  (isTest && resolveTestDatabaseName()) || process.env.DB_NAME || 'nodepress_cms',
   (isTest && process.env.TEST_DB_USER) || process.env.DB_USER || 'root',
   (isTest && process.env.TEST_DB_PASSWORD) || process.env.DB_PASSWORD || '',
   {

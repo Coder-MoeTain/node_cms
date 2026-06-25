@@ -1,4 +1,5 @@
 const { spawnSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 const { models } = require('../server');
 const { runChecks } = require('../utils/siteHealth');
@@ -6,7 +7,16 @@ const { discoverThemes } = require('../utils/themeLoader');
 const { discoverPluginManifests, syncInstalledPlugins } = require('../utils/pluginLoader');
 
 const nodepress = path.join(process.cwd(), 'bin', 'nodepress');
-const env = { ...process.env, NODE_ENV: 'test', DOTENV_CONFIG_QUIET: 'true' };
+const runtimeFile = path.join(__dirname, '.test-runtime.json');
+const runtime = fs.existsSync(runtimeFile)
+  ? JSON.parse(fs.readFileSync(runtimeFile, 'utf8'))
+  : {};
+const env = {
+  ...process.env,
+  NODE_ENV: 'test',
+  DOTENV_CONFIG_QUIET: 'true',
+  TEST_DB_NAME: runtime.TEST_DB_NAME || process.env.TEST_DB_NAME || 'nodepress_cms_test'
+};
 
 function runCli(args) {
   const result = spawnSync(process.execPath, [nodepress, ...args], {

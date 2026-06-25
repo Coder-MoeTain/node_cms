@@ -63,6 +63,7 @@ router.put('/profile', requireAuth, auth.updateProfile);
 router.get('/profile/2fa', requireAuth, auth.twoFactorForm);
 router.post('/profile/2fa/enable', requireAuth, auth.enableTwoFactor);
 router.post('/profile/2fa/disable', requireAuth, auth.disableTwoFactor);
+router.get('/profile/2fa/recovery-codes', requireAuth, auth.recoveryCodesView);
 
 router.use(requireAuth, activityLogMiddleware('admin'));
 

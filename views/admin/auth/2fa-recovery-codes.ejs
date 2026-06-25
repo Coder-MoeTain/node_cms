@@ -1,0 +1,21 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content">
+    <%- include('../partials/flash') %>
+    <div class="card">
+      <div class="card-header professional-card-header"><span>Recovery Codes</span></div>
+      <div class="card-body">
+        <p class="alert alert-warning">Store these codes in a safe place. Each code works once if you lose your authenticator device.</p>
+        <ul class="list-group mb-3">
+          <% recoveryCodes.forEach(function(code) { %>
+            <li class="list-group-item font-monospace"><%= code %></li>
+          <% }) %>
+        </ul>
+        <a href="/admin/profile" class="btn btn-primary">I have saved my codes</a>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

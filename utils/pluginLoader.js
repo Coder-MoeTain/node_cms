@@ -44,30 +44,47 @@ function discoverPluginManifests() {
     .filter(Boolean);
 }
 
+async function upsertPluginRow(item) {
+  const payload = {
+    name: item.manifest.name,
+    version: item.manifest.version,
+    description: item.manifest.description,
+    author: item.manifest.author,
+    manifest: item.manifest,
+    installed: true
+  };
+
+  let pluginRow = await Plugin.findOne({ where: { slug: item.manifest.slug } });
+  if (!pluginRow) {
+    try {
+      [pluginRow] = await Plugin.findOrCreate({
+        where: { slug: item.manifest.slug },
+        defaults: payload
+      });
+    } catch (error) {
+      if (error.name !== 'SequelizeUniqueConstraintError') throw error;
+      pluginRow = await Plugin.findOne({ where: { slug: item.manifest.slug } });
+    }
+  }
+
+  if (pluginRow) {
+    await pluginRow.update(payload);
+    await seedPluginDefaults(pluginRow, item.manifest);
+  }
+  return pluginRow;
+}
+
+async function syncPluginBySlug(slug) {
+  const manifestPath = path.join(pluginsRoot, slug, 'plugin.json');
+  if (!fs.existsSync(manifestPath)) return null;
+  const manifest = validateManifest(readJson(manifestPath));
+  return upsertPluginRow({ path: path.join(pluginsRoot, slug), manifest });
+}
+
 async function syncInstalledPlugins() {
   const discovered = discoverPluginManifests();
   for (const item of discovered) {
-    await Plugin.findOrCreate({
-      where: { slug: item.manifest.slug },
-      defaults: {
-        name: item.manifest.name,
-        version: item.manifest.version,
-        description: item.manifest.description,
-        author: item.manifest.author,
-        manifest: item.manifest,
-        installed: true
-      }
-    });
-    await Plugin.update({
-      name: item.manifest.name,
-      version: item.manifest.version,
-      description: item.manifest.description,
-      author: item.manifest.author,
-      manifest: item.manifest,
-      installed: true
-    }, { where: { slug: item.manifest.slug } });
-    const pluginRow = await Plugin.findOne({ where: { slug: item.manifest.slug } });
-    if (pluginRow) await seedPluginDefaults(pluginRow, item.manifest);
+    await upsertPluginRow(item);
   }
   return discovered;
 }
@@ -219,6 +236,7 @@ module.exports = {
   discoverPluginManifests,
   validateManifest,
   syncInstalledPlugins,
+  syncPluginBySlug,
   runPluginMigrations,
   loadActivePlugins,
   activatePlugin,
