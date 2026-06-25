@@ -224,7 +224,7 @@ npm run migrate
 npm run seed
 ```
 
-`npm run migrate` applies incremental SQL migrations (WAF, translation cache, and other upgrades). Use it on existing databases after pulling updates.
+`npm run migrate` creates the database if needed, applies `database/schema.sql` on a **fresh empty database**, then runs incremental SQL migrations (WAF, translation cache, and other upgrades). Use it on new installs and after pulling updates.
 
 ### 5. Run
 
@@ -514,13 +514,14 @@ database/seed.js
 database/migrate.js
 ```
 
-Run migrations after upgrades:
+Run migrations after upgrades (or on a fresh server):
 
 ```bash
 npm run migrate
+npm run seed
 ```
 
-Manual import:
+On a new database, `npm run migrate` loads `database/schema.sql` automatically before incremental migrations. Manual import is only needed if you prefer it:
 
 ```bash
 mysql -u root -p < database/schema.sql
