@@ -75,22 +75,6 @@ window.addEventListener('resize', () => {
   if (window.innerWidth >= 992) closeSidebar();
 });
 
-document.querySelector('[data-sidebar-collapse]')?.addEventListener('click', () => {
-  const collapsed = document.body.classList.toggle('admin-sidebar-collapsed');
-  const btn = document.querySelector('[data-sidebar-collapse]');
-  btn?.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
-  try {
-    localStorage.setItem('np-admin-sidebar-collapsed', collapsed ? '1' : '0');
-  } catch (e) { /* ignore */ }
-});
-
-try {
-  if (localStorage.getItem('np-admin-sidebar-collapsed') === '1' && window.innerWidth >= 992) {
-    document.body.classList.add('admin-sidebar-collapsed');
-    document.querySelector('[data-sidebar-collapse]')?.setAttribute('aria-pressed', 'true');
-  }
-} catch (e) { /* ignore */ }
-
 document.querySelectorAll('[data-topbar-dropdown]').forEach((dropdown) => {
   const toggle = dropdown.querySelector('[data-topbar-dropdown-toggle]');
   toggle?.addEventListener('click', (event) => {

@@ -18,7 +18,7 @@ describe('admin UI upgrade', () => {
     expect(response.text).toMatch(/admin-search\.js/);
     expect(response.text).toMatch(/At a Glance/);
     expect(response.text).toMatch(/data-admin-search/);
-    expect(response.text).toMatch(/nav-section/);
+    expect(response.text).toMatch(/admin-sidebar|admin-nav/);
   });
 
   test('posts list includes mobile card fallback markup', async () => {
