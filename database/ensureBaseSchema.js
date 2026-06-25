@@ -55,8 +55,31 @@ async function ensureBaseSchema(sequelize) {
   return true;
 }
 
+async function ensureMissingSchemaTables(sequelize) {
+  if (!fs.existsSync(schemaPath)) {
+    throw new Error(`Base schema file not found: ${schemaPath}`);
+  }
+
+  const statements = prepareSchemaStatements(fs.readFileSync(schemaPath, 'utf8'));
+  const created = [];
+
+  for (const statement of statements) {
+    const match = statement.match(/^CREATE\s+TABLE\s+`?([\w]+)`?/i);
+    if (!match) continue;
+    const table = match[1];
+    if (await tableExists(sequelize, table)) continue;
+    const createSql = statement.replace(/^CREATE\s+TABLE/i, 'CREATE TABLE IF NOT EXISTS');
+    await sequelize.query(createSql);
+    created.push(table);
+  }
+
+  return created;
+}
+
 module.exports = {
   ensureBaseSchema,
+  ensureMissingSchemaTables,
   prepareSchemaStatements,
-  splitStatements
+  splitStatements,
+  tableExists
 };

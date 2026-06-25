@@ -230,9 +230,26 @@ async function resetDatabase() {
 
 async function repairSchemaAfterRestore() {
   const { sequelize } = require('../models');
+  const { ensureMissingSchemaTables } = require('../database/ensureBaseSchema');
   const { applyPendingMigrations } = require('../database/migrationRunner');
-  await sequelize.sync();
-  await applyPendingMigrations(sequelize);
+
+  try {
+    await ensureMissingSchemaTables(sequelize);
+  } catch (error) {
+    console.error('Missing schema table repair failed:', error.message);
+  }
+
+  try {
+    await sequelize.sync();
+  } catch (error) {
+    console.error('Sequelize sync after restore failed:', error.message);
+  }
+
+  try {
+    await applyPendingMigrations(sequelize);
+  } catch (error) {
+    console.error('Pending migrations after restore failed:', error.message);
+  }
 }
 
 module.exports = {

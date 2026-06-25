@@ -68,13 +68,17 @@ async function finalizeLogin(req, res, user) {
   await regenerateSession(req);
 
   await user.update({ last_login: new Date(), failed_login_count: 0, locked_until: null });
-  await ActivityLog.create({
-    user_id: user.id,
-    action: 'Logged in',
-    entity_type: 'auth',
-    ip_address: req.ip,
-    user_agent: req.get('user-agent')
-  });
+  try {
+    await ActivityLog.create({
+      user_id: user.id,
+      action: 'Logged in',
+      entity_type: 'auth',
+      ip_address: req.ip,
+      user_agent: req.get('user-agent')
+    });
+  } catch {
+    // Activity logging should not block login after partial restores.
+  }
 
   await pluginLoader.doAction('afterUserLogin', user, { req, res });
 

@@ -34,7 +34,14 @@ async function applyPendingMigrations(sequelize) {
     const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
     await sequelize.transaction(async (transaction) => {
       for (const statement of splitStatements(sql)) {
-        await executeMigrationStatement(sequelize, statement, transaction);
+        try {
+          await executeMigrationStatement(sequelize, statement, transaction);
+        } catch (error) {
+          if (error?.parent?.code === 'ER_NO_SUCH_TABLE' || /doesn't exist/i.test(error.message)) {
+            continue;
+          }
+          throw error;
+        }
       }
       await sequelize.query('INSERT INTO migrations (name) VALUES (?)', { replacements: [file], transaction });
     });

@@ -1,4 +1,15 @@
 const { QueryTypes } = require('sequelize');
+const { tableExists } = require('./ensureBaseSchema');
+
+function statementTargetTable(sql) {
+  const update = sql.match(/^UPDATE\s+`?([\w]+)`?/i);
+  if (update) return update[1];
+  const alter = sql.match(/^ALTER\s+TABLE\s+`?([\w]+)`?/i);
+  if (alter) return alter[1];
+  const insert = sql.match(/^INSERT\s+(?:IGNORE\s+)?INTO\s+`?([\w]+)`?/i);
+  if (insert) return insert[1];
+  return null;
+}
 
 function parseAddColumnStatements(sql) {
   if (!/ALTER\s+TABLE/i.test(sql) || !/ADD\s+COLUMN/i.test(sql)) return null;
@@ -82,6 +93,7 @@ async function executeMigrationStatement(sequelize, statement, transaction) {
 
   const addColumns = parseAddColumnStatements(trimmed);
   if (addColumns) {
+    if (!(await tableExists(sequelize, addColumns[0].table, transaction))) return;
     for (const column of addColumns) {
       await ensureColumn(sequelize, column, transaction);
     }
@@ -90,9 +102,13 @@ async function executeMigrationStatement(sequelize, statement, transaction) {
 
   const createIndex = parseCreateIndexIfNotExists(trimmed);
   if (createIndex) {
+    if (!(await tableExists(sequelize, createIndex.table, transaction))) return;
     await ensureIndex(sequelize, createIndex, transaction);
     return;
   }
+
+  const targetTable = statementTargetTable(trimmed);
+  if (targetTable && !(await tableExists(sequelize, targetTable, transaction))) return;
 
   await sequelize.query(trimmed, { transaction });
 }
