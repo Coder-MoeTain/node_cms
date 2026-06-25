@@ -2,7 +2,7 @@
    const hdr = portalConfig.header || {};
    const nav = portalConfig.nav || {};
    const siteLogo = siteSettings.site_logo || activeTheme.logo;
-   const defaultNav = [
+   const portalDefaultNav = [
      { title: 'Home', url: '/', children: [] },
      { title: 'About', url: '/page/about', children: [
        { title: 'History', url: '/page/about' },
@@ -36,7 +36,14 @@
      ]},
      { title: 'Contact', url: '/contact', children: [] }
    ];
-   const menuItems = (siteMenus.header && siteMenus.header.length) ? siteMenus.header : defaultNav;
+   const standardDefaultNav = [
+     { title: 'Home', url: '/', children: [] },
+     { title: 'Blog', url: '/blog', children: [] },
+     { title: 'Contact', url: '/contact', children: [] }
+   ];
+   const menuItems = (siteMenus.header && siteMenus.header.length)
+     ? siteMenus.header
+     : (isPortal ? portalDefaultNav : standardDefaultNav);
    const cp = (typeof currentPath !== 'undefined' ? currentPath : '') || '';
    function portalNavActive(url, children) {
      if (url === '/') return cp === '/' || cp === '';
@@ -150,8 +157,8 @@
 <% } else { %>
 <nav class="navbar navbar-expand-lg site-navbar sticky-top header-layout-<%= activeTheme.header_layout || 'standard' %>">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="/">
-      <% if (siteLogo) { %><img class="site-logo" src="<%= siteLogo %>" alt="<%= siteSettings.site_title || 'NodePress CMS' %>"><% } else { %><span class="brand-mark">NP</span><%= siteSettings.site_title || 'NodePress CMS' %><% } %>
+    <a class="navbar-brand" href="/">
+      <% if (siteLogo) { %><img class="site-logo" src="<%= siteLogo %>" alt="<%= siteSettings.site_title || 'NodePress CMS' %>"><% } else { %><span class="brand-mark">NP</span><span class="brand-text"><%= siteSettings.site_title || 'NodePress CMS' %></span><% } %>
     </a>
     <button class="navbar-toggler site-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu" aria-controls="mainMenu" aria-expanded="false" aria-label="Toggle navigation"><span></span><span></span><span></span></button>
     <div class="collapse navbar-collapse" id="mainMenu">

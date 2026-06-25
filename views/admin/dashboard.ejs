@@ -4,9 +4,18 @@
   <%- include('partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('partials/flash') %>
+    <div class="dashboard-welcome">
+      <div class="dashboard-welcome-text">
+        <h2>Welcome back, <%= currentUser ? currentUser.name.split(' ')[0] : 'Admin' %></h2>
+        <p>Here's what's happening with your site today.</p>
+      </div>
+      <div class="dashboard-welcome-actions">
+        <a class="np-btn np-btn-secondary" href="/" target="_blank"><i class="bi bi-box-arrow-up-right"></i> View Site</a>
+        <% if (canManageResource('posts', 'create')) { %><a class="np-btn np-btn-primary" href="/admin/posts/create"><i class="bi bi-plus-lg"></i> New Post</a><% } %>
+      </div>
+    </div>
     <div class="np-page-header">
       <h1>Dashboard</h1>
-      <% if (canManageResource('posts', 'create')) { %><a class="np-btn np-btn-primary" href="/admin/posts/create"><i class="bi bi-plus-lg"></i> Add New Post</a><% } %>
     </div>
 
     <div class="row dashboard-widgets">
@@ -14,12 +23,12 @@
         <div class="np-widget">
           <div class="np-widget-header"><span>At a Glance</span></div>
           <div class="np-widget-body dashboard-at-glance">
-            <div><a href="/admin/posts"><%= stats.posts %></a><span>Posts</span></div>
-            <div><a href="/admin/pages"><%= stats.pages %></a><span>Pages</span></div>
-            <div><a href="/admin/comments"><%= stats.comments %></a><span>Comments</span></div>
-            <div><a href="/admin/media"><%= stats.media %></a><span>Media</span></div>
-            <div><a href="/admin/categories"><%= stats.categories %></a><span>Categories</span></div>
-            <div><span class="np-badge np-badge-info"><%= siteHealth.activeTheme || 'Classic' %></span><span>Theme</span></div>
+            <div class="stat-card"><i class="bi bi-file-earmark-text stat-icon" aria-hidden="true"></i><a href="/admin/posts"><%= stats.posts %></a><span>Posts</span></div>
+            <div class="stat-card"><i class="bi bi-file-earmark stat-icon" aria-hidden="true"></i><a href="/admin/pages"><%= stats.pages %></a><span>Pages</span></div>
+            <div class="stat-card"><i class="bi bi-chat-dots stat-icon" aria-hidden="true"></i><a href="/admin/comments"><%= stats.comments %></a><span>Comments</span></div>
+            <div class="stat-card"><i class="bi bi-images stat-icon" aria-hidden="true"></i><a href="/admin/media"><%= stats.media %></a><span>Media</span></div>
+            <div class="stat-card"><i class="bi bi-folder stat-icon" aria-hidden="true"></i><a href="/admin/categories"><%= stats.categories %></a><span>Categories</span></div>
+            <div class="stat-card"><i class="bi bi-palette stat-icon" aria-hidden="true"></i><span class="np-badge np-badge-info"><%= siteHealth.activeTheme || 'Classic' %></span><span>Theme</span></div>
           </div>
         </div>
 

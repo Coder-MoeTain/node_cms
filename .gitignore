@@ -6,4 +6,10 @@ public/uploads/*
 database/backups/
 coverage/
 tmp/
+plugins/.tmp-extract-*/
+themes/.tmp-extract-*/
+plugins/lifecycle-test-plugin/
+plugins/migration-test-plugin/
+plugins/full-lifecycle-plugin/
+plugins/http-upload-plugin/
 .DS_Store

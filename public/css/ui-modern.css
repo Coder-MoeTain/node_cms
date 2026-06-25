@@ -413,24 +413,88 @@ body {
 }
 
 /* --- Admin dashboard --- */
+.dashboard-welcome {
+  align-items: center;
+  background: linear-gradient(135deg, var(--np-primary) 0%, var(--np-primary-hover) 100%);
+  border-radius: var(--np-radius-md);
+  color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--np-space-4);
+  justify-content: space-between;
+  margin-bottom: var(--np-space-5);
+  padding: var(--np-space-5) var(--np-space-6);
+}
+
+.dashboard-welcome h2 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.dashboard-welcome p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.dashboard-welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--np-space-2);
+}
+
+.dashboard-welcome .np-btn-secondary {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.dashboard-welcome .np-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.dashboard-welcome .np-btn-primary {
+  background: #fff;
+  border-color: #fff;
+  color: var(--np-primary);
+}
+
+.dashboard-welcome .np-btn-primary:hover {
+  background: #f0f6fc;
+  border-color: #f0f6fc;
+  color: var(--np-primary-hover);
+}
+
 .dashboard-at-glance {
   display: grid;
   gap: var(--np-space-3);
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
 }
 
-.dashboard-at-glance > div {
+.dashboard-at-glance .stat-card {
   background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
   border: 1px solid var(--np-border-light);
   border-radius: var(--np-radius-md);
   padding: var(--np-space-4);
+  position: relative;
   text-align: center;
   transition: box-shadow var(--np-transition), transform var(--np-transition);
 }
 
-.dashboard-at-glance > div:hover {
+.dashboard-at-glance .stat-card:hover {
   box-shadow: var(--np-shadow-md);
   transform: translateY(-2px);
+}
+
+.dashboard-at-glance .stat-icon {
+  color: var(--np-primary);
+  display: block;
+  font-size: 1.25rem;
+  margin-bottom: 6px;
+  opacity: 0.7;
 }
 
 .dashboard-at-glance a {
@@ -444,8 +508,34 @@ body {
 
 .dashboard-at-glance span:last-child {
   color: var(--np-text-muted);
+  display: block;
   font-size: 0.8125rem;
   font-weight: 500;
+  margin-top: 2px;
+}
+
+/* --- Admin toasts --- */
+.np-toast {
+  border: 0;
+  border-radius: var(--np-radius-md);
+  box-shadow: var(--np-shadow-lg);
+  min-width: 280px;
+}
+
+.np-toast-success {
+  background: #edfaef;
+  color: var(--np-success);
+}
+
+.np-toast-error {
+  background: #fcf0f1;
+  color: var(--np-error);
+}
+
+.np-toast .toast-body {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 16px;
 }
 
 .health-item {

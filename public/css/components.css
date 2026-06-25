@@ -3,19 +3,19 @@
 .np-btn {
   align-items: center;
   border: 1px solid var(--np-border);
-  border-radius: 3px;
+  border-radius: var(--np-radius-sm, 6px);
   background: #f6f7f7;
   color: var(--np-text);
   cursor: pointer;
   display: inline-flex;
   font-size: 13px;
-  font-weight: 400;
-  gap: .35rem;
+  font-weight: 500;
+  gap: .4rem;
   line-height: 1.4;
-  padding: 0 10px;
-  min-height: 30px;
+  padding: 0 12px;
+  min-height: 34px;
   text-decoration: none;
-  transition: background .15s ease, border-color .15s ease, color .15s ease;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
 }
 
 .np-btn:hover { background: #f0f0f1; border-color: #8c8f94; color: var(--np-text); }
@@ -67,12 +67,12 @@
 .np-card-body, .np-widget-body { padding: 12px; }
 
 .np-badge {
-  border-radius: 3px;
+  border-radius: var(--np-radius-pill, 999px);
   display: inline-block;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.4;
-  padding: 2px 8px;
+  padding: 3px 10px;
 }
 
 .np-badge-success { background: #edfaef; color: var(--np-success); }

@@ -1,8 +1,15 @@
 <%- include('../partials/head') %>
 <main class="auth-page" id="np-main-content">
   <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-brand-icon"><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i></span>
+      <div>
+        <strong>NodePress</strong>
+        <div class="text-muted" style="font-size:13px">Content Management System</div>
+      </div>
+    </div>
     <h1>Log In</h1>
-    <p class="text-muted mb-3">NodePress CMS Admin</p>
+    <p class="text-muted mb-3">Sign in to your admin dashboard</p>
     <%- include('../partials/flash') %>
     <form method="post" action="/admin/login">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
