@@ -2,6 +2,7 @@
 
 ```bash
 npm install
+cp .env.example .env   # edit .env locally — never commit it
 npm run db:sync
 npm run migrate
 npm run seed
@@ -16,6 +17,24 @@ npm ci --omit=dev
 npm run migrate
 pm2 start ecosystem.config.js
 ```
+
+### Verification
+
+Run before release or deployment:
+
+```bash
+npm install
+npm run lint
+npm run test:ci
+npm run audit
+npm run validate
+npm run check
+npm run predeploy
+```
+
+### Repository hygiene
+
+`.env` is listed in `.gitignore` and must not be committed — use `.env.example` as the template. Generated files such as logs, coverage reports, uploads, database backups, and local test outputs are excluded from Git.
 
 Health endpoints:
 
@@ -189,27 +208,13 @@ npm install
 
 ### 2. Configure environment
 
-Create or update `.env`:
+Copy the example file and edit values locally (`.env` is gitignored — never commit it):
 
-```env
-NODE_ENV=development
-APP_NAME="NodePress CMS"
-APP_URL=http://localhost:3000
-PORT=3000
-
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=nodepress_cms
-DB_USER=root
-DB_PASSWORD=
-
-SESSION_SECRET=change-this-long-random-secret
-SESSION_NAME=nodepress.sid
-SESSION_MAX_AGE=86400000
-
-UPLOAD_MAX_SIZE_MB=25
-ADMIN_SESSION_TIMEOUT_MINUTES=60
+```bash
+cp .env.example .env
 ```
+
+Key variables to review: `DB_*`, `SESSION_SECRET`, `APP_URL`, and optional `TEST_DB_*` for the test suite. See `.env.example` for the full list.
 
 ### 3. Create database
 

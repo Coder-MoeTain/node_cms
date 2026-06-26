@@ -2,18 +2,63 @@ node_modules/
 .env
 .env.local
 .env.*.local
-tmp/quarantine/
+!.env.example
+
+# Logs
+logs/
+*.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test and coverage output
+coverage/
+.nyc_output/
+test-output-full.txt
+test-plugin-out.txt
+test-run.log
+full-suite-run*.txt
+full-suite.txt
+themes-only.txt
+ci-artifact.zip
+
+# Runtime uploads and temp files
+tmp/
+tmp/quarantine/
 public/uploads/*
 !public/uploads/.gitkeep
 database/backups/
-coverage/
-tmp/
+
+# Local demo photo pool (optional input for database/assign-photos.js)
+photos/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build/cache
+.cache/
+dist/
+build/
+
+# PM2/runtime
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Test runtime
 tests/.test-runtime.json
+
+# Plugin/theme install temp dirs
 plugins/.tmp-extract-*/
 themes/.tmp-extract-*/
+
+# Ephemeral test plugins (created during test runs)
 plugins/lifecycle-test-plugin/
 plugins/migration-test-plugin/
 plugins/full-lifecycle-plugin/
 plugins/http-upload-plugin/
-.DS_Store

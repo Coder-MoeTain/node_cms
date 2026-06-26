@@ -1,12 +1,33 @@
 # NodePress CMS Security
 
-## Secret management
+## Secret Management
 
-- **Never commit `.env`** — only `.env.example` belongs in the repository.
-- If secrets were ever committed, **rotate them immediately**: `SESSION_SECRET`, database passwords, `API_KEY`, and SMTP credentials.
-- Use a unique, strong `SESSION_SECRET` (32+ random bytes) per environment.
+- Never commit `.env`.
+- Use `.env.example` as the template (`cp .env.example .env` on new installs).
+- Generate a strong `SESSION_SECRET` for production (32+ random bytes).
+- Use unique secrets per environment.
+- Rotate secrets if accidentally committed: `SESSION_SECRET`, database passwords, `API_KEY`, JWT/API secrets, and SMTP credentials.
+- Store production secrets in server environment variables, Docker secrets, or a secure secret manager.
 - Production startup is blocked by `config/env.js` when required variables are missing or weak defaults are used.
 - Remove tracked secrets with: `git rm --cached .env`
+
+## Repository Hygiene
+
+- Runtime logs, coverage reports, uploads, database backups, test output, and local environment files are ignored by Git.
+- Production builds should be created from clean source — do not commit generated artifacts unless intentionally documented.
+- Optional local demo images for `npm run assign-photos` belong in `photos/` (ignored); they are not part of the repository.
+
+## Verification Commands
+
+```bash
+npm install
+npm run lint
+npm run test:ci
+npm run audit
+npm run validate
+npm run check
+npm run predeploy
+```
 
 ## Dependency policy
 
