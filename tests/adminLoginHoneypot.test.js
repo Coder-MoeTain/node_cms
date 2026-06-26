@@ -11,6 +11,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  await models.BlockedIp.update({ active: false }, { where: {} });
   await models.SecuritySetting.upsert({
     key: 'admin_login_honeypot_enabled',
     value: 'true',
@@ -82,6 +83,41 @@ test('honeypot login attempt blocks attacker IP automatically', async () => {
     { where: { setting_key: 'trusted_proxy_enabled' } }
   );
   invalidateTrustedProxyCache();
+});
+
+test('valid credentials cannot log in through honeypot URL', async () => {
+  const agent = request.agent(app);
+  const csrf = await getCsrf(agent, '/admin/login');
+  const response = await agent
+    .post('/admin/login')
+    .type('form')
+    .send({ email: 'admin@example.com', password: 'Admin@12345', _csrf: csrf });
+
+  expect(response.status).toBe(302);
+  expect(response.headers.location).toMatch(/\/admin\/login/);
+  expect(response.headers.location).not.toBe('/admin');
+
+  const dashboard = await agent.get('/admin');
+  expect(dashboard.status).not.toBe(200);
+});
+
+test('main security settings save does not disable honeypot', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await (async () => {
+    const page = await agent.get('/admin/security');
+    const match = page.text.match(/name="_csrf" value="([^"]+)"/);
+    return match?.[1] || '';
+  })();
+
+  await agent
+    .put('/admin/security/settings?_method=PUT')
+    .type('form')
+    .send({ login_attempt_limiter: 'on', _csrf: csrf });
+
+  adminLoginPath.clearConfigCache();
+  const config = await adminLoginPath.getConfig({ fresh: true });
+  expect(config.honeypotEnabled).toBe(true);
 });
 
 test('real admin login works on secret path when honeypot is enabled', async () => {

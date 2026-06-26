@@ -31,6 +31,11 @@
       </div>
     </form>
 
+    <% const logsReturnParams = new URLSearchParams(); %>
+    <% if (filters) { Object.entries(filters).forEach(function(entry) { if (entry[1]) logsReturnParams.set(entry[0], entry[1]); }); } %>
+    <% if (meta && meta.page > 1) logsReturnParams.set('page', String(meta.page)); %>
+    <% const logsReturnTo = '/admin/waf/logs' + (logsReturnParams.toString() ? '?' + logsReturnParams.toString() : ''); %>
+
     <div class="np-widget">
       <div class="np-widget-body p-0">
         <div class="table-responsive">
@@ -47,7 +52,14 @@
                   <td><span class="np-badge np-badge-<%= log.severity === 'critical' ? 'danger' : log.severity === 'high' ? 'warning' : 'muted' %>"><%= log.severity || '-' %></span></td>
                   <td><span class="np-badge np-badge-<%= log.action_taken === 'block' ? 'danger' : log.action_taken === 'rate_limit' ? 'warning' : 'muted' %>"><%= log.action_taken %></span></td>
                   <td><span class="np-badge np-badge-<%= log.risk_score >= 50 ? 'danger' : 'warning' %>"><%= log.risk_score %></span></td>
-                  <td><a class="np-btn np-btn-small np-btn-secondary" href="/admin/waf/logs/<%= log.id %>">View</a></td>
+                  <td class="text-nowrap">
+                    <a class="np-btn np-btn-small np-btn-secondary" href="/admin/waf/logs/<%= log.id %>">View</a>
+                    <form class="d-inline" method="post" action="/admin/waf/logs/<%= log.id %>/block-ip" data-confirm="Block IP <%= log.ip_address %>?">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="return_to" value="<%= logsReturnTo %>">
+                      <button class="np-btn np-btn-small np-btn-danger" type="submit">Block IP</button>
+                    </form>
+                  </td>
                 </tr>
               <% }) %>
               <% if (!logs.length) { %><tr><td colspan="9" class="text-center text-muted py-4">No WAF logs found.</td></tr><% } %>

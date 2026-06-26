@@ -160,6 +160,7 @@ router.post('/themes/:slug/uninstall', requireAuth, can('manage_themes'), themes
 
 router.get('/security', requireAuth, can('manage_security'), security.index);
 router.put('/security/settings', requireAuth, can('manage_security'), security.updateSettings);
+router.post('/security/honeypot-settings', requireAuth, can('manage_security'), security.updateHoneypotSettings);
 router.post('/security/regenerate-login-path', requireAuth, can('manage_security'), security.regenerateLoginPath);
 router.get('/security/login-attempts', requireAuth, can('manage_security'), security.index);
 router.post('/security/block-ip', requireAuth, can('manage_security'), security.blockIp);

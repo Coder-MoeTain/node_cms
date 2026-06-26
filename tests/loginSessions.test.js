@@ -92,6 +92,29 @@ test('admin can revoke another active session', async () => {
   expect(stillIn.status).toBe(200);
 });
 
+test('login sessions page shows honeypot trap entries with remark', async () => {
+  await models.LoginAttempt.create({
+    email: 'attacker@evil.com',
+    ip_address: '203.0.113.199',
+    user_agent: 'scanner-bot',
+    success: false,
+    reason: 'honeypot_trap'
+  });
+
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const response = await agent.get('/admin/settings/login-sessions');
+  expect(response.status).toBe(200);
+  expect(response.text).toMatch(/Honeypot/i);
+  expect(response.text).toMatch(/203\.0\.113\.199/);
+  expect(response.text).toMatch(/decoy login at \/admin\/login/i);
+
+  const filtered = await agent.get('/admin/settings/login-sessions?status=honeypot');
+  expect(filtered.status).toBe(200);
+  expect(filtered.text).toMatch(/attacker@evil\.com/);
+  expect(filtered.text).toMatch(/Honeypot only|Trap/i);
+});
+
 test('login records remote IP from X-Forwarded-For behind local reverse proxy', async () => {
   const agent = request.agent(app);
   const csrf = await getCsrf(agent, '/admin/login');

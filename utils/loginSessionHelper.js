@@ -154,6 +154,10 @@ async function listLoginAttempts({
 
   if (status === 'success') where.success = true;
   if (status === 'failed') where.success = false;
+  if (status === 'honeypot') {
+    where.success = false;
+    where.reason = 'honeypot_trap';
+  }
 
   const trimmedEmail = String(email || '').trim();
   if (trimmedEmail) {
@@ -168,16 +172,23 @@ async function listLoginAttempts({
   });
 
   return {
-    rows: rows.map((row) => ({
-      id: row.id,
-      username: row.email || '—',
-      email: row.email,
-      ipAddress: row.ip_address,
-      userAgent: row.user_agent,
-      success: Boolean(row.success),
-      reason: row.reason,
-      createdAt: row.created_at
-    })),
+    rows: rows.map((row) => {
+      const isHoneypot = row.reason === 'honeypot_trap';
+      return {
+        id: row.id,
+        username: row.email || '—',
+        email: row.email,
+        ipAddress: row.ip_address,
+        userAgent: row.user_agent,
+        success: Boolean(row.success),
+        reason: row.reason,
+        isHoneypot,
+        remark: isHoneypot
+          ? 'Honeypot trap — decoy login at /admin/login (IP auto-blocked)'
+          : formatLoginAttemptRemark(row.reason, row.user_agent),
+        createdAt: row.created_at
+      };
+    }),
     meta: {
       total: count,
       page: safePage,
@@ -185,6 +196,31 @@ async function listLoginAttempts({
       pages: Math.max(Math.ceil(count / safeLimit), 1)
     }
   };
+}
+
+function formatLoginAttemptRemark(reason, userAgent) {
+  const labels = {
+    success: 'Successful login',
+    invalid_credentials: 'Invalid email or password',
+    honeypot_trap: 'Honeypot trap — decoy login at /admin/login (IP auto-blocked)'
+  };
+  if (labels[reason]) return labels[reason];
+  if (reason) return reason.replace(/_/g, ' ');
+  return userAgent || '—';
+}
+
+async function countHoneypotTraps({ days = 30 } = {}) {
+  try {
+    const since = new Date(Date.now() - Math.max(Number(days) || 30, 1) * 24 * 60 * 60 * 1000);
+    return await LoginAttempt.count({
+      where: {
+        reason: 'honeypot_trap',
+        created_at: { [Op.gte]: since }
+      }
+    });
+  } catch {
+    return 0;
+  }
 }
 
 module.exports = {
@@ -195,6 +231,7 @@ module.exports = {
   listActiveAdminSessions,
   countActiveAdminSessions,
   listLoginAttempts,
+  countHoneypotTraps,
   getAdminSession,
   revokeAdminSession,
   parseSessionRow

@@ -452,7 +452,11 @@ async function addIpFromLog(req, res, next, listType) {
       metadata: { target_ip: log.ip_address }
     });
     req.flash('success', `IP ${log.ip_address} ${listType === 'whitelist' ? 'whitelisted' : 'blocked'}.`);
-    return res.redirect(`/admin/waf/logs/${log.id}`);
+    const fallback = `/admin/waf/logs/${log.id}`;
+    const returnTo = typeof req.body.return_to === 'string' && req.body.return_to.startsWith('/admin/waf/logs')
+      ? req.body.return_to
+      : fallback;
+    return res.redirect(returnTo);
   } catch (error) {
     return next(error);
   }

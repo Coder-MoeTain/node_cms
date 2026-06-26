@@ -5,25 +5,29 @@ const {
   listActiveAdminSessions,
   countActiveAdminSessions,
   listLoginAttempts,
+  countHoneypotTraps,
   getAdminSession,
   revokeAdminSession,
   resolveRequestIpAsync
-} = require('../../utils/loginSessionHelper');const { getPagination } = require('../../utils/pagination');
+} = require('../../utils/loginSessionHelper');
+const { getPagination } = require('../../utils/pagination');
 
 async function index(req, res, next) {
   try {
     const { page, limit, offset } = getPagination(req, 25, 100);
-    const status = ['success', 'failed', 'all'].includes(req.query.status) ? req.query.status : 'all';
+    const status = ['success', 'failed', 'honeypot', 'all'].includes(req.query.status) ? req.query.status : 'all';
     const email = String(req.query.email || '').trim();
 
-    const [sessions, sessionTotal, attempts] = await Promise.all([
+    const [sessions, sessionTotal, attempts, honeypotTraps30d, honeypotConfig] = await Promise.all([
       listActiveAdminSessions({
         limit: 100,
         offset: 0,
         currentSessionId: req.sessionID || ''
       }),
       countActiveAdminSessions(),
-      listLoginAttempts({ page, limit, status, email })
+      listLoginAttempts({ page, limit, status, email }),
+      countHoneypotTraps({ days: 30 }),
+      adminLoginPath.getConfig()
     ]);
 
     return res.render('admin/settings/login-sessions', {
@@ -33,7 +37,9 @@ async function index(req, res, next) {
       attempts: attempts.rows,
       meta: attempts.meta,
       filters: { status, email },
-      sessionTimeoutMinutes: appConfig.adminSessionTimeoutMinutes
+      sessionTimeoutMinutes: appConfig.adminSessionTimeoutMinutes,
+      honeypotTraps30d,
+      honeypotConfig
     });
   } catch (error) {
     return next(error);
