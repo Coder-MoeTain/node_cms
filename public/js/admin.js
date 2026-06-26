@@ -238,7 +238,6 @@ window.npOpenMediaPicker = function openMediaPicker(callback) {
   if (modal && window.bootstrap) {
     elevateMediaGalleryModal();
     bootstrap.Modal.getOrCreateInstance(modal).show();
-    loadMediaGallery({ loadAll: true });
   }
 };
 
@@ -393,38 +392,74 @@ function selectMediaItem(item) {
   closeMediaGalleryModal();
 }
 
-async function loadMediaGallery({ append = false, search, loadAll = false } = {}) {
+function getMediaGalleryPageSize() {
+  const modal = document.getElementById('mediaGalleryModal');
+  const fromModal = Number(modal?.dataset.pickerLimit);
+  if (Number.isFinite(fromModal) && fromModal > 0) return fromModal;
+  return 36;
+}
+
+function updateMediaGalleryPagination() {
+  const pagination = document.querySelector('[data-media-gallery-pagination]');
+  const pageInfo = document.querySelector('[data-media-gallery-page-info]');
+  const prevBtn = document.querySelector('[data-media-gallery-prev]');
+  const nextBtn = document.querySelector('[data-media-gallery-next]');
+  const metaEl = document.querySelector('[data-media-gallery-meta]');
+  const grid = document.querySelector('[data-media-gallery-grid]');
+  const shown = grid?.querySelectorAll('.media-gallery-item').length || 0;
+  const { page, pages, total, limit } = mediaGalleryState;
+
+  if (pagination) {
+    pagination.hidden = !(pages > 1);
+  }
+  if (pageInfo) {
+    pageInfo.textContent = `Page ${page} of ${pages}`;
+  }
+  if (prevBtn) prevBtn.disabled = page <= 1 || mediaGalleryState.loading;
+  if (nextBtn) nextBtn.disabled = page >= pages || mediaGalleryState.loading;
+
+  if (metaEl) {
+    if (total > 0) {
+      const start = total === 0 ? 0 : ((page - 1) * limit) + 1;
+      const end = Math.min(page * limit, total);
+      metaEl.textContent = total > shown
+        ? `Showing ${start}–${end} of ${total} photos.`
+        : `${total} photo${total === 1 ? '' : 's'}.`;
+      metaEl.hidden = false;
+    } else {
+      metaEl.hidden = true;
+    }
+  }
+}
+
+async function loadMediaGallery({ page, search } = {}) {
   const grid = document.querySelector('[data-media-gallery-grid]');
   if (!grid) return;
 
-  const loadMoreWrap = document.querySelector('[data-media-gallery-load-more-wrap]');
-  const loadMoreBtn = document.querySelector('[data-media-gallery-load-more]');
   const metaEl = document.querySelector('[data-media-gallery-meta]');
   const searchInput = document.querySelector('[data-media-gallery-search]');
 
   if (typeof search === 'string') {
     mediaGalleryState.search = search.trim();
-    append = false;
-  } else if (searchInput && !append) {
+    page = 1;
+  } else if (searchInput && page === undefined) {
     mediaGalleryState.search = searchInput.value.trim();
   }
 
+  const targetPage = Math.max(Number(page || mediaGalleryState.page || 1), 1);
+  mediaGalleryState.limit = getMediaGalleryPageSize();
+
   if (mediaGalleryState.loading) return;
   mediaGalleryState.loading = true;
+  updateMediaGalleryPagination();
 
-  const nextPage = append ? mediaGalleryState.page + 1 : 1;
-  if (!append) {
-    grid.innerHTML = '<div class="media-gallery-empty">Loading media...</div>';
-    if (loadMoreWrap) loadMoreWrap.hidden = true;
-  } else if (loadMoreBtn) {
-    loadMoreBtn.disabled = true;
-    loadMoreBtn.textContent = 'Loading…';
-  }
+  grid.innerHTML = '<div class="media-gallery-empty">Loading media...</div>';
+  if (metaEl) metaEl.hidden = true;
 
   try {
     const params = new URLSearchParams({
       type: 'image',
-      page: String(nextPage),
+      page: String(targetPage),
       limit: String(mediaGalleryState.limit)
     });
     if (mediaGalleryState.search) params.set('q', mediaGalleryState.search);
@@ -433,27 +468,27 @@ async function loadMediaGallery({ append = false, search, loadAll = false } = {}
       headers: { Accept: 'application/json' }
     });
     if (!response.ok) {
-      if (!append) {
-        grid.innerHTML = '<div class="media-gallery-empty">Unable to load media library. Check your upload permissions.</div>';
-      }
+      grid.innerHTML = '<div class="media-gallery-empty">Unable to load media library. Check your upload permissions.</div>';
       return;
     }
+
     const data = await response.json();
-    mediaGalleryState.page = data.page || nextPage;
+    mediaGalleryState.page = data.page || targetPage;
     mediaGalleryState.limit = data.limit || mediaGalleryState.limit;
+    mediaGalleryState.pages = data.pages || 1;
     mediaGalleryState.hasMore = Boolean(data.hasMore);
     mediaGalleryState.total = data.total || 0;
 
     const items = data.items || [];
-    if (!items.length && !append) {
+    if (!items.length) {
       grid.innerHTML = mediaGalleryState.search
         ? '<div class="media-gallery-empty">No photos match your search.</div>'
         : '<div class="media-gallery-empty">No images found. Upload images in Media Library first.</div>';
-      if (metaEl) metaEl.hidden = true;
+      updateMediaGalleryPagination();
       return;
     }
 
-    const markup = items.map((item) => {
+    grid.innerHTML = items.map((item) => {
       const thumb = item.thumbnailPath || item.filePath || '';
       const imgSrc = thumb || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22140%22 height=%22105%22%3E%3Crect fill=%22%23e9ecef%22 width=%22140%22 height=%22105%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%236c757d%22 font-size=%2212%22%3ENo preview%3C/text%3E%3C/svg%3E';
       const missingClass = item.fileAvailable === false ? ' media-gallery-item--missing' : '';
@@ -464,14 +499,7 @@ async function loadMediaGallery({ append = false, search, loadAll = false } = {}
       </button>`;
     }).join('');
 
-    if (append) {
-      grid.insertAdjacentHTML('beforeend', markup);
-    } else {
-      grid.innerHTML = markup;
-    }
-
-    grid.querySelectorAll('.media-gallery-item:not([data-gallery-bound])').forEach((button) => {
-      button.dataset.galleryBound = 'true';
+    grid.querySelectorAll('.media-gallery-item').forEach((button) => {
       button.addEventListener('click', () => {
         selectMediaItem({
           filePath: button.dataset.filePath,
@@ -481,41 +509,20 @@ async function loadMediaGallery({ append = false, search, loadAll = false } = {}
       });
     });
 
-    const shown = grid.querySelectorAll('.media-gallery-item').length;
-    if (metaEl) {
-      if (mediaGalleryState.total > shown) {
-        metaEl.textContent = `Showing ${shown} of ${mediaGalleryState.total} photos.`;
-        metaEl.hidden = false;
-      } else if (mediaGalleryState.total > 0) {
-        metaEl.textContent = `${mediaGalleryState.total} photo${mediaGalleryState.total === 1 ? '' : 's'}.`;
-        metaEl.hidden = false;
-      } else {
-        metaEl.hidden = true;
-      }
-    }
-
-    if (loadMoreWrap) loadMoreWrap.hidden = !mediaGalleryState.hasMore;
-    if (loadMoreBtn) {
-      loadMoreBtn.disabled = false;
-      loadMoreBtn.textContent = 'Load more photos';
-    }
-
-    if (loadAll && mediaGalleryState.hasMore && !mediaGalleryState.search) {
-      await loadMediaGallery({ append: true, loadAll: true });
-      return;
-    }
+    updateMediaGalleryPagination();
+    grid.closest('.modal-body')?.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (error) {
-    if (!append) {
-      grid.innerHTML = '<div class="media-gallery-empty">Unable to load media gallery.</div>';
-    }
+    grid.innerHTML = '<div class="media-gallery-empty">Unable to load media gallery.</div>';
   } finally {
     mediaGalleryState.loading = false;
+    updateMediaGalleryPagination();
   }
 }
 
 const mediaGalleryState = {
   page: 1,
-  limit: Number(document.getElementById('mediaGalleryModal')?.dataset.pickerLimit) || 200,
+  pages: 1,
+  limit: getMediaGalleryPageSize(),
   search: '',
   hasMore: false,
   total: 0,
@@ -526,12 +533,18 @@ let mediaGallerySearchTimer;
 document.querySelector('[data-media-gallery-search]')?.addEventListener('input', (event) => {
   clearTimeout(mediaGallerySearchTimer);
   mediaGallerySearchTimer = setTimeout(() => {
-    loadMediaGallery({ search: event.target.value });
+    loadMediaGallery({ search: event.target.value, page: 1 });
   }, 300);
 });
 
-document.querySelector('[data-media-gallery-load-more]')?.addEventListener('click', () => {
-  loadMediaGallery({ append: true });
+document.querySelector('[data-media-gallery-prev]')?.addEventListener('click', () => {
+  if (mediaGalleryState.page <= 1 || mediaGalleryState.loading) return;
+  loadMediaGallery({ page: mediaGalleryState.page - 1 });
+});
+
+document.querySelector('[data-media-gallery-next]')?.addEventListener('click', () => {
+  if (mediaGalleryState.page >= mediaGalleryState.pages || mediaGalleryState.loading) return;
+  loadMediaGallery({ page: mediaGalleryState.page + 1 });
 });
 
 document.querySelectorAll('[data-open-media-gallery]').forEach((button) => {
@@ -539,7 +552,6 @@ document.querySelectorAll('[data-open-media-gallery]').forEach((button) => {
     activeMediaTargetField = button.dataset.openMediaGallery;
     window.activeMediaTargetField = activeMediaTargetField;
     mediaPickerCallback = null;
-    loadMediaGallery({ loadAll: true });
   });
 });
 
@@ -578,7 +590,7 @@ document.getElementById('mediaGalleryUploadInput')?.addEventListener('change', a
     if (status) {
       status.textContent = files.length === 1 ? 'Photo uploaded.' : `${files.length} photos uploaded.`;
     }
-    await loadMediaGallery({ loadAll: true });
+    await loadMediaGallery({ page: 1 });
     setTimeout(() => { if (status) status.textContent = ''; }, 2500);
   } catch (error) {
     if (status) status.textContent = error.message || 'Upload failed.';
@@ -591,6 +603,7 @@ document.getElementById('mediaGalleryModal')?.addEventListener('show.bs.modal', 
   if (searchInput) searchInput.value = '';
   mediaGalleryState.search = '';
   mediaGalleryState.page = 1;
+  loadMediaGallery({ page: 1 });
 });
 
 document.getElementById('mediaGalleryModal')?.addEventListener('hidden.bs.modal', () => {
@@ -607,7 +620,6 @@ document.addEventListener('click', (event) => {
   if (modal && window.bootstrap) {
     elevateMediaGalleryModal();
     bootstrap.Modal.getOrCreateInstance(modal).show();
-    loadMediaGallery({ loadAll: true });
   }
 });
 

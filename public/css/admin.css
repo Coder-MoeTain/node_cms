@@ -705,6 +705,23 @@
   opacity: 0.85;
 }
 
+.media-gallery-pagination {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 0.25rem;
+}
+
+.media-gallery-page-info {
+  color: #646970;
+  font-size: 0.875rem;
+  min-width: 7rem;
+  text-align: center;
+}
+
 .media-gallery-item img {
   aspect-ratio: 1;
   display: block;
