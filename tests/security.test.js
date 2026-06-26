@@ -56,3 +56,14 @@ test('helmet CSP is applied on admin login', async () => {
   const response = await request(app).get('/admin/login');
   expect(response.headers['content-security-policy']).toBeTruthy();
 });
+
+test('buildCspDirectives allows Cloudflare Insights when configured', () => {
+  const { buildCspDirectives } = require('../middleware/security');
+  const previous = process.env.CSP_CLOUDFLARE_INSIGHTS;
+  process.env.CSP_CLOUDFLARE_INSIGHTS = 'true';
+  const directives = buildCspDirectives({ path: '/admin/plugins' }, { locals: {} });
+  expect(directives.scriptSrc).toContain('https://static.cloudflareinsights.com');
+  expect(directives.connectSrc).toContain('https://cloudflareinsights.com');
+  if (previous === undefined) delete process.env.CSP_CLOUDFLARE_INSIGHTS;
+  else process.env.CSP_CLOUDFLARE_INSIGHTS = previous;
+});
