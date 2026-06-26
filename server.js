@@ -108,7 +108,7 @@ app.use(async (req, res, next) => {
   try {
     const adminLoginPath = require('./utils/adminLoginPath');
     const config = await adminLoginPath.getConfig();
-    res.locals.adminLoginUrl = config.loginUrl;
+    res.locals.adminLoginUrl = config.honeypotEnabled ? config.honeypotPath : config.loginUrl;
     res.locals.adminHoneypotEnabled = config.honeypotEnabled;
     res.locals.adminSecretLoginUrl = config.secretUrl;
   } catch {

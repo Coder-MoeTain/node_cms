@@ -35,10 +35,20 @@ afterAll(async () => {
 });
 
 test('honeypot login page is shown at /admin/login when enabled', async () => {
-  const response = await request(app).get('/admin/login');
+  const response = await request(app).get('/admin/login').redirects(0);
   expect(response.status).toBe(200);
+  expect(response.headers.location).toBeUndefined();
   expect(response.text).toMatch(/Log In/i);
   expect(response.text).toMatch(/action="\/admin\/login"/);
+  expect(response.text).not.toMatch(new RegExp(`action="/admin/${SECRET_SLUG}"`));
+});
+
+test('honeypot login redirects stay on decoy path, not secret URL', async () => {
+  await adminLoginPath.getConfig({ fresh: true });
+  const honeypotReq = { path: '/login' };
+  expect(adminLoginPath.getLoginUrlForRequestSync(honeypotReq)).toBe('/admin/login');
+  const secretReq = { path: `/${SECRET_SLUG}` };
+  expect(adminLoginPath.getLoginUrlForRequestSync(secretReq)).toBe(`/admin/${SECRET_SLUG}`);
 });
 
 test('honeypot login attempt blocks attacker IP automatically', async () => {
