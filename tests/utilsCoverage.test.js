@@ -106,3 +106,20 @@ test('portalSettings maps keys to groups', () => {
   expect(getSettingGroup('site_title')).toBe('general');
   expect(getSettingGroup('site_tagline')).toBe('portal');
 });
+
+test('testDatabase isolates test DB name from production DB', () => {
+  const { resolveIsolatedTestDatabaseName } = require('../utils/testDatabase');
+  expect(resolveIsolatedTestDatabaseName({ DB_NAME: 'nodepress_cms', TEST_DB_NAME: 'nodepress_cms' }))
+    .toBe('nodepress_cms_test');
+  expect(resolveIsolatedTestDatabaseName({ DB_NAME: 'nodepress_cms', TEST_DB_NAME: 'nodepress_cms_test' }))
+    .toBe('nodepress_cms_test');
+});
+
+test('previewHelper signs and verifies preview tokens', () => {
+  const { signPreviewToken, verifyPreviewToken, buildPreviewUrl } = require('../utils/previewHelper');
+  const token = signPreviewToken('post', 42);
+  expect(verifyPreviewToken('post', 42, token)).toBe(true);
+  expect(verifyPreviewToken('post', 43, token)).toBe(false);
+  expect(verifyPreviewToken('page', 42, token)).toBe(false);
+  expect(buildPreviewUrl('post', 'hello-world', 42)).toMatch(/^\/post\/hello-world\?preview=/);
+});

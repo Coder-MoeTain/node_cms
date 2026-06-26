@@ -14,6 +14,7 @@ const {
   SiteSetting,
   Media
 } = require('../../models');
+const { canPreviewContent } = require('../../utils/previewHelper');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { meta, postSchema, websiteSchema } = require('../../utils/seoHelper');
 const appConfig = require('../../config/app');
@@ -179,12 +180,17 @@ async function blog(req, res, next) {
   }
 }
 
-async function loadPostForRender(slug) {
+async function loadPostForRender(slug, req) {
+  const where = { slug, post_type: 'post' };
+  const previewRequested = Boolean(req?.query?.preview);
+  if (!previewRequested) where.status = 'published';
+
   const row = await Post.findOne({
-    where: { slug, status: 'published', post_type: 'post' },
+    where,
     include: [...publishedPostInclude]
   });
   if (!row) return null;
+  if (row.status !== 'published' && !canPreviewContent(req, 'post', row)) return null;
   const allComments = await Comment.findAll({
     where: { post_id: row.id, status: 'approved' },
     order: [['created_at', 'ASC']]
@@ -220,7 +226,7 @@ async function loadPostForRender(slug) {
 
 async function post(req, res, next) {
   try {
-    const loaded = await loadPostForRender(req.params.slug);
+    const loaded = await loadPostForRender(req.params.slug, req);
     if (!loaded) return res.status(404).render('public/error', { title: 'Post Not Found', code: 404, message: 'This post could not be found or is no longer published.' });
     const { row, relatedPosts, prevPost, nextPost } = loaded;
     await row.increment('views_count');
@@ -297,8 +303,14 @@ async function tag(req, res, next) {
 
 async function page(req, res, next) {
   try {
-    const row = await Page.findOne({ where: { slug: req.params.slug, status: 'published' } });
+    const previewRequested = Boolean(req.query.preview);
+    const where = { slug: req.params.slug };
+    if (!previewRequested) where.status = 'published';
+    const row = await Page.findOne({ where });
     if (!row) return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
+    if (row.status !== 'published' && !canPreviewContent(req, 'page', row)) {
+      return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
+    }
     return renderPublic(res, 'page', {
       title: row.title,
       seo: meta(row.seo_title || row.title, row.seo_description, row.og_image || row.featured_image),

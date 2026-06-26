@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post, Media, Plugin } = require('../models');
+const { Menu, MenuItem, SiteSetting, ThemeSetting, Category, Post, Media, Plugin, SecuritySetting } = require('../models');
 const pluginLoader = require('../utils/pluginLoader');
 const themeLoader = require('../utils/themeLoader');
 const { resolveThemePartials } = require('../utils/themePartials');
@@ -65,8 +65,9 @@ function applyThemePreview(req, themePlain) {
 
 async function loadSiteContext(req, res, next) {
   try {
-    const [settings, theme, menus, categories, recentPosts, popularPosts, announcementPosts, activePlugins] = await Promise.all([
+    const [settings, maintenanceSetting, theme, menus, categories, recentPosts, popularPosts, announcementPosts, activePlugins] = await Promise.all([
       SiteSetting.findAll(),
+      SecuritySetting.findOne({ where: { key: 'maintenance_mode' } }),
       ThemeSetting.findOne({ where: { active: true } }),
       Menu.findAll({
         where: { active: true },
@@ -81,6 +82,12 @@ async function loadSiteContext(req, res, next) {
     ]);
 
     res.locals.siteSettings = settings.reduce((map, row) => ({ ...map, [row.key]: row.value }), {});
+    const maintenanceEnabled = maintenanceSetting?.value === 'true' || maintenanceSetting?.enabled === true;
+    if (maintenanceEnabled) {
+      res.locals.siteSettings.maintenance_mode = 'true';
+    } else if (res.locals.siteSettings.maintenance_mode == null) {
+      res.locals.siteSettings.maintenance_mode = 'false';
+    }
     const contentLocale = normalizeLocale(
       res.locals.siteSettings.default_content_locale || process.env.DEFAULT_CONTENT_LOCALE || 'my'
     );

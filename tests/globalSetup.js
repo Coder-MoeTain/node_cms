@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { resolveIsolatedTestDatabaseName } = require('../utils/testDatabase');
 
 const runtimeFile = path.join(__dirname, '.test-runtime.json');
 
@@ -7,7 +8,7 @@ module.exports = async () => {
   const { execSync } = require('child_process');
 
   if (process.env.NODE_ENV === 'test') {
-    process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || 'nodepress_cms_test';
+    process.env.TEST_DB_NAME = resolveIsolatedTestDatabaseName();
     process.env.TEST_DB_HOST = process.env.TEST_DB_HOST || process.env.DB_HOST || '127.0.0.1';
     process.env.TEST_DB_USER = process.env.TEST_DB_USER || process.env.DB_USER || 'root';
     if (process.env.TEST_DB_PASSWORD === undefined) {

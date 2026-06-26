@@ -4,7 +4,6 @@ node_modules/
 .env.*.local
 !.env.example
 
-# Logs
 logs/
 *.log
 npm-debug.log*
@@ -12,7 +11,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Test and coverage output
 coverage/
 .nyc_output/
 test-output-full.txt
@@ -23,41 +21,31 @@ full-suite.txt
 themes-only.txt
 ci-artifact.zip
 
-# Runtime uploads, temp files, backups
 tmp/
 tmp/quarantine/
 public/uploads/*
 !public/uploads/.gitkeep
 database/backups/
 
-# Local/demo generated folders
 photos/
 
-# OS/editor files
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 
-# Build/cache
 .cache/
 dist/
 build/
 
-# PM2/runtime
 pids/
 *.pid
 *.seed
 *.pid.lock
 
-# Test runtime
 tests/.test-runtime.json
-
-# Plugin/theme install temp dirs
 plugins/.tmp-extract-*/
 themes/.tmp-extract-*/
-
-# Ephemeral test plugins (created during test runs)
 plugins/lifecycle-test-plugin/
 plugins/migration-test-plugin/
 plugins/full-lifecycle-plugin/

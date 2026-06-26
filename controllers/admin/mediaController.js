@@ -2,7 +2,7 @@ const appConfig = require('../../config/app');
 const { Media } = require('../../models');
 const pluginLoader = require('../../utils/pluginLoader');
 const policy = require('../../utils/policy');
-const { buildMediaPayload, removeMediaFiles, filterExistingMedia } = require('../../utils/mediaHelper');
+const { buildMediaPayload, removeMediaFiles, filterExistingMedia, regenerateImageVariants } = require('../../utils/mediaHelper');
 const { finalizeQuarantinedUpload } = require('../../utils/uploadSecurity');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 
@@ -133,6 +133,52 @@ async function destroy(req, res, next) {
   }
 }
 
+async function bulkDestroy(req, res, next) {
+  try {
+    const ids = Array.isArray(req.body.ids) ? req.body.ids : String(req.body.ids || '').split(',').filter(Boolean);
+    if (!ids.length) {
+      req.flash('error', 'Select at least one media item to delete.');
+      return res.redirect('/admin/media');
+    }
+    const rows = await Media.findAll({ where: { id: ids } });
+    let deleted = 0;
+    for (const media of rows) {
+      if (!policy.canDeleteMedia(req.session.user, media)) continue;
+      removeMediaFiles(media);
+      await media.destroy();
+      deleted += 1;
+    }
+    req.flash('success', deleted === 1 ? 'Media deleted.' : `${deleted} media items deleted.`);
+    return res.redirect('/admin/media');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function regenerateThumbnails(req, res, next) {
+  try {
+    const ids = Array.isArray(req.body.ids) ? req.body.ids : String(req.body.ids || '').split(',').filter(Boolean);
+    const where = ids.length ? { id: ids } : { file_type: 'image' };
+    const rows = await Media.findAll({ where, order: [['id', 'ASC']] });
+    let regenerated = 0;
+    for (const media of rows) {
+      if (!policy.canEditMedia(req.session.user, media)) continue;
+      try {
+        await regenerateImageVariants(media);
+        regenerated += 1;
+      } catch {
+        // skip items with missing originals
+      }
+    }
+    req.flash('success', regenerated
+      ? `Regenerated thumbnails for ${regenerated} image(s).`
+      : 'No images were regenerated.');
+    return res.redirect('/admin/media');
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function gallery(req, res, next) {
   try {
     const mediaType = req.query.type || 'image';
@@ -167,7 +213,14 @@ async function uploadJson(req, res, next) {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded.' });
 
-    const allowed = await pluginLoader.applyFilters('beforeMediaUpload', file, {
+    let processedFile;
+    try {
+      processedFile = await finalizeQuarantinedUpload(file);
+    } catch (validationError) {
+      return res.status(400).json({ error: validationError.message || 'Upload failed content validation.' });
+    }
+
+    const allowed = await pluginLoader.applyFilters('beforeMediaUpload', processedFile, {
       req,
       user: req.session.user
     });
@@ -188,4 +241,4 @@ async function uploadJson(req, res, next) {
   }
 }
 
-module.exports = { index, upload, uploadJson, gallery, edit, update, destroy };
+module.exports = { index, upload, uploadJson, gallery, edit, update, destroy, bulkDestroy, regenerateThumbnails };

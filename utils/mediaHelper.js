@@ -115,6 +115,24 @@ function filterExistingMedia(rows = []) {
   });
 }
 
+async function regenerateImageVariants(media) {
+  const originalPath = diskPathFromPublic(media.file_path);
+  if (!fs.existsSync(originalPath)) {
+    throw new Error('Original media file not found on disk.');
+  }
+  if (!String(media.mime_type || '').startsWith('image/')) {
+    return media;
+  }
+  for (const key of ['thumbnail_path', 'medium_path', 'large_path']) {
+    if (!media[key]) continue;
+    const variantPath = diskPathFromPublic(media[key]);
+    if (fs.existsSync(variantPath)) fs.unlinkSync(variantPath);
+  }
+  const variants = await createImageVariants({ path: originalPath, mimetype: media.mime_type });
+  await media.update(variants);
+  return media;
+}
+
 module.exports = {
   buildMediaPayload,
   removeMediaFiles,
@@ -124,5 +142,7 @@ module.exports = {
   resolvePublicMediaUrl,
   extractUploadsPath,
   filterExistingMedia,
-  normalizeUploadUrlsInHtml
+  normalizeUploadUrlsInHtml,
+  regenerateImageVariants,
+  imageSizes
 };

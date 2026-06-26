@@ -50,3 +50,25 @@ test('admin can block and unblock an IP', async () => {
   await row.reload();
   expect(row.active).toBe(false);
 });
+
+test('maintenance mode toggle syncs to site settings', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/security');
+  const response = await agent
+    .put('/admin/security/settings')
+    .type('form')
+    .send({
+      maintenance_mode: 'on',
+      login_attempt_limiter: 'off',
+      csrf_protection: 'on',
+      xss_protection: 'on',
+      file_upload_validation: 'on',
+      _csrf: csrf
+    });
+  expect(response.status).toBe(302);
+  const security = await models.SecuritySetting.findOne({ where: { key: 'maintenance_mode' } });
+  const site = await models.SiteSetting.findOne({ where: { key: 'maintenance_mode' } });
+  expect(security?.value).toBe('true');
+  expect(site?.value).toBe('true');
+});
