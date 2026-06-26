@@ -2,13 +2,18 @@
   const pathField = typeof name !== 'undefined' ? name : 'featured_image';
   const uploadField = typeof fileName !== 'undefined' ? fileName : 'featured_image_file';
   const currentValue = typeof value !== 'undefined' ? value : '';
+  const previewUrl = typeof resolvePublicMediaUrl === 'function'
+    ? resolvePublicMediaUrl(currentValue)
+    : currentValue;
+  const hasPreview = Boolean(previewUrl);
+  const missingFile = Boolean(currentValue) && !hasPreview;
 %>
 <div class="featured-image-box" data-image-upload>
   <input type="hidden" name="<%= pathField %>" value="<%= currentValue %>" data-image-path>
   <input type="hidden" name="remove_<%= pathField %>" value="0" data-image-remove-flag>
   <input class="d-none" type="file" name="<%= uploadField %>" accept="image/*" data-image-file>
-  <% if (currentValue) { %>
-    <img class="featured-image-preview" data-image-preview data-media-preview="<%= pathField %>" src="<%= currentValue %>" alt="Featured image preview">
+  <% if (hasPreview) { %>
+    <img class="featured-image-preview" data-image-preview data-media-preview="<%= pathField %>" src="<%= previewUrl %>" alt="Featured image preview">
     <div class="featured-image-actions mt-2">
       <button class="np-btn np-btn-secondary np-btn-small" type="button" data-open-media-picker="<%= pathField %>">Replace image</button>
       <button class="np-btn np-btn-link np-btn-small text-danger" type="button" data-remove-image>Remove featured image</button>
@@ -16,8 +21,15 @@
   <% } else { %>
     <div class="featured-image-placeholder" data-image-preview data-media-preview="<%= pathField %>">
       <i class="bi bi-image" aria-hidden="true"></i>
-      <p class="mb-2">Set a featured image</p>
-      <button class="np-btn np-btn-secondary np-btn-small" type="button" data-open-media-picker="<%= pathField %>">Set featured image</button>
+      <% if (missingFile) { %>
+        <p class="mb-2 text-danger small">Saved image file is missing on the server. Choose a new image or remove it.</p>
+      <% } else { %>
+        <p class="mb-2">Set a featured image</p>
+      <% } %>
+      <button class="np-btn np-btn-secondary np-btn-small" type="button" data-open-media-picker="<%= pathField %>"><%= missingFile ? 'Choose replacement' : 'Set featured image' %></button>
+      <% if (missingFile) { %>
+        <button class="np-btn np-btn-link np-btn-small text-danger mt-1" type="button" data-remove-image>Clear missing image</button>
+      <% } %>
     </div>
   <% } %>
 </div>
