@@ -33,8 +33,8 @@ test('admin can view themes page with template metadata', async () => {
   await login(agent, 'admin@example.com', 'Admin@12345');
   const page = await agent.get('/admin/themes');
   expect(page.status).toBe(200);
-  expect(page.text).toMatch(/Install Theme/i);
-  expect(page.text).toMatch(/templates/i);
+  expect(page.text).toMatch(/Install theme|Install Theme/i);
+  expect(page.text).toMatch(/Installed themes|templates/i);
 });
 
 async function pickActivatableTheme() {

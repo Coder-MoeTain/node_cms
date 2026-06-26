@@ -1,14 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" role="img">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 400 300" role="img" aria-label="Minimal Personal theme preview">
+  <defs><linearGradient id="pg-hero" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fbbf24"/><stop offset="55%" stop-color="#50575e" stop-opacity="0.85"/><stop offset="100%" stop-color="#78350f" stop-opacity="0.7"/></linearGradient></defs>
   <rect width="400" height="300" fill="#f6f7f7"/>
-  <rect width="400" height="44" fill="#50575e"/>
-  <rect x="16" y="12" width="80" height="20" rx="3" fill="#ffffff" opacity="0.9"/>
-  <rect x="280" y="16" width="48" height="12" rx="2" fill="#ffffff" opacity="0.5"/>
-  <rect x="340" y="16" width="44" height="12" rx="2" fill="#ffffff" opacity="0.5"/>
-  <rect x="20" y="60" width="360" height="72" rx="6" fill="#ffffff" stroke="#50575e" stroke-width="1"/>
-  <rect x="36" y="76" width="200" height="14" rx="2" fill="#1d2327" opacity="0.25"/>
-  <rect x="36" y="98" width="280" height="10" rx="2" fill="#1d2327" opacity="0.15"/>
-  <rect x="20" y="148" width="170" height="100" rx="4" fill="#ffffff" stroke="#1d2327" stroke-width="0.5" opacity="0.25"/>
-  <rect x="205" y="148" width="170" height="100" rx="4" fill="#ffffff" stroke="#1d2327" stroke-width="0.5" opacity="0.25"/>
-  <rect x="0" y="268" width="400" height="32" fill="#50575e" opacity="0.85"/>
-  <text x="200" y="288" text-anchor="middle" fill="#ffffff" font-family="Arial,sans-serif" font-size="11">minimal-personal</text>
+  <rect y="0" width="400" height="40" fill="#50575e"/>
+    <rect x="156" y="10" width="88" height="22" rx="4" fill="#ffffff" opacity="0.95"/>
+    <rect x="250" y="16" width="42" height="10" rx="2" fill="#ffffff" opacity="0.45"/>
+    <rect x="300" y="16" width="36" height="10" rx="2" fill="#ffffff" opacity="0.45"/>
+    <rect x="346" y="16" width="38" height="10" rx="2" fill="#ffffff" opacity="0.45"/>
+    <rect x="70" y="58" width="260" height="10" rx="2" fill="#1d2327" opacity="0.2"/>
+    <rect x="70" y="78" width="260" height="88" rx="6" fill="url(#pg-hero)"/>
+    <path d="M78 160 L161 126.4 L213 141.36 L320 152 L322 160 Z" fill="#000" opacity="0.12"/>
+    <circle cx="312" cy="94" r="9" fill="#fff" opacity="0.35"/>
+    <rect x="70" y="178" width="260" height="8" rx="2" fill="#1d2327" opacity="0.16"/>
+    <rect x="70" y="194" width="220" height="8" rx="2" fill="#1d2327" opacity="0.12"/>
+    <rect x="70" y="210" width="240" height="8" rx="2" fill="#1d2327" opacity="0.1"/>
+    <rect x="70" y="234" width="180" height="8" rx="2" fill="#1d2327" opacity="0.08"/>
+    <rect y="268" width="400" height="32" fill="#50575e" opacity="0.92"/>
+    <rect x="24" y="278" width="70" height="8" rx="2" fill="#ffffff" opacity="0.5"/>
+    <rect x="110" y="278" width="55" height="8" rx="2" fill="#ffffff" opacity="0.35"/>
+    <rect x="300" y="278" width="76" height="8" rx="2" fill="#ffffff" opacity="0.35"/>
 </svg>
