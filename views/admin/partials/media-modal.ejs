@@ -1,4 +1,4 @@
-<div class="modal fade" id="mediaGalleryModal" tabindex="-1" aria-labelledby="mediaGalleryModalLabel" aria-hidden="true" data-picker-limit="<%= typeof mediaGalleryPickerLimit !== 'undefined' ? mediaGalleryPickerLimit : 200 %>">
+<div class="modal fade" id="mediaGalleryModal" tabindex="-1" aria-labelledby="mediaGalleryModalLabel" aria-hidden="true" data-picker-limit="<%= typeof mediaGalleryPickerLimit !== 'undefined' ? mediaGalleryPickerLimit : 36 %>">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content media-gallery-modal">
       <div class="modal-header">
@@ -25,9 +25,15 @@
         <div class="media-gallery-grid" data-media-gallery-grid>
           <div class="media-gallery-empty">Loading media...</div>
         </div>
-        <div class="text-center mt-3" data-media-gallery-load-more-wrap hidden>
-          <button type="button" class="np-btn np-btn-secondary np-btn-small" data-media-gallery-load-more>Load more photos</button>
-        </div>
+        <nav class="media-gallery-pagination" data-media-gallery-pagination aria-label="Media library pages" hidden>
+          <button type="button" class="np-btn np-btn-secondary np-btn-small" data-media-gallery-prev disabled>
+            <i class="bi bi-chevron-left" aria-hidden="true"></i> Previous
+          </button>
+          <span class="media-gallery-page-info" data-media-gallery-page-info>Page 1 of 1</span>
+          <button type="button" class="np-btn np-btn-secondary np-btn-small" data-media-gallery-next disabled>
+            Next <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </button>
+        </nav>
       </div>
       <div class="modal-footer">
         <button type="button" class="np-btn np-btn-secondary" data-bs-dismiss="modal">Cancel</button>
