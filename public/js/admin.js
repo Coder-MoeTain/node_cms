@@ -328,6 +328,12 @@ document.querySelectorAll('[data-image-upload]').forEach((container) => {
     const preview = container.querySelector('[data-image-preview]');
     if (!file || !preview) return;
 
+    if (container.dataset.imageCrop && window.npSliderCrop?.openFromFile) {
+      event.target.value = '';
+      window.npSliderCrop.openFromFile({ file, container });
+      return;
+    }
+
     if (removeFlag) removeFlag.value = '0';
     // Keep existing path until save; server resolves uploaded file vs hidden path.
 
@@ -368,6 +374,16 @@ function selectMediaItem(item) {
   const container = input.closest('[data-image-upload]');
   const removeFlag = container?.querySelector('[data-image-remove-flag]');
   const fileInput = container?.querySelector('[data-image-file]');
+
+  if (container && window.npSliderCrop?.isCropField?.(container)) {
+    closeMediaGalleryModal();
+    window.npSliderCrop.openFromUrl({
+      url: item.filePath,
+      container,
+      fileName: item.originalName || item.name || 'slider-photo.jpg'
+    });
+    return;
+  }
 
   input.value = item.filePath;
   input.dispatchEvent(new Event('change', { bubbles: true }));

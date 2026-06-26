@@ -191,7 +191,7 @@
             <div class="col-md-6"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= val('title') %>" required></div>
             <div class="col-md-6"><label class="form-label">Description</label><input class="form-control" name="description" value="<%= val('description') %>"></div>
           </div>
-          <p class="np-help-text mt-3 mb-2">Add up to 3 photos for this slider. Each photo becomes one slide in the homepage carousel (same title, description, and button).</p>
+          <p class="np-help-text mt-3 mb-2">Add up to 3 photos for this slider. Each photo is cropped to 16:9 and becomes one slide in the homepage carousel.</p>
           <div class="row g-3">
             <% let sliderSlots = [];
                if (record && record.images && record.images.length) {
@@ -206,7 +206,7 @@
                  const fileName = slot === 1 ? 'image_file' : `image_file_${slot}`;
             %>
               <div class="col-md-4">
-                <%- include('../partials/image-upload-field', { label: `Photo ${slot}`, name: pathName, fileName, value: slotValue }) %>
+                <%- include('../partials/image-upload-field', { label: `Photo ${slot}`, name: pathName, fileName, value: slotValue, enableCrop: true, cropAspect: '16/9' }) %>
               </div>
             <% }) %>
             <div class="col-md-3"><label class="form-label">Button Text</label><input class="form-control" name="button_text" value="<%= val('button_text') %>"></div>
@@ -244,5 +244,11 @@
     </form>
   </main>
 </div>
+<% if (resource === 'sliders') { %>
+  <link rel="stylesheet" href="/vendor/cropperjs/cropper.min.css">
+  <script src="/vendor/cropperjs/cropper.min.js"></script>
+  <%- include('../partials/image-crop-modal') %>
+  <script src="/js/slider-crop.js"></script>
+<% } %>
 <% if (['posts','pages','categories','banners','sliders'].includes(resource)) { %><%- include('../partials/media-modal') %><% } %>
 <%- include('../partials/footer') %>

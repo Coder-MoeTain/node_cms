@@ -4,22 +4,36 @@
 
   const searchInput = root.querySelector('[data-plugin-filter]');
   const statusSelect = root.querySelector('[data-plugin-status]');
+  const filterChips = [...root.querySelectorAll('[data-plugin-chip]')];
   const viewButtons = [...root.querySelectorAll('[data-plugin-view]')];
   const listView = root.querySelector('[data-plugin-list-view]');
   const gridView = root.querySelector('[data-plugin-grid-view]');
   const rows = [...root.querySelectorAll('[data-plugin-row]')];
   const cards = [...root.querySelectorAll('[data-plugin-card]')];
   const countEl = root.querySelector('[data-plugin-visible-count]');
+  const noResults = root.querySelector('[data-plugin-no-results]');
   const selectAll = root.querySelector('[data-plugin-select-all]');
   const bulkBar = root.querySelector('[data-plugin-bulk-bar]');
   const bulkForm = root.querySelector('[data-plugin-bulk-form]');
   const bulkAction = root.querySelector('[data-plugin-bulk-action]');
   const uploadZone = root.querySelector('[data-plugin-upload-zone]');
   const uploadInput = root.querySelector('#plugin-archive');
+  const installTriggers = [...root.querySelectorAll('[data-plugin-scroll-install]')];
+
+  function currentStatus() {
+    return statusSelect?.value || 'all';
+  }
+
+  function setStatus(status) {
+    if (statusSelect) statusSelect.value = status;
+    filterChips.forEach((chip) => {
+      chip.classList.toggle('is-active', chip.dataset.status === status);
+    });
+  }
 
   function visibleItems() {
     const q = (searchInput?.value || '').trim().toLowerCase();
-    const status = statusSelect?.value || 'all';
+    const status = currentStatus();
     const items = rows.length ? rows : cards;
     return items.filter((item) => {
       const matchesText = !q || (item.dataset.name || '').includes(q);
@@ -33,8 +47,16 @@
 
   function applyFilter() {
     const visible = visibleItems();
-    if (countEl) {
-      countEl.textContent = String(visible.length);
+    if (countEl) countEl.textContent = String(visible.length);
+    const hasCatalog = rows.length > 0 || cards.length > 0;
+    if (noResults) {
+      noResults.classList.toggle('d-none', !hasCatalog || visible.length > 0);
+    }
+    if (listView && hasCatalog) {
+      listView.classList.toggle('d-none', visible.length === 0);
+    }
+    if (gridView && hasCatalog && !gridView.classList.contains('d-none')) {
+      gridView.classList.toggle('d-none', visible.length === 0);
     }
     updateBulkBar();
   }
@@ -69,10 +91,22 @@
     } catch {
       // ignore
     }
+    applyFilter();
   }
 
   searchInput?.addEventListener('input', applyFilter);
-  statusSelect?.addEventListener('change', applyFilter);
+
+  filterChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      setStatus(chip.dataset.status || 'all');
+      applyFilter();
+    });
+  });
+
+  statusSelect?.addEventListener('change', () => {
+    setStatus(currentStatus());
+    applyFilter();
+  });
 
   viewButtons.forEach((btn) => {
     btn.addEventListener('click', () => setView(btn.dataset.pluginView || 'list'));
@@ -110,7 +144,21 @@
     });
   });
 
+  function openUploadPicker() {
+    uploadInput?.click();
+  }
+
   if (uploadZone && uploadInput) {
+    uploadZone.addEventListener('click', (event) => {
+      if (event.target.closest('button[type="submit"]')) return;
+      openUploadPicker();
+    });
+    uploadZone.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openUploadPicker();
+      }
+    });
     uploadZone.addEventListener('dragover', (event) => {
       event.preventDefault();
       uploadZone.classList.add('is-dragover');
@@ -129,9 +177,17 @@
     });
     uploadInput.addEventListener('change', () => {
       const nameEl = uploadZone.querySelector('[data-plugin-upload-name]');
-      if (nameEl) nameEl.textContent = uploadInput.files?.[0]?.name || 'No file chosen';
+      if (nameEl) nameEl.textContent = uploadInput.files?.[0]?.name || 'No file selected';
     });
   }
+
+  installTriggers.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById('np-plugin-install');
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      uploadZone?.focus();
+    });
+  });
 
   const savedView = (() => {
     try {
@@ -141,5 +197,6 @@
     }
   })();
   setView(savedView === 'grid' ? 'grid' : 'list');
+  setStatus('all');
   applyFilter();
 })();
