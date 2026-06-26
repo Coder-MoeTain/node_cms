@@ -3,6 +3,7 @@ const sanitizeHtml = require('sanitize-html');
 const { Op } = require('sequelize');
 const models = require('../../models');
 const { resolveImageValue } = require('../../utils/uploadHelper');
+const { resolveSliderImages } = require('../../utils/sliderHelper');
 const { normalizeUploadUrlsInHtml } = require('../../utils/mediaHelper');
 const { createSlug, createUniqueSlug } = require('../../utils/slugGenerator');
 const { getPagination, pageMeta } = require('../../utils/pagination');
@@ -213,15 +214,19 @@ const configs = {
     title: 'Sliders',
     permission: 'manage_sliders',
     searchFields: ['title', 'description'],
-    payload: async (body, req, record = null, transaction = null) => ({
-      title: sanitizePlainText(body.title, 180),
-      description: sanitizePlainText(body.description, 500),
-      image: await resolveImageValue(req, { fileField: 'image_file', pathField: 'image', record, transaction }),
-      button_text: sanitizePlainText(body.button_text, 80),
-      button_url: sanitizePlainText(body.button_url, 255),
-      display_order: body.display_order || 0,
-      active: body.active === 'on'
-    })
+    payload: async (body, req, record = null, transaction = null) => {
+      const images = await resolveSliderImages(req, record, transaction);
+      return {
+        title: sanitizePlainText(body.title, 180),
+        description: sanitizePlainText(body.description, 500),
+        images: images.length ? images : null,
+        image: images[0] || null,
+        button_text: sanitizePlainText(body.button_text, 80),
+        button_url: sanitizePlainText(body.button_url, 255),
+        display_order: body.display_order || 0,
+        active: body.active === 'on'
+      };
+    }
   },
   menus: {
     model: models.Menu,

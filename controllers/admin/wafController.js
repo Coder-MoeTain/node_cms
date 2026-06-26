@@ -5,6 +5,8 @@ const { getPagination, pageMeta } = require('../../utils/pagination');
 const { createSlug } = require('../../utils/slugGenerator');
 const { validatePattern, normalizeRequestData, matchRuleAgainstRequest, calculateRiskScore, summarizeMatchedRules } = require('../../utils/wafHelper');
 const { clearWafCache } = require('../../middleware/waf');
+const { checkHealth } = require('../../utils/webguardClient');
+const appConfig = require('../../config/app');
 
 const categories = ['sql_injection', 'xss', 'command_injection', 'path_traversal', 'file_attack', 'bad_bot', 'scanner', 'brute_force', 'spam', 'cms_probe', 'custom'];
 const targets = ['url', 'query', 'body', 'headers', 'user_agent', 'ip', 'file_name', 'all'];
@@ -36,7 +38,12 @@ const settingFields = {
   auto_block_window_minutes: 'number',
   auto_block_duration_minutes: 'number',
   trusted_proxy_enabled: 'boolean',
-  waf_response_message: 'string'
+  waf_response_message: 'string',
+  ml_waf_enabled: 'boolean',
+  ml_waf_confidence_threshold: 'number',
+  ml_waf_model_id: 'string',
+  ml_waf_block_standalone: 'boolean',
+  ml_waf_reject_uncertain: 'boolean'
 };
 
 function flashAndRedirect(req, res, message, path = '/admin/waf') {
@@ -169,7 +176,14 @@ async function dashboard(req, res, next) {
 
 async function settings(req, res, next) {
   try {
-    return res.render('admin/waf/settings', { title: 'WAF Settings', activeNav: 'settings', settings: await getSettingsObject() });
+    const webguardHealth = appConfig.webguard?.enabled ? await checkHealth() : { configured: false, ok: false };
+    return res.render('admin/waf/settings', {
+      title: 'WAF Settings',
+      activeNav: 'settings',
+      settings: await getSettingsObject(),
+      webguardConfigured: Boolean(appConfig.webguard?.enabled),
+      webguardHealth
+    });
   } catch (error) {
     return next(error);
   }
@@ -184,7 +198,11 @@ async function updateSettings(req, res, next) {
       } else if (key === 'waf_mode') {
         value = ['disabled', 'monitor', 'block'].includes(req.body[key]) ? req.body[key] : 'monitor';
       } else if (type === 'number') {
-        value = String(Math.max(Number(req.body[key] || 0), 0));
+        if (key === 'ml_waf_confidence_threshold') {
+          value = String(Math.min(Math.max(Number(req.body[key] || 0.7), 0.1), 1));
+        } else {
+          value = String(Math.max(Number(req.body[key] || 0), 0));
+        }
       } else {
         value = String(req.body[key] || '').trim();
       }

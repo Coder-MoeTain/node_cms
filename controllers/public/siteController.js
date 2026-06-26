@@ -29,6 +29,7 @@ const {
   translateBanners,
   translateSliders
 } = require('../../utils/contentTranslator');
+const { expandSlidersToSlides } = require('../../utils/sliderHelper');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
 
@@ -54,7 +55,10 @@ async function translateViewData(res, data) {
   if (output.jobPosts) output.jobPosts = await translatePosts(engine, output.jobPosts, 'post', contentLocale);
   if (output.hotPosts) output.hotPosts = await translatePosts(engine, output.hotPosts, 'post', contentLocale);
   if (output.banners) output.banners = await translateBanners(engine, output.banners);
-  if (output.sliders) output.sliders = await translateSliders(engine, output.sliders);
+  if (output.sliders) {
+    const translated = await translateSliders(engine, output.sliders);
+    output.sliders = expandSlidersToSlides(translated);
+  }
   if (engine?.isActive) {
     if (output.title && typeof output.title === 'string') output.title = await engine.translate(output.title);
     if (output.heading && typeof output.heading === 'string') output.heading = await engine.translate(output.heading);

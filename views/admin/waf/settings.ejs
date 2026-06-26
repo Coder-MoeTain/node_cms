@@ -63,6 +63,30 @@
           </div>
         </div>
       </div>
+      <div class="np-widget">
+        <div class="np-widget-header"><span>WebGuard ML Detection</span></div>
+        <div class="np-widget-body">
+          <% if (!webguardConfigured) { %>
+            <div class="np-alert np-alert-warning mb-3">
+              WebGuard is not configured. Set <code>WEBGUARD_API_URL</code> and <code>WEBGUARD_API_KEY</code> (or <code>WEBGUARD_API_TOKEN</code>) in your environment, then enable ML detection below.
+            </div>
+          <% } else if (webguardHealth && !webguardHealth.ok) { %>
+            <div class="np-alert np-alert-warning mb-3">
+              WebGuard API is configured but not reachable<%= webguardHealth.error ? `: ${webguardHealth.error}` : '' %>.
+            </div>
+          <% } else if (webguardHealth && webguardHealth.ok) { %>
+            <div class="np-alert np-alert-success mb-3">WebGuard API is reachable. Trained models can augment WAF scoring.</div>
+          <% } %>
+          <div class="row g-3">
+            <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="ml_waf_enabled" <%= settings.ml_waf_enabled === 'true' ? 'checked' : '' %>> Enable ML detection</label></div>
+            <div class="col-md-4"><label class="form-label">Confidence threshold</label><input class="form-control" type="number" min="0.1" max="1" step="0.05" name="ml_waf_confidence_threshold" value="<%= settings.ml_waf_confidence_threshold || '0.7' %>"></div>
+            <div class="col-md-4"><label class="form-label">Model ID (optional)</label><input class="form-control" name="ml_waf_model_id" value="<%= settings.ml_waf_model_id || '' %>" placeholder="Latest trained model"></div>
+            <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="ml_waf_block_standalone" <%= settings.ml_waf_block_standalone !== 'false' ? 'checked' : '' %>> ML detections can block alone</label></div>
+            <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="ml_waf_reject_uncertain" <%= settings.ml_waf_reject_uncertain !== 'false' ? 'checked' : '' %>> Ignore uncertain predictions</label></div>
+          </div>
+          <p class="np-help-text mb-0 mt-2">ML runs alongside signature rules. Use monitor mode first to validate false positives before blocking.</p>
+        </div>
+      </div>
       <p><button class="np-btn np-btn-primary" type="submit">Save Settings</button></p>
     </form>
   </main>

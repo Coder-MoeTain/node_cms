@@ -37,7 +37,7 @@ function isBlockedIp(ip) {
   return true;
 }
 
-function assertSafeOutboundUrl(rawUrl, { allowHttp = false } = {}) {
+function assertSafeOutboundUrl(rawUrl, { allowHttp = false, allowLoopback = false } = {}) {
   let parsed;
   try {
     parsed = new URL(rawUrl);
@@ -53,14 +53,18 @@ function assertSafeOutboundUrl(rawUrl, { allowHttp = false } = {}) {
   }
 
   const hostname = parsed.hostname.toLowerCase();
-  if (BLOCKED_HOSTNAMES.has(hostname) || hostname.endsWith('.local')) {
-    throw new Error('Blocked hostname.');
-  }
   if (hostname === '127.0.0.1' || hostname === '::1' || hostname.startsWith('127.')) {
+    if (allowLoopback) return parsed;
     throw new Error('Loopback addresses are not allowed.');
   }
 
+  if (BLOCKED_HOSTNAMES.has(hostname) || hostname.endsWith('.local')) {
+    if (allowLoopback && hostname === 'localhost') return parsed;
+    throw new Error('Blocked hostname.');
+  }
+
   if (net.isIP(hostname) && isBlockedIp(hostname)) {
+    if (allowLoopback) return parsed;
     throw new Error('Private or internal IP addresses are not allowed.');
   }
 

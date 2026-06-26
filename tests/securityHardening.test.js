@@ -148,6 +148,11 @@ describe('SSRF guard', () => {
   test('allows public https URLs', () => {
     expect(assertSafeOutboundUrl('https://example.com/update.json').hostname).toBe('example.com');
   });
+
+  test('allows loopback when explicitly enabled', () => {
+    expect(assertSafeOutboundUrl('http://127.0.0.1:8001/health', { allowHttp: true, allowLoopback: true }).hostname).toBe('127.0.0.1');
+    expect(assertSafeOutboundUrl('http://localhost:8001/health', { allowHttp: true, allowLoopback: true }).hostname).toBe('localhost');
+  });
 });
 
 describe('security headers', () => {

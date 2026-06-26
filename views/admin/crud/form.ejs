@@ -186,13 +186,41 @@
             <div class="col-md-3"><label class="form-label">Order</label><input class="form-control" name="display_order" type="number" value="<%= val('display_order', 0) %>"></div>
           </div>
           <label class="form-check mt-3"><input class="form-check-input" name="active" type="checkbox" <%= val('active', true) ? 'checked' : '' %>> Active</label>
-        <% } else if (['banners','sliders'].includes(resource)) { %>
+        <% } else if (resource === 'sliders') { %>
           <div class="row g-3">
             <div class="col-md-6"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= val('title') %>" required></div>
-            <div class="col-md-6"><label class="form-label"><%= resource === 'banners' ? 'Subtitle' : 'Description' %></label><input class="form-control" name="<%= resource === 'banners' ? 'subtitle' : 'description' %>" value="<%= resource === 'banners' ? val('subtitle') : val('description') %>"></div>
+            <div class="col-md-6"><label class="form-label">Description</label><input class="form-control" name="description" value="<%= val('description') %>"></div>
+          </div>
+          <p class="np-help-text mt-3 mb-2">Add up to 3 photos for this slider. Each photo becomes one slide in the homepage carousel (same title, description, and button).</p>
+          <div class="row g-3">
+            <% let sliderSlots = [];
+               if (record && record.images && record.images.length) {
+                 sliderSlots = record.images.slice(0, 3);
+               } else if (record && record.image) {
+                 sliderSlots = [record.image];
+               }
+               while (sliderSlots.length < 3) sliderSlots.push(''); %>
+            <% sliderSlots.forEach(function(slotValue, index) {
+                 const slot = index + 1;
+                 const pathName = slot === 1 ? 'image' : `image_${slot}`;
+                 const fileName = slot === 1 ? 'image_file' : `image_file_${slot}`;
+            %>
+              <div class="col-md-4">
+                <%- include('../partials/image-upload-field', { label: `Photo ${slot}`, name: pathName, fileName, value: slotValue }) %>
+              </div>
+            <% }) %>
+            <div class="col-md-3"><label class="form-label">Button Text</label><input class="form-control" name="button_text" value="<%= val('button_text') %>"></div>
+            <div class="col-md-3"><label class="form-label">Button URL</label><input class="form-control" name="button_url" value="<%= val('button_url') %>"></div>
+            <div class="col-md-3"><label class="form-label">Order</label><input class="form-control" name="display_order" type="number" value="<%= val('display_order', 0) %>"></div>
+          </div>
+          <label class="form-check mt-3"><input class="form-check-input" name="active" type="checkbox" <%= val('active', true) ? 'checked' : '' %>> Active</label>
+        <% } else if (resource === 'banners') { %>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= val('title') %>" required></div>
+            <div class="col-md-6"><label class="form-label">Subtitle</label><input class="form-control" name="subtitle" value="<%= val('subtitle') %>"></div>
             <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Image', name: 'image', fileName: 'image_file', value: val('image') }) %></div>
             <div class="col-md-3"><label class="form-label">Button Text</label><input class="form-control" name="button_text" value="<%= val('button_text') %>"></div>
-            <div class="col-md-3"><label class="form-label">Button URL</label><input class="form-control" name="<%= resource === 'banners' ? 'button_link' : 'button_url' %>" value="<%= resource === 'banners' ? val('button_link') : val('button_url') %>"></div>
+            <div class="col-md-3"><label class="form-label">Button URL</label><input class="form-control" name="button_link" value="<%= val('button_link') %>"></div>
             <div class="col-md-3"><label class="form-label">Order</label><input class="form-control" name="display_order" type="number" value="<%= val('display_order', 0) %>"></div>
           </div>
           <label class="form-check mt-3"><input class="form-check-input" name="active" type="checkbox" <%= val('active', true) ? 'checked' : '' %>> Active</label>

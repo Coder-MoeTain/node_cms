@@ -73,7 +73,12 @@ const wafSettings = {
   auto_block_window_minutes: ['10', 'number'],
   auto_block_duration_minutes: ['60', 'number'],
   trusted_proxy_enabled: ['false', 'boolean'],
-  waf_response_message: ['Request blocked by Web Application Firewall.', 'string']
+  waf_response_message: ['Request blocked by Web Application Firewall.', 'string'],
+  ml_waf_enabled: ['false', 'boolean'],
+  ml_waf_confidence_threshold: ['0.7', 'number'],
+  ml_waf_model_id: ['', 'string'],
+  ml_waf_block_standalone: ['true', 'boolean'],
+  ml_waf_reject_uncertain: ['true', 'boolean']
 };
 
 const wafRules = [
