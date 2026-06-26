@@ -49,10 +49,8 @@ function parseCspSourceList(value) {
 }
 
 function appendCloudflareInsightsCsp(directives) {
-  const disabled = process.env.CSP_CLOUDFLARE_INSIGHTS === 'false';
-  const enabled = process.env.CSP_CLOUDFLARE_INSIGHTS === 'true'
-    || (!disabled && process.env.NODE_ENV === 'production');
-  if (!enabled) return;
+  // Cloudflare injects Web Analytics at the edge; allow unless explicitly disabled.
+  if (process.env.CSP_CLOUDFLARE_INSIGHTS === 'false') return;
   directives.scriptSrc.push('https://static.cloudflareinsights.com');
   directives.connectSrc.push('https://cloudflareinsights.com');
 }

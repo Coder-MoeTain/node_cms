@@ -5,6 +5,11 @@
   const fieldLabel = typeof label !== 'undefined' ? label : 'Image';
   const imageCropAspect = (typeof cropAspect !== 'undefined' && cropAspect) ? cropAspect : '16/9';
   const useCrop = typeof enableCrop !== 'undefined' && enableCrop;
+  const previewUrl = typeof resolvePublicMediaUrl === 'function'
+    ? resolvePublicMediaUrl(currentValue)
+    : currentValue;
+  const hasPreview = Boolean(previewUrl);
+  const missingFile = Boolean(currentValue) && !hasPreview;
 %>
 <div class="image-upload-field mb-3" data-image-upload<%= useCrop ? ` data-image-crop="${imageCropAspect}"` : '' %>>
   <label class="form-label"><%= fieldLabel %></label>
@@ -18,10 +23,10 @@
     <% } %>
     <% if (currentValue) { %><button class="np-btn np-btn-link np-btn-small text-danger" type="button" data-remove-image>Remove</button><% } %>
   </div>
-  <% if (currentValue) { %>
-    <img class="settings-image-preview" data-image-preview data-media-preview="<%= pathField %>" src="<%= typeof resolvePublicMediaUrl === 'function' ? resolvePublicMediaUrl(currentValue) || currentValue : currentValue %>" alt="<%= fieldLabel %>">
+  <% if (hasPreview) { %>
+    <img class="settings-image-preview" data-image-preview data-media-preview="<%= pathField %>" src="<%= previewUrl %>" alt="<%= fieldLabel %>">
   <% } else { %>
-    <div class="settings-empty-preview" data-image-preview data-media-preview="<%= pathField %>">No image selected</div>
+    <div class="settings-empty-preview" data-image-preview data-media-preview="<%= pathField %>"><%= missingFile ? 'Image file missing on server — choose a new file.' : 'No image selected' %></div>
   <% } %>
   <% if (useCrop) { %>
     <p class="np-help-text mb-0 mt-2">Uploads open the crop tool (16:9 hero ratio).</p>
