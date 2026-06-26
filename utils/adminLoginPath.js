@@ -85,6 +85,28 @@ function getLoginUrlSync() {
   return cachedConfig?.loginUrl || '/admin/login';
 }
 
+function loginUrlSuffix(query = '') {
+  return query ? (query.startsWith('?') ? query : `?${query}`) : '';
+}
+
+async function getLoginUrlForRequest(req, query = '') {
+  const config = await loadConfig({ fresh: true });
+  const suffix = loginUrlSuffix(query);
+  if (config.honeypotEnabled && isHoneypotRouterPath(req)) {
+    return `${config.honeypotPath}${suffix}`;
+  }
+  return `${config.loginUrl}${suffix}`;
+}
+
+function getLoginUrlForRequestSync(req, query = '') {
+  const config = cachedConfig;
+  const suffix = loginUrlSuffix(query);
+  if (config?.honeypotEnabled && isHoneypotRouterPath(req)) {
+    return `${config.honeypotPath}${suffix}`;
+  }
+  return `${getLoginUrlSync()}${suffix}`;
+}
+
 function routerPathFromRequest(req) {
   return req.path || '';
 }
@@ -147,7 +169,7 @@ async function dispatchLoginForm(req, res, next) {
   try {
     const config = await loadConfig({ fresh: true });
     const auth = require('../controllers/admin/authController');
-    if (config.honeypotEnabled) {
+    if (config.honeypotEnabled && isHoneypotRouterPath(req)) {
       return auth.honeypotLoginForm(req, res);
     }
     return auth.loginForm(req, res);
@@ -160,7 +182,7 @@ async function dispatchLoginPost(req, res, next) {
   try {
     const config = await loadConfig({ fresh: true });
     const auth = require('../controllers/admin/authController');
-    if (config.honeypotEnabled) {
+    if (config.honeypotEnabled && isHoneypotRouterPath(req)) {
       return auth.honeypotLogin(req, res, next);
     }
     return auth.login(req, res, next);
@@ -208,6 +230,8 @@ module.exports = {
   isHoneypotActive,
   getLoginUrl,
   getLoginUrlSync,
+  getLoginUrlForRequest,
+  getLoginUrlForRequestSync,
   clearConfigCache,
   isHoneypotRouterPath,
   isSecretRouterPath,

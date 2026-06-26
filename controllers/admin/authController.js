@@ -20,7 +20,11 @@ const {
 } = require('../../utils/twoFactorRecovery');
 
 async function loginForm(req, res) {
-  const loginAction = await adminLoginPath.getLoginUrl();
+  const config = await adminLoginPath.getConfig({ fresh: true });
+  const path = (req.path || '').replace(/^\//, '').replace(/\/$/, '');
+  const loginAction = (config.honeypotEnabled && path === config.secretSlug)
+    ? `/admin/${config.secretSlug}`
+    : '/admin/login';
   res.render('admin/auth/login', {
     title: 'Admin Login',
     loginEmail: req.query.email || '',

@@ -15,7 +15,7 @@ const loginLimiter = rateLimit({
   handler(req, res) {
     if (req.flash) {
       req.flash('error', 'Too many login attempts. Try again later.');
-      return res.redirect(adminLoginPath.getLoginUrlSync());
+      return res.redirect(adminLoginPath.getLoginUrlForRequestSync(req));
     }
     return res.status(429).send('Too many login attempts. Try again later.');
   }

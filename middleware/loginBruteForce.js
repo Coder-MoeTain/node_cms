@@ -15,7 +15,7 @@ async function loginBruteForceGuard(req, res, next) {
         'error',
         `Too many failed login attempts from your IP address. Please wait ${ipCheck.retryAfterMinutes} minutes before trying again.`
       );
-      return res.redirect(await adminLoginPath.getLoginUrl());
+      return res.redirect(await adminLoginPath.getLoginUrlForRequest(req));
     }
 
     return next();
