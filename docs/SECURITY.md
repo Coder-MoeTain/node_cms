@@ -13,8 +13,9 @@
 
 ## Repository Hygiene
 
-- Runtime logs, coverage reports, uploads, database backups, test output, and local environment files are ignored by Git.
-- Production builds should be created from clean source — do not commit generated artifacts unless intentionally documented.
+- `coverage/`, `logs/`, local uploads, test output files, backup files, and runtime artifacts are ignored.
+- Generated artifacts should not be committed to the production source tree.
+- Demo artifacts must be placed under `docs/demo-artifacts/` only when intentionally needed.
 - Optional local demo images for `npm run assign-photos` belong in `photos/` (ignored); they are not part of the repository.
 
 ## Verification Commands

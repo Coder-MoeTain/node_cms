@@ -23,14 +23,14 @@ full-suite.txt
 themes-only.txt
 ci-artifact.zip
 
-# Runtime uploads and temp files
+# Runtime uploads, temp files, backups
 tmp/
 tmp/quarantine/
 public/uploads/*
 !public/uploads/.gitkeep
 database/backups/
 
-# Local demo photo pool (optional input for database/assign-photos.js)
+# Local/demo generated folders
 photos/
 
 # OS/editor files

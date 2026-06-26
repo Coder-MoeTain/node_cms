@@ -34,7 +34,7 @@ npm run predeploy
 
 ### Repository hygiene
 
-`.env` is listed in `.gitignore` and must not be committed — use `.env.example` as the template. Generated files such as logs, coverage reports, uploads, database backups, and local test outputs are excluded from Git.
+`.env` is listed in `.gitignore` and must not be committed — use `.env.example` as the template. Generated files such as logs, coverage reports, uploads, database backups, test output files (`full-suite-run*.txt`, `test-output-full.txt`, `ci-artifact.zip`), and local demo folders (`photos/`) are excluded from Git.
 
 Health endpoints:
 
