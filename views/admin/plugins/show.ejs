@@ -4,33 +4,50 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header d-flex flex-wrap justify-content-between align-items-start gap-2">
-      <div>
-        <h1><%= plugin.name %></h1>
-        <p class="text-muted mb-0"><code><%= plugin.slug %></code> · v<%= plugin.version %></p>
+    <div class="np-page-header np-page-header-split mb-4">
+      <div class="d-flex gap-3 align-items-start">
+        <span class="np-plugin-icon np-plugin-icon-xl"><i class="bi <%= plugin.icon %>"></i></span>
+        <div>
+          <h1><%= plugin.name %></h1>
+          <p class="np-help-text mb-0"><code><%= plugin.slug %></code> · v<%= plugin.version %> · <%= plugin.author || 'Unknown' %></p>
+        </div>
       </div>
       <div class="d-flex flex-wrap gap-2">
-        <a class="np-btn np-btn-secondary" href="/admin/plugins">Back to Plugins</a>
-        <a class="np-btn np-btn-secondary" href="/admin/plugins/<%= plugin.slug %>/settings">Settings</a>
+        <a class="np-btn np-btn-secondary" href="/admin/plugins"><i class="bi bi-arrow-left"></i> All plugins</a>
+        <% if (plugin.hasSettings) { %>
+          <a class="np-btn np-btn-secondary" href="/admin/plugins/<%= plugin.slug %>/settings"><i class="bi bi-gear"></i> Settings</a>
+        <% } %>
       </div>
     </div>
 
     <div class="row g-3">
       <div class="col-lg-8">
         <div class="np-widget mb-3">
-          <div class="np-widget-header"><span>Plugin Details</span></div>
+          <div class="np-widget-header"><span>Overview</span></div>
           <div class="np-widget-body">
-            <p><%= plugin.description || 'No description provided.' %></p>
-            <dl class="row mb-0">
-              <dt class="col-sm-3">Author</dt>
-              <dd class="col-sm-9"><%= plugin.author || 'Unknown' %></dd>
-              <dt class="col-sm-3">Status</dt>
-              <dd class="col-sm-9"><span class="np-badge np-badge-<%= isActive ? 'success' : 'muted' %>"><%= isActive ? 'Active' : 'Inactive' %></span></dd>
-              <dt class="col-sm-3">Entry file</dt>
-              <dd class="col-sm-9"><code><%= (diskManifest && diskManifest.main) || 'index.js' %></code></dd>
-              <% if (diskManifest && diskManifest.permissions) { %>
-                <dt class="col-sm-3">Permissions</dt>
-                <dd class="col-sm-9"><%= diskManifest.permissions.join(', ') %></dd>
+            <p class="mb-3"><%= plugin.description || 'No description provided.' %></p>
+            <dl class="row np-plugin-details-dl mb-0">
+              <dt class="col-sm-4">Status</dt>
+              <dd class="col-sm-8"><span class="np-badge np-badge-<%= isActive ? 'success' : 'secondary' %>"><%= isActive ? 'Active' : 'Inactive' %></span></dd>
+              <dt class="col-sm-4">Entry file</dt>
+              <dd class="col-sm-8"><code><%= plugin.entryFile %></code></dd>
+              <dt class="col-sm-4">On disk</dt>
+              <dd class="col-sm-8"><%= plugin.disk.exists ? `${plugin.disk.fileCount} files · ${plugin.disk.sizeLabel}` : 'Missing from disk' %></dd>
+              <% if (plugin.disk.modifiedAt) { %>
+                <dt class="col-sm-4">Last modified</dt>
+                <dd class="col-sm-8"><%= plugin.disk.modifiedAt.toLocaleString() %></dd>
+              <% } %>
+              <% if (plugin.requires) { %>
+                <dt class="col-sm-4">Requires</dt>
+                <dd class="col-sm-8"><%= plugin.requires %></dd>
+              <% } %>
+              <% if (plugin.homepage) { %>
+                <dt class="col-sm-4">Plugin homepage</dt>
+                <dd class="col-sm-8"><a href="<%= plugin.homepage %>" target="_blank" rel="noopener noreferrer"><%= plugin.homepage %></a></dd>
+              <% } %>
+              <% if (plugin.diskManifest && plugin.diskManifest.permissions) { %>
+                <dt class="col-sm-4">Permissions</dt>
+                <dd class="col-sm-8"><%= plugin.diskManifest.permissions.join(', ') %></dd>
               <% } %>
             </dl>
             <% if (activationError) { %>
@@ -39,22 +56,38 @@
           </div>
         </div>
 
+        <% if (readme) { %>
+          <div class="np-widget mb-3">
+            <div class="np-widget-header"><span><i class="bi bi-book me-1"></i> <%= readme.filename %></span></div>
+            <div class="np-widget-body np-plugin-readme"><%- readme.html %></div>
+          </div>
+        <% } %>
+
         <div class="np-widget mb-3">
-          <div class="np-widget-header"><span>Registered Hooks</span></div>
+          <div class="np-widget-header d-flex justify-content-between align-items-center">
+            <span>Hooks</span>
+            <span class="np-badge np-badge-secondary"><%= registeredHooks.length %> runtime</span>
+          </div>
           <div class="np-widget-body">
             <% if (manifestHooks.length) { %>
-              <p class="text-muted">Declared in manifest:</p>
-              <ul><% manifestHooks.forEach(function(hook) { %><li><code><%= hook %></code></li><% }) %></ul>
-            <% } %>
-            <p class="text-muted mb-2">Currently registered in runtime:</p>
-            <% if (registeredHooks.length) { %>
-              <div class="d-flex flex-wrap gap-2">
-                <% registeredHooks.forEach(function(hook) { %>
-                  <span class="badge bg-light text-dark border"><%= hook %></span>
+              <p class="np-help-text">Declared in <code>plugin.json</code>:</p>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <% manifestHooks.forEach(function(hook) { %>
+                  <span class="badge bg-light text-dark border"><code><%= hook %></code></span>
                 <% }) %>
               </div>
+            <% } %>
+            <p class="np-help-text mb-2">Currently registered when active:</p>
+            <% if (isActive && registeredHooks.length) { %>
+              <div class="d-flex flex-wrap gap-2">
+                <% registeredHooks.forEach(function(hook) { %>
+                  <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle"><%= hook %></span>
+                <% }) %>
+              </div>
+            <% } else if (!isActive) { %>
+              <p class="mb-0 text-muted">Activate this plugin to register its hooks.</p>
             <% } else { %>
-              <p class="mb-0 text-muted">No hooks registered. Activate the plugin to load hooks.</p>
+              <p class="mb-0 text-muted">No hooks registered.</p>
             <% } %>
           </div>
         </div>
@@ -67,16 +100,18 @@
             <% if (isActive) { %>
               <form method="post" action="/admin/plugins/<%= plugin.slug %>/deactivate">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="redirect" value="/admin/plugins/<%= plugin.slug %>">
                 <button class="np-btn np-btn-secondary w-100" type="submit">Deactivate</button>
               </form>
             <% } else { %>
               <form method="post" action="/admin/plugins/<%= plugin.slug %>/activate">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="redirect" value="/admin/plugins/<%= plugin.slug %>">
                 <button class="np-btn np-btn-primary w-100" type="submit">Activate</button>
               </form>
               <form method="post" action="/admin/plugins/<%= plugin.slug %>/uninstall" data-confirm="Remove this plugin from disk?">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <button class="np-btn np-btn-danger w-100" type="submit">Delete Plugin</button>
+                <button class="np-btn np-btn-danger w-100" type="submit">Delete plugin</button>
               </form>
             <% } %>
             <% if (pendingMigrations.length) { %>
@@ -88,14 +123,14 @@
           </div>
         </div>
 
-        <div class="np-widget">
+        <div class="np-widget mb-3">
           <div class="np-widget-header"><span>Migrations</span></div>
           <div class="np-widget-body">
             <% const applied = (plugin.migrations || []).map(function(row) { return row.migration; }); %>
             <% if (applied.length || pendingMigrations.length) { %>
-              <ul class="list-unstyled mb-0 small">
+              <ul class="list-unstyled mb-0 small np-plugin-migration-list">
                 <% applied.forEach(function(file) { %>
-                  <li class="text-success"><i class="bi bi-check-circle"></i> <%= file %></li>
+                  <li class="text-success"><i class="bi bi-check-circle-fill"></i> <%= file %></li>
                 <% }) %>
                 <% pendingMigrations.forEach(function(file) { %>
                   <li class="text-muted"><i class="bi bi-circle"></i> <%= file %> (pending)</li>
@@ -104,6 +139,17 @@
             <% } else { %>
               <p class="text-muted mb-0">No migrations for this plugin.</p>
             <% } %>
+          </div>
+        </div>
+
+        <div class="np-widget">
+          <div class="np-widget-header"><span>At a glance</span></div>
+          <div class="np-widget-body">
+            <ul class="list-unstyled mb-0 small">
+              <li class="mb-2"><i class="bi bi-gear me-1"></i> <%= plugin.settingsCount %> configurable settings</li>
+              <li class="mb-2"><i class="bi bi-link-45deg me-1"></i> <%= plugin.declaredHooksCount %> declared hooks</li>
+              <li><i class="bi bi-hdd me-1"></i> <%= plugin.disk.sizeLabel %> on disk</li>
+            </ul>
           </div>
         </div>
       </div>

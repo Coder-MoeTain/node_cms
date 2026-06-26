@@ -91,6 +91,9 @@ router.put('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), 
 router.delete('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), media.destroy);
 
 router.get('/plugins', requireAuth, can('manage_plugins'), plugins.index);
+router.get('/plugins.json', requireAuth, can('manage_plugins'), plugins.pluginsJson);
+router.post('/plugins/sync', requireAuth, can('manage_plugins'), plugins.syncPlugins);
+router.post('/plugins/bulk', requireAuth, can('manage_plugins'), plugins.bulkAction);
 router.post('/plugins/upload', requireAuth, can('manage_plugins'), zipUpload.single('archive'), plugins.upload);
 router.get('/plugins/:slug', requireAuth, can('manage_plugins'), plugins.show);
 router.post('/plugins/:slug/migrate', requireAuth, can('manage_plugins'), plugins.runMigrations);
@@ -110,6 +113,8 @@ router.post('/settings/database/reset', requireAuth, canAny(['manage_settings', 
 router.get('/settings', requireAuth, can('manage_settings'), settings.settings);
 router.put('/settings', requireAuth, can('manage_settings'), brandingImageUpload, settings.updateSettings);
 router.get('/themes', requireAuth, can('manage_themes'), themes.index);
+router.get('/themes.json', requireAuth, can('manage_themes'), themes.themesJson);
+router.post('/themes/sync', requireAuth, can('manage_themes'), themes.syncThemes);
 router.post('/themes/upload', requireAuth, can('manage_themes'), zipUpload.single('archive'), themes.upload);
 router.get('/themes/customize', requireAuth, can('manage_themes'), themes.customize);
 router.get('/themes/customize/preview', requireAuth, can('manage_themes'), themes.previewTheme);
@@ -118,6 +123,7 @@ router.post('/themes/activate', requireAuth, can('manage_themes'), themes.activa
 router.post('/themes/reset', requireAuth, can('manage_themes'), themes.resetSettings);
 router.put('/theme-settings', requireAuth, can('manage_themes'), brandingImageUpload, themes.updateSettings);
 router.post('/theme-settings/preview', requireAuth, can('manage_themes'), themes.previewDraft);
+router.get('/themes/:slug/thumbnail', requireAuth, can('manage_themes'), themes.previewThumbnail);
 router.get('/themes/:slug/preview', requireAuth, can('manage_themes'), themes.previewThemeLive);
 router.get('/themes/:slug', requireAuth, can('manage_themes'), themes.show);
 router.post('/themes/:slug/uninstall', requireAuth, can('manage_themes'), themes.uninstall);

@@ -292,3 +292,9 @@ Reset your password:
 http://localhost:3000/admin/reset-password?token=d49104fe689fe342a0d4f6a3810bf211c67c348ec8c723aa9977ee05ca0986b0
 
 This link expires in 1 hour.
+[2026-06-26T03:12:02.372Z] To: admin@example.com | NodePress CMS — Password reset
+Reset your password:
+
+http://localhost:3000/admin/reset-password?token=c2ba56598add282918812b48b9c6dc5dd67afd2f807ea046aaf585b5ae07ba84
+
+This link expires in 1 hour.

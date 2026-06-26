@@ -1,16 +1,21 @@
 <%#
   theme-card.ejs
-  locals: theme, csrfToken, compact (optional), showOverlay (optional, default true)
+  locals: theme, csrfToken, compact (optional), showOverlay (optional, default true), showMeta (optional)
 %>
 <% const overlay = typeof showOverlay === 'undefined' ? true : showOverlay; %>
 <% const isCompact = typeof compact !== 'undefined' && compact; %>
+<% const withMeta = typeof showMeta === 'undefined' ? true : showMeta; %>
 <div class="theme-browser-card<%= theme.active ? ' is-active' : '' %><%= isCompact ? ' theme-browser-card-compact' : '' %>">
   <div class="theme-screenshot">
-    <% if (theme.preview_image) { %>
-      <img src="<%= theme.preview_image %>" alt="<%= theme.name %> preview" loading="lazy">
-    <% } else { %>
-      <div class="theme-screenshot-placeholder" aria-hidden="true"><i class="bi bi-image"></i></div>
-    <% } %>
+    <a href="<%= theme.preview_thumb %>" class="theme-screenshot-link" data-theme-preview-open data-thumb="<%= theme.preview_thumb %>" data-full="<%= theme.preview_thumb %>" data-name="<%= theme.name %>" aria-label="Preview <%= theme.name %>">
+      <img src="<%= theme.preview_thumb %>" alt="<%= theme.name %> theme screenshot" loading="lazy" class="theme-screenshot-img" width="1200" height="900">
+    </a>
+    <div class="theme-color-swatches" aria-hidden="true">
+      <span style="background:<%= theme.colors.primary %>"></span>
+      <span style="background:<%= theme.colors.secondary %>"></span>
+      <span style="background:<%= theme.colors.background %>"></span>
+      <span style="background:<%= theme.colors.text %>"></span>
+    </div>
     <% if (overlay && !theme.active) { %>
       <div class="theme-screenshot-overlay">
         <form method="post" action="/admin/themes/activate">
@@ -19,7 +24,7 @@
           <button class="np-btn np-btn-primary np-btn-small" type="submit">Activate</button>
         </form>
         <a class="np-btn np-btn-secondary np-btn-small" href="/admin/themes/<%= theme.slug %>/preview" target="_blank" rel="noopener">Live Preview</a>
-        <a class="np-btn np-btn-secondary np-btn-small" href="/admin/themes/<%= theme.slug %>">Details</a>
+        <a class="np-btn np-btn-secondary np-btn-small" href="/admin/themes/<%= theme.slug %>">Theme Details</a>
       </div>
     <% } %>
     <% if (theme.active) { %>
@@ -27,7 +32,16 @@
     <% } %>
   </div>
   <div class="theme-name-bar">
-    <strong class="theme-name"><%= theme.name %></strong>
-    <% if (theme.version) { %><span class="theme-version">Version <%= theme.version %></span><% } %>
+    <div>
+      <strong class="theme-name"><%= theme.name %></strong>
+      <% if (theme.version) { %><span class="theme-version">Version <%= theme.version %></span><% } %>
+    </div>
+    <% if (withMeta && theme.tags && theme.tags.length) { %>
+      <div class="theme-tag-row">
+        <% theme.tags.slice(0, 3).forEach(function(tag) { %>
+          <span class="theme-tag"><%= tag %></span>
+        <% }) %>
+      </div>
+    <% } %>
   </div>
 </div>

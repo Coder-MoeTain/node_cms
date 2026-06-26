@@ -4,6 +4,26 @@ const { Plugin, PluginSetting, PluginMigration } = require('../../models');
 const pluginLoader = require('../../utils/pluginLoader');
 const { resolvePluginSettings, seedPluginDefaults } = require('../../utils/pluginSettings');
 const { extractZipArchive } = require('../../utils/packageArchive');
+const { createActivityLog } = require('../../utils/activityLogHelper');
+const {
+  enrichPlugin,
+  readPluginReadme,
+  bulkActivate,
+  bulkDeactivate,
+  bulkUninstall,
+  getPendingMigrationFiles
+} = require('../../utils/pluginAdmin');
+
+function logPluginAction(req, action, details = {}) {
+  return createActivityLog({
+    user_id: req.session?.user?.id || null,
+    action,
+    entity_type: 'plugin',
+    entity_id: details.slug || null,
+    details: JSON.stringify(details),
+    ip_address: req.ip
+  });
+}
 
 async function show(req, res, next) {
   try {
@@ -16,20 +36,17 @@ async function show(req, res, next) {
     });
     if (!plugin) return res.status(404).render('errors/404', { title: 'Plugin Not Found' });
 
-    const diskManifest = pluginLoader.getManifestBySlug(plugin.slug);
-    const migrationsDir = path.join(pluginLoader.pluginsRoot, plugin.slug, 'migrations');
-    const pendingMigrations = fs.existsSync(migrationsDir)
-      ? fs.readdirSync(migrationsDir).filter((file) => file.endsWith('.sql')).sort()
-          .filter((file) => !(plugin.migrations || []).some((row) => row.migration === file))
-      : [];
+    const enriched = enrichPlugin(plugin, { activationErrors: Object.fromEntries(pluginLoader.getActivationErrors()) });
+    const pendingMigrations = getPendingMigrationFiles(plugin.slug, plugin.migrations || []);
     const activationErrors = pluginLoader.getActivationErrors();
     const registeredHooks = pluginLoader.listRegisteredHooks();
     const manifestHooks = (plugin.manifest?.hooks || []);
+    const readme = readPluginReadme(plugin.slug);
 
     return res.render('admin/plugins/show', {
       title: plugin.name,
-      plugin,
-      diskManifest,
+      plugin: enriched,
+      readme,
       pendingMigrations,
       registeredHooks,
       manifestHooks,
@@ -50,6 +67,7 @@ async function runMigrations(req, res, next) {
       return res.redirect('/admin/plugins');
     }
     const ran = await pluginLoader.runPluginMigrations(slug);
+    await logPluginAction(req, 'plugin_migrate', { slug, migrations: ran });
     req.flash('success', ran.length ? `Ran ${ran.length} migration(s): ${ran.join(', ')}` : 'No pending migrations.');
     return res.redirect(`/admin/plugins/${slug}`);
   } catch (error) {
@@ -62,18 +80,92 @@ async function index(req, res, next) {
   try {
     await pluginLoader.syncInstalledPlugins();
     const [plugins, stats, registeredHooks] = await Promise.all([
-      Plugin.findAll({ order: [['name', 'ASC']] }),
+      Plugin.findAll({
+        order: [['name', 'ASC']],
+        include: [{ model: PluginMigration, as: 'migrations' }]
+      }),
       pluginLoader.getPluginManagerStats(),
       Promise.resolve(pluginLoader.listRegisteredHooks())
     ]);
-    const activationErrors = pluginLoader.getActivationErrors();
+    const activationErrors = Object.fromEntries(pluginLoader.getActivationErrors());
+    const enriched = plugins.map((plugin) => enrichPlugin(plugin, { activationErrors }));
+
     return res.render('admin/plugins/index', {
       title: 'Plugins',
-      plugins,
+      plugins: enriched,
       stats,
       registeredHooks,
-      activationErrors: Object.fromEntries(activationErrors)
+      activationErrors
     });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function pluginsJson(req, res, next) {
+  try {
+    await pluginLoader.syncInstalledPlugins();
+    const plugins = await Plugin.findAll({
+      order: [['name', 'ASC']],
+      include: [{ model: PluginMigration, as: 'migrations' }]
+    });
+    const activationErrors = Object.fromEntries(pluginLoader.getActivationErrors());
+    const stats = await pluginLoader.getPluginManagerStats();
+    return res.json({
+      stats,
+      plugins: plugins.map((plugin) => enrichPlugin(plugin, { activationErrors })),
+      registeredHooks: pluginLoader.listRegisteredHooks(),
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function syncPlugins(req, res, next) {
+  try {
+    const discovered = await pluginLoader.syncInstalledPlugins();
+    await pluginLoader.loadActivePlugins(req.app);
+    await logPluginAction(req, 'plugin_sync', { count: discovered.length });
+    req.flash('success', `Synced ${discovered.length} plugin(s) from disk.`);
+    return res.redirect('/admin/plugins');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function bulkAction(req, res, next) {
+  try {
+    const action = req.body.action;
+    const slugs = [].concat(req.body.slugs || req.body['slugs[]'] || []).filter(Boolean);
+    if (!slugs.length) {
+      req.flash('error', 'Select at least one plugin.');
+      return res.redirect('/admin/plugins');
+    }
+
+    let results;
+    if (action === 'activate') results = await bulkActivate(slugs, req.app);
+    else if (action === 'deactivate') results = await bulkDeactivate(slugs, req.app);
+    else if (action === 'delete') results = await bulkUninstall(slugs, req.app);
+    else {
+      req.flash('error', 'Unknown bulk action.');
+      return res.redirect('/admin/plugins');
+    }
+
+    await logPluginAction(req, `plugin_bulk_${action}`, {
+      slugs,
+      succeeded: results.succeeded,
+      failed: results.failed
+    });
+
+    if (results.succeeded.length) {
+      req.flash('success', `${results.succeeded.length} plugin(s) updated (${action}).`);
+    }
+    if (results.failed.length) {
+      const summary = results.failed.map((row) => `${row.slug}: ${row.error}`).join('; ');
+      req.flash('error', summary);
+    }
+    return res.redirect('/admin/plugins');
   } catch (error) {
     return next(error);
   }
@@ -93,6 +185,15 @@ async function upload(req, res, next) {
     if (isNew) {
       await pluginLoader.invokePluginLifecycle(manifest.slug, 'onInstall', req.app);
     }
+    if (req.body.activate_after === 'on') {
+      try {
+        await pluginLoader.activatePlugin(manifest.slug, req.app);
+      } catch (error) {
+        req.flash('error', `Installed but activation failed: ${error.message}`);
+        return res.redirect('/admin/plugins');
+      }
+    }
+    await logPluginAction(req, 'plugin_install', { slug: manifest.slug, version: manifest.version, isNew });
     req.flash('success', `Plugin "${manifest.name}" installed successfully.`);
     return res.redirect('/admin/plugins');
   } catch (error) {
@@ -105,19 +206,24 @@ async function activate(req, res, next) {
   try {
     const slug = req.params.slug;
     await pluginLoader.activatePlugin(slug, req.app);
+    await logPluginAction(req, 'plugin_activate', { slug });
     req.flash('success', 'Plugin activated.');
-    return res.redirect('/admin/plugins');
+    const redirectTo = req.body.redirect || '/admin/plugins';
+    return res.redirect(redirectTo);
   } catch (error) {
     req.flash('error', error.message || 'Plugin activation failed.');
-    return res.redirect('/admin/plugins');
+    return res.redirect(req.body.redirect || '/admin/plugins');
   }
 }
 
 async function deactivate(req, res, next) {
   try {
-    await pluginLoader.deactivatePlugin(req.params.slug, req.app);
+    const slug = req.params.slug;
+    await pluginLoader.deactivatePlugin(slug, req.app);
+    await logPluginAction(req, 'plugin_deactivate', { slug });
     req.flash('success', 'Plugin deactivated.');
-    return res.redirect('/admin/plugins');
+    const redirectTo = req.body.redirect || '/admin/plugins';
+    return res.redirect(redirectTo);
   } catch (error) {
     return next(error);
   }
@@ -139,6 +245,7 @@ async function uninstall(req, res, next) {
     await PluginSetting.destroy({ where: { plugin_id: plugin.id } });
     await plugin.destroy();
     pluginLoader.removePluginDirectory(plugin.slug);
+    await logPluginAction(req, 'plugin_uninstall', { slug: req.params.slug });
     req.flash('success', 'Plugin removed.');
     return res.redirect('/admin/plugins');
   } catch (error) {
@@ -168,7 +275,7 @@ async function settings(req, res, next) {
 
     return res.render('admin/plugins/settings', {
       title: `${plugin.name} Settings`,
-      plugin,
+      plugin: enrichPlugin(plugin),
       settingsMap,
       fields,
       usesManifestSettings: manifestFields.length > 0
@@ -211,6 +318,7 @@ async function updateSettings(req, res, next) {
     }
 
     if (plugin.active) await pluginLoader.loadActivePlugins(req.app);
+    await logPluginAction(req, 'plugin_settings_update', { slug: plugin.slug });
     req.flash('success', 'Plugin settings saved.');
     return res.redirect(`/admin/plugins/${plugin.slug}/settings`);
   } catch (error) {
@@ -218,4 +326,17 @@ async function updateSettings(req, res, next) {
   }
 }
 
-module.exports = { index, show, upload, activate, deactivate, uninstall, settings, updateSettings, runMigrations };
+module.exports = {
+  index,
+  show,
+  upload,
+  activate,
+  deactivate,
+  uninstall,
+  settings,
+  updateSettings,
+  runMigrations,
+  syncPlugins,
+  bulkAction,
+  pluginsJson
+};

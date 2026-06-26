@@ -5,7 +5,13 @@ const themeManager = require('../../utils/themeManager');
 const themeLoader = require('../../utils/themeLoader');
 const { resolvePortalConfig, stripManagedBlocks, parseThemeVars, parseDesignTokens } = require('../../utils/portalConfig');
 const { resolveImageValue } = require('../../utils/uploadHelper');
-const { zipUpload } = require('../../middleware/zipUpload');
+const { createActivityLog } = require('../../utils/activityLogHelper');
+const {
+  enrichTheme,
+  readThemeReadme,
+  getThemeManagerStats
+} = require('../../utils/themeAdmin');
+const { buildThemeScreenshotSvg } = require('../../utils/themeScreenshotArt');
 
 function clampLogoDimension(value, fallback, min, max) {
   const parsed = Number.parseInt(value, 10);
@@ -18,40 +24,110 @@ function normalizeLogoPlacement(value) {
   return allowed.includes(value) ? value : 'left';
 }
 
-function enrichThemeRow(theme) {
-  const plain = theme.get ? theme.get({ plain: true }) : { ...theme };
-  const manifest = plain.manifest || themeLoader.getManifestBySlug(plain.slug) || {};
-  return {
-    ...plain,
-    preview_image: themeLoader.resolveThemePreviewImage(plain.slug) || plain.preview_image || null,
-    version: manifest.version || '1.0.0',
-    author: manifest.author || null
-  };
+function logThemeAction(req, action, details = {}) {
+  return createActivityLog({
+    user_id: req.session?.user?.id || null,
+    action,
+    entity_type: 'theme',
+    entity_id: details.slug || null,
+    details: JSON.stringify(details),
+    ip_address: req.ip
+  });
+}
+
+function enrichThemeRow(theme, options = {}) {
+  return enrichTheme(theme, options);
 }
 
 async function index(req, res, next) {
   try {
     await themeManager.syncInstalledThemes();
-    const [themes, themeSetting] = await Promise.all([
-      Theme.findAll({ order: [['name', 'ASC']] }),
-      ThemeSetting.findOne({ where: { active: true } })
-    ]);
-    const enrichedThemes = themes.map(enrichThemeRow);
-    const themeAssets = enrichedThemes.reduce((map, theme) => {
+    const themes = await Theme.findAll({ order: [['name', 'ASC']] });
+    const themeAssets = themes.reduce((map, theme) => {
       map[theme.slug] = themeManager.discoverThemeAssets(theme.slug);
       return map;
     }, {});
+    const activationChecks = themes.reduce((map, theme) => {
+      try {
+        themeManager.validateThemeForActivation(theme.slug);
+        map[theme.slug] = { error: null };
+      } catch (error) {
+        map[theme.slug] = { error: error.message };
+      }
+      return map;
+    }, {});
+    const enrichedThemes = themes.map((theme) => enrichThemeRow(theme, {
+      assets: themeAssets[theme.slug],
+      activationCheck: activationChecks[theme.slug]
+    }));
     const activeTheme = enrichedThemes.find((theme) => theme.active) || null;
     const inactiveThemes = enrichedThemes.filter((theme) => !theme.active);
+    const stats = getThemeManagerStats(enrichedThemes);
+
     return res.render('admin/themes/index', {
       title: 'Themes',
       themes: enrichedThemes,
       activeTheme,
       inactiveThemes,
-      themeSetting: themeSetting || {},
-      themeAssets,
-      builtInThemes: themeManager.BUILT_IN_THEMES
+      stats,
+      themeAssets
     });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function themesJson(req, res, next) {
+  try {
+    await themeManager.syncInstalledThemes();
+    const themes = await Theme.findAll({ order: [['name', 'ASC']] });
+    const enrichedThemes = themes.map((theme) => enrichThemeRow(theme, {
+      assets: themeManager.discoverThemeAssets(theme.slug)
+    }));
+    return res.json({
+      stats: getThemeManagerStats(enrichedThemes),
+      themes: enrichedThemes,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function syncThemes(req, res, next) {
+  try {
+    const discovered = await themeManager.syncInstalledThemes();
+    await logThemeAction(req, 'theme_sync', { count: discovered.length });
+    req.flash('success', `Synced ${discovered.length} theme(s) from disk.`);
+    return res.redirect('/admin/themes');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function previewThumbnail(req, res, next) {
+  try {
+    const slug = req.params.slug;
+    const staticPreview = themeLoader.resolveThemePreviewImage(slug);
+    if (staticPreview && staticPreview.startsWith('/themes/')) {
+      const relative = staticPreview.replace(`/themes/${slug}/`, '');
+      const filePath = path.join(themeLoader.themesRoot, slug, relative);
+      if (fs.existsSync(filePath)) {
+        if (filePath.endsWith('.svg')) {
+          res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          return res.send(fs.readFileSync(filePath, 'utf8'));
+        }
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.sendFile(filePath);
+      }
+    }
+    const manifest = themeLoader.getManifestBySlug(slug);
+    if (!manifest) return res.status(404).send('Theme not found');
+    const svg = buildThemeScreenshotSvg(manifest);
+    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.send(svg);
   } catch (error) {
     return next(error);
   }
@@ -64,9 +140,20 @@ async function show(req, res, next) {
     if (!themeRow) return res.status(404).render('errors/404', { title: 'Theme Not Found' });
 
     const details = themeManager.getThemeDetails(req.params.slug);
+    let activationCheck = { error: null };
+    try {
+      themeManager.validateThemeForActivation(req.params.slug);
+    } catch (error) {
+      activationCheck = { error: error.message };
+    }
+
     return res.render('admin/themes/show', {
       title: themeRow.name,
-      theme: enrichThemeRow(themeRow),
+      theme: enrichThemeRow(themeRow, {
+        assets: details?.assets,
+        activationCheck
+      }),
+      readme: readThemeReadme(req.params.slug),
       details,
       assets: details?.assets || { templates: [], partials: [], chain: [] }
     });
@@ -77,12 +164,14 @@ async function show(req, res, next) {
 
 async function activate(req, res, next) {
   try {
+    const theme = await Theme.findByPk(req.body.theme_id);
     await themeManager.activateTheme(req.body.theme_id);
+    await logThemeAction(req, 'theme_activate', { slug: theme?.slug });
     req.flash('success', 'Theme activated.');
-    return res.redirect('/admin/themes');
+    return res.redirect(req.body.redirect || '/admin/themes');
   } catch (error) {
     req.flash('error', error.message || 'Theme activation failed.');
-    return res.redirect('/admin/themes');
+    return res.redirect(req.body.redirect || '/admin/themes');
   }
 }
 
@@ -139,6 +228,7 @@ async function updateSettings(req, res, next) {
       custom_js: req.body.custom_js || ''
     });
     delete req.session.customizerDraft;
+    await logThemeAction(req, 'theme_settings_update', { theme: setting.theme_name });
     req.flash('success', 'Theme settings updated.');
     return res.redirect('/admin/themes/customize');
   } catch (error) {
@@ -192,6 +282,18 @@ async function upload(req, res, next) {
       return res.redirect('/admin/themes');
     }
     const manifest = await themeManager.installThemeFromArchive(req.file.path);
+    if (req.body.activate_after === 'on') {
+      const theme = await Theme.findOne({ where: { slug: manifest.slug } });
+      if (theme) {
+        try {
+          await themeManager.activateTheme(theme.id);
+        } catch (error) {
+          req.flash('error', `Installed but activation failed: ${error.message}`);
+          return res.redirect('/admin/themes');
+        }
+      }
+    }
+    await logThemeAction(req, 'theme_install', { slug: manifest.slug, version: manifest.version });
     req.flash('success', `Theme "${manifest.name}" installed successfully.`);
     return res.redirect('/admin/themes');
   } catch (error) {
@@ -219,6 +321,7 @@ async function uninstall(req, res, next) {
     await ThemeSetting.destroy({ where: { theme_name: theme.slug } });
     await theme.destroy();
     themeManager.removeThemeDirectory(theme.slug);
+    await logThemeAction(req, 'theme_uninstall', { slug: theme.slug });
     req.flash('success', 'Theme removed.');
     return res.redirect('/admin/themes');
   } catch (error) {
@@ -255,5 +358,8 @@ module.exports = {
   upload,
   uninstall,
   previewTheme,
-  previewThemeLive
+  previewThemeLive,
+  syncThemes,
+  themesJson,
+  previewThumbnail
 };

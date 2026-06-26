@@ -4,108 +4,197 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header">
-      <h1>Themes</h1>
-      <% if (activeTheme) { %>
-        <a class="np-btn np-btn-secondary" href="/admin/themes/customize">Customize</a>
-      <% } %>
-    </div>
-    <%- include('../partials/settings-nav') %>
-
-    <div class="np-widget mb-3">
-      <div class="np-widget-header"><span>Install Theme</span></div>
-      <div class="np-widget-body">
-        <form method="post" action="/admin/themes/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data" class="row g-2 align-items-end">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <div class="col-md-8">
-            <label class="form-label" for="theme-archive">Upload theme (.zip)</label>
-            <input class="form-control" id="theme-archive" type="file" name="archive" accept=".zip" required>
-            <div class="form-text">Archive must contain <code>theme.json</code>. Child themes require the parent theme installed first.</div>
-          </div>
-          <div class="col-md-4">
-            <button class="np-btn np-btn-primary w-100" type="submit"><i class="bi bi-upload"></i> Install Theme</button>
-          </div>
-        </form>
+    <div id="np-themes-admin">
+      <div class="np-page-header np-page-header-split mb-4">
+        <div>
+          <h1>Themes</h1>
+          <p class="np-help-text mb-0">Browse, preview, and activate themes — WordPress-style appearance management for NodePress.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <form method="post" action="/admin/themes/sync" class="d-inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="np-btn np-btn-secondary" type="submit"><i class="bi bi-arrow-clockwise"></i> Sync from disk</button>
+          </form>
+          <% if (activeTheme) { %>
+            <a class="np-btn np-btn-primary" href="/admin/themes/customize"><i class="bi bi-brush"></i> Customize</a>
+          <% } %>
+          <a class="np-btn np-btn-secondary" href="/" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> View Site</a>
+        </div>
       </div>
-    </div>
 
-    <% if (activeTheme) { %>
-      <section class="theme-browser-active mb-4" aria-labelledby="active-theme-heading">
-        <h2 id="active-theme-heading" class="theme-browser-section-title">Active Theme</h2>
-        <div class="np-widget theme-active-panel">
-          <div class="row g-0">
-            <div class="col-lg-8">
-              <%- include('./partials/theme-card', { theme: activeTheme, csrfToken, showOverlay: false }) %>
-            </div>
-            <div class="col-lg-4 theme-active-details">
-              <h3 class="h5 mb-2"><%= activeTheme.name %></h3>
-              <% if (activeTheme.author) { %><p class="text-muted small mb-2">By <%= activeTheme.author %></p><% } %>
-              <p class="text-muted small mb-3"><%= activeTheme.description || 'No description provided.' %></p>
-              <div class="d-flex flex-wrap gap-2">
-                <a class="np-btn np-btn-primary" href="/admin/themes/customize">Customize</a>
-                <a class="np-btn np-btn-secondary" href="/" target="_blank" rel="noopener">View Site</a>
-                <a class="np-btn np-btn-secondary" href="/admin/themes/<%= activeTheme.slug %>">Theme Details</a>
-              </div>
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="np-theme-stat">
+            <i class="bi bi-palette" aria-hidden="true"></i>
+            <div><strong><%= stats.total %></strong><span>Installed</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-theme-stat np-theme-stat-success">
+            <i class="bi bi-check-circle" aria-hidden="true"></i>
+            <div><strong><%= stats.active %></strong><span>Active</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-theme-stat">
+            <i class="bi bi-pause-circle" aria-hidden="true"></i>
+            <div><strong><%= stats.inactive %></strong><span>Inactive</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-theme-stat">
+            <i class="bi bi-diagram-2" aria-hidden="true"></i>
+            <div><strong><%= stats.childThemes %></strong><span>Child themes</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-lg-7">
+          <div class="np-widget h-100">
+            <div class="np-widget-header"><span><i class="bi bi-upload me-1"></i> Install theme</span></div>
+            <div class="np-widget-body">
+              <form method="post" action="/admin/themes/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="np-theme-upload-zone" data-theme-upload-zone>
+                  <i class="bi bi-file-earmark-zip" aria-hidden="true"></i>
+                  <p class="mb-1"><strong>Drop a theme .zip here</strong> or choose a file</p>
+                  <p class="np-help-text mb-2">Archive must include <code>theme.json</code>. Child themes need their parent installed first.</p>
+                  <input class="form-control" id="theme-archive" type="file" name="archive" accept=".zip" required>
+                  <p class="np-help-text mt-2 mb-0" data-theme-upload-name>No file chosen</p>
+                </div>
+                <div class="d-flex flex-wrap gap-3 align-items-center mt-3">
+                  <label class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" name="activate_after" value="on">
+                    <span class="form-check-label">Activate after install</span>
+                  </label>
+                  <button class="np-btn np-btn-primary ms-auto" type="submit"><i class="bi bi-upload"></i> Install now</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
-      </section>
-    <% } %>
+        <div class="col-lg-5">
+          <div class="np-widget h-100">
+            <div class="np-widget-header"><span><i class="bi bi-lightbulb me-1"></i> Theme tips</span></div>
+            <div class="np-widget-body">
+              <ul class="np-theme-tips mb-0">
+                <li>Click a screenshot to open a full-size preview.</li>
+                <li>Use <strong>Live Preview</strong> to see an inactive theme on the public site without activating it.</li>
+                <li>Open <strong>Customize</strong> to change colors, logo, layouts, and portal options for the active theme.</li>
+                <li>Place theme folders in <code>themes/</code> and click <strong>Sync from disk</strong>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <% if (inactiveThemes.length) { %>
-      <section class="theme-browser-grid mb-4" aria-labelledby="installed-themes-heading">
-        <h2 id="installed-themes-heading" class="theme-browser-section-title">Installed Themes</h2>
-        <div class="row g-3">
-          <% inactiveThemes.forEach(function(theme) { %>
-            <% const assets = (themeAssets && themeAssets[theme.slug]) || { templates: [], partials: [], chain: [] }; %>
-            <div class="col-xl-4 col-lg-6">
-              <div class="np-widget h-100 theme-card-wrap">
-                <%- include('./partials/theme-card', { theme, csrfToken }) %>
-                <div class="theme-card-meta">
-                  <p class="text-muted small mb-2"><%= theme.description || '' %></p>
-                  <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <% if (theme.parent_slug) { %>
-                      <span class="badge bg-light text-dark border">Child of <%= theme.parent_slug %></span>
-                    <% } %>
-                    <span class="text-muted small"><%= assets.templates.length %> templates</span>
-                    <form method="post" action="/admin/themes/<%= theme.slug %>/uninstall" data-confirm="Remove this theme from disk?">
-                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                      <button class="np-btn np-btn-small np-btn-danger" type="submit">Delete</button>
-                    </form>
+      <% if (activeTheme) { %>
+        <section class="mb-4" aria-labelledby="active-theme-heading">
+          <h2 id="active-theme-heading" class="np-theme-section-title">Active theme</h2>
+          <div class="np-theme-active-card">
+            <div class="row g-0 align-items-stretch">
+              <div class="col-lg-5 col-xl-4">
+                <%- include('./partials/theme-card', { theme: activeTheme, csrfToken, showOverlay: false, showMeta: true }) %>
+              </div>
+              <div class="col-lg-7 col-xl-8 np-theme-active-body">
+                <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+                  <div>
+                    <h3 class="h4 mb-1"><%= activeTheme.name %></h3>
+                    <% if (activeTheme.author) { %><p class="np-help-text mb-1">By <%= activeTheme.author %></p><% } %>
                   </div>
+                  <span class="np-badge np-badge-success">Currently active</span>
+                </div>
+                <p class="mb-3"><%= activeTheme.description || 'No description provided.' %></p>
+                <div class="np-theme-active-meta mb-3">
+                  <span><i class="bi bi-file-earmark-code"></i> <%= activeTheme.templateCount %> templates</span>
+                  <% if (activeTheme.isChild) { %><span><i class="bi bi-diagram-2"></i> Child of <code><%= activeTheme.parent_slug %></code></span><% } %>
+                  <% if (activeTheme.preset) { %><span><i class="bi bi-palette2"></i> <%= activeTheme.preset %></span><% } %>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <a class="np-btn np-btn-primary" href="/admin/themes/customize">Customize</a>
+                  <a class="np-btn np-btn-secondary" href="/" target="_blank" rel="noopener">View Site</a>
+                  <a class="np-btn np-btn-secondary" href="/admin/themes/<%= activeTheme.slug %>">Theme Details</a>
+                  <a class="np-btn np-btn-secondary" href="/admin/templates">Templates</a>
                 </div>
               </div>
             </div>
-          <% }) %>
-        </div>
-      </section>
-    <% } else if (!activeTheme) { %>
-      <div class="np-widget mb-4">
-        <div class="np-widget-body">
-          <p class="text-muted mb-0">No themes installed yet. Upload a theme archive or add themes to the <code>themes/</code> folder.</p>
-        </div>
-      </div>
-    <% } %>
+          </div>
+        </section>
+      <% } %>
 
-    <form class="np-widget" method="post" action="/admin/theme-settings?_method=PUT&_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="np-widget-header"><span>Quick Theme Settings</span></div>
-      <div class="np-widget-body row g-3">
-        <div class="col-md-3"><label class="form-label">Primary</label><input class="form-control" type="color" name="primary_color" value="<%= themeSetting.primary_color || '#2271b1' %>"></div>
-        <div class="col-md-3"><label class="form-label">Secondary</label><input class="form-control" type="color" name="secondary_color" value="<%= themeSetting.secondary_color || '#50575e' %>"></div>
-        <div class="col-md-3"><label class="form-label">Background</label><input class="form-control" type="color" name="background_color" value="<%= themeSetting.background_color || '#ffffff' %>"></div>
-        <div class="col-md-3"><label class="form-label">Text</label><input class="form-control" type="color" name="text_color" value="<%= themeSetting.text_color || '#1d2327' %>"></div>
-        <div class="col-md-4"><label class="form-label">Blog Layout</label><select class="form-select" name="blog_layout"><option value="grid">Grid</option><option value="list" <%= themeSetting.blog_layout === 'list' ? 'selected' : '' %>>List</option><option value="masonry" <%= themeSetting.blog_layout === 'masonry' ? 'selected' : '' %>>Masonry</option></select></div>
-        <div class="col-md-4"><label class="form-label">Header Layout</label><select class="form-select" name="header_layout"><% ['standard','centered','minimal'].forEach(function(v) { %><option value="<%= v %>" <%= (themeSetting.header_layout || 'standard') === v ? 'selected' : '' %>><%= v %></option><% }) %></select></div>
-        <div class="col-md-4"><label class="form-label">Footer Layout</label><select class="form-select" name="footer_layout"><% ['four-columns','simple','minimal'].forEach(function(v) { %><option value="<%= v %>" <%= (themeSetting.footer_layout || 'four-columns') === v ? 'selected' : '' %>><%= v %></option><% }) %></select></div>
-        <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Logo', name: 'logo', fileName: 'logo_file', value: themeSetting.logo || '' }) %></div>
-        <div class="col-md-6"><%- include('../partials/image-upload-field', { label: 'Favicon', name: 'favicon', fileName: 'favicon_file', value: themeSetting.favicon || '' }) %></div>
+      <div class="np-theme-toolbar mb-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label" for="theme-search">Search themes</label>
+            <input class="form-control" id="theme-search" type="search" placeholder="Name, slug, author, description…" data-theme-filter>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="theme-type-filter">Type</label>
+            <select class="form-select" id="theme-type-filter" data-theme-type>
+              <option value="all">All themes</option>
+              <option value="parent">Parent themes</option>
+              <option value="child">Child themes</option>
+              <option value="portal">Portal themes</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <div class="np-help-text pt-4"><span data-theme-visible-count><%= inactiveThemes.length %></span> of <%= inactiveThemes.length %> shown</div>
+          </div>
+        </div>
       </div>
-      <div class="np-widget-footer p-3 border-top">
-        <button class="np-btn np-btn-primary" type="submit">Save Theme Settings</button>
+
+      <% if (inactiveThemes.length) { %>
+        <section aria-labelledby="installed-themes-heading">
+          <h2 id="installed-themes-heading" class="np-theme-section-title">Installed themes</h2>
+          <div class="row g-3">
+            <% inactiveThemes.forEach(function(theme) { %>
+              <div class="col-xl-4 col-lg-6" data-theme-card data-name="<%= (theme.name + ' ' + theme.slug + ' ' + (theme.author || '') + ' ' + (theme.description || '')).toLowerCase() %>" data-child="<%= theme.isChild ? '1' : '0' %>" data-portal="<%= theme.isPortal ? '1' : '0' %>">
+                <article class="np-theme-card-wrap h-100">
+                  <%- include('./partials/theme-card', { theme, csrfToken }) %>
+                  <div class="np-theme-card-footer">
+                    <p class="np-theme-card-desc"><%= theme.description || 'No description provided.' %></p>
+                    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                      <div class="np-theme-card-stats">
+                        <span><i class="bi bi-file-earmark-code"></i> <%= theme.templateCount %> templates</span>
+                        <% if (!theme.activationReady) { %>
+                          <span class="text-warning"><i class="bi bi-exclamation-triangle"></i> Needs attention</span>
+                        <% } %>
+                      </div>
+                      <form method="post" action="/admin/themes/<%= theme.slug %>/uninstall" data-confirm="Remove <%= theme.name %> from disk?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="np-btn np-btn-small np-btn-danger" type="submit">Delete</button>
+                      </form>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            <% }) %>
+          </div>
+        </section>
+      <% } else if (!activeTheme) { %>
+        <div class="empty-state">
+          <i class="bi bi-palette d-block"></i>
+          <strong>No themes installed</strong>
+          <p class="mb-0">Upload a theme archive or add themes to the <code>themes/</code> folder, then sync.</p>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="modal fade" id="npThemePreviewModal" tabindex="-1" aria-labelledby="npThemePreviewModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="npThemePreviewModalLabel" data-theme-preview-title>Theme preview</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-0">
+            <img src="" alt="" class="np-theme-preview-modal-img" data-theme-preview-image>
+          </div>
+        </div>
       </div>
-    </form>
+    </div>
   </main>
 </div>
-<%- include('../partials/media-modal') %>
+<script src="/js/admin-themes.js"></script>
 <%- include('../partials/footer') %>

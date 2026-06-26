@@ -59,7 +59,7 @@ test('admin can view plugin detail page', async () => {
   await login(agent, 'admin@example.com', 'Admin@12345');
   const page = await agent.get('/admin/plugins/seo-booster');
   expect(page.status).toBe(200);
-  expect(page.text).toMatch(/Plugin Details/i);
+  expect(page.text).toMatch(/Overview|Plugin Details/i);
   expect(page.text).toMatch(/seo-booster/i);
 });
 
@@ -68,8 +68,8 @@ test('admin can view plugin manager', async () => {
   await login(agent, 'admin@example.com', 'Admin@12345');
   const page = await agent.get('/admin/plugins');
   expect(page.status).toBe(200);
-  expect(page.text).toMatch(/Install Plugin/i);
-  expect(page.text).toMatch(/Registered hooks/i);
+  expect(page.text).toMatch(/Install plugin|Install Plugin/i);
+  expect(page.text).toMatch(/Runtime hooks|Registered hooks/i);
 });
 
 test('admin can activate and deactivate a plugin', async () => {
