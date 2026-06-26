@@ -6,7 +6,7 @@
     <%- include('../partials/flash') %>
     <div class="np-page-header">
       <h1>Login &amp; Sessions</h1>
-      <p class="np-help-text mb-0">Review active admin sessions and login success/failure activity. Sessions expire after <%= sessionTimeoutMinutes %> minutes of inactivity.</p>
+      <p class="np-help-text mb-0">Review active admin sessions and login success/failure activity. IP addresses use proxy headers when <code>TRUST_PROXY=true</code> or WAF “Trust proxy headers” is enabled. Sessions expire after <%= sessionTimeoutMinutes %> minutes of inactivity.</p>
     </div>
     <%- include('../partials/settings-nav') %>
 
@@ -27,6 +27,7 @@
                 <th>Last activity</th>
                 <th>Expires</th>
                 <th>Session</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -39,10 +40,17 @@
                   <td><%= session.lastActivity ? new Date(session.lastActivity).toLocaleString() : '—' %></td>
                   <td><%= session.expiresAt ? new Date(session.expiresAt).toLocaleString() : '—' %></td>
                   <td><code title="<%= session.sessionId %>"><%= session.sessionIdShort %></code></td>
+                  <td>
+                    <form method="post" action="/admin/settings/login-sessions/revoke" class="d-inline" onsubmit="return confirm('<%= session.isCurrent ? 'Revoke your current session? You will be logged out.' : 'Revoke this session for ' + session.email + '?' %>');">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="session_id" value="<%= session.sessionId %>">
+                      <button class="np-btn np-btn-small np-btn-danger" type="submit">Revoke</button>
+                    </form>
+                  </td>
                 </tr>
               <% }) %>
               <% if (!sessions.length) { %>
-                <tr><td colspan="7" class="text-muted">No active admin sessions found.</td></tr>
+                <tr><td colspan="8" class="text-muted">No active admin sessions found.</td></tr>
               <% } %>
             </tbody>
           </table>

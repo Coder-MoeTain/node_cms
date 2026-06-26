@@ -124,6 +124,7 @@ router.get('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugin
 router.put('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.updateSettings);
 
 router.get('/settings/login-sessions', requireAuth, canAny(['manage_settings', 'manage_security']), loginSessions.index);
+router.post('/settings/login-sessions/revoke', requireAuth, canAny(['manage_settings', 'manage_security']), loginSessions.revoke);
 router.get('/settings/media-gallery', requireAuth, canAny(['manage_settings', 'manage_media', 'upload_media']), settings.mediaGallery);
 router.get('/settings/database', requireAuth, canAny(['manage_settings', 'manage_security']), database.index);
 router.post('/settings/database/backup', requireAuth, canAny(['manage_settings', 'manage_security']), database.createBackup);

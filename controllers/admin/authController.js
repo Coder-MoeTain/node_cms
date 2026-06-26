@@ -6,7 +6,7 @@ const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
 const { User, Role, Permission, LoginAttempt, PasswordResetToken } = require('../../models');
 const { createActivityLog } = require('../../utils/activityLogHelper');
-const { resolveRequestIp } = require('../../utils/loginSessionHelper');
+const { resolveRequestIpAsync } = require('../../utils/loginSessionHelper');
 const pluginLoader = require('../../utils/pluginLoader');
 const loginBruteForce = require('../../utils/loginBruteForce');
 const { sendPasswordResetEmail } = require('../../utils/mailer');
@@ -40,7 +40,8 @@ function regenerateSession(req) {
       pendingTwoFactorSecret: req.session.pendingTwoFactorSecret,
       twoFactorRecoveryCodes: req.session.twoFactorRecoveryCodes,
       loginAt: req.session.loginAt,
-      loginIp: req.session.loginIp
+      loginIp: req.session.loginIp,
+      lastActivityIp: req.session.lastActivityIp
     };
     req.session.regenerate((error) => {
       if (error) return reject(error);
@@ -52,6 +53,7 @@ function regenerateSession(req) {
       if (snapshot.twoFactorRecoveryCodes) req.session.twoFactorRecoveryCodes = snapshot.twoFactorRecoveryCodes;
       if (snapshot.loginAt) req.session.loginAt = snapshot.loginAt;
       if (snapshot.loginIp) req.session.loginIp = snapshot.loginIp;
+      if (snapshot.lastActivityIp) req.session.lastActivityIp = snapshot.lastActivityIp;
       return resolve();
     });
   });
@@ -71,7 +73,8 @@ async function finalizeLogin(req, res, user) {
   req.session.lastActivity = Date.now();
   req.session.lastUserRefresh = Date.now();
   req.session.loginAt = Date.now();
-  req.session.loginIp = resolveRequestIp(req);
+  req.session.loginIp = await resolveRequestIpAsync(req);
+  req.session.lastActivityIp = req.session.loginIp;
 
   await regenerateSession(req);
 
@@ -80,7 +83,7 @@ async function finalizeLogin(req, res, user) {
     user_id: user.id,
     action: 'Logged in',
     entity_type: 'auth',
-    ip_address: resolveRequestIp(req),
+    ip_address: await resolveRequestIpAsync(req),
     user_agent: req.get('user-agent')
   });
 
@@ -123,7 +126,7 @@ async function login(req, res, next) {
     try {
       await LoginAttempt.create({
         email,
-        ip_address: resolveRequestIp(req),
+        ip_address: await resolveRequestIpAsync(req),
         user_agent: req.get('user-agent'),
         success: Boolean(valid),
         reason: valid ? 'success' : 'invalid_credentials'
