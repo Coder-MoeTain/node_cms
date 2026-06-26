@@ -45,18 +45,24 @@
     });
   }
 
+  function isListView() {
+    const active = viewButtons.find((btn) => btn.classList.contains('active'));
+    return (active?.dataset.pluginView || 'list') === 'list';
+  }
+
   function applyFilter() {
     const visible = visibleItems();
     if (countEl) countEl.textContent = String(visible.length);
     const hasCatalog = rows.length > 0 || cards.length > 0;
+    const listMode = isListView();
     if (noResults) {
       noResults.classList.toggle('d-none', !hasCatalog || visible.length > 0);
     }
     if (listView && hasCatalog) {
-      listView.classList.toggle('d-none', visible.length === 0);
+      listView.classList.toggle('d-none', !listMode || visible.length === 0);
     }
-    if (gridView && hasCatalog && !gridView.classList.contains('d-none')) {
-      gridView.classList.toggle('d-none', visible.length === 0);
+    if (gridView && hasCatalog) {
+      gridView.classList.toggle('d-none', listMode || visible.length === 0);
     }
     updateBulkBar();
   }
