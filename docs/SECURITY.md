@@ -65,10 +65,17 @@ Documented CSP exceptions live in `middleware/security.js`.
 ## ZIP / plugin / theme upload security
 
 - ZIP magic-byte validation
+- Quarantine extraction under `tmp/quarantine/` before install
 - Safe per-entry extraction (Zip Slip prevention, no symlinks)
-- Extracted size and file-count limits
-- Post-extract scan: plugins allow `.js`; themes block `.js` and server-side extensions
-- Manifest validation before install
+- Extracted size (100 MB) and file-count (500) limits
+- Post-extract scan: blocked extensions include `.php`, `.exe`, `.env`, `.pem`, `.key`, …
+- Plugins allow `.js`; theme `.js` only under `public/` or `assets/`
+- Manifest validation via `pluginValidator.js` / `themeValidator.js` before activation
+- Plugin safe mode: `PLUGIN_SAFE_MODE=true` skips plugin loading; active theme falls back to `classic-blog` on validation failure
+
+## Plugin / theme audit logging
+
+Admin actions are recorded in `activity_logs` with standardized actions (`plugin.installed`, `theme.activated`, …). Sensitive values are redacted in metadata.
 
 ## Import / export safety
 

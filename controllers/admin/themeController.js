@@ -5,7 +5,7 @@ const themeManager = require('../../utils/themeManager');
 const themeLoader = require('../../utils/themeLoader');
 const { resolvePortalConfig, stripManagedBlocks, parseThemeVars, parseDesignTokens } = require('../../utils/portalConfig');
 const { resolveImageValue } = require('../../utils/uploadHelper');
-const { createActivityLog } = require('../../utils/activityLogHelper');
+const { logThemeAudit } = require('../../utils/activityLogHelper');
 const {
   enrichTheme,
   readThemeReadme,
@@ -25,14 +25,7 @@ function normalizeLogoPlacement(value) {
 }
 
 function logThemeAction(req, action, details = {}) {
-  return createActivityLog({
-    user_id: req.session?.user?.id || null,
-    action,
-    entity_type: 'theme',
-    entity_id: details.slug || null,
-    details: JSON.stringify(details),
-    ip_address: req.ip
-  });
+  return logThemeAudit(req, action, details);
 }
 
 function enrichThemeRow(theme, options = {}) {

@@ -29,13 +29,43 @@ plugins/my-plugin/
 }
 ```
 
-Required fields: `name`, `slug`, `version`. Slug must be lowercase alphanumeric + hyphens.
+Required fields: `name`, `slug`, `version`, `main` (optional, defaults to `index.js`). Slug must be lowercase kebab-case. Version must be valid semver.
+
+Optional fields: `nodepressVersion`, `dependencies`, `permissions`, `settings` (array or object schema), `hooks`, `license`, `updateUrl`, `changelogUrl`.
+
+Validation is enforced by `utils/pluginValidator.js` on activation and install.
+
+## Plugin manager API
+
+Use `utils/pluginManager.js` (facade over `pluginLoader.js`):
+
+- `discoverPlugins()`, `getPlugin(slug)`, `validatePlugin(slug)`
+- `activatePlugin(slug, app, user)`, `deactivatePlugin`, `uninstallPlugin(slug, app, user, options)`
+- `loadActivePlugins(app)`, `reloadPlugin(slug, app)`
+- `getPluginSettings(slug)`, `savePluginSettings(slug, settings, user)`
+- `runPluginMigrations(slug)`, `getPluginHealth(slug)`
+- `registerPluginRoutes(app)`, `registerPluginAssets(app)` — called automatically on load
+
+Set `PLUGIN_SAFE_MODE=true` to skip loading all plugins (site stays up; admin shows warning).
+
+## Hooks (WordPress-style)
+
+| API | Purpose |
+|-----|---------|
+| `hooks.register(name, fn, priority)` | Collector hooks (`publicFooter`, `adminMenuItems`, …) |
+| `hooks.addFilter(name, fn, priority)` | Transform values |
+| `hooks.addAction(name, fn, priority)` | Side effects |
+| `hooks.removeFilter` / `hooks.removeAction` | Unregister |
+
+Core hook names include `public:head`, `post:beforeRender`, `media:beforeUpload`, `admin:menu`, `waf:beforeCheck`, and legacy aliases (`publicHead`, `beforePageRender`, …).
+
+Hook callbacks are error-isolated — a failing plugin hook does not crash the CMS.
 
 ## Entry module (`index.js`)
 
 ```javascript
 module.exports = {
-  register({ hooks, manifest }) {
+  register({ hooks, manifest, app }) {
     hooks.register('publicFooter', () => '<!-- my-plugin -->', 10);
   },
   onInstall({ app }) {},
@@ -45,50 +75,30 @@ module.exports = {
 };
 ```
 
-## Hooks
+## Settings & migrations
 
-| Type | Usage |
-|------|--------|
-| `hooks.register(name, fn, priority)` | Output hook (e.g. `publicFooter`, widgets) |
-| `hooks.addFilter(name, fn, priority)` | Transform data |
-| `hooks.addAction(name, fn, priority)` | Side effects |
+Define `settings` in manifest (array or object schema). Values stored in `plugin_settings`. SQL migrations go in `migrations/*.sql` and are tracked in `plugin_migrations`.
 
-Use `pluginLoader.listRegisteredHooks()` in admin to debug registration.
+## Permissions
 
-## Settings
+Declare `"permissions": ["manage_plugins"]` in `plugin.json`. Only known RBAC slugs are accepted (see `pluginValidator.KNOWN_PERMISSIONS`).
 
-Define `settings` in manifest. Values stored in `plugin_settings`. Access via admin **Plugins → Settings** or `resolvePluginSettings()` in code.
+## Public / admin assets
 
-## Migrations
+Place files under `plugins/<slug>/public/` (or `assets/`). Served at `/plugins/<slug>/public/...` when active.
 
-Place `.sql` files in `migrations/`, run via:
+## Routes
 
-- Admin: **Plugins → Details → Run migrations**
-- CLI: after install, `pluginLoader.runPluginMigrations('my-plugin')`
-- HTTP: `POST /admin/plugins/:slug/migrate`
+In `register()`, use `hooks.registerRoute('GET', '/admin/my-plugin/page', handler, { admin: true })` to register plugin routes (wrapped with error isolation).
 
-Migrations are tracked in `plugin_migrations`.
+## Audit logging
 
-## Packaging
+Plugin admin actions are logged via `activityLogHelper.logPluginAudit` with actions like `plugin.installed`, `plugin.activated`, `plugin.settings_updated`.
 
-Zip the plugin folder contents (or folder root with `plugin.json` at top level). Upload via **Plugins → Install Plugin**. Max size: 25 MB (see `utils/packageArchive.js`).
+## Security
 
-## Built-in plugins
-
-| Slug | Purpose |
-|------|---------|
-| seo-booster | Meta tags, Open Graph |
-| analytics-lite | Analytics snippet injection |
-| security-monitor | Security event hooks |
-| portal-widgets-extension | Extra portal widgets |
-| cookie-notice | Cookie consent banner |
-| redirection | URL redirects |
-| social-share | Share buttons |
-| super-cache | Page cache headers |
-| updraft-backup | Backup helpers |
-| smush-optimizer | Image optimization on upload |
-| akismet-shield | Comment spam scoring |
+ZIP uploads are quarantined under `tmp/quarantine/`, scanned for Zip Slip, symlinks, dangerous extensions (`.php`, `.env`, `.pem`, `.key`, …), and size limits. See [SECURITY.md](./SECURITY.md).
 
 ## Testing
 
-See [TESTING.md](./TESTING.md). Integration tests: `tests/plugins.test.js`, `tests/pluginsAdmin.test.js`, `tests/pluginsMigrations.test.js`.
+See [TESTING.md](./TESTING.md). Integration tests: `tests/plugins.test.js`, `tests/pluginsAdmin.test.js`, `tests/pluginsMigrations.test.js`, `tests/pluginThemeCommercial.test.js`.

@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { Theme, ThemeSetting } = require('../models');
 const themeLoader = require('./themeLoader');
-const { extractZipArchive } = require('./packageArchive');
+const themeValidator = require('./themeValidator');
+const themeInstaller = require('./themeInstaller');
+const templateResolver = require('./templateResolver');
 
 const REQUIRED_TEMPLATES = ['home', 'blog', 'post', 'page', 'search', 'contact'];
 const RECOMMENDED_TEMPLATES = ['archive', 'error'];
@@ -59,7 +61,7 @@ function validateThemeForActivation(slug) {
   const theme = themeLoader.getThemeBySlug(slug);
   if (!theme) throw new Error(`Theme "${slug}" is not installed.`);
 
-  const manifest = themeLoader.validateManifest({ ...theme.manifest });
+  const manifest = themeLoader.validateManifest({ ...theme.manifest }, { themePath: theme.path, themesRoot: themeLoader.themesRoot, strict: false });
   if (manifest.parent) {
     const parent = themeLoader.getThemeBySlug(manifest.parent);
     if (!parent) {
@@ -84,24 +86,8 @@ async function syncInstalledThemes() {
   return themeLoader.syncInstalledThemes();
 }
 
-async function installThemeFromArchive(zipPath) {
-  const { manifest, installPath } = await extractZipArchive(zipPath, themeLoader.themesRoot, 'theme.json');
-  themeLoader.validateManifest(manifest);
-
-  const scanIssues = scanThemeDirectory(installPath);
-  if (scanIssues.length) {
-    themeLoader.removeThemeDirectory(manifest.slug);
-    throw new Error(`Theme archive contains blocked files: ${scanIssues.slice(0, 3).join('; ')}`);
-  }
-
-  if (manifest.parent) {
-    const parentExists = fs.existsSync(path.join(themeLoader.themesRoot, manifest.parent, 'theme.json'));
-    if (!parentExists) {
-      themeLoader.removeThemeDirectory(manifest.slug);
-      throw new Error(`Parent theme "${manifest.parent}" is not installed. Install the parent theme first.`);
-    }
-  }
-
+async function installThemeFromArchive(zipPath, options = {}) {
+  const { manifest } = await themeInstaller.installFromZip(zipPath, options);
   await syncInstalledThemes();
   return manifest;
 }
@@ -155,6 +141,111 @@ function getThemeDetails(slug) {
   };
 }
 
+async function getThemeHealth(slug) {
+  const row = await Theme.findOne({ where: { slug } });
+  const disk = themeLoader.getThemeBySlug(slug);
+  let activationCheck = { error: null };
+  try {
+    validateThemeForActivation(slug);
+  } catch (error) {
+    activationCheck = { error: error.message };
+  }
+  return {
+    slug,
+    active: Boolean(row?.active),
+    on_disk: Boolean(disk),
+    error_state: row?.error_state || (activationCheck.error ? 'error' : 'none'),
+    last_error: row?.last_error || activationCheck.error || null,
+    update_available: Boolean(row?.update_available),
+    latest_version: row?.latest_version || null,
+    parent: disk?.manifest?.parent || row?.parent_slug || null
+  };
+}
+
+async function exportThemeSettings(slug) {
+  const setting = await ThemeSetting.findOne({ where: { theme_name: slug, active: true } })
+    || await ThemeSetting.findOne({ where: { theme_name: slug } });
+  if (!setting) return themeLoader.buildThemeSettingDefaults(slug);
+  return setting.get({ plain: true });
+}
+
+async function importThemeSettings(slug, json, _user = null) {
+  const data = typeof json === 'string' ? JSON.parse(json) : json;
+  const [setting] = await ThemeSetting.findOrCreate({
+    where: { theme_name: slug, active: true },
+    defaults: themeLoader.buildThemeSettingDefaults(slug)
+  });
+  const allowed = Object.keys(themeLoader.buildThemeSettingDefaults(slug));
+  const payload = {};
+  for (const key of allowed) {
+    if (data[key] !== undefined) payload[key] = data[key];
+  }
+  await setting.update(payload);
+  return setting;
+}
+
+async function previewTheme(slug, req) {
+  if (req?.session) req.session.themePreview = slug;
+  return slug;
+}
+
+async function resolveTemplate(type, context = {}) {
+  return themeLoader.resolveTemplate(type, context);
+}
+
+async function resolvePartial(name, context = {}) {
+  return themeLoader.resolvePartial(name, context);
+}
+
+function getThemeAssets(slug) {
+  return themeLoader.discoverThemeAssets(slug);
+}
+
+function discoverThemes() {
+  return themeLoader.discoverThemes();
+}
+
+function getTheme(slug) {
+  return themeLoader.getThemeBySlug(slug);
+}
+
+function validateTheme(slug) {
+  const theme = themeLoader.getThemeBySlug(slug);
+  if (!theme) return { valid: false, errors: ['Theme not found.'] };
+  try {
+    themeValidator.validateManifest(theme.manifest, { themePath: theme.path, themesRoot: themeLoader.themesRoot, strict: false });
+    return { valid: true, errors: [] };
+  } catch (error) {
+    return { valid: false, errors: [error.message] };
+  }
+}
+
+async function deleteTheme(slug, _user) {
+  const theme = await Theme.findOne({ where: { slug } });
+  if (!theme) throw new Error('Theme not found.');
+  if (theme.active) throw new Error('Cannot delete active theme.');
+  const children = await themeLoader.getChildThemeSlugsFromDb(slug);
+  if (children.length) throw new Error(`Child themes depend on this theme: ${children.join(', ')}`);
+  await ThemeSetting.destroy({ where: { theme_name: slug } });
+  await theme.destroy();
+  themeLoader.removeThemeDirectory(slug);
+  return true;
+}
+
+async function getActiveTheme() {
+  const row = await Theme.findOne({ where: { active: true } });
+  return row || await Theme.findOne({ where: { slug: templateResolver.DEFAULT_THEME } });
+}
+
+async function saveThemeSettings(slug, settings, _user = null) {
+  const [setting] = await ThemeSetting.findOrCreate({
+    where: { theme_name: slug, active: true },
+    defaults: themeLoader.buildThemeSettingDefaults(slug)
+  });
+  await setting.update(settings);
+  return setting;
+}
+
 module.exports = {
   REQUIRED_TEMPLATES,
   RECOMMENDED_TEMPLATES,
@@ -162,13 +253,26 @@ module.exports = {
   BUILT_IN_THEMES,
   BLOCKED_THEME_EXTENSIONS,
   normalizeTemplateName,
-  scanThemeDirectory,
+  scanThemeDirectory: themeInstaller.scanThemeDirectory,
   templateAvailable,
   validateThemeForActivation,
+  validateTheme,
   syncInstalledThemes,
   installThemeFromArchive,
   activateTheme,
   resetThemeSettings,
   getThemeDetails,
+  discoverThemes,
+  getTheme,
+  getActiveTheme,
+  getThemeHealth,
+  exportThemeSettings,
+  importThemeSettings,
+  previewTheme,
+  resolveTemplate,
+  resolvePartial,
+  getThemeAssets,
+  deleteTheme,
+  saveThemeSettings,
   ...themeLoader
 };

@@ -32,8 +32,8 @@ const {
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
 
-async function renderTheme(res, template, locals) {
-  return res.render(await themeLoader.resolveTemplate(template), locals);
+async function renderTheme(res, template, locals, templateContext = {}) {
+  return res.render(await themeLoader.resolveTemplate(template, templateContext), locals);
 }
 
 async function translateViewData(res, data) {
@@ -83,14 +83,14 @@ async function applyRenderHooks(res, locals, hookNames = {}) {
   return translated;
 }
 
-async function renderPublic(res, template, locals, renderHooks = null) {
+async function renderPublic(res, template, locals, renderHooks = null, templateContext = {}) {
   const hooks = renderHooks || {};
   if (!hooks.template) hooks.template = template;
   const data = await applyRenderHooks(res, locals, hooks);
   if (data === null) {
     return res.status(404).render('public/error', { title: 'Not Found', code: 404, message: 'This content is not available.' });
   }
-  return renderTheme(res, template, data);
+  return renderTheme(res, template, data, templateContext);
 }
 
 async function postsForCategorySlug(slug, limit = 6) {
@@ -152,7 +152,7 @@ async function home(req, res, next) {
       jobPosts,
       hotPosts,
       mediaItems
-    });
+    }, null, { isFrontPage: true });
   } catch (error) {
     return next(error);
   }
@@ -230,7 +230,10 @@ async function post(req, res, next) {
       commentTree: row.comments || [],
       commentCount: row.commentCount || 0,
       schema: postSchema(row, `${req.protocol}://${req.get('host')}${req.originalUrl}`)
-    }, { before: 'beforePostRender', after: 'afterPostRender', template: 'post' });
+    }, { before: 'beforePostRender', after: 'afterPostRender', template: 'post' }, {
+      postType: row.post_type || 'post',
+      slug: row.slug
+    });
   } catch (error) {
     return next(error);
   }
@@ -250,13 +253,13 @@ async function category(req, res, next) {
       order: [['published_at', 'DESC']]
     });
     const translatedCategory = await translateCategory(res.locals.translationEngine, categoryRow);
-    return renderPublic(res, 'archive', {
+    return renderPublic(res, 'category', {
       title: translatedCategory.name,
       seo: meta(translatedCategory.name, translatedCategory.description),
       heading: translatedCategory.name,
       posts: rows,
       pagination: pageMeta(count, page, limit)
-    });
+    }, null, { slug: categoryRow.slug });
   } catch (error) {
     return next(error);
   }
@@ -276,13 +279,13 @@ async function tag(req, res, next) {
       order: [['published_at', 'DESC']]
     });
     const translatedTag = await translateTag(res.locals.translationEngine, tagRow);
-    return renderPublic(res, 'archive', {
+    return renderPublic(res, 'tag', {
       title: translatedTag.name,
       seo: meta(translatedTag.name, translatedTag.description),
       heading: translatedTag.name,
       posts: rows,
       pagination: pageMeta(count, page, limit)
-    });
+    }, null, { slug: tagRow.slug });
   } catch (error) {
     return next(error);
   }
@@ -296,7 +299,7 @@ async function page(req, res, next) {
       title: row.title,
       seo: meta(row.seo_title || row.title, row.seo_description, row.og_image || row.featured_image),
       page: row
-    }, { before: 'beforePageRender', after: 'afterPageRender', template: 'page' });
+    }, { before: 'beforePageRender', after: 'afterPageRender', template: 'page' }, { slug: row.slug });
   } catch (error) {
     return next(error);
   }

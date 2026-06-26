@@ -8,5 +8,10 @@ module.exports = (sequelize) =>
     preview_image: DataTypes.STRING(255),
     manifest: DataTypes.JSON,
     parent_slug: DataTypes.STRING(180),
-    active: { type: DataTypes.BOOLEAN, defaultValue: false }
+    active: { type: DataTypes.BOOLEAN, defaultValue: false },
+    error_state: { type: DataTypes.ENUM('none', 'error'), defaultValue: 'none' },
+    last_error: DataTypes.TEXT,
+    latest_version: DataTypes.STRING(40),
+    update_available: { type: DataTypes.BOOLEAN, defaultValue: false },
+    last_checked_at: DataTypes.DATE
   }, { tableName: 'themes' });

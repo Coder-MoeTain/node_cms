@@ -89,6 +89,10 @@
         </div>
       </div>
 
+      <% if (typeof safeMode !== 'undefined' && safeMode) { %>
+        <div class="alert alert-warning mb-3"><i class="bi bi-shield-exclamation"></i> <strong>Plugin safe mode</strong> is enabled (<code>PLUGIN_SAFE_MODE</code>). Active plugins are not loaded.</div>
+      <% } %>
+
       <div class="np-plugin-toolbar mb-3">
         <div class="row g-2 align-items-end">
           <div class="col-md-5">
@@ -101,6 +105,8 @@
               <option value="all">All plugins</option>
               <option value="active">Active only</option>
               <option value="inactive">Inactive only</option>
+              <option value="error">Error state</option>
+              <option value="update">Update available</option>
             </select>
           </div>
           <div class="col-md-4">
@@ -139,7 +145,7 @@
               </thead>
               <tbody>
                 <% plugins.forEach(function(plugin) { %>
-                  <tr data-plugin-row data-name="<%= (plugin.name + ' ' + plugin.slug + ' ' + (plugin.author || '') + ' ' + (plugin.description || '')).toLowerCase() %>" data-status="<%= plugin.active ? 'active' : 'inactive' %>">
+                  <tr data-plugin-row data-name="<%= (plugin.name + ' ' + plugin.slug + ' ' + (plugin.author || '') + ' ' + (plugin.description || '')).toLowerCase() %>" data-status="<%= plugin.hasActivationError ? 'error' : (plugin.active ? 'active' : 'inactive') %>" data-update="<%= plugin.update_available ? 'yes' : 'no' %>">
                     <td><input type="checkbox" data-plugin-checkbox value="<%= plugin.slug %>" aria-label="Select <%= plugin.name %>"></td>
                     <td>
                       <div class="np-plugin-name-cell">
@@ -159,7 +165,8 @@
                     <td class="np-plugin-desc-cell"><%= plugin.description || 'No description provided.' %></td>
                     <td>v<%= plugin.version %></td>
                     <td>
-                      <span class="np-badge np-badge-<%= plugin.active ? 'success' : 'secondary' %>"><%= plugin.active ? 'Active' : 'Inactive' %></span>
+                      <span class="np-badge np-badge-<%= plugin.hasActivationError ? 'danger' : (plugin.active ? 'success' : 'secondary') %>"><%= plugin.hasActivationError ? 'Error' : (plugin.active ? 'Active' : 'Inactive') %></span>
+                      <% if (plugin.update_available) { %><span class="np-badge np-badge-info ms-1">Update</span><% } %>
                     </td>
                     <td class="text-end">
                       <div class="np-plugin-row-actions">

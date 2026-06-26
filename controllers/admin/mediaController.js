@@ -1,3 +1,4 @@
+const appConfig = require('../../config/app');
 const { Media } = require('../../models');
 const pluginLoader = require('../../utils/pluginLoader');
 const policy = require('../../utils/policy');
@@ -13,7 +14,13 @@ async function index(req, res, next) {
       where.uploaded_by = req.session.user.id;
     }
     const { rows, count } = await Media.findAndCountAll({ where, limit, offset, order: [['created_at', 'DESC']] });
-    return res.render('admin/media/index', { title: 'Media Library', rows: filterExistingMedia(rows), pagination: pageMeta(count, page, limit) });
+    return res.render('admin/media/index', {
+      title: 'Media Library',
+      rows: filterExistingMedia(rows),
+      pagination: pageMeta(count, page, limit),
+      mediaUploadMaxFiles: appConfig.mediaUploadMaxFiles,
+      uploadMaxSizeMb: appConfig.uploadMaxSizeMb
+    });
   } catch (error) {
     return next(error);
   }

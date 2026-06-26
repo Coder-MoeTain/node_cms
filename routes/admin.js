@@ -1,5 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
+const appConfig = require('../config/app');
 const { requireAuth, guestOnly } = require('../middleware/auth');
 const { can, canAny, policy } = require('../middleware/permission');
 const { loginBruteForceGuard, conditionalLoginLimiter } = require('../middleware/loginBruteForce');
@@ -53,6 +54,20 @@ function handleImageUpload(req, res, next) {
   });
 }
 
+function handleMediaUpload(req, res, next) {
+  upload.array('files', appConfig.mediaUploadMaxFiles)(req, res, (error) => {
+    if (error) {
+      if (error.code === 'LIMIT_FILE_COUNT') {
+        req.flash('error', `You can upload up to ${appConfig.mediaUploadMaxFiles} files at once.`);
+      } else {
+        req.flash('error', error.message || 'Upload failed.');
+      }
+      return res.redirect('/admin/media');
+    }
+    return next();
+  });
+}
+
 function handleSqlUpload(req, res, next) {
   sqlUpload.single('sql_file')(req, res, (error) => {
     if (error) {
@@ -84,7 +99,7 @@ router.post('/quick-draft', requireAuth, canAny(['manage_posts', 'create_posts']
 
 router.get('/media', requireAuth, canAny(['manage_media', 'upload_media']), media.index);
 router.get('/media/gallery', requireAuth, canAny(['manage_media', 'upload_media']), media.gallery);
-router.post('/media/upload', requireAuth, canAny(['manage_media', 'upload_media']), upload.array('files', 20), media.upload);
+router.post('/media/upload', requireAuth, canAny(['manage_media', 'upload_media']), handleMediaUpload, media.upload);
 router.post('/media/upload-json', requireAuth, canAny(['manage_media', 'upload_media']), handleImageUpload, media.uploadJson);
 router.get('/media/:id/edit', requireAuth, canAny(['manage_media', 'upload_media']), media.edit);
 router.put('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), upload.single('file'), media.update);
