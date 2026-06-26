@@ -50,16 +50,22 @@ async function resetSecuritySettings() {
 
 async function resetWafState() {
   const { clearWafCache } = require('../middleware/waf');
-  await models.WafSetting.upsert({
-    setting_key: 'waf_enabled',
-    setting_value: 'true',
-    setting_type: 'boolean'
-  });
-  await models.WafSetting.upsert({
-    setting_key: 'waf_mode',
-    setting_value: 'monitor',
-    setting_type: 'string'
-  });
+  const defaults = [
+    ['waf_enabled', 'true', 'boolean'],
+    ['waf_mode', 'monitor', 'string'],
+    ['block_sql_injection', 'true', 'boolean'],
+    ['block_xss', 'true', 'boolean'],
+    ['block_path_traversal', 'true', 'boolean'],
+    ['block_command_injection', 'true', 'boolean'],
+    ['block_bad_bots', 'true', 'boolean'],
+    ['block_scanners', 'true', 'boolean'],
+    ['block_cms_probes', 'true', 'boolean'],
+    ['admin_protection_enabled', 'true', 'boolean'],
+    ['public_protection_enabled', 'true', 'boolean']
+  ];
+  for (const [setting_key, setting_value, setting_type] of defaults) {
+    await models.WafSetting.upsert({ setting_key, setting_value, setting_type });
+  }
   clearWafCache();
 }
 

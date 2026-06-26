@@ -46,6 +46,29 @@ test('media gallery JSON endpoint returns items', async () => {
   const response = await agent.get('/admin/media/gallery?type=image');
   expect(response.status).toBe(200);
   expect(response.body.items).toEqual(expect.any(Array));
+  expect(response.body).toMatchObject({
+    page: 1,
+    limit: expect.any(Number),
+    total: expect.any(Number),
+    hasMore: expect.any(Boolean)
+  });
+});
+
+test('media gallery JSON supports pagination', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const page1 = await agent.get('/admin/media/gallery?type=image&page=1&limit=2');
+  expect(page1.status).toBe(200);
+  expect(page1.body.limit).toBe(2);
+  if (page1.body.total > 2) {
+    expect(page1.body.hasMore).toBe(true);
+    const page2 = await agent.get('/admin/media/gallery?type=image&page=2&limit=2');
+    expect(page2.status).toBe(200);
+    expect(page2.body.page).toBe(2);
+    const ids1 = page1.body.items.map((item) => item.id);
+    const ids2 = page2.body.items.map((item) => item.id);
+    expect(ids1.some((id) => ids2.includes(id))).toBe(false);
+  }
 });
 
 test('author with upload_media can browse media gallery JSON', async () => {

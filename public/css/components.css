@@ -28,7 +28,17 @@
 
 .np-btn-primary:hover { background: var(--np-primary-hover); border-color: var(--np-primary-hover); color: #fff; }
 
-.np-btn-secondary { background: #f6f7f7; }
+.np-btn-secondary {
+  background: #f6f7f7;
+  border-color: var(--np-border, #c3c4c7);
+  color: var(--np-text, #1d2327);
+}
+
+.np-btn-secondary:hover {
+  background: #f0f0f1;
+  border-color: #8c8f94;
+  color: var(--np-text, #1d2327);
+}
 
 .np-btn-danger {
   background: var(--np-error);

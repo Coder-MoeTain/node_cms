@@ -39,9 +39,9 @@
                 <% if (slide.description && !isPortalHero) { %><span class="hero-eyebrow site-eyebrow-light">Featured</span><% } %>
                 <h1 class="<%= mnp ? 'portal-mnp-hero-title' : '' %>"><%= slide.title %></h1>
                 <% if (slide.description) { %><p class="hero-lead"><%= slide.description %></p><% } %>
-                <% if (slide.button_text && slide.button_url) { %>
+                <% if (slide.button_text) { %>
                   <div class="hero-actions <%= isPortalHero ? 'portal-hero-actions' : '' %>">
-                    <a class="site-btn <%= isPortalHero ? 'portal-btn' : 'site-btn-lg' %>" href="<%= slide.button_url %>"><%= slide.button_text %></a>
+                    <a class="site-btn <%= isPortalHero ? 'portal-btn' : 'site-btn-lg' %>" href="<%= slide.button_url || '#' %>"><%= slide.button_text %></a>
                   </div>
                 <% } %>
               </div>

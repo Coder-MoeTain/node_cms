@@ -213,10 +213,13 @@
                 <%- include('../partials/image-upload-field', { label: `Photo ${slot}`, name: pathName, fileName, value: slotValue, enableCrop: true, cropAspect: '16/9' }) %>
               </div>
             <% }) %>
-            <div class="col-md-3"><label class="form-label">Button Text</label><input class="form-control" name="button_text" value="<%= val('button_text') %>"></div>
-            <div class="col-md-3"><label class="form-label">Button URL</label><input class="form-control" name="button_url" value="<%= val('button_url') %>"></div>
-            <div class="col-md-3"><label class="form-label">Order</label><input class="form-control" name="display_order" type="number" value="<%= val('display_order', 0) %>"></div>
           </div>
+          <div class="row g-3 mt-1">
+            <div class="col-md-4"><label class="form-label">Button Text</label><input class="form-control" name="button_text" value="<%= val('button_text') %>" placeholder="e.g. Learn more"></div>
+            <div class="col-md-4"><label class="form-label">Button URL</label><input class="form-control" name="button_url" value="<%= val('button_url') %>" placeholder="e.g. /about"></div>
+            <div class="col-md-4"><label class="form-label">Order</label><input class="form-control" name="display_order" type="number" value="<%= val('display_order', 0) %>"></div>
+          </div>
+          <p class="np-help-text mb-0">Button Text appears on the homepage slider when set. Add a URL to make the button clickable.</p>
           <label class="form-check mt-3"><input class="form-check-input" name="active" type="checkbox" <%= val('active', true) ? 'checked' : '' %>> Active</label>
         <% } else if (resource === 'banners') { %>
           <div class="row g-3">

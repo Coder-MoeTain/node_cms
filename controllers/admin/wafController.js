@@ -6,6 +6,12 @@ const { createSlug } = require('../../utils/slugGenerator');
 const { validatePattern, normalizeRequestData, matchRuleAgainstRequest, calculateRiskScore, summarizeMatchedRules } = require('../../utils/wafHelper');
 const { clearWafCache } = require('../../middleware/waf');
 const { checkHealth } = require('../../utils/webguardClient');
+const {
+  listModels,
+  installModelFromZip,
+  activateModel,
+  deleteModel
+} = require('../../utils/webguardModelManager');
 const appConfig = require('../../config/app');
 
 const categories = ['sql_injection', 'xss', 'command_injection', 'path_traversal', 'file_attack', 'bad_bot', 'scanner', 'brute_force', 'spam', 'cms_probe', 'custom'];
@@ -177,10 +183,12 @@ async function dashboard(req, res, next) {
 async function settings(req, res, next) {
   try {
     const webguardHealth = appConfig.webguard?.enabled ? await checkHealth() : { configured: false, ok: false };
+    const mlModels = listModels();
     return res.render('admin/waf/settings', {
       title: 'WAF Settings',
       activeNav: 'settings',
       settings: await getSettingsObject(),
+      mlModels,
       webguardConfigured: Boolean(appConfig.webguard?.enabled),
       webguardHealth
     });
@@ -191,10 +199,14 @@ async function settings(req, res, next) {
 
 async function updateSettings(req, res, next) {
   try {
+    const isFullFormSave = req.body._waf_settings_form === '1';
     for (const [key, type] of Object.entries(settingFields)) {
       let value;
       if (type === 'boolean') {
-        value = String(req.body[key] === 'on');
+        if (!isFullFormSave && !Object.prototype.hasOwnProperty.call(req.body, key)) {
+          continue;
+        }
+        value = String(req.body[key] === 'on' || req.body[key] === 'true' || req.body[key] === true);
       } else if (key === 'waf_mode') {
         value = ['disabled', 'monitor', 'block'].includes(req.body[key]) ? req.body[key] : 'monitor';
       } else if (type === 'number') {
@@ -553,6 +565,68 @@ async function testRule(req, res, next) {
   }
 }
 
+async function uploadModel(req, res, next) {
+  try {
+    if (!req.file) {
+      req.flash('error', 'Choose a WebGuard model .zip archive to upload.');
+      return res.redirect('/admin/waf/settings');
+    }
+
+    const result = await installModelFromZip(req.file.path, {
+      modelId: req.body.model_id,
+      activate: req.body.activate_after === 'on',
+      userId: req.session?.user?.id || null
+    });
+
+    await createActivityLog({
+      user_id: req.session?.user?.id || null,
+      action: 'waf_ml_model_upload',
+      resource_type: 'waf',
+      resource_id: result.model.id,
+      details: {
+        model_id: result.model.id,
+        remote_synced: result.model.remote_synced,
+        shared_path: result.model.shared_path
+      },
+      ip_address: req.ip
+    });
+
+    let message = `ML model "${result.model.id}" installed.`;
+    if (result.remote?.ok) message += ' Synced to WebGuard API.';
+    else if (result.remote?.skipped) message += ' Stored locally (WebGuard API not configured).';
+    else message += ` Local install OK; remote sync: ${result.remote?.error || 'failed'}.`;
+    if (req.body.activate_after === 'on') message += ' Model activated for WAF scoring.';
+
+    req.flash('success', message);
+    return res.redirect('/admin/waf/settings');
+  } catch (error) {
+    req.flash('error', error.message || 'Model upload failed.');
+    return res.redirect('/admin/waf/settings');
+  }
+}
+
+async function activateModelAction(req, res, next) {
+  try {
+    const modelId = await activateModel(req.params.id);
+    req.flash('success', `Active ML model set to "${modelId}".`);
+    return res.redirect('/admin/waf/settings');
+  } catch (error) {
+    req.flash('error', error.message || 'Could not activate model.');
+    return res.redirect('/admin/waf/settings');
+  }
+}
+
+async function deleteModelAction(req, res, next) {
+  try {
+    await deleteModel(req.params.id);
+    req.flash('success', `ML model "${req.params.id}" removed.`);
+    return res.redirect('/admin/waf/settings');
+  } catch (error) {
+    req.flash('error', error.message || 'Could not delete model.');
+    return res.redirect('/admin/waf/settings');
+  }
+}
+
 module.exports = {
   dashboard,
   settings,
@@ -574,5 +648,8 @@ module.exports = {
   blockIpFromLog,
   whitelistIpFromLog,
   exportLogsCsv,
-  testRule
+  testRule,
+  uploadModel,
+  activateModelAction,
+  deleteModelAction
 };

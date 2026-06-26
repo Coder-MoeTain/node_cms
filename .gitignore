@@ -23,6 +23,8 @@ ci-artifact.zip
 
 tmp/
 tmp/quarantine/
+storage/webguard-models/*
+!storage/webguard-models/.gitkeep
 public/uploads/*
 !public/uploads/.gitkeep
 database/backups/

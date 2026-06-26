@@ -52,4 +52,11 @@ describe('webguardClient', () => {
     expect(result.ok).toBe(false);
     expect(result.failOpen).toBe(true);
   });
+
+  test('skips model upload when WebGuard is not configured', async () => {
+    const { uploadModelArchive } = require('../utils/webguardClient');
+    const result = await uploadModelArchive('/tmp/missing.zip', 'model.zip', { modelId: 'rf_demo' });
+    expect(result.ok).toBe(false);
+    expect(result.skipped).toBe(true);
+  });
 });
