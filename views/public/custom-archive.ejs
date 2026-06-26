@@ -18,7 +18,10 @@
         <% posts.forEach(function(post) { %>
           <article class="col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm">
-              <% if (post.featured_image) { %><img src="<%= post.featured_image %>" class="card-img-top" alt="<%= post.title %>"><% } %>
+              <% const featuredImage = typeof resolvePublicMediaUrl === 'function'
+                   ? resolvePublicMediaUrl(post.featured_image)
+                   : (post.featured_image || ''); %>
+              <% if (featuredImage) { %><img src="<%= featuredImage %>" class="card-img-top" alt="<%= post.title %>"><% } %>
               <div class="card-body">
                 <h2 class="h5 card-title"><a href="/types/<%= type.slug %>/<%= post.slug %>" class="stretched-link text-decoration-none"><%= post.title %></a></h2>
                 <% if (post.excerpt) { %><p class="card-text text-muted small"><%= post.excerpt %></p><% } %>

@@ -13,6 +13,7 @@
     "seed": "node database/seed.js",
     "reset-admin": "node database/reset-admin.js",
     "assign-photos": "node database/assign-photos.js",
+    "purge-missing-featured-images": "node database/purge-missing-featured-images.js",
     "migrate": "node database/migrate.js",
     "test": "cross-env NODE_ENV=test jest --runInBand --forceExit",
     "test:ci": "cross-env NODE_ENV=test jest --runInBand --forceExit --ci --coverage",

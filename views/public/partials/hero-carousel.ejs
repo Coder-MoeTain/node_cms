@@ -8,9 +8,11 @@
    const carouselClass = isPortalHero ? 'portal-hero-carousel' : 'site-hero-carousel';
    const contentClass = isPortalHero ? 'portal-hero-content' : 'site-hero-content';
    const mnp = typeof isMnp !== 'undefined' && isMnp;
-   const normalizeSlideImage = typeof normalizePublicMediaUrl === 'function'
-     ? normalizePublicMediaUrl
-     : function(url) { return url || ''; };
+   const normalizeSlideImage = typeof resolvePublicMediaUrl === 'function'
+     ? resolvePublicMediaUrl
+     : (typeof normalizePublicMediaUrl === 'function'
+       ? normalizePublicMediaUrl
+       : function(url) { return url || ''; });
 %>
 <% if (sliders && sliders.length) { %>
 <section class="<%= heroSectionClass %> <%= mnp ? 'portal-hero-mnp' : '' %>" id="<%= isPortalHero ? 'portal-hero' : 'site-hero' %>" aria-label="Featured slider">

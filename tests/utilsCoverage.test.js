@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 const { ensureDirectory, publicUploadPath, classifyMime } = require('../utils/fileHelper');
 const { createSlug, createUniqueSlug } = require('../utils/slugGenerator');
-const { mediaUrl, diskPathFromPublic, normalizeUploadUrlsInHtml } = require('../utils/mediaHelper');
+const { mediaUrl, diskPathFromPublic, normalizeUploadUrlsInHtml, resolvePublicMediaUrl } = require('../utils/mediaHelper');
 const { isSafeEntryName, extractZipArchive } = require('../utils/packageArchive');
 const { resolveThemePartials, partialIncludePath } = require('../utils/themePartials');
 const { getPagination, pageMeta } = require('../utils/pagination');
@@ -40,6 +40,20 @@ test('mediaHelper builds CDN URLs and disk paths', () => {
   expect(mediaUrl('/uploads/test.png')).toBe('https://cdn.example.com/uploads/test.png');
   process.env.CDN_URL = original;
   expect(diskPathFromPublic('/uploads/test.png')).toContain('uploads');
+});
+
+test('resolvePublicMediaUrl hides missing local uploads and keeps valid CDN paths', () => {
+  const uploadRoot = path.join(process.cwd(), 'public', 'uploads', 'resolve-media-test');
+  fs.mkdirSync(uploadRoot, { recursive: true });
+  const filePath = path.join(uploadRoot, 'exists.png');
+  fs.writeFileSync(filePath, 'x');
+
+  expect(resolvePublicMediaUrl('/uploads/resolve-media-test/exists.png')).toBe('/uploads/resolve-media-test/exists.png');
+  expect(resolvePublicMediaUrl('https://www.example.gov.mm/uploads/resolve-media-test/exists.png')).toBe('/uploads/resolve-media-test/exists.png');
+  expect(resolvePublicMediaUrl('/uploads/resolve-media-test/missing.png')).toBe('');
+  expect(resolvePublicMediaUrl('https://www.example.gov.mm/uploads/resolve-media-test/missing.png')).toBe('');
+
+  fs.rmSync(uploadRoot, { recursive: true, force: true });
 });
 
 test('mediaHelper normalizes relative upload URLs in HTML', () => {

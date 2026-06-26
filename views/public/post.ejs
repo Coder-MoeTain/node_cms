@@ -6,12 +6,15 @@
   const readMinutes = Math.max(1, Math.ceil(wordCount / 200));
   const publishedDate = post.published_at || post.created_at;
   const authorInitial = post.author && post.author.name ? post.author.name.trim().charAt(0).toUpperCase() : 'A';
+  const featuredImage = typeof resolvePublicMediaUrl === 'function'
+    ? resolvePublicMediaUrl(post.featured_image)
+    : (post.featured_image || '');
 %>
 <main class="<%= isPortal ? 'portal-main portal-page' : '' %> post-page" id="main-content">
   <div class="post-reading-progress" aria-hidden="true"><div class="post-reading-progress-bar" data-reading-progress></div></div>
-  <% if (post.featured_image) { %>
+  <% if (featuredImage) { %>
     <figure class="post-hero">
-      <img src="<%= post.featured_image %>" alt="<%= post.title %>" decoding="async" fetchpriority="high">
+      <img src="<%= featuredImage %>" alt="<%= post.title %>" decoding="async" fetchpriority="high">
       <div class="post-hero-shade" aria-hidden="true"></div>
     </figure>
   <% } %>
@@ -27,7 +30,7 @@
 
     <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
       <article class="post-article <%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
-        <header class="post-header<%= post.featured_image ? ' post-header--overlap' : '' %>">
+        <header class="post-header<%= featuredImage ? ' post-header--overlap' : '' %>">
           <% if (post.Category) { %>
             <a class="post-category-pill" href="/category/<%= post.Category.slug %>"><%= post.Category.name %></a>
           <% } %>
