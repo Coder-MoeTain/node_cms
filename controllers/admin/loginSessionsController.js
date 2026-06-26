@@ -1,5 +1,6 @@
 const appConfig = require('../../config/app');
 const { createActivityLog } = require('../../utils/activityLogHelper');
+const adminLoginPath = require('../../utils/adminLoginPath');
 const {
   listActiveAdminSessions,
   countActiveAdminSessions,
@@ -7,8 +8,7 @@ const {
   getAdminSession,
   revokeAdminSession,
   resolveRequestIpAsync
-} = require('../../utils/loginSessionHelper');
-const { getPagination } = require('../../utils/pagination');
+} = require('../../utils/loginSessionHelper');const { getPagination } = require('../../utils/pagination');
 
 async function index(req, res, next) {
   try {
@@ -74,13 +74,13 @@ async function revoke(req, res, next) {
     });
 
     if (isCurrent) {
+      const loginUrl = await adminLoginPath.getLoginUrl();
       return req.session.destroy(() => {
         res.clearCookie(appConfig.sessionName);
         req.flash('success', 'Your session was revoked. Please log in again.');
-        res.redirect('/admin/login');
+        res.redirect(loginUrl);
       });
     }
-
     req.flash('success', `Session for ${target.email} was revoked.`);
     return res.redirect('/admin/settings/login-sessions');
   } catch (error) {

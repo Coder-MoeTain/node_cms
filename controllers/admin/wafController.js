@@ -13,6 +13,7 @@ const {
   deleteModel
 } = require('../../utils/webguardModelManager');
 const appConfig = require('../../config/app');
+const { formatInTimezone } = require('../../utils/timezoneHelper');
 
 const categories = ['sql_injection', 'xss', 'command_injection', 'path_traversal', 'file_attack', 'bad_bot', 'scanner', 'brute_force', 'spam', 'cms_probe', 'custom'];
 const targets = ['url', 'query', 'body', 'headers', 'user_agent', 'ip', 'file_name', 'all'];
@@ -101,7 +102,7 @@ function buildRulePayload(body, userId, existing = null) {
   };
 }
 
-async function getBlocksLast7Days() {
+async function getBlocksLast7Days(timeZone = 'UTC') {
   const days = [];
   for (let offset = 6; offset >= 0; offset -= 1) {
     const start = new Date();
@@ -116,8 +117,8 @@ async function getBlocksLast7Days() {
       }
     });
     days.push({
-      label: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      weekday: start.toLocaleDateString('en-US', { weekday: 'short' }),
+      label: formatInTimezone(start, timeZone, { locale: 'en-US', month: 'short', day: 'numeric' }),
+      weekday: formatInTimezone(start, timeZone, { locale: 'en-US', weekday: 'short' }),
       count
     });
   }
@@ -154,7 +155,7 @@ async function dashboard(req, res, next) {
       WafIpList.count({ where: { status: true, list_type: ['blacklist', 'temporary_block'] } }),
       WafRule.count({ where: { is_system: true } }),
       WafRule.count({ where: { is_system: false } }),
-      getBlocksLast7Days(),
+      getBlocksLast7Days(res.locals.siteTimezone),
       WafIpList.count({ where: { status: true, list_type: 'whitelist' } })
     ]);
 

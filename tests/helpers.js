@@ -63,13 +63,15 @@ async function logout(agent) {
 }
 
 async function login(agent, email, password, totp) {
+  const adminLoginPath = require('../utils/adminLoginPath');
+  const loginUrl = await adminLoginPath.getLoginUrl();
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const csrf = await getCsrf(agent, '/admin/login');
+    const csrf = await getCsrf(agent, loginUrl);
     const payload = { email, password, _csrf: csrf };
     if (totp) payload.totp = totp;
-    const response = await agent.post('/admin/login').type('form').send(payload);
+    const response = await agent.post(loginUrl).type('form').send(payload);
     const location = String(response.headers.location || '');
-    if (response.status === 302 && !location.includes('/admin/login')) {
+    if (response.status === 302 && !location.includes(loginUrl)) {
       return response;
     }
   }

@@ -32,7 +32,7 @@
                 <td><strong><%= c.name %></strong><br><small><%= c.email %></small></td>
                 <td><%= c.content %></td>
                 <td><%= c.Post ? c.Post.title : '—' %></td>
-                <td><%= new Date(c.created_at).toLocaleString() %></td>
+                <td><%= formatDateTime(c.created_at) %></td>
                 <td class="text-end">
                   <a href="/admin/comments/<%= c.id %>/reply" class="np-btn np-btn-link np-btn-small">Reply</a>
                   <% if (c.status !== 'approved') { %>

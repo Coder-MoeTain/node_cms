@@ -81,7 +81,7 @@
                 <tr>
                   <td><code><%= backup.file %></code></td>
                   <td><%= backup.sizeLabel %></td>
-                  <td><%= backup.created.toLocaleString() %></td>
+                  <td><%= formatDateTime(backup.created) %></td>
                   <td>
                     <% if (backup.uploadsArchive) { %>
                       <span class="np-badge np-badge-success">Yes</span>

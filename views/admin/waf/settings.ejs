@@ -136,7 +136,7 @@
                         <% if (settings.ml_waf_model_id === model.id) { %><span class="badge bg-success ms-1">Active</span><% } %>
                       </td>
                       <td class="small text-muted"><%= (model.joblib_files || model.files || []).slice(0, 3).join(', ') %></td>
-                      <td class="small"><%= new Date(model.installed_at).toLocaleString() %></td>
+                      <td class="small"><%= formatDateTime(model.installed_at) %></td>
                       <td class="small">
                         <% if (model.remote_synced) { %>Synced<% } else if (model.remote_error) { %><span class="text-warning" title="<%= model.remote_error %>">Local only</span><% } else { %>Local<% } %>
                       </td>

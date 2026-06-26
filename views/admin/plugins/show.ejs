@@ -35,7 +35,7 @@
               <dd class="col-sm-8"><%= plugin.disk.exists ? `${plugin.disk.fileCount} files · ${plugin.disk.sizeLabel}` : 'Missing from disk' %></dd>
               <% if (plugin.disk.modifiedAt) { %>
                 <dt class="col-sm-4">Last modified</dt>
-                <dd class="col-sm-8"><%= plugin.disk.modifiedAt.toLocaleString() %></dd>
+                <dd class="col-sm-8"><%= formatDateTime(plugin.disk.modifiedAt) %></dd>
               <% } %>
               <% if (plugin.requires) { %>
                 <dt class="col-sm-4">Requires</dt>

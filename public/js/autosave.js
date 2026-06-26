@@ -63,7 +63,7 @@
         body: JSON.stringify({ resource_type: resourceType, resource_id: resourceId || 0, draft_data: collectDraft() })
       });
       if (res.ok && statusEl) {
-        statusEl.textContent = 'Draft saved ' + new Date().toLocaleTimeString();
+        statusEl.textContent = 'Draft saved ' + (window.npFormatTime ? window.npFormatTime(new Date()) : (window.npFormatDateTime ? window.npFormatDateTime(new Date(), { year: undefined, month: undefined, day: undefined }) : new Date().toLocaleTimeString()));
       }
     } catch {
       if (statusEl) statusEl.textContent = 'Autosave failed';

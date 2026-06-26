@@ -7,6 +7,8 @@ const { Op } = require('sequelize');
 const { User, Role, Permission, LoginAttempt, PasswordResetToken } = require('../../models');
 const { createActivityLog } = require('../../utils/activityLogHelper');
 const { resolveRequestIpAsync } = require('../../utils/loginSessionHelper');
+const adminLoginPath = require('../../utils/adminLoginPath');
+const { blockHoneypotAttacker } = adminLoginPath;
 const pluginLoader = require('../../utils/pluginLoader');
 const loginBruteForce = require('../../utils/loginBruteForce');
 const { sendPasswordResetEmail } = require('../../utils/mailer');
@@ -17,17 +19,34 @@ const {
   clearRecoveryCodes
 } = require('../../utils/twoFactorRecovery');
 
-function loginForm(req, res) {
+async function loginForm(req, res) {
+  const loginAction = await adminLoginPath.getLoginUrl();
   res.render('admin/auth/login', {
     title: 'Admin Login',
     loginEmail: req.query.email || '',
-    restored: req.query.restored === '1'
+    restored: req.query.restored === '1',
+    loginAction
   });
 }
 
-function loginRedirect(res, email) {
-  const q = email ? `?email=${encodeURIComponent(email)}` : '';
-  return res.redirect(`/admin/login${q}`);
+function honeypotLoginForm(req, res) {
+  res.render('admin/auth/login', {
+    title: 'Admin Login',
+    loginEmail: req.query.email || '',
+    restored: false,
+    loginAction: '/admin/login'
+  });
+}
+
+async function honeypotLogin(req, res) {
+  await blockHoneypotAttacker(req, req.body.email);
+  req.flash('error', 'Invalid email or password.');
+  return res.redirect('/admin/login');
+}
+
+async function loginRedirect(res, email) {
+  const url = await adminLoginPath.getLoginUrl(email ? `email=${encodeURIComponent(email)}` : '');
+  return res.redirect(url);
 }
 
 function regenerateSession(req) {
@@ -73,7 +92,7 @@ async function finalizeLogin(req, res, user) {
   req.session.lastActivity = Date.now();
   req.session.lastUserRefresh = Date.now();
   req.session.loginAt = Date.now();
-  req.session.loginIp = await resolveRequestIpAsync(req);
+  req.session.loginIp = req.clientIp || await resolveRequestIpAsync(req);
   req.session.lastActivityIp = req.session.loginIp;
 
   await regenerateSession(req);
@@ -83,7 +102,7 @@ async function finalizeLogin(req, res, user) {
     user_id: user.id,
     action: 'Logged in',
     entity_type: 'auth',
-    ip_address: await resolveRequestIpAsync(req),
+    ip_address: req.clientIp || await resolveRequestIpAsync(req),
     user_agent: req.get('user-agent')
   });
 
@@ -126,7 +145,7 @@ async function login(req, res, next) {
     try {
       await LoginAttempt.create({
         email,
-        ip_address: await resolveRequestIpAsync(req),
+        ip_address: req.clientIp || await resolveRequestIpAsync(req),
         user_agent: req.get('user-agent'),
         success: Boolean(valid),
         reason: valid ? 'success' : 'invalid_credentials'
@@ -193,7 +212,7 @@ async function forgotPassword(req, res, next) {
         user_id: user.id,
         token_hash: hashToken(token),
         expires_at: new Date(Date.now() + 60 * 60 * 1000),
-        ip_address: req.ip,
+        ip_address: req.clientIp || await resolveRequestIpAsync(req),
         user_agent: req.get('user-agent')
       });
       const mailResult = await sendPasswordResetEmail(user, token);
@@ -202,7 +221,7 @@ async function forgotPassword(req, res, next) {
       }
     }
     req.flash('success', 'If that email exists, a reset link has been generated.');
-    return res.redirect('/admin/login');
+    return res.redirect(await adminLoginPath.getLoginUrl());
   } catch (error) {
     return next(error);
   }
@@ -227,7 +246,7 @@ async function resetPassword(req, res, next) {
     await PasswordResetToken.update({ used_at: new Date() }, { where: { user_id: user.id, used_at: null } });
     await row.update({ used_at: new Date() });
     req.flash('success', 'Password reset complete. You can log in now.');
-    return res.redirect('/admin/login');
+    return res.redirect(await adminLoginPath.getLoginUrl());
   } catch (error) {
     return next(error);
   }
@@ -339,14 +358,17 @@ function recoveryCodesView(req, res) {
   });
 }
 
-function logout(req, res) {
+async function logout(req, res) {
+  const loginUrl = await adminLoginPath.getLoginUrl();
   req.session.destroy(() => {
-    res.redirect('/admin/login');
+    res.redirect(loginUrl);
   });
 }
 
 module.exports = {
   loginForm,
+  honeypotLoginForm,
+  honeypotLogin,
   login,
   forgotPasswordForm,
   forgotPassword,

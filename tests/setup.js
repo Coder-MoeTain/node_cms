@@ -2,6 +2,7 @@ jest.setTimeout(30000);
 
 const { models, sequelize } = require('../server');
 const loginBruteForce = require('../utils/loginBruteForce');
+const adminLoginPath = require('../utils/adminLoginPath');
 
 /** Reset shared admin account state polluted by auth/lockout/2FA tests. */
 async function resetAdminUser() {
@@ -45,7 +46,13 @@ async function resetSecuritySettings() {
     value: 'false',
     group: 'security'
   });
+  await models.SecuritySetting.upsert({
+    key: 'admin_login_honeypot_enabled',
+    value: 'false',
+    enabled: false
+  });
   loginBruteForce.clearSettingsCache();
+  adminLoginPath.clearConfigCache();
 }
 
 async function resetWafState() {

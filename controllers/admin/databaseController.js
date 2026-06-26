@@ -1,14 +1,16 @@
 const dbBackup = require('../../utils/databaseBackup');
 const { createActivityLog } = require('../../utils/activityLogHelper');
+const adminLoginPath = require('../../utils/adminLoginPath');
 
 async function safeActivityLog(entry) {
   await createActivityLog(entry);
 }
 
-function redirectAfterRestore(req, res) {
+async function redirectAfterRestore(req, res) {
+  const loginUrl = await adminLoginPath.getLoginUrl('restored=1');
   req.session.destroy((error) => {
     if (error) console.error('Session destroy after restore:', error.message);
-    res.redirect('/admin/login?restored=1');
+    res.redirect(loginUrl);
   });
 }
 
@@ -127,7 +129,8 @@ async function resetDatabase(req, res, next) {
     await dbBackup.resetDatabase();
 
     req.flash('success', 'Database reset complete. Default admin: admin@example.com / Admin@12345');
-    return req.session.destroy(() => res.redirect('/admin/login'));
+    const loginUrl = await adminLoginPath.getLoginUrl();
+    return req.session.destroy(() => res.redirect(loginUrl));
   } catch (error) {
     req.flash('error', `Database reset failed: ${error.message}`);
     return res.redirect('/admin/settings/database');

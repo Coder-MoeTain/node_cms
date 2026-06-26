@@ -6,6 +6,7 @@ const PORTAL_SETTING_DEFINITIONS = {
   site_tagline: { value: 'Official information portal powered by NodePress', group: 'portal', label: 'Site tagline' },
   site_location: { value: 'Nay Pyi Taw, MM', group: 'portal', label: 'Site location' },
   posts_per_page: { value: '6', group: 'general', label: 'Posts per page' },
+  site_timezone: { value: 'Asia/Yangon', group: 'general', label: 'Site timezone' },
   contact_email: { value: 'contact@example.com', group: 'contact', label: 'Contact email' },
   contact_phone: { value: '+95 67 409 000', group: 'contact', label: 'Contact phone' },
   contact_address: { value: 'Nay Pyi Taw, Myanmar', group: 'contact', label: 'Contact address' },

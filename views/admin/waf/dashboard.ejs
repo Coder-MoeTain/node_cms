@@ -60,7 +60,7 @@
                 <tbody>
                   <% recentBlocked.forEach(function(log) { %>
                     <tr>
-                      <td><%= log.created_at.toLocaleString() %></td>
+                      <td><%= formatDateTime(log.created_at) %></td>
                       <td><code><%= log.ip_address %></code></td>
                       <td><%= log.matched_rule_name || '-' %></td>
                       <td><span class="np-badge np-badge-muted"><%= log.category || '-' %></span></td>

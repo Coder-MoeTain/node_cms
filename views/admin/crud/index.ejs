@@ -157,7 +157,7 @@
               <% } %>
               <td><span class="np-badge np-badge-<%= badgeClass %>"><%= statusKey %></span></td>
               <% if (resource === 'posts') { %><td><%= row.Category ? row.Category.name : '—' %></td><% } %>
-              <% if (!['menu-items'].includes(resource)) { %><td class="date-column"><%= row.created_at ? row.created_at.toLocaleDateString() : '' %></td><% } %>
+              <% if (!['menu-items'].includes(resource)) { %><td class="date-column"><%= row.created_at ? formatDate(row.created_at) : '' %></td><% } %>
             </tr>
           <% }) %>
           <% if (!rows.length) { %>

@@ -9,8 +9,9 @@
   const selectedPermissions = record.Permissions ? record.Permissions.map((permission) => String(permission.id)) : [];
   let publishedAtValue = '';
   if (record.published_at) {
-    const d = new Date(record.published_at);
-    publishedAtValue = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    publishedAtValue = typeof toDatetimeLocalValue === 'function'
+      ? toDatetimeLocalValue(record.published_at)
+      : '';
   }
   let contentPreviewUrl = '';
   if (typeof previewUrl !== 'undefined' && previewUrl) {

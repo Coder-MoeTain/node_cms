@@ -2,6 +2,7 @@ const { SiteSetting } = require('../../models');
 const { listGalleryItems } = require('./mediaController');
 const { ensurePortalSettings, SETTING_GROUP_LABELS, SETTING_GROUP_ORDER, PORTAL_SETTING_DEFINITIONS, getSettingGroup } = require('../../utils/portalSettings');
 const { resolveImageValue, sanitizeUploadPath } = require('../../utils/uploadHelper');
+const { getTimezoneOptions, isValidTimezone } = require('../../utils/timezoneHelper');
 
 async function settings(req, res, next) {
   try {
@@ -28,7 +29,8 @@ async function settings(req, res, next) {
       grouped,
       groupLabels: SETTING_GROUP_LABELS,
       groupOrder: SETTING_GROUP_ORDER,
-      settingDefinitions: PORTAL_SETTING_DEFINITIONS
+      settingDefinitions: PORTAL_SETTING_DEFINITIONS,
+      timezoneOptions: getTimezoneOptions()
     });
   } catch (error) {
     return next(error);
@@ -61,6 +63,10 @@ async function updateSettings(req, res, next) {
       if (brandingImageFields[key]) continue;
 
       let finalValue = Array.isArray(value) ? value.join(',') : value;
+      if (key === 'site_timezone' && !isValidTimezone(finalValue)) {
+        req.flash('error', 'Invalid timezone selected.');
+        continue;
+      }
       await SiteSetting.upsert({
         key,
         value: finalValue,

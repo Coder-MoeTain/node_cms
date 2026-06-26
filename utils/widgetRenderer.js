@@ -4,6 +4,7 @@ const {
   WIDGET_TYPES,
   getWidgetDefinition
 } = require('./widgetRegistry');
+const { createDateFormatters } = require('./timezoneHelper');
 
 function parseSettings(json) {
   if (!json) return {};
@@ -41,10 +42,7 @@ async function renderNavigationMenu(menuSlug) {
 async function renderWidget(instance, context = {}) {
   const settings = parseSettings(instance.settings_json);
   const title = widgetTitleHtml(instance.title);
-  const formatDate = context.formatDate || ((value) => {
-    const date = value instanceof Date ? value : new Date(value);
-    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  });
+  const formatDate = context.formatDate || createDateFormatters({ timeZone: context.siteTimezone }).formatDate;
 
   switch (instance.widget_type) {
     case 'search':

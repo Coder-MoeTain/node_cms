@@ -4,7 +4,7 @@
     <div class="post-comment-body">
       <header class="post-comment-meta">
         <strong><%= comment.name %></strong>
-        <time datetime="<%= comment.created_at %>"><%= new Date(comment.created_at).toLocaleDateString() %></time>
+        <time datetime="<%= comment.created_at %>"><%= formatDate(comment.created_at) %></time>
       </header>
       <p class="mb-0"><%= comment.content %></p>
       <button type="button" class="btn btn-link btn-sm p-0 mt-1" data-reply-to="<%= comment.id %>">Reply</button>

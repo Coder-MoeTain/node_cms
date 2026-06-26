@@ -81,7 +81,7 @@ function initMediaLibrary() {
 
     nameEl.textContent = originalName || 'Attachment';
     typeEl.textContent = item.dataset.mime || fileType || 'file';
-    dateEl.textContent = uploaded ? new Date(uploaded).toLocaleString() : '—';
+    dateEl.textContent = uploaded ? (window.npFormatDateTime ? window.npFormatDateTime(uploaded) : new Date(uploaded).toLocaleString()) : '—';
     urlEl.textContent = filePath || '';
     if (altEl) altEl.textContent = alt || '—';
     if (captionEl) captionEl.textContent = caption || '—';

@@ -92,6 +92,8 @@ Public Site  -> http://localhost:3000
 Admin Panel  -> http://localhost:3000/admin/login
 ```
 
+When the **admin login honeypot** is enabled, `/admin/login` is a decoy only — use the secret URL shown under **Admin → Security** (see [Login & Sessions and honeypot](#login--sessions-and-admin-login-honeypot)).
+
 <p align="center">
   <img src="docs/assets/screenshots/public-home.svg" alt="NodePress public website screenshot" width="49%">
   <img src="docs/assets/screenshots/admin-dashboard.svg" alt="NodePress admin dashboard screenshot" width="49%">
@@ -124,7 +126,7 @@ Admin Panel  -> http://localhost:3000/admin/login
 | Publishing | Drafts, publishing, private posts, scheduled dates, SEO fields, featured images, video embeds, tags, categories |
 | Design System | Space-agency inspired frontend, modern admin dashboard, dynamic logo, favicon, colors, layout, dark mode |
 | Media Library | Upload images, videos, PDFs, docs, copy URLs, and reuse assets in posts and pages |
-| Security | Sessions, bcrypt, Helmet, CSRF, rate limiting, upload validation, blocked IPs, login attempts, activity logs, optional WebGuard ML WAF |
+| Security | Sessions, bcrypt, Helmet, CSRF, rate limiting, upload validation, blocked IPs, login attempts, **Login & Sessions** audit page, **admin login honeypot**, session revoke, real client IP behind proxies, activity logs, optional WebGuard ML WAF |
 | Internationalization | Server-side translation engine (en, my, zh-CN, ru) with glossary files and database cache — no Google Translate |
 | Portal Statistics | Live homepage stat counters (users, visitors, discussions, polls, blogs, events, mobile apps) from database activity |
 
@@ -147,7 +149,7 @@ Admin Panel  -> http://localhost:3000/admin/login
 | Core CMS | **9.5** | Scheduled publish cron, trash/restore, CPT, fields, revisions |
 | Themes | **9.0** | Child-theme uninstall guard (DB + disk), upload, customizer |
 | Plugins | **9.0** | Full HTTP lifecycle, hooks, migrations |
-| RBAC & security | **9.0** | 2FA, WAF, ownership policies, mailer abstraction |
+| RBAC & security | **9.0** | 2FA, WAF, honeypot login trap, login/session audit, ownership policies, mailer abstraction |
 | REST API | **8.5** | v1 read/write posts & pages, comments list, widgets |
 | Tests & CI | **9.0** | 310+ tests, coverage thresholds, GitHub Actions |
 | Ops & deploy | **8.5** | `publish:scheduled` CLI, Docker, health checks with WAF/SMTP |
@@ -214,7 +216,7 @@ Copy the example file and edit values locally (`.env` is gitignored — never co
 cp .env.example .env
 ```
 
-Key variables to review: `DB_*`, `SESSION_SECRET`, `APP_URL`, and optional `TEST_DB_*` for the test suite. See `.env.example` for the full list.
+Key variables to review: `DB_*`, `SESSION_SECRET`, `APP_URL`, `TRUST_PROXY` (set `true` behind a reverse proxy), and optional `TEST_DB_*` for the test suite. See `.env.example` for the full list.
 
 ### 3. Create database
 
@@ -501,7 +503,8 @@ Visitor sessions are tracked once per day per session via `middleware/portalVisi
 - Media upload library with URL copy
 - Theme and layout customization
 - Site settings for logo, favicon, social links, contact details, and maintenance mode
-- Security plugin-style settings page
+- **Login & Sessions** page under Settings (active sessions, login success/failure log, revoke session)
+- Security plugin-style settings page with **admin login honeypot** controls
 
 ### Content Management
 
@@ -574,8 +577,12 @@ Example permissions:
 | `GET/POST/PUT/DELETE` | `/admin/banners` |
 | `GET/POST/PUT/DELETE` | `/admin/sliders` |
 | `GET/PUT` | `/admin/settings` |
+| `GET` | `/admin/settings/login-sessions` |
+| `POST` | `/admin/settings/login-sessions/revoke` |
 | `GET/POST/PUT` | `/admin/themes` |
 | `GET/PUT/POST/DELETE` | `/admin/security` |
+| `POST` | `/admin/security/regenerate-login-path` |
+| `GET/POST` | `/admin/np-auth-*` (secret login path when honeypot enabled) |
 
 ## Database
 
@@ -618,11 +625,75 @@ Use `npm run seed` afterward to generate the bcrypt-hashed default admin account
 - Login attempts, blocked IPs, and admin activity are logged.
 - Optional WebGuard ML scoring augments the WAF when `WEBGUARD_API_URL` and credentials are configured.
 
+### Login & Sessions and admin login honeypot
+
+Recent security additions for admin authentication monitoring and deception:
+
+#### Login & Sessions (`/admin/settings/login-sessions`)
+
+Available under **Settings → Login & Sessions** (requires `manage_settings` or `manage_security`).
+
+| Feature | Description |
+| --- | --- |
+| Active admin sessions | Username, email, client IP, logged-in time, last activity, expiry, session ID |
+| Revoke session | Per-session **Revoke** button; revoking your own session logs you out immediately |
+| Login activity | Paginated success/failure log with email and IP filters |
+| Client IP | Uses `X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP`, etc. when behind a reverse proxy (see below) |
+
+Key files: `utils/loginSessionHelper.js`, `controllers/admin/loginSessionsController.js`, `views/admin/settings/login-sessions.ejs`.
+
+Tests: `tests/loginSessions.test.js`.
+
+#### Admin login honeypot
+
+Configure under **Admin → Security → Admin Login Honeypot**.
+
+| Setting | Behavior |
+| --- | --- |
+| Honeypot enabled | `/admin/login` shows a normal-looking login form but never authenticates |
+| Secret login URL | Real admin login moves to `/admin/np-auth-<random>` (configurable slug) |
+| Auto-block | Any honeypot login attempt immediately blocks the client IP in **Blocked IPs** and **WAF blacklist**, logs `honeypot_trap`, and shows a generic invalid-credentials message |
+| Public site | The portal **Login** link is hidden while honeypot mode is on so the secret URL is not exposed |
+
+Actions:
+
+- **Save Honeypot Settings** — enable/disable and set the secret path slug
+- **Generate New Secret URL** — rotate the secret login path
+
+Key files: `utils/adminLoginPath.js`, `controllers/admin/authController.js` (`honeypotLogin`, `honeypotLoginForm`).
+
+Tests: `tests/adminLoginHoneypot.test.js`.
+
+#### Real client IP behind nginx / Cloudflare
+
+Login & Sessions, honeypot blocks, and WAF logs resolve the visitor IP from proxy headers when:
+
+1. `TRUST_PROXY=true` in `.env`, **or**
+2. WAF **Trust proxy headers** is enabled, **or**
+3. The TCP connection comes from localhost/private network (typical nginx → Node) **and** forwarding headers are present
+
+Every request sets `req.clientIp` via `middleware/clientIp.js`. Session IPs are backfilled on the next admin request if a loopback address was stored earlier.
+
+Production nginx example:
+
+```nginx
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+```
+
+Set in `.env`:
+
+```env
+TRUST_PROXY=true
+```
+
 Production recommendations:
 
 - Set a strong `SESSION_SECRET`.
 - Use HTTPS.
 - Set `NODE_ENV=production`.
+- Set `TRUST_PROXY=true` when behind Nginx, Cloudflare, or a load balancer; enable WAF **Trust proxy headers** if needed.
+- Consider enabling the **admin login honeypot** and bookmarking only the secret login URL.
 - Keep MySQL private.
 - Put uploads behind safe server rules.
 - Configure regular database backups.

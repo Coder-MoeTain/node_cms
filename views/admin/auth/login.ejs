@@ -14,7 +14,7 @@
       <div class="alert alert-success">Database restored successfully. Sign in with your restored account credentials.</div>
     <% } %>
     <%- include('../partials/flash') %>
-    <form method="post" action="/admin/login">
+    <form method="post" action="<%= typeof loginAction !== 'undefined' ? loginAction : '/admin/login' %>">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="mb-3">
         <label class="form-label" for="login-email">Email</label>

@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <% if (typeof siteTimezone !== 'undefined' && siteTimezone) { %><meta name="site-timezone" content="<%= siteTimezone %>"><% } %>
   <title><%= (typeof seo !== 'undefined' && seo && seo.title) || title %></title>
   <meta name="description" content="<%= (typeof seo !== 'undefined' && seo && seo.description) || siteSettings.site_tagline || '' %>">
   <link rel="canonical" href="<%= (typeof seo !== 'undefined' && seo && seo.canonical) || '' %>">
