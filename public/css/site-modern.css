@@ -312,7 +312,7 @@
 .site-hero-slide {
   align-items: center;
   background-color: var(--site-primary-dark, #06466a);
-  background-image: var(--site-hero-overlay-soft), var(--hero-image, none);
+  background-image: var(--site-hero-overlay-soft);
   background-position: center;
   background-size: cover;
   color: #fff;
@@ -320,6 +320,23 @@
   min-height: var(--site-hero-min-height);
   overflow: hidden;
   position: relative;
+}
+
+.hero-slide-bg {
+  height: 100%;
+  inset: 0;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  z-index: 0;
+}
+
+.hero-slide:has(.hero-slide-bg),
+.portal-hero-slide:has(.hero-slide-bg),
+.site-hero-slide:has(.hero-slide-bg) {
+  background-image: none;
 }
 
 .site-hero-shade,

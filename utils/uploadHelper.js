@@ -33,6 +33,17 @@ function sanitizeUploadPath(publicPath) {
   return isValidUploadPath(trimmed) ? trimmed.slice(0, 255) : '';
 }
 
+function normalizePublicMediaUrl(publicPath) {
+  if (!publicPath || typeof publicPath !== 'string') return '';
+  const trimmed = publicPath.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed.slice(0, 2048);
+  if (/quarantine|\.\./i.test(trimmed)) return '';
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  if (!withLeadingSlash.startsWith('/uploads/')) return '';
+  return withLeadingSlash.slice(0, 255);
+}
+
 function readRecordPath(record, pathField) {
   if (!record) return '';
   const plain = typeof record.get === 'function' ? record.get({ plain: true }) : record;
@@ -71,5 +82,6 @@ module.exports = {
   resolveImageValue,
   isValidUploadPath,
   sanitizeUploadPath,
+  normalizePublicMediaUrl,
   readRecordPath
 };

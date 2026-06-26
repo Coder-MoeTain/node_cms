@@ -8,6 +8,9 @@
    const carouselClass = isPortalHero ? 'portal-hero-carousel' : 'site-hero-carousel';
    const contentClass = isPortalHero ? 'portal-hero-content' : 'site-hero-content';
    const mnp = typeof isMnp !== 'undefined' && isMnp;
+   const normalizeSlideImage = typeof normalizePublicMediaUrl === 'function'
+     ? normalizePublicMediaUrl
+     : function(url) { return url || ''; };
 %>
 <% if (sliders && sliders.length) { %>
 <section class="<%= heroSectionClass %> <%= mnp ? 'portal-hero-mnp' : '' %>" id="<%= isPortalHero ? 'portal-hero' : 'site-hero' %>" aria-label="Featured slider">
@@ -20,9 +23,14 @@
       </div>
     <% } %>
     <div class="carousel-inner">
-      <% sliders.forEach(function(slide, index) { %>
+      <% sliders.forEach(function(slide, index) {
+           const slideImage = normalizeSlideImage(slide.image);
+      %>
         <div class="carousel-item <%= index === 0 ? 'active' : '' %>" data-hero-title="<%= slide.title %>">
-          <div class="hero-slide <%= isPortalHero ? 'portal-hero-slide' : 'site-hero-slide' %>" style="<%= slide.image ? `--hero-image: url(${slide.image})` : '' %>">
+          <div class="hero-slide <%= isPortalHero ? 'portal-hero-slide' : 'site-hero-slide' %>">
+            <% if (slideImage) { %>
+              <img class="hero-slide-bg" src="<%= slideImage %>" alt="" aria-hidden="true" decoding="async" <%= index === 0 ? 'fetchpriority="high"' : 'loading="lazy"' %>>
+            <% } %>
             <div class="site-hero-shade <%= isPortalHero ? 'portal-hero-shade' : '' %>" aria-hidden="true"></div>
             <div class="container hero-content <%= contentClass %>">
               <div class="hero-body">

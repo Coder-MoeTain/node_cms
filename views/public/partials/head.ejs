@@ -54,7 +54,7 @@
      const linkColor = tv.link || activeTheme.primary_color || '#0b5f8a';
      const buttonColor = tv.button || activeTheme.primary_color || '#0b5f8a';
   %>
-  <style>
+  <style nonce="<%= cspNonce %>">
     :root {
       --portal-primary: <%= activeTheme.primary_color || (themePreset === 'myanmar-portal' ? '#006ba6' : '#0b5f8a') %>;
       --portal-primary-dark: <%= themePreset === 'myanmar-portal' ? '#004d7a' : '#06466a' %>;
@@ -114,8 +114,8 @@
       --site-logo-max-width: <%= activeTheme.logo_max_width || 180 %>px;
     }
   </style>
-  <% if (activeTheme.custom_css) { %><style id="theme-custom-css"><%- activeTheme.custom_css %></style><% } %>
-  <% if (typeof schema !== 'undefined' && schema) { %><script type="application/ld+json"><%- schema %></script><% } %>
+  <% if (activeTheme.custom_css) { %><style id="theme-custom-css" nonce="<%= cspNonce %>"><%- activeTheme.custom_css %></style><% } %>
+  <% if (typeof schema !== 'undefined' && schema) { %><script type="application/ld+json" nonce="<%= cspNonce %>"><%- schema %></script><% } %>
   <% (pluginPublicHead || []).forEach(function(snippet) { %><%- snippet %><% }) %>
 </head>
 <body class="site-design-system <%= typeof themeLayoutClasses !== 'undefined' ? themeLayoutClasses : '' %> portal-preset-<%= themePreset || 'default' %> <%= isPortalLayout ? 'portal-layout-active' : 'standard-layout-active' %><% if (activeTheme.dark_mode) { %> theme-dark<% } %><% if (typeof isCustomizerPreview !== 'undefined' && isCustomizerPreview) { %> customizer-preview-active<% } %>">
