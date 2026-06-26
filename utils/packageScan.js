@@ -2,13 +2,11 @@ const fs = require('fs');
 const path = require('path');
 
 const BLOCKED_ARCHIVE_EXTENSIONS = new Set([
-  '.php', '.phtml', '.exe', '.sh', '.bat', '.cmd', '.jsp', '.asp', '.aspx', '.jar', '.dll', '.vbs', '.ps1', '.htaccess', '.env'
+  '.php', '.phtml', '.exe', '.sh', '.bat', '.cmd', '.jsp', '.asp', '.aspx', '.jar', '.dll', '.vbs', '.ps1', '.htaccess', '.env', '.pem', '.key'
 ]);
 
 const BLOCKED_THEME_ARCHIVE_EXTENSIONS = new Set([
-  ...BLOCKED_ARCHIVE_EXTENSIONS,
-  '.js',
-  '.mjs'
+  ...BLOCKED_ARCHIVE_EXTENSIONS
 ]);
 
 const MAX_ARCHIVE_FILES = 500;
@@ -37,7 +35,13 @@ function scanExtractedDirectory(rootDir, { archiveType = 'plugin' } = {}) {
       issues.push(`Unsafe path "${relative}"`);
     }
     if (blockedExtensions.has(ext)) {
+      if (archiveType === 'theme' && (ext === '.js' || ext === '.mjs')) {
+        if (relative.startsWith('public/') || relative.startsWith('assets/')) continue;
+      }
       issues.push(`Blocked file type "${ext}" in ${relative}`);
+    }
+    if (ext === '.pem' || ext === '.key') {
+      issues.push(`Blocked sensitive file in ${relative}`);
     }
     if (path.basename(relative).toLowerCase() === '.env') {
       issues.push(`Blocked file ".env" in ${relative}`);

@@ -49,8 +49,20 @@ test('parses CREATE INDEX IF NOT EXISTS statement', () => {
   });
 });
 
-test('parses plain ADD COLUMN for idempotent handling', () => {
-  expect(parseAddColumnStatements('ALTER TABLE users ADD COLUMN avatar VARCHAR(255)')).toEqual([
-    { table: 'users', column: 'avatar', definition: 'VARCHAR(255)' }
+test('parses plugin and theme commercial migration columns', () => {
+  const sql = `ALTER TABLE plugins
+  ADD COLUMN IF NOT EXISTS error_state ENUM('none','error') NOT NULL DEFAULT 'none' AFTER manifest,
+  ADD COLUMN IF NOT EXISTS last_error TEXT NULL AFTER error_state,
+  ADD COLUMN IF NOT EXISTS latest_version VARCHAR(40) NULL AFTER last_error,
+  ADD COLUMN IF NOT EXISTS update_available BOOLEAN NOT NULL DEFAULT FALSE AFTER latest_version,
+  ADD COLUMN IF NOT EXISTS last_checked_at DATETIME NULL AFTER update_available`;
+  const parsed = parseAddColumnStatements(sql);
+  expect(parsed).toHaveLength(5);
+  expect(parsed.map((column) => column.column)).toEqual([
+    'error_state',
+    'last_error',
+    'latest_version',
+    'update_available',
+    'last_checked_at'
   ]);
 });

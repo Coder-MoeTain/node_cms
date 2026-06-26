@@ -81,23 +81,24 @@ function ensureParent(filePath) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
 }
 
-async function extractZipArchive(zipPath, targetRoot, manifestName) {
+async function extractZipArchive(zipPath, targetRoot, manifestName, options = {}) {
+  const archiveType = options.archiveType || (manifestName === 'theme.json' ? 'theme' : 'plugin');
   if (!fs.existsSync(zipPath)) throw new Error('Archive file not found.');
   if (!isZipMagicBytes(zipPath)) throw new Error('File is not a valid ZIP archive.');
 
   const stat = fs.statSync(zipPath);
   if (stat.size > MAX_ARCHIVE_BYTES) throw new Error('Archive exceeds maximum allowed size (25 MB).');
 
-  const tempDir = path.join(targetRoot, `.tmp-extract-${Date.now()}`);
+  const quarantineRoot = path.join(process.cwd(), 'tmp', 'quarantine');
+  fs.mkdirSync(quarantineRoot, { recursive: true });
+  const tempDir = path.join(quarantineRoot, `extract-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   fs.mkdirSync(tempDir, { recursive: true });
 
   try {
     const directory = await unzipper.Open.file(zipPath);
     await extractSafeEntries(directory, tempDir);
 
-    const scanIssues = scanExtractedDirectory(tempDir, {
-      archiveType: manifestName === 'theme.json' ? 'theme' : 'plugin'
-    });
+    const scanIssues = scanExtractedDirectory(tempDir, { archiveType });
     if (scanIssues.length) {
       throw new Error(scanIssues.slice(0, 3).join('; '));
     }
@@ -112,6 +113,7 @@ async function extractZipArchive(zipPath, targetRoot, manifestName) {
     }
 
     const finalDir = path.join(targetRoot, manifest.slug);
+    fs.mkdirSync(targetRoot, { recursive: true });
     if (fs.existsSync(finalDir)) {
       const backupDir = path.join(targetRoot, `.backup-${manifest.slug}-${Date.now()}`);
       fs.renameSync(finalDir, backupDir);

@@ -2,9 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { Plugin, PluginSetting, PluginMigration } = require('../../models');
 const pluginLoader = require('../../utils/pluginLoader');
+const pluginInstaller = require('../../utils/pluginInstaller');
 const { resolvePluginSettings, seedPluginDefaults } = require('../../utils/pluginSettings');
-const { extractZipArchive } = require('../../utils/packageArchive');
-const { createActivityLog } = require('../../utils/activityLogHelper');
+const { logPluginAudit, createActivityLog } = require('../../utils/activityLogHelper');
 const {
   enrichPlugin,
   readPluginReadme,
@@ -15,14 +15,7 @@ const {
 } = require('../../utils/pluginAdmin');
 
 function logPluginAction(req, action, details = {}) {
-  return createActivityLog({
-    user_id: req.session?.user?.id || null,
-    action,
-    entity_type: 'plugin',
-    entity_id: details.slug || null,
-    details: JSON.stringify(details),
-    ip_address: req.ip
-  });
+  return logPluginAudit(req, action, details);
 }
 
 async function show(req, res, next) {
@@ -89,13 +82,15 @@ async function index(req, res, next) {
     ]);
     const activationErrors = Object.fromEntries(pluginLoader.getActivationErrors());
     const enriched = plugins.map((plugin) => enrichPlugin(plugin, { activationErrors }));
+    const safeMode = pluginLoader.isSafeMode();
 
     return res.render('admin/plugins/index', {
       title: 'Plugins',
       plugins: enriched,
       stats,
       registeredHooks,
-      activationErrors
+      activationErrors,
+      safeMode
     });
   } catch (error) {
     return next(error);
@@ -177,8 +172,9 @@ async function upload(req, res, next) {
       req.flash('error', 'Choose a plugin .zip archive to upload.');
       return res.redirect('/admin/plugins');
     }
-    const { manifest } = await extractZipArchive(req.file.path, pluginLoader.pluginsRoot, 'plugin.json');
-    pluginLoader.validateManifest(manifest);
+    const overwrite = req.body.overwrite === 'on' || req.body.overwrite === 'true';
+    const { manifest } = await pluginInstaller.installFromZip(req.file.path, { overwrite });
+    pluginLoader.validateManifest(manifest, { pluginPath: path.join(pluginLoader.pluginsRoot, manifest.slug), strict: false });
     const isNew = !(await Plugin.findOne({ where: { slug: manifest.slug } }));
     await pluginLoader.syncInstalledPlugins();
     await pluginLoader.runPluginMigrations(manifest.slug);
@@ -187,16 +183,17 @@ async function upload(req, res, next) {
     }
     if (req.body.activate_after === 'on') {
       try {
-        await pluginLoader.activatePlugin(manifest.slug, req.app);
+        await pluginLoader.activatePlugin(manifest.slug, req.app, req.session?.user);
       } catch (error) {
         req.flash('error', `Installed but activation failed: ${error.message}`);
         return res.redirect('/admin/plugins');
       }
     }
-    await logPluginAction(req, 'plugin_install', { slug: manifest.slug, version: manifest.version, isNew });
+    await logPluginAction(req, 'plugin.installed', { slug: manifest.slug, version: manifest.version, isNew });
     req.flash('success', `Plugin "${manifest.name}" installed successfully.`);
     return res.redirect('/admin/plugins');
   } catch (error) {
+    await logPluginAction(req, 'plugin.error', { slug: req.body.slug, status: 'failed', details: { message: error.message } });
     req.flash('error', error.message || 'Plugin upload failed.');
     return res.redirect('/admin/plugins');
   }
@@ -206,7 +203,7 @@ async function activate(req, res, next) {
   try {
     const slug = req.params.slug;
     await pluginLoader.activatePlugin(slug, req.app);
-    await logPluginAction(req, 'plugin_activate', { slug });
+    await logPluginAction(req, 'plugin.activated', { slug });
     req.flash('success', 'Plugin activated.');
     const redirectTo = req.body.redirect || '/admin/plugins';
     return res.redirect(redirectTo);
@@ -220,7 +217,7 @@ async function deactivate(req, res, next) {
   try {
     const slug = req.params.slug;
     await pluginLoader.deactivatePlugin(slug, req.app);
-    await logPluginAction(req, 'plugin_deactivate', { slug });
+    await logPluginAction(req, 'plugin.deactivated', { slug });
     req.flash('success', 'Plugin deactivated.');
     const redirectTo = req.body.redirect || '/admin/plugins';
     return res.redirect(redirectTo);
@@ -245,7 +242,7 @@ async function uninstall(req, res, next) {
     await PluginSetting.destroy({ where: { plugin_id: plugin.id } });
     await plugin.destroy();
     pluginLoader.removePluginDirectory(plugin.slug);
-    await logPluginAction(req, 'plugin_uninstall', { slug: req.params.slug });
+    await logPluginAction(req, 'plugin.uninstalled', { slug: req.params.slug });
     req.flash('success', 'Plugin removed.');
     return res.redirect('/admin/plugins');
   } catch (error) {
@@ -318,7 +315,7 @@ async function updateSettings(req, res, next) {
     }
 
     if (plugin.active) await pluginLoader.loadActivePlugins(req.app);
-    await logPluginAction(req, 'plugin_settings_update', { slug: plugin.slug });
+    await logPluginAction(req, 'plugin.settings_updated', { slug: plugin.slug });
     req.flash('success', 'Plugin settings saved.');
     return res.redirect(`/admin/plugins/${plugin.slug}/settings`);
   } catch (error) {

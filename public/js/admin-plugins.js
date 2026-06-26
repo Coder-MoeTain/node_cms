@@ -23,7 +23,8 @@
     const items = rows.length ? rows : cards;
     return items.filter((item) => {
       const matchesText = !q || (item.dataset.name || '').includes(q);
-      const matchesStatus = status === 'all' || item.dataset.status === status;
+      let matchesStatus = status === 'all' || item.dataset.status === status;
+      if (status === 'update') matchesStatus = item.dataset.update === 'yes';
       const visible = matchesText && matchesStatus;
       item.classList.toggle('d-none', !visible);
       return visible;

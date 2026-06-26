@@ -15,9 +15,10 @@
     </div>
 
     <div class="upload-dropzone" id="upload">
-      <form method="post" action="/admin/media/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data" data-upload-form>
+      <form method="post" action="/admin/media/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data" data-upload-form data-max-files="<%= mediaUploadMaxFiles %>">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <p class="mb-2"><strong>Drop files to upload</strong> or choose files</p>
+        <p class="np-help-text mb-2">Up to <%= mediaUploadMaxFiles %> files per upload (max <%= uploadMaxSizeMb %> MB each).</p>
         <input class="form-control" type="file" name="files" multiple data-preview-file accept="image/*,video/*,.pdf,.doc,.docx">
         <div class="upload-preview mt-2"></div>
         <div class="progress mt-3 d-none" data-upload-progress role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div></div>

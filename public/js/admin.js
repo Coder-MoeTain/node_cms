@@ -508,11 +508,27 @@ document.querySelectorAll('form').forEach((form) => {
 });
 
 document.querySelectorAll('[data-upload-form]').forEach((form) => {
-  form.addEventListener('submit', () => {
-    const bar = form.querySelector('[data-upload-progress]');
+  form.addEventListener('submit', (event) => {
+    const maxFiles = Number(form.dataset.maxFiles) || 100;
+    const fileInput = form.querySelector('[data-preview-file]');
+    const fileCount = fileInput?.files?.length || 0;
     const status = form.querySelector('[data-upload-status]');
+
+    if (fileCount > maxFiles) {
+      event.preventDefault();
+      if (status) {
+        status.classList.remove('d-none');
+        status.textContent = `Select up to ${maxFiles} files per upload.`;
+      }
+      return;
+    }
+
+    const bar = form.querySelector('[data-upload-progress]');
     if (bar) bar.classList.remove('d-none');
-    if (status) status.textContent = 'Uploading…';
+    if (status) {
+      status.classList.remove('d-none');
+      status.textContent = 'Uploading…';
+    }
   });
 });
 

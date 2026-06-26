@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { Theme, ThemeSetting } = require('../models');
 const { buildPortalConfigBlock } = require('./portalConfig');
+const themeValidator = require('./themeValidator');
+const templateResolver = require('./templateResolver');
 
 const themesRoot = path.join(process.cwd(), 'themes');
 const defaultPublicRoot = path.join(process.cwd(), 'views', 'public');
@@ -39,26 +41,14 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
-function validateManifest(manifest) {
-  for (const key of ['name', 'slug', 'version']) {
-    if (!manifest[key] || typeof manifest[key] !== 'string') throw new Error(`Theme manifest missing ${key}.`);
-  }
-  if (!SLUG_PATTERN.test(manifest.slug)) {
-    throw new Error(`Theme slug "${manifest.slug}" must be lowercase alphanumeric with hyphens.`);
-  }
-  if (manifest.parent && !SLUG_PATTERN.test(manifest.parent)) {
-    throw new Error(`Parent theme slug "${manifest.parent}" is invalid.`);
-  }
-  if (manifest.parent === manifest.slug) {
-    throw new Error('Theme cannot be its own parent.');
-  }
-  if (manifest.templates && !Array.isArray(manifest.templates)) {
-    throw new Error('Theme manifest "templates" must be an array.');
-  }
-  if (manifest.layouts && !Array.isArray(manifest.layouts)) {
-    throw new Error('Theme manifest "layouts" must be an array.');
-  }
-  return manifest;
+function validateManifest(manifest, options = {}) {
+  return themeValidator.validateManifest(manifest, {
+    themePath: options.themePath,
+    themesRoot,
+    strict: options.strict === true,
+    requireTemplates: Boolean(options.requireTemplates),
+    validateScreenshot: Boolean(options.validateScreenshot)
+  });
 }
 
 function discoverThemes() {
@@ -70,7 +60,7 @@ function discoverThemes() {
       const manifestPath = path.join(themePath, 'theme.json');
       if (!fs.existsSync(manifestPath)) return null;
       try {
-        return { path: themePath, manifest: validateManifest(readJson(manifestPath)) };
+        return { path: themePath, manifest: validateManifest(readJson(manifestPath), { themePath, strict: false }) };
       } catch (error) {
         console.warn(`Skipping invalid theme "${entry.name}": ${error.message}`);
         return null;
@@ -187,58 +177,42 @@ async function syncInstalledThemes() {
 async function getActiveThemeManifest() {
   try {
     const activeSetting = await ThemeSetting.findOne({ where: { active: true } });
-    const slug = activeSetting?.theme_name || 'classic-blog';
-    return getThemeBySlug(slug);
+    let slug = activeSetting?.theme_name || templateResolver.DEFAULT_THEME;
+    let theme = getThemeBySlug(slug);
+    if (!theme) {
+      slug = templateResolver.DEFAULT_THEME;
+      theme = getThemeBySlug(slug);
+    }
+    if (theme) {
+      try {
+        validateManifest({ ...theme.manifest }, { themePath: theme.path, themesRoot, strict: false });
+      } catch (error) {
+        console.warn(`Active theme "${slug}" failed validation: ${error.message}. Falling back to ${templateResolver.DEFAULT_THEME}.`);
+        try {
+          await Theme.update({ error_state: 'error', last_error: error.message }, { where: { slug } });
+        } catch {
+          // ignore missing columns
+        }
+        return getThemeBySlug(templateResolver.DEFAULT_THEME);
+      }
+    }
+    return theme;
   } catch {
-    return getThemeBySlug('classic-blog');
+    return getThemeBySlug(templateResolver.DEFAULT_THEME);
   }
 }
 
-function templateExistsInChain(chain, template) {
-  for (const theme of chain) {
-    const candidate = path.join(theme.path, 'templates', `${template}.ejs`);
-    if (fs.existsSync(candidate)) return candidate;
-  }
-  return null;
-}
-
-function partialExistsInChain(chain, partial) {
-  for (const theme of chain) {
-    const candidate = path.join(theme.path, 'partials', `${partial}.ejs`);
-    if (fs.existsSync(candidate)) return candidate;
-  }
-  return null;
-}
-
-function toViewPath(absolutePath) {
-  return path.relative(process.cwd(), absolutePath).replace(/\\/g, '/').replace(/\.ejs$/, '');
-}
-
-async function resolveTemplate(template) {
+async function resolveTemplate(template, context = {}) {
   const normalized = normalizeTemplateName(template);
   const active = await getActiveThemeManifest();
   const chain = active ? resolveThemeChain(active.manifest.slug) : [];
-  const resolved = templateExistsInChain(chain, normalized);
-  if (resolved) return toViewPath(resolved);
-
-  const publicTemplate = path.join(defaultPublicRoot, `${normalized}.ejs`);
-  if (fs.existsSync(publicTemplate)) return `public/${normalized}`;
-  return 'errors/404';
+  return templateResolver.resolveTemplatePath(normalized, context, { chain, themesRoot });
 }
 
-async function resolvePartial(partial) {
+async function resolvePartial(partial, context = {}) {
   const active = await getActiveThemeManifest();
   const chain = active ? resolveThemeChain(active.manifest.slug) : [];
-  const resolved = partialExistsInChain(chain, partial);
-  if (resolved) return toViewPath(resolved);
-
-  const publicPartial = path.join(defaultPublicRoot, 'partials', `${partial}.ejs`);
-  if (fs.existsSync(publicPartial)) return `public/partials/${partial}`;
-
-  const publicRoot = path.join(defaultPublicRoot, `${partial}.ejs`);
-  if (fs.existsSync(publicRoot)) return `public/${partial}`;
-
-  return `public/partials/${partial}`;
+  return templateResolver.resolvePartialPath(partial, { chain });
 }
 
 function getLayoutClasses(themeSetting = {}) {

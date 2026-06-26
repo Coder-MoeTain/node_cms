@@ -43,21 +43,33 @@ async function checkPluginUpdates() {
     slug: plugin.slug,
     name: plugin.name,
     current: plugin.version,
-    latest: plugin.version,
-    available: false
+    latest: plugin.latest_version || plugin.version,
+    available: Boolean(plugin.update_available),
+    updateUrl: plugin.manifest?.updateUrl || null,
+    changelogUrl: plugin.manifest?.changelogUrl || null,
+    lastCheckedAt: plugin.last_checked_at || null
   }));
 }
 
 async function checkThemeUpdates() {
   const { discoverThemes } = require('./themeLoader');
   const themes = discoverThemes();
-  return themes.map((theme) => ({
-    slug: theme.manifest?.slug || theme.slug,
-    name: theme.manifest?.name || theme.slug,
-    current: theme.manifest?.version || '1.0.0',
-    latest: theme.manifest?.version || '1.0.0',
-    available: false
-  }));
+  const rows = await models.Theme.findAll();
+  const rowMap = new Map(rows.map((r) => [r.slug, r]));
+  return themes.map((theme) => {
+    const slug = theme.manifest?.slug;
+    const row = rowMap.get(slug);
+    return {
+      slug,
+      name: theme.manifest?.name || slug,
+      current: theme.manifest?.version || '1.0.0',
+      latest: row?.latest_version || theme.manifest?.version || '1.0.0',
+      available: Boolean(row?.update_available),
+      updateUrl: theme.manifest?.updateUrl || null,
+      changelogUrl: theme.manifest?.changelogUrl || null,
+      lastCheckedAt: row?.last_checked_at || null
+    };
+  });
 }
 
 async function runUpdateCheck() {

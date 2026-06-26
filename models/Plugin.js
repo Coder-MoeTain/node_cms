@@ -9,5 +9,10 @@ module.exports = (sequelize) =>
     author: DataTypes.STRING(160),
     active: { type: DataTypes.BOOLEAN, defaultValue: false },
     installed: { type: DataTypes.BOOLEAN, defaultValue: true },
-    manifest: DataTypes.JSON
+    manifest: DataTypes.JSON,
+    error_state: { type: DataTypes.ENUM('none', 'error'), defaultValue: 'none' },
+    last_error: DataTypes.TEXT,
+    latest_version: DataTypes.STRING(40),
+    update_available: { type: DataTypes.BOOLEAN, defaultValue: false },
+    last_checked_at: DataTypes.DATE
   }, { tableName: 'plugins' });

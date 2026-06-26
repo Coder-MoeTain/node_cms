@@ -2,7 +2,9 @@ const { Plugin, PluginSetting } = require('../models');
 
 function defaultsFromManifest(manifest) {
   const map = {};
-  for (const field of manifest?.settings || []) {
+  const fields = manifest?._normalizedSettings || manifest?.settings || [];
+  const list = Array.isArray(fields) ? fields : Object.entries(fields).map(([key, field]) => ({ key, ...field }));
+  for (const field of list) {
     if (!field.key) continue;
     if (field.default !== undefined) map[field.key] = String(field.default);
     else if (field.type === 'checkbox') map[field.key] = 'false';
@@ -46,8 +48,9 @@ function settingValue(settings, key, fallback = '') {
 }
 
 async function seedPluginDefaults(pluginRow, manifest) {
-  const fields = manifest?.settings || [];
-  for (const field of fields) {
+  const fields = manifest?._normalizedSettings || manifest?.settings || [];
+  const list = Array.isArray(fields) ? fields : Object.entries(fields || {}).map(([key, field]) => ({ key, ...field }));
+  for (const field of list) {
     if (!field.key) continue;
     const defaultValue = field.default !== undefined
       ? String(field.default)
