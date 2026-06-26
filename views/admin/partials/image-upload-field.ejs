@@ -3,19 +3,27 @@
   const uploadField = typeof fileName !== 'undefined' ? fileName : 'image_file';
   const currentValue = typeof value !== 'undefined' ? value : '';
   const fieldLabel = typeof label !== 'undefined' ? label : 'Image';
+  const imageCropAspect = (typeof cropAspect !== 'undefined' && cropAspect) ? cropAspect : '16/9';
+  const useCrop = typeof enableCrop !== 'undefined' && enableCrop;
 %>
-<div class="image-upload-field mb-3" data-image-upload>
+<div class="image-upload-field mb-3" data-image-upload<%= useCrop ? ` data-image-crop="${imageCropAspect}"` : '' %>>
   <label class="form-label"><%= fieldLabel %></label>
   <input type="hidden" name="<%= pathField %>" value="<%= currentValue %>" data-image-path>
   <input type="hidden" name="remove_<%= pathField %>" value="0" data-image-remove-flag>
   <input class="form-control mb-2" type="file" name="<%= uploadField %>" accept="image/*" data-image-file>
-  <div class="d-flex flex-wrap gap-2 mb-2">
+  <div class="d-flex flex-wrap gap-2 mb-2 image-upload-actions">
     <button class="np-btn np-btn-secondary np-btn-small" type="button" data-open-media-picker="<%= pathField %>">Choose from Library</button>
+    <% if (useCrop && currentValue) { %>
+      <button class="np-btn np-btn-secondary np-btn-small" type="button" data-crop-existing-image>Crop</button>
+    <% } %>
     <% if (currentValue) { %><button class="np-btn np-btn-link np-btn-small text-danger" type="button" data-remove-image>Remove</button><% } %>
   </div>
   <% if (currentValue) { %>
     <img class="settings-image-preview" data-image-preview data-media-preview="<%= pathField %>" src="<%= currentValue %>" alt="<%= fieldLabel %>">
   <% } else { %>
     <div class="settings-empty-preview" data-image-preview data-media-preview="<%= pathField %>">No image selected</div>
+  <% } %>
+  <% if (useCrop) { %>
+    <p class="np-help-text mb-0 mt-2">Uploads open the crop tool (16:9 hero ratio).</p>
   <% } %>
 </div>

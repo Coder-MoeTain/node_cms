@@ -674,6 +674,19 @@
   object-fit: contain;
 }
 
+.slider-crop-stage {
+  background: #111827;
+  max-height: min(70vh, 520px);
+  min-height: 280px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.slider-crop-stage img {
+  display: block;
+  max-width: 100%;
+}
+
 .theme-preview {
   background: linear-gradient(135deg, var(--np-primary), #135e96);
   height: 120px;

@@ -49,6 +49,7 @@ applySecurityMiddleware(app);
 app.use('/vendor/tinymce', express.static(path.join(__dirname, 'node_modules', 'tinymce')));
 app.use('/vendor/bootstrap', express.static(path.join(__dirname, 'node_modules', 'bootstrap', 'dist')));
 app.use('/vendor/bootstrap-icons', express.static(path.join(__dirname, 'node_modules', 'bootstrap-icons')));
+app.use('/vendor/cropperjs', express.static(path.join(__dirname, 'node_modules', 'cropperjs', 'dist')));
 app.use('/themes', express.static(path.join(__dirname, 'themes')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));

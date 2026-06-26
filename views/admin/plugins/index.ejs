@@ -4,256 +4,308 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div id="np-plugins-admin">
-      <div class="np-page-header np-page-header-split mb-4">
-        <div>
-          <h1>Plugins</h1>
-          <p class="np-help-text mb-0">Install, activate, and manage extensions — WordPress-style plugin management for NodePress.</p>
+    <div id="np-plugins-admin" class="np-plugins-page">
+      <header class="np-plugins-hero mb-4">
+        <div class="np-plugins-hero-main">
+          <div class="np-plugins-hero-icon" aria-hidden="true"><i class="bi bi-puzzle"></i></div>
+          <div>
+            <h1 class="np-plugins-hero-title">Plugins</h1>
+            <p class="np-plugins-hero-sub mb-0">Extend NodePress with hooks, widgets, and integrations — install, activate, and manage from one place.</p>
+          </div>
         </div>
-        <div class="d-flex flex-wrap gap-2">
+        <div class="np-plugins-hero-actions">
           <form method="post" action="/admin/plugins/sync" class="d-inline">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button class="np-btn np-btn-secondary" type="submit"><i class="bi bi-arrow-clockwise"></i> Sync from disk</button>
           </form>
-          <div class="np-plugin-view-toggle btn-group" role="group" aria-label="View mode">
-            <button type="button" class="np-btn np-btn-secondary active" data-plugin-view="list" title="List view"><i class="bi bi-list-ul"></i></button>
-            <button type="button" class="np-btn np-btn-secondary" data-plugin-view="grid" title="Grid view"><i class="bi bi-grid-3x3-gap"></i></button>
+          <button type="button" class="np-btn np-btn-primary" data-plugin-scroll-install><i class="bi bi-plus-lg"></i> Add plugin</button>
+        </div>
+      </header>
+
+      <div class="np-plugins-stats row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="np-plugin-stat np-plugin-stat--total">
+            <div class="np-plugin-stat-icon"><i class="bi bi-plug" aria-hidden="true"></i></div>
+            <div class="np-plugin-stat-body">
+              <strong><%= stats.total %></strong>
+              <span>Installed</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="np-plugin-stat np-plugin-stat--active">
+            <div class="np-plugin-stat-icon"><i class="bi bi-lightning-charge" aria-hidden="true"></i></div>
+            <div class="np-plugin-stat-body">
+              <strong><%= stats.active %></strong>
+              <span>Active</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="np-plugin-stat np-plugin-stat--inactive">
+            <div class="np-plugin-stat-icon"><i class="bi bi-pause-circle" aria-hidden="true"></i></div>
+            <div class="np-plugin-stat-body">
+              <strong><%= stats.inactive %></strong>
+              <span>Inactive</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="np-plugin-stat np-plugin-stat--hooks">
+            <div class="np-plugin-stat-icon"><i class="bi bi-diagram-3" aria-hidden="true"></i></div>
+            <div class="np-plugin-stat-body">
+              <strong><%= stats.hooks %></strong>
+              <span>Runtime hooks</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-          <div class="np-plugin-stat">
-            <i class="bi bi-plug" aria-hidden="true"></i>
-            <div><strong><%= stats.total %></strong><span>Installed</span></div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="np-plugin-stat np-plugin-stat-success">
-            <i class="bi bi-check-circle" aria-hidden="true"></i>
-            <div><strong><%= stats.active %></strong><span>Active</span></div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="np-plugin-stat">
-            <i class="bi bi-pause-circle" aria-hidden="true"></i>
-            <div><strong><%= stats.inactive %></strong><span>Inactive</span></div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="np-plugin-stat">
-            <i class="bi bi-diagram-3" aria-hidden="true"></i>
-            <div><strong><%= stats.hooks %></strong><span>Runtime hooks</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="row g-3 mb-4">
+      <div class="row g-3 mb-4" id="np-plugin-install">
         <div class="col-lg-7">
-          <div class="np-widget h-100">
-            <div class="np-widget-header"><span><i class="bi bi-upload me-1"></i> Install plugin</span></div>
-            <div class="np-widget-body">
+          <section class="np-plugins-panel h-100">
+            <div class="np-plugins-panel-head">
+              <span><i class="bi bi-cloud-arrow-up"></i> Install plugin</span>
+            </div>
+            <div class="np-plugins-panel-body">
               <form method="post" action="/admin/plugins/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <div class="np-plugin-upload-zone" data-plugin-upload-zone>
-                  <i class="bi bi-file-earmark-zip" aria-hidden="true"></i>
-                  <p class="mb-1"><strong>Drop a plugin .zip here</strong> or choose a file</p>
-                  <p class="np-help-text mb-2">Archive must include <code>plugin.json</code> at the root or in one folder.</p>
-                  <input class="form-control" id="plugin-archive" type="file" name="archive" accept=".zip" required>
-                  <p class="np-help-text mt-2 mb-0" data-plugin-upload-name>No file chosen</p>
+                <div class="np-plugin-upload-zone" data-plugin-upload-zone role="button" tabindex="0" aria-label="Upload plugin zip file">
+                  <div class="np-plugin-upload-visual">
+                    <span class="np-plugin-upload-badge"><i class="bi bi-file-earmark-zip"></i></span>
+                    <p class="np-plugin-upload-title mb-1">Drop your <code>.zip</code> here</p>
+                    <p class="np-plugin-upload-hint mb-3">or click to browse — must include <code>plugin.json</code> at root or in one folder.</p>
+                    <span class="np-btn np-btn-secondary np-btn-small"><i class="bi bi-folder2-open"></i> Choose file</span>
+                  </div>
+                  <input class="np-plugin-upload-input" id="plugin-archive" type="file" name="archive" accept=".zip" required>
+                  <p class="np-plugin-upload-filename mb-0" data-plugin-upload-name>No file selected</p>
                 </div>
-                <div class="d-flex flex-wrap gap-3 align-items-center mt-3">
-                  <label class="form-check mb-0">
-                    <input class="form-check-input" type="checkbox" name="activate_after" value="on">
-                    <span class="form-check-label">Activate after install</span>
+                <div class="np-plugin-upload-footer">
+                  <label class="np-plugin-toggle mb-0">
+                    <input type="checkbox" name="activate_after" value="on">
+                    <span class="np-plugin-toggle-track" aria-hidden="true"></span>
+                    <span class="np-plugin-toggle-label">Activate after install</span>
                   </label>
-                  <button class="np-btn np-btn-primary ms-auto" type="submit"><i class="bi bi-upload"></i> Install now</button>
+                  <button class="np-btn np-btn-primary" type="submit"><i class="bi bi-download"></i> Install now</button>
                 </div>
               </form>
             </div>
-          </div>
+          </section>
         </div>
         <div class="col-lg-5">
-          <div class="np-widget h-100">
-            <div class="np-widget-header"><span><i class="bi bi-info-circle me-1"></i> Plugin tips</span></div>
-            <div class="np-widget-body">
+          <section class="np-plugins-panel np-plugins-panel--tips h-100">
+            <div class="np-plugins-panel-head">
+              <span><i class="bi bi-stars"></i> Quick tips</span>
+            </div>
+            <div class="np-plugins-panel-body">
               <ul class="np-plugin-tips mb-0">
-                <li>Upload a zip or place folders under <code>plugins/</code>, then click <strong>Sync from disk</strong>.</li>
-                <li>Deactivate a plugin before deleting it from the server.</li>
-                <li>Use bulk actions to activate or deactivate several plugins at once.</li>
-                <li>Runtime hooks: <span class="text-muted"><%= (registeredHooks || []).slice(0, 5).join(', ') %><% if ((registeredHooks || []).length > 5) { %> +<%= registeredHooks.length - 5 %> more<% } %></span></li>
+                <li><i class="bi bi-hdd-stack"></i><span>Upload a zip or add folders under <code>plugins/</code>, then <strong>Sync from disk</strong>.</span></li>
+                <li><i class="bi bi-shield-check"></i><span>Deactivate a plugin before removing it from the server.</span></li>
+                <li><i class="bi bi-check2-square"></i><span>Use bulk actions to activate or deactivate several plugins at once.</span></li>
+                <li><i class="bi bi-link-45deg"></i><span>Hooks: <em><%= (registeredHooks || []).slice(0, 4).join(', ') %><% if ((registeredHooks || []).length > 4) { %> +<%= registeredHooks.length - 4 %> more<% } %></em></span></li>
               </ul>
             </div>
-          </div>
+          </section>
         </div>
       </div>
 
       <% if (typeof safeMode !== 'undefined' && safeMode) { %>
-        <div class="alert alert-warning mb-3"><i class="bi bi-shield-exclamation"></i> <strong>Plugin safe mode</strong> is enabled (<code>PLUGIN_SAFE_MODE</code>). Active plugins are not loaded.</div>
+        <div class="np-plugins-alert np-plugins-alert--warn mb-3" role="alert">
+          <i class="bi bi-shield-exclamation"></i>
+          <div><strong>Plugin safe mode</strong> is enabled (<code>PLUGIN_SAFE_MODE</code>). Active plugins are not loaded at runtime.</div>
+        </div>
       <% } %>
 
-      <div class="np-plugin-toolbar mb-3">
-        <div class="row g-2 align-items-end">
-          <div class="col-md-5">
-            <label class="form-label" for="plugin-search">Search plugins</label>
-            <input class="form-control" id="plugin-search" type="search" placeholder="Name, slug, author, description…" data-plugin-filter>
+      <section class="np-plugins-catalog" aria-labelledby="plugins-catalog-heading">
+        <div class="np-plugins-toolbar">
+          <div class="np-plugins-toolbar-search">
+            <label class="visually-hidden" for="plugin-search">Search plugins</label>
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input class="form-control" id="plugin-search" type="search" placeholder="Search name, slug, author…" data-plugin-filter autocomplete="off">
           </div>
-          <div class="col-md-3">
-            <label class="form-label" for="plugin-status-filter">Status</label>
-            <select class="form-select" id="plugin-status-filter" data-plugin-status>
-              <option value="all">All plugins</option>
-              <option value="active">Active only</option>
-              <option value="inactive">Inactive only</option>
-              <option value="error">Error state</option>
-              <option value="update">Update available</option>
-            </select>
+          <div class="np-plugins-toolbar-filters" role="group" aria-label="Filter by status">
+            <button type="button" class="np-plugin-chip is-active" data-plugin-chip data-status="all">All</button>
+            <button type="button" class="np-plugin-chip" data-plugin-chip data-status="active">Active</button>
+            <button type="button" class="np-plugin-chip" data-plugin-chip data-status="inactive">Inactive</button>
+            <button type="button" class="np-plugin-chip" data-plugin-chip data-status="update">Updates</button>
+            <button type="button" class="np-plugin-chip" data-plugin-chip data-status="error">Errors</button>
           </div>
-          <div class="col-md-4">
-            <div class="np-help-text pt-4"><span data-plugin-visible-count><%= plugins.length %></span> of <%= plugins.length %> shown</div>
+          <div class="np-plugins-toolbar-meta">
+            <span class="np-plugins-count" data-plugin-visible-count><%= plugins.length %></span>
+            <span class="np-plugins-count-label">of <%= plugins.length %> shown</span>
+            <div class="np-plugin-view-toggle" role="group" aria-label="View mode">
+              <button type="button" class="np-plugin-view-btn active" data-plugin-view="list" title="List view"><i class="bi bi-list-ul"></i></button>
+              <button type="button" class="np-plugin-view-btn" data-plugin-view="grid" title="Grid view"><i class="bi bi-grid-3x3-gap"></i></button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div class="np-plugin-bulk-bar" data-plugin-bulk-bar>
-        <form method="post" action="/admin/plugins/bulk" data-plugin-bulk-form class="d-flex flex-wrap gap-2 align-items-center">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <span><strong data-plugin-selected-count>0</strong> selected</span>
-          <select class="form-select form-select-sm" name="action" data-plugin-bulk-action style="max-width: 180px;">
-            <option value="">Bulk actions</option>
-            <option value="activate">Activate</option>
-            <option value="deactivate">Deactivate</option>
-            <option value="delete">Delete</option>
+          <select class="visually-hidden" id="plugin-status-filter" data-plugin-status aria-hidden="true" tabindex="-1">
+            <option value="all">All plugins</option>
+            <option value="active">Active only</option>
+            <option value="inactive">Inactive only</option>
+            <option value="error">Error state</option>
+            <option value="update">Update available</option>
           </select>
-          <button class="np-btn np-btn-small np-btn-primary" type="submit">Apply</button>
-        </form>
-      </div>
+        </div>
 
-      <div data-plugin-list-view>
-        <% if (plugins.length) { %>
-          <div class="np-plugin-table-wrap">
-            <table class="np-plugin-table">
-              <thead>
-                <tr>
-                  <th class="np-plugin-col-check"><input type="checkbox" data-plugin-select-all aria-label="Select all plugins"></th>
-                  <th>Plugin</th>
-                  <th>Description</th>
-                  <th>Version</th>
-                  <th>Status</th>
-                  <th class="text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% plugins.forEach(function(plugin) { %>
-                  <tr data-plugin-row data-name="<%= (plugin.name + ' ' + plugin.slug + ' ' + (plugin.author || '') + ' ' + (plugin.description || '')).toLowerCase() %>" data-status="<%= plugin.hasActivationError ? 'error' : (plugin.active ? 'active' : 'inactive') %>" data-update="<%= plugin.update_available ? 'yes' : 'no' %>">
-                    <td><input type="checkbox" data-plugin-checkbox value="<%= plugin.slug %>" aria-label="Select <%= plugin.name %>"></td>
-                    <td>
-                      <div class="np-plugin-name-cell">
-                        <span class="np-plugin-icon"><i class="bi <%= plugin.icon %>"></i></span>
-                        <div>
-                          <a href="/admin/plugins/<%= plugin.slug %>" class="np-plugin-title"><%= plugin.name %></a>
-                          <div class="np-help-text"><code><%= plugin.slug %></code> · <%= plugin.author || 'Unknown' %></div>
-                          <% if (plugin.hasActivationError) { %>
-                            <div class="np-plugin-inline-error"><i class="bi bi-exclamation-triangle"></i> <%= plugin.activationError %></div>
+        <div class="np-plugin-bulk-bar" data-plugin-bulk-bar>
+          <form method="post" action="/admin/plugins/bulk" data-plugin-bulk-form class="np-plugin-bulk-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <span class="np-plugin-bulk-count"><strong data-plugin-selected-count>0</strong> selected</span>
+            <select class="form-select form-select-sm" name="action" data-plugin-bulk-action>
+              <option value="">Bulk actions</option>
+              <option value="activate">Activate</option>
+              <option value="deactivate">Deactivate</option>
+              <option value="delete">Delete</option>
+            </select>
+            <button class="np-btn np-btn-small np-btn-primary" type="submit">Apply</button>
+          </form>
+        </div>
+
+        <h2 id="plugins-catalog-heading" class="visually-hidden">Installed plugins</h2>
+
+        <div data-plugin-list-view>
+          <% if (plugins.length) { %>
+            <div class="np-plugin-table-wrap">
+              <table class="np-plugin-table">
+                <thead>
+                  <tr>
+                    <th class="np-plugin-col-check"><input type="checkbox" data-plugin-select-all aria-label="Select all plugins"></th>
+                    <th>Plugin</th>
+                    <th class="np-plugin-col-desc">Description</th>
+                    <th>Version</th>
+                    <th>Status</th>
+                    <th class="np-plugin-col-actions text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% plugins.forEach(function(plugin) { %>
+                    <tr class="np-plugin-row" data-plugin-row data-name="<%= (plugin.name + ' ' + plugin.slug + ' ' + (plugin.author || '') + ' ' + (plugin.description || '')).toLowerCase() %>" data-status="<%= plugin.hasActivationError ? 'error' : (plugin.active ? 'active' : 'inactive') %>" data-update="<%= plugin.update_available ? 'yes' : 'no' %>">
+                      <td class="np-plugin-col-check"><input type="checkbox" data-plugin-checkbox value="<%= plugin.slug %>" aria-label="Select <%= plugin.name %>"></td>
+                      <td>
+                        <div class="np-plugin-name-cell">
+                          <span class="np-plugin-icon np-plugin-icon--<%= plugin.active ? 'active' : 'inactive' %>"><i class="bi <%= plugin.icon %>"></i></span>
+                          <div class="np-plugin-name-meta">
+                            <a href="/admin/plugins/<%= plugin.slug %>" class="np-plugin-title"><%= plugin.name %></a>
+                            <div class="np-plugin-slug-line"><code><%= plugin.slug %></code><span class="np-plugin-author"><%= plugin.author || 'Unknown' %></span></div>
+                            <% if (plugin.hasActivationError) { %>
+                              <div class="np-plugin-inline-error"><i class="bi bi-exclamation-triangle-fill"></i> <%= plugin.activationError %></div>
+                            <% } %>
+                            <% if (plugin.pendingMigrationCount) { %>
+                              <div class="np-plugin-inline-warn"><i class="bi bi-database-fill"></i> <%= plugin.pendingMigrationCount %> pending migration(s)</div>
+                            <% } %>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="np-plugin-desc-cell"><%= plugin.description || 'No description provided.' %></td>
+                      <td><span class="np-plugin-version">v<%= plugin.version %></span></td>
+                      <td>
+                        <div class="np-plugin-status-stack">
+                          <span class="np-status-pill np-status-pill--<%= plugin.hasActivationError ? 'error' : (plugin.active ? 'active' : 'inactive') %>">
+                            <%= plugin.hasActivationError ? 'Error' : (plugin.active ? 'Active' : 'Inactive') %>
+                          </span>
+                          <% if (plugin.update_available) { %><span class="np-status-pill np-status-pill--update">Update</span><% } %>
+                        </div>
+                      </td>
+                      <td class="np-plugin-col-actions">
+                        <div class="np-plugin-row-actions">
+                          <% if (plugin.active) { %>
+                            <form method="post" action="/admin/plugins/<%= plugin.slug %>/deactivate" class="d-inline">
+                              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                              <button class="np-btn np-btn-small np-btn-ghost" type="submit">Deactivate</button>
+                            </form>
+                          <% } else { %>
+                            <form method="post" action="/admin/plugins/<%= plugin.slug %>/activate" class="d-inline">
+                              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                              <button class="np-btn np-btn-small np-btn-primary" type="submit">Activate</button>
+                            </form>
                           <% } %>
-                          <% if (plugin.pendingMigrationCount) { %>
-                            <div class="np-plugin-inline-warn"><i class="bi bi-database"></i> <%= plugin.pendingMigrationCount %> pending migration(s)</div>
+                          <a class="np-btn np-btn-small np-btn-ghost" href="/admin/plugins/<%= plugin.slug %>" title="Details"><i class="bi bi-info-circle"></i></a>
+                          <% if (plugin.hasSettings) { %>
+                            <a class="np-btn np-btn-small np-btn-ghost" href="/admin/plugins/<%= plugin.slug %>/settings" title="Settings"><i class="bi bi-gear"></i></a>
+                          <% } %>
+                          <% if (!plugin.active) { %>
+                            <form method="post" action="/admin/plugins/<%= plugin.slug %>/uninstall" class="d-inline" data-confirm="Remove <%= plugin.name %> from disk?">
+                              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                              <button class="np-btn np-btn-small np-btn-ghost np-btn-ghost-danger" type="submit" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
                           <% } %>
                         </div>
-                      </div>
-                    </td>
-                    <td class="np-plugin-desc-cell"><%= plugin.description || 'No description provided.' %></td>
-                    <td>v<%= plugin.version %></td>
-                    <td>
-                      <span class="np-badge np-badge-<%= plugin.hasActivationError ? 'danger' : (plugin.active ? 'success' : 'secondary') %>"><%= plugin.hasActivationError ? 'Error' : (plugin.active ? 'Active' : 'Inactive') %></span>
-                      <% if (plugin.update_available) { %><span class="np-badge np-badge-info ms-1">Update</span><% } %>
-                    </td>
-                    <td class="text-end">
-                      <div class="np-plugin-row-actions">
-                        <% if (plugin.active) { %>
-                          <form method="post" action="/admin/plugins/<%= plugin.slug %>/deactivate" class="d-inline">
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                            <button class="np-btn np-btn-small np-btn-secondary" type="submit">Deactivate</button>
-                          </form>
-                        <% } else { %>
-                          <form method="post" action="/admin/plugins/<%= plugin.slug %>/activate" class="d-inline">
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                            <button class="np-btn np-btn-small np-btn-primary" type="submit">Activate</button>
-                          </form>
-                        <% } %>
-                        <a class="np-btn np-btn-small np-btn-secondary" href="/admin/plugins/<%= plugin.slug %>">Details</a>
-                        <% if (plugin.hasSettings) { %>
-                          <a class="np-btn np-btn-small np-btn-secondary" href="/admin/plugins/<%= plugin.slug %>/settings">Settings</a>
-                        <% } %>
-                        <% if (!plugin.active) { %>
-                          <form method="post" action="/admin/plugins/<%= plugin.slug %>/uninstall" class="d-inline" data-confirm="Remove <%= plugin.name %> from disk?">
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                            <button class="np-btn np-btn-small np-btn-danger" type="submit" title="Delete"><i class="bi bi-trash"></i></button>
-                          </form>
-                        <% } %>
-                      </div>
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
-        <% } else { %>
-          <div class="empty-state"><i class="bi bi-plug d-block"></i><strong>No plugins installed</strong><p class="mb-0">Upload a plugin zip or add one under <code>plugins/</code>, then sync.</p></div>
-        <% } %>
-      </div>
-
-      <div class="d-none" data-plugin-grid-view>
-        <div class="row g-3" id="plugin-grid">
-          <% plugins.forEach(function(plugin) { %>
-            <div class="col-md-6 col-xl-4" data-plugin-card data-name="<%= (plugin.name + ' ' + plugin.slug + ' ' + (plugin.author || '') + ' ' + (plugin.description || '')).toLowerCase() %>" data-status="<%= plugin.active ? 'active' : 'inactive' %>">
-              <article class="np-plugin-card h-100">
-                <div class="np-plugin-card-head">
-                  <label class="np-plugin-card-check">
-                    <input type="checkbox" data-plugin-checkbox value="<%= plugin.slug %>" aria-label="Select <%= plugin.name %>">
-                  </label>
-                  <span class="np-plugin-icon np-plugin-icon-lg"><i class="bi <%= plugin.icon %>"></i></span>
-                  <div class="flex-grow-1">
-                    <a href="/admin/plugins/<%= plugin.slug %>" class="np-plugin-title"><%= plugin.name %></a>
-                    <div class="np-help-text">v<%= plugin.version %> · <%= plugin.author || 'Unknown' %></div>
-                  </div>
-                  <span class="np-badge np-badge-<%= plugin.active ? 'success' : 'secondary' %>"><%= plugin.active ? 'Active' : 'Inactive' %></span>
-                </div>
-                <p class="np-plugin-card-desc"><%= plugin.description || 'No description provided.' %></p>
-                <div class="np-plugin-card-meta">
-                  <code><%= plugin.slug %></code>
-                  <% if (plugin.settingsCount) { %><span><i class="bi bi-gear"></i> <%= plugin.settingsCount %> settings</span><% } %>
-                  <% if (plugin.declaredHooksCount) { %><span><i class="bi bi-link-45deg"></i> <%= plugin.declaredHooksCount %> hooks</span><% } %>
-                </div>
-                <% if (plugin.hasActivationError) { %>
-                  <div class="alert alert-warning py-2 px-3 small mb-0"><%= plugin.activationError %></div>
-                <% } %>
-                <div class="np-plugin-card-actions">
-                  <% if (plugin.active) { %>
-                    <form method="post" action="/admin/plugins/<%= plugin.slug %>/deactivate">
-                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                      <button class="np-btn np-btn-small np-btn-secondary" type="submit">Deactivate</button>
-                    </form>
-                  <% } else { %>
-                    <form method="post" action="/admin/plugins/<%= plugin.slug %>/activate">
-                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                      <button class="np-btn np-btn-small np-btn-primary" type="submit">Activate</button>
-                    </form>
-                    <form method="post" action="/admin/plugins/<%= plugin.slug %>/uninstall" data-confirm="Remove this plugin from disk?">
-                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                      <button class="np-btn np-btn-small np-btn-danger" type="submit">Delete</button>
-                    </form>
-                  <% } %>
-                  <a class="np-btn np-btn-small np-btn-secondary" href="/admin/plugins/<%= plugin.slug %>">Details</a>
-                  <% if (plugin.hasSettings) { %>
-                    <a class="np-btn np-btn-small np-btn-secondary" href="/admin/plugins/<%= plugin.slug %>/settings">Settings</a>
-                  <% } %>
-                </div>
-              </article>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
             </div>
-          <% }) %>
+          <% } else { %>
+            <div class="np-plugins-empty">
+              <div class="np-plugins-empty-icon"><i class="bi bi-plugin"></i></div>
+              <h3>No plugins installed yet</h3>
+              <p class="mb-3">Upload a plugin zip or add a folder under <code>plugins/</code>, then sync from disk.</p>
+              <button type="button" class="np-btn np-btn-primary" data-plugin-scroll-install><i class="bi bi-plus-lg"></i> Add your first plugin</button>
+            </div>
+          <% } %>
         </div>
-      </div>
+
+        <div class="d-none" data-plugin-grid-view>
+          <div class="row g-3" id="plugin-grid">
+            <% plugins.forEach(function(plugin) { %>
+              <div class="col-md-6 col-xl-4" data-plugin-card data-name="<%= (plugin.name + ' ' + plugin.slug + ' ' + (plugin.author || '') + ' ' + (plugin.description || '')).toLowerCase() %>" data-status="<%= plugin.hasActivationError ? 'error' : (plugin.active ? 'active' : 'inactive') %>" data-update="<%= plugin.update_available ? 'yes' : 'no' %>">
+                <article class="np-plugin-card np-plugin-card--<%= plugin.active ? 'active' : 'inactive' %> h-100">
+                  <div class="np-plugin-card-accent" aria-hidden="true"></div>
+                  <div class="np-plugin-card-head">
+                    <label class="np-plugin-card-check">
+                      <input type="checkbox" data-plugin-checkbox value="<%= plugin.slug %>" aria-label="Select <%= plugin.name %>">
+                    </label>
+                    <span class="np-plugin-icon np-plugin-icon-lg np-plugin-icon--<%= plugin.active ? 'active' : 'inactive' %>"><i class="bi <%= plugin.icon %>"></i></span>
+                    <div class="np-plugin-card-title-wrap">
+                      <a href="/admin/plugins/<%= plugin.slug %>" class="np-plugin-title"><%= plugin.name %></a>
+                      <div class="np-plugin-slug-line"><code><%= plugin.slug %></code></div>
+                    </div>
+                    <span class="np-status-pill np-status-pill--<%= plugin.active ? 'active' : 'inactive' %>"><%= plugin.active ? 'Active' : 'Inactive' %></span>
+                  </div>
+                  <p class="np-plugin-card-desc"><%= plugin.description || 'No description provided.' %></p>
+                  <div class="np-plugin-card-meta">
+                    <span><i class="bi bi-tag"></i> v<%= plugin.version %></span>
+                    <span><i class="bi bi-person"></i> <%= plugin.author || 'Unknown' %></span>
+                    <% if (plugin.settingsCount) { %><span><i class="bi bi-gear"></i> <%= plugin.settingsCount %></span><% } %>
+                    <% if (plugin.declaredHooksCount) { %><span><i class="bi bi-link-45deg"></i> <%= plugin.declaredHooksCount %></span><% } %>
+                  </div>
+                  <% if (plugin.hasActivationError) { %>
+                    <div class="np-plugins-alert np-plugins-alert--warn py-2 px-3 small mb-0"><%= plugin.activationError %></div>
+                  <% } %>
+                  <div class="np-plugin-card-actions">
+                    <% if (plugin.active) { %>
+                      <form method="post" action="/admin/plugins/<%= plugin.slug %>/deactivate">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="np-btn np-btn-small np-btn-ghost" type="submit">Deactivate</button>
+                      </form>
+                    <% } else { %>
+                      <form method="post" action="/admin/plugins/<%= plugin.slug %>/activate">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="np-btn np-btn-small np-btn-primary" type="submit">Activate</button>
+                      </form>
+                      <form method="post" action="/admin/plugins/<%= plugin.slug %>/uninstall" data-confirm="Remove this plugin from disk?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="np-btn np-btn-small np-btn-ghost np-btn-ghost-danger" type="submit">Delete</button>
+                      </form>
+                    <% } %>
+                    <a class="np-btn np-btn-small np-btn-ghost" href="/admin/plugins/<%= plugin.slug %>">Details</a>
+                    <% if (plugin.hasSettings) { %>
+                      <a class="np-btn np-btn-small np-btn-ghost" href="/admin/plugins/<%= plugin.slug %>/settings">Settings</a>
+                    <% } %>
+                  </div>
+                </article>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+
+        <div class="np-plugins-empty np-plugins-empty--filter d-none" data-plugin-no-results>
+          <div class="np-plugins-empty-icon"><i class="bi bi-search"></i></div>
+          <h3>No plugins match your filters</h3>
+          <p class="mb-0">Try a different search term or clear the status filter.</p>
+        </div>
+      </section>
     </div>
   </main>
 </div>
