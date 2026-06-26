@@ -285,7 +285,8 @@ function getActionForRiskScore(score, settings, isAdminRouteFlag, matches = []) 
   const maxAdmin = Number(settings.max_risk_score_admin ?? Math.max(20, maxPublic - 10));
   const threshold = isAdminRouteFlag ? maxAdmin : maxPublic;
 
-  const hasBlockRule = matches.some((match) => match.rule.action === 'block');
+  const blockMatches = matches.filter((match) => match.rule.action === 'block');
+  const hasBlockRule = blockMatches.length > 0;
   const hasRateLimitRule = matches.some((match) => match.rule.action === 'rate_limit');
   const hasTempBlockRule = matches.some((match) => match.rule.action === 'temporary_block');
 
@@ -295,6 +296,10 @@ function getActionForRiskScore(score, settings, isAdminRouteFlag, matches = []) 
   if (hasTempBlockRule && score >= threshold) return 'temporary_block';
   if (hasRateLimitRule && score >= Math.max(10, threshold - 15)) return 'rate_limit';
   if (hasBlockRule && score >= threshold) return 'block';
+  if (hasBlockRule && blockMatches.some((match) => {
+    const ruleFloor = Number(match.rule.score || getSeverityWeight(match.rule.severity));
+    return score >= ruleFloor;
+  })) return 'block';
   if (score >= threshold && matches.some((match) => ['block', 'rate_limit', 'temporary_block'].includes(match.rule.action))) {
     return matches[0].rule.action;
   }

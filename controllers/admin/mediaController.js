@@ -179,30 +179,56 @@ async function regenerateThumbnails(req, res, next) {
   }
 }
 
+async function listGalleryItems(req) {
+  const { Op } = require('sequelize');
+  const mediaType = req.query.type || 'image';
+  const search = String(req.query.q || req.query.search || '').trim();
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const requestedLimit = parseInt(req.query.limit, 10);
+  const limit = Math.min(
+    Math.max(Number.isFinite(requestedLimit) ? requestedLimit : appConfig.mediaGalleryPickerLimit, 1),
+    500
+  );
+  const offset = (page - 1) * limit;
+
+  const where = { file_type: mediaType };
+  if (search) {
+    where.original_name = { [Op.like]: `%${search}%` };
+  }
+  if (!policy.hasPermission(req.session.user, 'manage_media') && policy.hasPermission(req.session.user, 'upload_media')) {
+    where.uploaded_by = req.session.user.id;
+  }
+
+  const { rows, count } = await Media.findAndCountAll({
+    where,
+    limit,
+    offset,
+    order: [['created_at', 'DESC']]
+  });
+  const items = filterExistingMedia(rows).map((item) => ({
+    id: item.id,
+    originalName: item.original_name,
+    filePath: item.file_path,
+    thumbnailPath: resolveBestMediaUrl(item.thumbnail_path, item.medium_path, item.file_path),
+    fileType: item.file_type,
+    mimeType: item.mime_type,
+    fileSize: item.file_size,
+    createdAt: item.created_at
+  }));
+
+  return {
+    items,
+    page,
+    limit,
+    total: count,
+    pages: Math.max(Math.ceil(count / limit), 1),
+    hasMore: page * limit < count
+  };
+}
+
 async function gallery(req, res, next) {
   try {
-    const mediaType = req.query.type || 'image';
-    const where = { file_type: mediaType };
-    if (!policy.hasPermission(req.session.user, 'manage_media') && policy.hasPermission(req.session.user, 'upload_media')) {
-      where.uploaded_by = req.session.user.id;
-    }
-    const rows = filterExistingMedia(await Media.findAll({
-      where,
-      limit: 60,
-      order: [['created_at', 'DESC']]
-    }));
-    return res.json({
-      items: rows.map((item) => ({
-        id: item.id,
-        originalName: item.original_name,
-        filePath: item.file_path,
-        thumbnailPath: resolveBestMediaUrl(item.thumbnail_path, item.medium_path, item.file_path),
-        fileType: item.file_type,
-        mimeType: item.mime_type,
-        fileSize: item.file_size,
-        createdAt: item.created_at
-      }))
-    });
+    return res.json(await listGalleryItems(req));
   } catch (error) {
     return next(error);
   }
@@ -241,4 +267,4 @@ async function uploadJson(req, res, next) {
   }
 }
 
-module.exports = { index, upload, uploadJson, gallery, edit, update, destroy, bulkDestroy, regenerateThumbnails };
+module.exports = { index, upload, uploadJson, gallery, listGalleryItems, edit, update, destroy, bulkDestroy, regenerateThumbnails };

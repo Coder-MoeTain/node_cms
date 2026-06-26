@@ -165,6 +165,12 @@
   }
 
   modalEl.querySelector('[data-crop-apply]')?.addEventListener('click', applyCrop);
+  modalEl.addEventListener('shown.bs.modal', () => {
+    modalEl.style.zIndex = '200060';
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    const backdrop = backdrops[backdrops.length - 1];
+    if (backdrop) backdrop.style.zIndex = '200055';
+  });
   modalEl.addEventListener('hidden.bs.modal', () => {
     destroyCropper();
     targetContainer = null;

@@ -1,7 +1,7 @@
-const { SiteSetting, Media } = require('../../models');
+const { SiteSetting } = require('../../models');
+const { listGalleryItems } = require('./mediaController');
 const { ensurePortalSettings, SETTING_GROUP_LABELS, SETTING_GROUP_ORDER, PORTAL_SETTING_DEFINITIONS, getSettingGroup } = require('../../utils/portalSettings');
 const { resolveImageValue, sanitizeUploadPath } = require('../../utils/uploadHelper');
-const { filterExistingMedia } = require('../../utils/mediaHelper');
 
 async function settings(req, res, next) {
   try {
@@ -76,24 +76,7 @@ async function updateSettings(req, res, next) {
 
 async function mediaGallery(req, res, next) {
   try {
-    const mediaType = req.query.type || 'image';
-    const rows = filterExistingMedia(await Media.findAll({
-      where: { file_type: mediaType },
-      limit: 60,
-      order: [['created_at', 'DESC']]
-    }));
-    return res.json({
-      items: rows.map((item) => ({
-        id: item.id,
-        originalName: item.original_name,
-        filePath: item.file_path,
-        thumbnailPath: item.thumbnail_path,
-        fileType: item.file_type,
-        mimeType: item.mime_type,
-        fileSize: item.file_size,
-        createdAt: item.created_at
-      }))
-    });
+    return res.json(await listGalleryItems(req));
   } catch (error) {
     return next(error);
   }

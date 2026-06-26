@@ -393,34 +393,81 @@ function selectMediaItem(item) {
   closeMediaGalleryModal();
 }
 
-async function loadMediaGallery() {
+async function loadMediaGallery({ append = false, search } = {}) {
   const grid = document.querySelector('[data-media-gallery-grid]');
   if (!grid) return;
 
-  grid.innerHTML = '<div class="media-gallery-empty">Loading media...</div>';
+  const loadMoreWrap = document.querySelector('[data-media-gallery-load-more-wrap]');
+  const loadMoreBtn = document.querySelector('[data-media-gallery-load-more]');
+  const metaEl = document.querySelector('[data-media-gallery-meta]');
+  const searchInput = document.querySelector('[data-media-gallery-search]');
+
+  if (typeof search === 'string') {
+    mediaGalleryState.search = search.trim();
+    append = false;
+  } else if (searchInput && !append) {
+    mediaGalleryState.search = searchInput.value.trim();
+  }
+
+  if (mediaGalleryState.loading) return;
+  mediaGalleryState.loading = true;
+
+  const nextPage = append ? mediaGalleryState.page + 1 : 1;
+  if (!append) {
+    grid.innerHTML = '<div class="media-gallery-empty">Loading media...</div>';
+    if (loadMoreWrap) loadMoreWrap.hidden = true;
+  } else if (loadMoreBtn) {
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.textContent = 'Loading…';
+  }
+
   try {
-    const response = await fetch('/admin/media/gallery?type=image', {
+    const params = new URLSearchParams({
+      type: 'image',
+      page: String(nextPage),
+      limit: String(mediaGalleryState.limit)
+    });
+    if (mediaGalleryState.search) params.set('q', mediaGalleryState.search);
+
+    const response = await fetch(`/admin/media/gallery?${params.toString()}`, {
       headers: { Accept: 'application/json' }
     });
     if (!response.ok) {
-      grid.innerHTML = '<div class="media-gallery-empty">Unable to load media library. Check your upload permissions.</div>';
+      if (!append) {
+        grid.innerHTML = '<div class="media-gallery-empty">Unable to load media library. Check your upload permissions.</div>';
+      }
       return;
     }
     const data = await response.json();
+    mediaGalleryState.page = data.page || nextPage;
+    mediaGalleryState.limit = data.limit || mediaGalleryState.limit;
+    mediaGalleryState.hasMore = Boolean(data.hasMore);
+    mediaGalleryState.total = data.total || 0;
 
-    if (!data.items?.length) {
-      grid.innerHTML = '<div class="media-gallery-empty">No images found. Upload images in Media Library first.</div>';
+    const items = data.items || [];
+    if (!items.length && !append) {
+      grid.innerHTML = mediaGalleryState.search
+        ? '<div class="media-gallery-empty">No photos match your search.</div>'
+        : '<div class="media-gallery-empty">No images found. Upload images in Media Library first.</div>';
+      if (metaEl) metaEl.hidden = true;
       return;
     }
 
-    grid.innerHTML = data.items.map((item) => `
-      <button type="button" class="media-gallery-item" data-file-path="${item.filePath}" data-file-name="${item.originalName}">
-        <img src="${item.thumbnailPath || item.filePath}" alt="${item.originalName}">
-        <span>${item.originalName}</span>
+    const markup = items.map((item) => `
+      <button type="button" class="media-gallery-item" data-file-path="${escapeHtmlAttr(item.filePath)}" data-file-name="${escapeHtmlAttr(item.originalName)}">
+        <img src="${escapeHtmlAttr(item.thumbnailPath || item.filePath)}" alt="${escapeHtmlAttr(item.originalName)}">
+        <span>${escapeHtmlAttr(item.originalName)}</span>
       </button>
     `).join('');
 
-    grid.querySelectorAll('.media-gallery-item').forEach((button) => {
+    if (append) {
+      grid.insertAdjacentHTML('beforeend', markup);
+    } else {
+      grid.innerHTML = markup;
+    }
+
+    grid.querySelectorAll('.media-gallery-item:not([data-gallery-bound])').forEach((button) => {
+      button.dataset.galleryBound = 'true';
       button.addEventListener('click', () => {
         selectMediaItem({
           filePath: button.dataset.filePath,
@@ -429,10 +476,54 @@ async function loadMediaGallery() {
         });
       });
     });
+
+    const shown = grid.querySelectorAll('.media-gallery-item').length;
+    if (metaEl) {
+      if (mediaGalleryState.total > shown) {
+        metaEl.textContent = `Showing ${shown} of ${mediaGalleryState.total} photos.`;
+        metaEl.hidden = false;
+      } else if (mediaGalleryState.total > 0) {
+        metaEl.textContent = `${mediaGalleryState.total} photo${mediaGalleryState.total === 1 ? '' : 's'}.`;
+        metaEl.hidden = false;
+      } else {
+        metaEl.hidden = true;
+      }
+    }
+
+    if (loadMoreWrap) loadMoreWrap.hidden = !mediaGalleryState.hasMore;
+    if (loadMoreBtn) {
+      loadMoreBtn.disabled = false;
+      loadMoreBtn.textContent = 'Load more photos';
+    }
   } catch (error) {
-    grid.innerHTML = '<div class="media-gallery-empty">Unable to load media gallery.</div>';
+    if (!append) {
+      grid.innerHTML = '<div class="media-gallery-empty">Unable to load media gallery.</div>';
+    }
+  } finally {
+    mediaGalleryState.loading = false;
   }
 }
+
+const mediaGalleryState = {
+  page: 1,
+  limit: 120,
+  search: '',
+  hasMore: false,
+  total: 0,
+  loading: false
+};
+
+let mediaGallerySearchTimer;
+document.querySelector('[data-media-gallery-search]')?.addEventListener('input', (event) => {
+  clearTimeout(mediaGallerySearchTimer);
+  mediaGallerySearchTimer = setTimeout(() => {
+    loadMediaGallery({ search: event.target.value });
+  }, 300);
+});
+
+document.querySelector('[data-media-gallery-load-more]')?.addEventListener('click', () => {
+  loadMediaGallery({ append: true });
+});
 
 document.querySelectorAll('[data-open-media-gallery]').forEach((button) => {
   button.addEventListener('click', () => {
@@ -484,6 +575,13 @@ document.getElementById('mediaGalleryUploadInput')?.addEventListener('change', a
     if (status) status.textContent = error.message || 'Upload failed.';
   }
   event.target.value = '';
+});
+
+document.getElementById('mediaGalleryModal')?.addEventListener('show.bs.modal', () => {
+  const searchInput = document.querySelector('[data-media-gallery-search]');
+  if (searchInput) searchInput.value = '';
+  mediaGalleryState.search = '';
+  mediaGalleryState.page = 1;
 });
 
 document.getElementById('mediaGalleryModal')?.addEventListener('hidden.bs.modal', () => {

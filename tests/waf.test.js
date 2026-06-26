@@ -45,10 +45,8 @@ test('monitor mode logs suspicious SQLi query without blocking', async () => {
 test('block mode blocks suspicious SQLi query', async () => {
   await setWafMode('block');
   const response = await request(app).get('/?search=1%20OR%201%3D1');
-  expect([403, 200]).toContain(response.status);
-  if (response.status === 403) {
-    expect(response.text).toMatch(/403|Forbidden|blocked/i);
-  }
+  expect(response.status).toBe(403);
+  expect(response.text).toMatch(/403|Forbidden|blocked/i);
   await setWafMode('monitor');
 });
 
@@ -57,14 +55,14 @@ test('scanner user-agent is handled in block mode', async () => {
   const response = await request(app)
     .get('/')
     .set('User-Agent', 'sqlmap/1.0');
-  expect([403, 200]).toContain(response.status);
+  expect(response.status).toBe(403);
   await setWafMode('monitor');
 });
 
 test('CMS probe request to /.env is handled', async () => {
   await setWafMode('block');
   const response = await request(app).get('/.env');
-  expect([403, 404, 200]).toContain(response.status);
+  expect(response.status).toBe(403);
   await setWafMode('monitor');
 });
 
@@ -118,10 +116,9 @@ test('API-style request receives structured JSON 403 when blocked', async () => 
   const response = await request(app)
     .get('/?id=1%20UNION%20SELECT%201')
     .set('Accept', 'application/json');
-  if (response.status === 403) {
-    expect(response.headers['content-type']).toMatch(/json/);
-    expect(response.body.error).toBe('waf_blocked');
-    expect(response.body.message).toMatch(/Custom WAF block message|blocked/i);
-  }
+  expect(response.status).toBe(403);
+  expect(response.headers['content-type']).toMatch(/json/);
+  expect(response.body.error).toBe('waf_blocked');
+  expect(response.body.message).toMatch(/Custom WAF block message|blocked/i);
   await setWafMode('monitor');
 });

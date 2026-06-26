@@ -10,16 +10,23 @@
       </div>
       <div class="modal-body">
         <div class="media-gallery-toolbar">
-          <div class="media-gallery-upload">
-            <input type="file" class="d-none" id="mediaGalleryUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
-            <button type="button" class="np-btn np-btn-primary np-btn-small" data-media-gallery-upload>
-              <i class="bi bi-upload"></i> Upload Photo
-            </button>
-            <span class="text-muted small ms-2" data-media-gallery-upload-status></span>
+          <div class="media-gallery-toolbar-row">
+            <input type="search" class="form-control form-control-sm media-gallery-search" placeholder="Search photos…" data-media-gallery-search aria-label="Search media library">
+            <div class="media-gallery-upload">
+              <input type="file" class="d-none" id="mediaGalleryUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+              <button type="button" class="np-btn np-btn-primary np-btn-small" data-media-gallery-upload>
+                <i class="bi bi-upload"></i> Upload Photo
+              </button>
+              <span class="text-muted small ms-2" data-media-gallery-upload-status></span>
+            </div>
           </div>
+          <p class="media-gallery-meta text-muted small mb-0" data-media-gallery-meta hidden></p>
         </div>
         <div class="media-gallery-grid" data-media-gallery-grid>
           <div class="media-gallery-empty">Loading media...</div>
+        </div>
+        <div class="text-center mt-3" data-media-gallery-load-more-wrap hidden>
+          <button type="button" class="np-btn np-btn-secondary np-btn-small" data-media-gallery-load-more>Load more photos</button>
         </div>
       </div>
       <div class="modal-footer">

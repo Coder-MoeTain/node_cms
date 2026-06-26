@@ -90,6 +90,14 @@
   gap: var(--admin-space-2);
 }
 
+.admin-body .np-btn:not(.np-btn-primary):not(.np-btn-danger):not(.np-btn-link) {
+  color: var(--admin-text, #1d2327);
+}
+
+.admin-body .np-btn-primary {
+  color: #fff;
+}
+
 /* --- Cards --- */
 .np-card {
   background: var(--admin-card-bg);
