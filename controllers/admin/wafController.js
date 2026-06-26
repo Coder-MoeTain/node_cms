@@ -221,6 +221,8 @@ async function updateSettings(req, res, next) {
       await WafSetting.upsert({ setting_key: key, setting_value: value, setting_type: type });
     }
     clearWafCache();
+    const { invalidateTrustedProxyCache } = require('../../utils/loginSessionHelper');
+    invalidateTrustedProxyCache();
     req.flash('success', 'WAF settings updated.');
     return res.redirect('/admin/waf/settings');
   } catch (error) {

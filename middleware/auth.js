@@ -1,6 +1,7 @@
 const appConfig = require('../config/app');
 const { User, Role, Permission } = require('../models');
 const policy = require('../utils/policy');
+const { resolveRequestIpAsync } = require('../utils/loginSessionHelper');
 
 async function refreshSessionUser(req) {
   const user = await User.findByPk(req.session.user.id, {
@@ -54,6 +55,7 @@ async function requireAuth(req, res, next) {
     }
 
     req.session.lastActivity = Date.now();
+    req.session.lastActivityIp = await resolveRequestIpAsync(req);
     return next();
   } catch (error) {
     return next(error);

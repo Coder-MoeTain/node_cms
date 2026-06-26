@@ -1,10 +1,14 @@
 const appConfig = require('../../config/app');
+const { createActivityLog } = require('../../utils/activityLogHelper');
 const {
   listActiveAdminSessions,
   countActiveAdminSessions,
-  listLoginAttempts
+  listLoginAttempts,
+  getAdminSession,
+  revokeAdminSession,
+  resolveRequestIpAsync
 } = require('../../utils/loginSessionHelper');
-const { getPagination, pageMeta } = require('../../utils/pagination');
+const { getPagination } = require('../../utils/pagination');
 
 async function index(req, res, next) {
   try {
@@ -36,4 +40,52 @@ async function index(req, res, next) {
   }
 }
 
-module.exports = { index };
+async function revoke(req, res, next) {
+  try {
+    const sessionId = String(req.body.session_id || '').trim();
+    if (!sessionId) {
+      req.flash('error', 'Session ID is required.');
+      return res.redirect('/admin/settings/login-sessions');
+    }
+
+    const target = await getAdminSession(sessionId);
+    if (!target) {
+      req.flash('error', 'Session not found or already expired.');
+      return res.redirect('/admin/settings/login-sessions');
+    }
+
+    const isCurrent = sessionId === req.sessionID;
+    const revoked = await revokeAdminSession(sessionId);
+    if (!revoked) {
+      req.flash('error', 'Could not revoke session.');
+      return res.redirect('/admin/settings/login-sessions');
+    }
+
+    await createActivityLog({
+      user_id: req.session.user.id,
+      action: 'revoke_session',
+      resource_type: 'session',
+      ip_address: await resolveRequestIpAsync(req),
+      user_agent: req.get('user-agent'),
+      metadata: {
+        targetEmail: target.email,
+        targetSessionId: sessionId.slice(0, 8)
+      }
+    });
+
+    if (isCurrent) {
+      return req.session.destroy(() => {
+        res.clearCookie(appConfig.sessionName);
+        req.flash('success', 'Your session was revoked. Please log in again.');
+        res.redirect('/admin/login');
+      });
+    }
+
+    req.flash('success', `Session for ${target.email} was revoked.`);
+    return res.redirect('/admin/settings/login-sessions');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { index, revoke };

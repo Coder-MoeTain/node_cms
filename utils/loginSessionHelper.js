@@ -1,11 +1,43 @@
 const { Op } = require('sequelize');
 const sequelize = require('../config/database');
-const { LoginAttempt } = require('../models');
+const { LoginAttempt, WafSetting } = require('../models');
 const { getClientIp } = require('./wafHelper');
 
-function resolveRequestIp(req) {
-  const trustProxy = Boolean(req.app?.get('trust proxy'));
-  return getClientIp(req, trustProxy);
+const TRUSTED_PROXY_CACHE_MS = 60 * 1000;
+let trustedProxyCache = { value: false, at: 0 };
+
+async function loadTrustedProxyEnabled() {
+  const now = Date.now();
+  if (trustedProxyCache.at && now - trustedProxyCache.at < TRUSTED_PROXY_CACHE_MS) {
+    return trustedProxyCache.value;
+  }
+  try {
+    const row = await WafSetting.findOne({ where: { setting_key: 'trusted_proxy_enabled' } });
+    const value = row?.setting_value === 'true' || row?.setting_value === true;
+    trustedProxyCache = { value, at: now };
+    return value;
+  } catch {
+    return false;
+  }
+}
+
+function isTrustProxyRequest(req, trustedProxyEnabled = false) {
+  if (req.wafTrustProxy !== undefined) return Boolean(req.wafTrustProxy);
+  if (trustedProxyEnabled) return true;
+  return Boolean(req.app?.get('trust proxy'));
+}
+
+function resolveRequestIp(req, trustedProxyEnabled = false) {
+  return getClientIp(req, isTrustProxyRequest(req, trustedProxyEnabled));
+}
+
+async function resolveRequestIpAsync(req) {
+  const trustedProxyEnabled = await loadTrustedProxyEnabled();
+  return resolveRequestIp(req, trustedProxyEnabled);
+}
+
+function invalidateTrustedProxyCache() {
+  trustedProxyCache = { value: false, at: 0 };
 }
 
 function parseSessionData(raw) {
@@ -43,12 +75,40 @@ function parseSessionRow(row, currentSessionId = '') {
     username: user.name || user.email,
     email: user.email,
     role: user.role || user.roleName || '—',
-    ipAddress: data.loginIp || '—',
+    ipAddress: data.lastActivityIp || data.loginIp || '—',
     loginAt,
     lastActivity,
     expiresAt,
     isCurrent: Boolean(currentSessionId && sid === currentSessionId)
   };
+}
+
+async function getAdminSession(sessionId) {
+  if (!sessionId) return null;
+  try {
+    const [rows] = await sequelize.query(
+      'SELECT sid, expires, data FROM sessions WHERE sid = ? LIMIT 1',
+      { replacements: [String(sessionId)] }
+    );
+    if (!rows.length) return null;
+    return parseSessionRow(rows[0]);
+  } catch {
+    return null;
+  }
+}
+
+async function revokeAdminSession(sessionId) {
+  if (!sessionId) return false;
+  try {
+    const [, metadata] = await sequelize.query(
+      'DELETE FROM sessions WHERE sid = ?',
+      { replacements: [String(sessionId)] }
+    );
+    const affected = metadata?.affectedRows ?? metadata;
+    return Number(affected) > 0;
+  } catch {
+    return false;
+  }
 }
 
 async function listActiveAdminSessions({ limit = 50, offset = 0, currentSessionId = '' } = {}) {
@@ -129,8 +189,12 @@ async function listLoginAttempts({
 
 module.exports = {
   resolveRequestIp,
+  resolveRequestIpAsync,
+  invalidateTrustedProxyCache,
   listActiveAdminSessions,
   countActiveAdminSessions,
   listLoginAttempts,
+  getAdminSession,
+  revokeAdminSession,
   parseSessionRow
 };
