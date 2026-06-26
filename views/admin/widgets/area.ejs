@@ -4,28 +4,119 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header mb-3"><h1>Widgets — <%= area.name %></h1><a href="/admin/widgets" class="np-btn np-btn-secondary">Back</a></div>
+    <div class="np-page-header np-page-header-split mb-3">
+      <div>
+        <h1><%= area.name %></h1>
+        <p class="np-help-text mb-0"><%= area.description || 'Drag widgets into this area. They appear on the public site immediately.' %></p>
+      </div>
+      <a href="/admin/widgets" class="np-btn np-btn-secondary"><i class="bi bi-arrow-left"></i> All widget areas</a>
+    </div>
+
     <div class="row g-4">
       <div class="col-lg-7">
-        <% (area.widgets || []).forEach(function(w) { %>
-          <div class="np-metabox mb-3">
-            <div class="np-metabox-header d-flex justify-content-between"><span><%= w.title || w.widget_type %></span>
-              <form method="post" action="/admin/widgets/instance/<%= w.id %>?_method=DELETE"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="np-btn np-btn-link text-danger np-btn-small">Remove</button></form>
-            </div>
-            <div class="np-metabox-body"><code><%= w.widget_type %></code></div>
+        <div class="np-widget mb-3">
+          <div class="np-widget-header d-flex justify-content-between align-items-center">
+            <span>Active widgets</span>
+            <span class="np-badge np-badge-secondary"><%= (area.widgets || []).length %></span>
           </div>
-        <% }) %>
+          <div class="np-widget-body" id="widget-instance-list">
+            <% if (!(area.widgets || []).length) { %>
+              <p class="text-muted mb-0">No widgets yet. Add one from the panel on the right.</p>
+            <% } %>
+            <% (area.widgets || []).forEach(function(widget, index) {
+              const def = getWidgetDefinition(widget.widget_type);
+              const values = settingsToFormValues(widget);
+            %>
+              <article class="np-widget-instance mb-3" data-widget-id="<%= widget.id %>">
+                <header class="np-widget-instance-head">
+                  <div>
+                    <strong><i class="bi <%= def.icon %> me-1"></i> <%= def.label %></strong>
+                    <% if (widget.title) { %><span class="text-muted"> — <%= widget.title %></span><% } %>
+                  </div>
+                  <div class="np-widget-instance-tools">
+                    <form method="post" action="/admin/widgets/instance/<%= widget.id %>/reorder" class="d-inline">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="direction" value="up">
+                      <button class="np-btn np-btn-small np-btn-secondary" type="submit" <%= index === 0 ? 'disabled' : '' %> title="Move up"><i class="bi bi-arrow-up"></i></button>
+                    </form>
+                    <form method="post" action="/admin/widgets/instance/<%= widget.id %>/reorder" class="d-inline">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="direction" value="down">
+                      <button class="np-btn np-btn-small np-btn-secondary" type="submit" <%= index === area.widgets.length - 1 ? 'disabled' : '' %> title="Move down"><i class="bi bi-arrow-down"></i></button>
+                    </form>
+                    <form method="post" action="/admin/widgets/instance/<%= widget.id %>?_method=DELETE" class="d-inline" data-confirm="Remove this widget?">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="np-btn np-btn-small np-btn-danger" type="submit" title="Remove"><i class="bi bi-trash"></i></button>
+                    </form>
+                  </div>
+                </header>
+                <form method="post" action="/admin/widgets/instance/<%= widget.id %>?_method=PUT" class="np-widget-instance-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <div class="row g-2">
+                    <% def.fields.forEach(function(field) { %>
+                      <div class="col-12<%= field.type === 'textarea' ? '' : ' col-md-6' %>">
+                        <% if (field.type === 'checkbox') { %>
+                          <label class="form-check">
+                            <input class="form-check-input" type="checkbox" name="<%= field.name %>" <%= values[field.name] ? 'checked' : '' %>>
+                            <span class="form-check-label"><%= field.label %></span>
+                          </label>
+                        <% } else if (field.type === 'menu') { %>
+                          <label class="form-label" for="widget-<%= widget.id %>-<%= field.name %>"><%= field.label %></label>
+                          <select class="form-select" id="widget-<%= widget.id %>-<%= field.name %>" name="<%= field.name %>">
+                            <% menus.forEach(function(menu) { %>
+                              <option value="<%= menu.slug %>" <%= values[field.name] === menu.slug ? 'selected' : '' %>><%= menu.name %> (<%= menu.slug %>)</option>
+                            <% }) %>
+                          </select>
+                        <% } else if (field.type === 'textarea') { %>
+                          <label class="form-label" for="widget-<%= widget.id %>-<%= field.name %>"><%= field.label %></label>
+                          <textarea class="form-control" id="widget-<%= widget.id %>-<%= field.name %>" name="<%= field.name %>" rows="<%= field.rows || 4 %>"><%= values[field.name] || '' %></textarea>
+                        <% } else { %>
+                          <label class="form-label" for="widget-<%= widget.id %>-<%= field.name %>"><%= field.label %></label>
+                          <input class="form-control" id="widget-<%= widget.id %>-<%= field.name %>" type="<%= field.type === 'number' ? 'number' : field.type === 'url' ? 'url' : 'text' %>" name="<%= field.name %>" value="<%= values[field.name] || '' %>" <% if (field.min != null) { %>min="<%= field.min %>"<% } %> <% if (field.max != null) { %>max="<%= field.max %>"<% } %>>
+                        <% } %>
+                      </div>
+                    <% }) %>
+                    <div class="col-md-6">
+                      <label class="form-label" for="widget-<%= widget.id %>-status">Visibility</label>
+                      <select class="form-select" id="widget-<%= widget.id %>-status" name="status">
+                        <option value="active" <%= values.status === 'active' ? 'selected' : '' %>>Visible</option>
+                        <option value="inactive" <%= values.status === 'inactive' ? 'selected' : '' %>>Hidden</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button class="np-btn np-btn-primary np-btn-small mt-3" type="submit">Save widget</button>
+                </form>
+              </article>
+            <% }) %>
+          </div>
+        </div>
       </div>
+
       <div class="col-lg-5">
-        <div class="np-metabox">
-          <div class="np-metabox-header">Add widget</div>
-          <div class="np-metabox-body">
-            <form method="post" action="/admin/widgets/<%= area.slug %>">
+        <div class="np-widget np-widget-sticky">
+          <div class="np-widget-header">Available widgets</div>
+          <div class="np-widget-body">
+            <p class="np-help-text">Click a widget type to configure and add it to <strong><%= area.name %></strong>.</p>
+            <div class="np-widget-type-grid mb-3">
+              <% widgetTypes.forEach(function(type) { const def = widgetDefinitions[type]; %>
+                <button type="button" class="np-widget-type-btn" data-widget-type="<%= type %>" data-widget-label="<%= def.label %>">
+                  <i class="bi <%= def.icon %>"></i>
+                  <span><%= def.label %></span>
+                </button>
+              <% }) %>
+            </div>
+            <form method="post" action="/admin/widgets/<%= area.slug %>" id="add-widget-form">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <div class="mb-2"><label class="form-label">Type</label><select class="form-select" name="widget_type"><% widgetTypes.forEach(function(t) { %><option value="<%= t %>"><%= t %></option><% }) %></select></div>
-              <div class="mb-2"><label class="form-label">Title</label><input class="form-control" name="title"></div>
-              <div class="mb-2"><label class="form-label">Content / settings</label><textarea class="form-control" name="content" rows="3"></textarea></div>
-              <button class="np-btn np-btn-primary" type="submit">Add widget</button>
+              <input type="hidden" name="widget_type" id="add-widget-type" value="search">
+              <div class="mb-2">
+                <label class="form-label" for="add-widget-title">Adding</label>
+                <input class="form-control" id="add-widget-title-display" value="Search" readonly>
+                <input type="hidden" name="title" id="add-widget-title" value="Search">
+              </div>
+              <div id="add-widget-fields">
+                <!-- populated by admin-widgets.js -->
+              </div>
+              <button class="np-btn np-btn-primary w-100" type="submit"><i class="bi bi-plus-lg"></i> Add widget</button>
             </form>
           </div>
         </div>
@@ -33,4 +124,9 @@
     </div>
   </main>
 </div>
+<script>
+  window.NP_WIDGET_DEFINITIONS = <%- JSON.stringify(widgetDefinitions) %>;
+  window.NP_WIDGET_MENUS = <%- JSON.stringify(menus.map(function(m){ return { slug: m.slug, name: m.name }; })) %>;
+</script>
+<script src="/js/admin-widgets.js" defer></script>
 <%- include('../partials/footer') %>

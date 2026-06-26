@@ -1,87 +1,40 @@
 <aside class="portal-sidebar" aria-label="Sidebar">
-  <div class="portal-widget portal-card-bordered">
-    <header class="portal-widget-header"><h2 class="portal-widget-title">Search</h2></header>
-    <div class="portal-widget-body">
-      <form action="/search" role="search">
-        <label class="visually-hidden" for="sidebar-search">Search</label>
-        <input class="form-control form-control-sm mb-2" id="sidebar-search" name="q" type="search" placeholder="Search...">
-        <button class="site-btn portal-btn portal-btn-sm w-100" type="submit">Search</button>
-      </form>
+  <% if (typeof widgetAreas !== 'undefined' && widgetAreas.sidebar) { %>
+    <%- widgetAreas.sidebar %>
+  <% } else { %>
+    <div class="portal-widget portal-card-bordered">
+      <header class="portal-widget-header"><h2 class="portal-widget-title">Search</h2></header>
+      <div class="portal-widget-body">
+        <form action="/search" role="search">
+          <label class="visually-hidden" for="sidebar-search">Search</label>
+          <input class="form-control form-control-sm mb-2" id="sidebar-search" name="q" type="search" placeholder="Search...">
+          <button class="site-btn portal-btn portal-btn-sm w-100" type="submit">Search</button>
+        </form>
+      </div>
     </div>
-  </div>
-
-  <div class="portal-widget portal-card-bordered">
-    <header class="portal-widget-header"><h2 class="portal-widget-title">Categories</h2></header>
-    <div class="portal-widget-body">
-      <% if (sidebarCategories.length) { %>
-        <ul class="portal-sidebar-list">
-          <% sidebarCategories.forEach(function(category) { %>
-            <li><a href="/category/<%= category.slug %>"><%= category.name %></a></li>
-          <% }) %>
-        </ul>
-      <% } else { %><p class="portal-empty-state">No categories yet.</p><% } %>
+    <div class="portal-widget portal-card-bordered">
+      <header class="portal-widget-header"><h2 class="portal-widget-title">Categories</h2></header>
+      <div class="portal-widget-body">
+        <% if (sidebarCategories.length) { %>
+          <ul class="portal-sidebar-list">
+            <% sidebarCategories.forEach(function(category) { %>
+              <li><a href="/category/<%= category.slug %>"><%= category.name %></a></li>
+            <% }) %>
+          </ul>
+        <% } else { %><p class="portal-empty-state">No categories yet.</p><% } %>
+      </div>
     </div>
-  </div>
-
-  <div class="portal-widget portal-card-bordered">
-    <header class="portal-widget-header"><h2 class="portal-widget-title">Latest News</h2><a class="portal-view-all" href="/category/news">More</a></header>
-    <div class="portal-widget-body">
-      <% if (recentPosts.length) { %>
-        <ul class="portal-sidebar-list portal-sidebar-posts">
-          <% recentPosts.forEach(function(post) { %>
-            <li><a href="/post/<%= post.slug %>"><%= post.title %></a><time datetime="<%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %>"><%= post.published_at ? formatDate(post.published_at) : '' %></time></li>
-          <% }) %>
-        </ul>
-      <% } else { %><p class="portal-empty-state">No posts yet.</p><% } %>
+    <div class="portal-widget portal-card-bordered">
+      <header class="portal-widget-header"><h2 class="portal-widget-title">Latest News</h2><a class="portal-view-all" href="/category/news">More</a></header>
+      <div class="portal-widget-body">
+        <% if (recentPosts.length) { %>
+          <ul class="portal-sidebar-list portal-sidebar-posts">
+            <% recentPosts.forEach(function(post) { %>
+              <li><a href="/post/<%= post.slug %>"><%= post.title %></a><time datetime="<%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %>"><%= post.published_at ? formatDate(post.published_at) : '' %></time></li>
+            <% }) %>
+          </ul>
+        <% } else { %><p class="portal-empty-state">No posts yet.</p><% } %>
+      </div>
     </div>
-  </div>
-
-  <div class="portal-widget portal-card-bordered">
-    <header class="portal-widget-header"><h2 class="portal-widget-title">Announcements</h2><a class="portal-view-all" href="/category/announcements">More</a></header>
-    <div class="portal-widget-body">
-      <% if (announcementPosts && announcementPosts.length) { %>
-        <ul class="portal-sidebar-list portal-sidebar-posts">
-          <% announcementPosts.forEach(function(post) { %>
-            <li><a href="/post/<%= post.slug %>"><%= post.title %></a><time datetime="<%= post.published_at ? post.published_at.toISOString().slice(0,10) : '' %>"><%= post.published_at ? formatDate(post.published_at) : '' %></time></li>
-          <% }) %>
-        </ul>
-      <% } else { %><p class="portal-empty-state">No announcements yet.</p><% } %>
-    </div>
-  </div>
-
-  <div class="portal-widget portal-card-bordered">
-    <header class="portal-widget-header"><h2 class="portal-widget-title">Hot News</h2><a class="portal-view-all" href="/blog">More</a></header>
-    <div class="portal-widget-body">
-      <% if (popularPosts.length) { %>
-        <ul class="portal-sidebar-list portal-sidebar-posts portal-hot-list">
-          <% popularPosts.forEach(function(post, index) { %>
-            <li class="<%= index < 2 ? 'is-hot-item' : '' %>"><a href="/post/<%= post.slug %>"><%= post.title %></a></li>
-          <% }) %>
-        </ul>
-      <% } else { %><p class="portal-empty-state">No popular posts yet.</p><% } %>
-    </div>
-  </div>
-
-  <div class="portal-widget portal-card-bordered">
-    <header class="portal-widget-header"><h2 class="portal-widget-title">Documents</h2><a class="portal-view-all" href="/category/documents">More</a></header>
-    <div class="portal-widget-body">
-      <ul class="portal-sidebar-list">
-        <li><a href="/category/documents">Official documents</a></li>
-        <li><a href="/search?q=forms">Forms &amp; applications</a></li>
-        <li><a href="/category/tenders">Tenders</a></li>
-        <li><a href="/category/jobs">Job vacancies</a></li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="portal-widget portal-card-bordered">
-    <header class="portal-widget-header"><h2 class="portal-widget-title">Quick Links</h2></header>
-    <div class="portal-widget-body">
-      <ul class="portal-sidebar-list">
-        <li><a href="/blog">News</a></li>
-        <li><a href="/contact">Contact</a></li>
-        <li><a href="/admin/login">Admin login</a></li>
-      </ul>
-    </div>
-  </div>
+  <% } %>
 </aside>

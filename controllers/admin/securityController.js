@@ -1,4 +1,5 @@
-const { SecuritySetting, LoginAttempt, BlockedIp, ActivityLog } = require('../../models');
+const { SecuritySetting, LoginAttempt, BlockedIp } = require('../../models');
+const { listActivityLogs, createActivityLog } = require('../../utils/activityLogHelper');
 const dbBackup = require('../../utils/databaseBackup');
 const loginBruteForce = require('../../utils/loginBruteForce');
 
@@ -27,7 +28,7 @@ async function index(req, res, next) {
       SecuritySetting.findAll({ order: [['key', 'ASC']] }),
       LoginAttempt.findAll({ limit: 50, order: [['created_at', 'DESC']] }),
       BlockedIp.findAll({ order: [['created_at', 'DESC']] }),
-      ActivityLog.findAll({ limit: 50, order: [['created_at', 'DESC']] })
+      listActivityLogs({ limit: 50, order: [['created_at', 'DESC']] })
     ]);
     return res.render('admin/security/index', { title: 'Security Plugins', settings, attempts, blockedIps, activityLogs });
   } catch (error) {
@@ -82,7 +83,7 @@ async function backupDatabase(req, res, next) {
   try {
     const { filename } = await dbBackup.createBackup();
 
-    await ActivityLog.create({
+    await createActivityLog({
       user_id: req.session.user.id,
       action: 'Database backup created',
       entity_type: 'security',

@@ -4,7 +4,8 @@ const qrcode = require('qrcode');
 const speakeasy = require('speakeasy');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
-const { User, Role, Permission, LoginAttempt, ActivityLog, PasswordResetToken } = require('../../models');
+const { User, Role, Permission, LoginAttempt, PasswordResetToken } = require('../../models');
+const { createActivityLog } = require('../../utils/activityLogHelper');
 const pluginLoader = require('../../utils/pluginLoader');
 const loginBruteForce = require('../../utils/loginBruteForce');
 const { sendPasswordResetEmail } = require('../../utils/mailer');
@@ -68,17 +69,13 @@ async function finalizeLogin(req, res, user) {
   await regenerateSession(req);
 
   await user.update({ last_login: new Date(), failed_login_count: 0, locked_until: null });
-  try {
-    await ActivityLog.create({
-      user_id: user.id,
-      action: 'Logged in',
-      entity_type: 'auth',
-      ip_address: req.ip,
-      user_agent: req.get('user-agent')
-    });
-  } catch {
-    // Activity logging should not block login after partial restores.
-  }
+  await createActivityLog({
+    user_id: user.id,
+    action: 'Logged in',
+    entity_type: 'auth',
+    ip_address: req.ip,
+    user_agent: req.get('user-agent')
+  });
 
   await pluginLoader.doAction('afterUserLogin', user, { req, res });
 

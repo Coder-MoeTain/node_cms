@@ -54,6 +54,11 @@
         <% } %>
       </div>
     </section>
+    <% if (typeof widgetAreas !== 'undefined' && widgetAreas['homepage-sections']) { %>
+    <section class="container py-5 site-widget-section homepage-widget-section">
+      <%- widgetAreas['homepage-sections'] %>
+    </section>
+    <% } %>
     <section class="site-cta-band">
       <div class="container site-cta-inner">
         <div>

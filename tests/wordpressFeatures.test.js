@@ -52,6 +52,16 @@ describe('WordPress-like features', () => {
   test('site health returns checks', async () => {
     const report = await runChecks();
     expect(Array.isArray(report.checks)).toBe(true);
+    expect(report.groups).toBeTruthy();
+    expect(typeof report.score).toBe('number');
+  });
+
+  test('admin site health page loads', async () => {
+    const agent = request.agent(app);
+    await login(agent, 'admin@example.com', 'Admin@12345');
+    const res = await agent.get('/admin/tools/health');
+    expect(res.status).toBe(200);
+    expect(res.text).toMatch(/Health score/i);
   });
 
   test('admin widgets page loads', async () => {
@@ -59,6 +69,15 @@ describe('WordPress-like features', () => {
     await login(agent, 'admin@example.com', 'Admin@12345');
     const res = await agent.get('/admin/widgets');
     expect(res.status).toBe(200);
+    expect(res.text).toMatch(/Available widgets|Widget areas|Manage widgets/i);
+  });
+
+  test('admin widgets area page loads', async () => {
+    const agent = request.agent(app);
+    await login(agent, 'admin@example.com', 'Admin@12345');
+    const res = await agent.get('/admin/widgets/sidebar');
+    expect(res.status).toBe(200);
+    expect(res.text).toMatch(/Active widgets/i);
   });
 
   test('admin comments moderation page loads', async () => {

@@ -1,12 +1,8 @@
-const { ActivityLog } = require('../../models');
 const dbBackup = require('../../utils/databaseBackup');
+const { createActivityLog } = require('../../utils/activityLogHelper');
 
 async function safeActivityLog(entry) {
-  try {
-    await ActivityLog.create(entry);
-  } catch {
-    // Restored databases may be missing optional tables until schema repair runs.
-  }
+  await createActivityLog(entry);
 }
 
 function redirectAfterRestore(req, res) {

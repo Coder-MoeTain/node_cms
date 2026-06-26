@@ -139,6 +139,8 @@ async function start() {
   try {
     await sequelize.authenticate();
     await sessionStore.sync();
+    const { ensureDefaultWidgetAreas } = require('./utils/widgetRegistry');
+    await ensureDefaultWidgetAreas(models);
     await pluginLoader.loadActivePlugins(app);
     if (process.env.NODE_ENV !== 'test' && process.env.SCHEDULED_PUBLISH !== 'false') {
       const { publishScheduledContent } = require('./utils/scheduledPublisher');

@@ -137,7 +137,11 @@ async function loadSiteContext(req, res, next) {
     res.locals.portalStats = await getPortalStats(res.locals.siteSettings);
     res.locals.activePluginSlugs = activePlugins.map((row) => row.slug);
     const { loadAllWidgetAreas } = require('../utils/widgetRenderer');
-    res.locals.widgetAreas = await loadAllWidgetAreas({ recentPosts });
+    res.locals.widgetAreas = await loadAllWidgetAreas({
+      recentPosts,
+      isPortal: res.locals.isPortal,
+      formatDate: res.locals.formatDate
+    });
     res.locals.pluginPublicHead = await pluginLoader.collectHook('publicHead', { req, res });
     res.locals.pluginPublicFooter = await pluginLoader.collectHook('publicFooter', { req, res });
     res.locals.currentPath = req.path;

@@ -36,6 +36,10 @@ async function bootstrapTestDatabase() {
   await sequelize.authenticate();
   await sequelize.sync();
 
+  const { ensureDefaultWidgetAreas } = require('../utils/widgetRegistry');
+  const models = require('../models');
+  await ensureDefaultWidgetAreas(models);
+
   const sessionStore = new SequelizeStore({ db: sequelize, tableName: 'sessions' });
   await sessionStore.sync();
 

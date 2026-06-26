@@ -4,18 +4,44 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header"><h1>Widgets</h1></div>
+    <div class="np-page-header np-page-header-split mb-4">
+      <div>
+        <h1>Widgets</h1>
+        <p class="np-help-text mb-0">Manage sidebar and footer blocks like WordPress — add, reorder, and configure widgets per area.</p>
+      </div>
+      <% if (sidebarEmpty) { %>
+        <form method="post" action="/admin/widgets/seed-defaults">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="np-btn np-btn-secondary" type="submit">Add default sidebar widgets</button>
+        </form>
+      <% } %>
+    </div>
+
     <div class="row g-3">
-      <% areas.forEach(function(area) { %>
+      <% areas.forEach(function(area) { const count = (area.widgets || []).length; const def = widgetDefinitions; %>
         <div class="col-md-6 col-lg-4">
-          <div class="card h-100">
-            <div class="card-body">
-              <h2 class="h5"><%= area.name %></h2>
-              <p class="text-muted small"><%= area.description || area.slug %></p>
-              <p><%= (area.widgets || []).length %> widget(s)</p>
-              <a href="/admin/widgets/<%= area.slug %>" class="np-btn np-btn-primary np-btn-small">Manage</a>
+          <article class="np-widget-area-card h-100">
+            <div class="np-widget-area-card-head">
+              <div>
+                <h2 class="h5 mb-1"><%= area.name %></h2>
+                <p class="text-muted small mb-0"><%= area.description || area.slug %></p>
+              </div>
+              <span class="np-badge np-badge-<%= count ? 'success' : 'secondary' %>"><%= count %> active</span>
             </div>
-          </div>
+            <div class="np-widget-area-preview">
+              <% if (count) { %>
+                <ul class="np-widget-area-widget-list">
+                  <% area.widgets.sort(function(a,b){ return a.display_order - b.display_order; }).slice(0, 4).forEach(function(w) { %>
+                    <li><i class="bi <%= (widgetDefinitions[w.widget_type] && widgetDefinitions[w.widget_type].icon) || 'bi-puzzle' %>"></i> <%= w.title || (widgetDefinitions[w.widget_type] && widgetDefinitions[w.widget_type].label) || w.widget_type %></li>
+                  <% }) %>
+                  <% if (count > 4) { %><li class="text-muted">+ <%= count - 4 %> more</li><% } %>
+                </ul>
+              <% } else { %>
+                <p class="text-muted small mb-0">No widgets in this area yet.</p>
+              <% } %>
+            </div>
+            <a href="/admin/widgets/<%= area.slug %>" class="np-btn np-btn-primary np-btn-small w-100">Manage widgets</a>
+          </article>
         </div>
       <% }) %>
     </div>
