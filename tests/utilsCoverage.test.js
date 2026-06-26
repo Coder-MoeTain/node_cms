@@ -123,3 +123,8 @@ test('previewHelper signs and verifies preview tokens', () => {
   expect(verifyPreviewToken('page', 42, token)).toBe(false);
   expect(buildPreviewUrl('post', 'hello-world', 42)).toMatch(/^\/post\/hello-world\?preview=/);
 });
+
+test('resolveBestMediaUrl falls back when thumbnail is missing', () => {
+  const { resolveBestMediaUrl } = require('../utils/mediaHelper');
+  expect(resolveBestMediaUrl('/uploads/missing-thumb.webp', '/uploads/missing-all.webp')).toBe('');
+});

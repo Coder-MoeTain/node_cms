@@ -22,6 +22,8 @@
     "migrate:status": "node database/migrate.js status",
     "backup:scheduled": "node scripts/scheduled-backup.js",
     "format:css": "node scripts/format-css.js",
+    "sync:vendors": "node scripts/sync-vendor-assets.js",
+    "postinstall": "node scripts/sync-vendor-assets.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "audit": "npm audit",

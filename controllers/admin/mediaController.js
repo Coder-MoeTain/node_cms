@@ -2,7 +2,7 @@ const appConfig = require('../../config/app');
 const { Media } = require('../../models');
 const pluginLoader = require('../../utils/pluginLoader');
 const policy = require('../../utils/policy');
-const { buildMediaPayload, removeMediaFiles, filterExistingMedia, regenerateImageVariants } = require('../../utils/mediaHelper');
+const { buildMediaPayload, removeMediaFiles, filterExistingMedia, regenerateImageVariants, resolveBestMediaUrl } = require('../../utils/mediaHelper');
 const { finalizeQuarantinedUpload } = require('../../utils/uploadSecurity');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 
@@ -196,7 +196,7 @@ async function gallery(req, res, next) {
         id: item.id,
         originalName: item.original_name,
         filePath: item.file_path,
-        thumbnailPath: item.thumbnail_path,
+        thumbnailPath: resolveBestMediaUrl(item.thumbnail_path, item.medium_path, item.file_path),
         fileType: item.file_type,
         mimeType: item.mime_type,
         fileSize: item.file_size,

@@ -67,3 +67,12 @@ test('buildCspDirectives allows Cloudflare Insights when configured', () => {
   if (previous === undefined) delete process.env.CSP_CLOUDFLARE_INSIGHTS;
   else process.env.CSP_CLOUDFLARE_INSIGHTS = previous;
 });
+
+test('vendor cropper assets are served with correct content type', async () => {
+  const response = await request(app).get('/vendor/cropperjs/cropper.min.css');
+  expect(response.status).toBe(200);
+  expect(response.headers['content-type']).toMatch(/text\/css/);
+  const js = await request(app).get('/vendor/cropperjs/cropper.min.js');
+  expect(js.status).toBe(200);
+  expect(js.headers['content-type']).toMatch(/javascript/);
+});
