@@ -100,6 +100,7 @@ app.use((req, res, next) => {
   res.locals.normalizePublicMediaUrl = normalizePublicMediaUrl;
   res.locals.resolvePublicMediaUrl = resolvePublicMediaUrl;
   res.locals.resolveBestMediaUrl = resolveBestMediaUrl;
+  res.locals.mediaGalleryPickerLimit = appConfig.mediaGalleryPickerLimit;
   next();
 });
 app.use(localeMiddleware);

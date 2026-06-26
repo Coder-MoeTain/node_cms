@@ -100,6 +100,21 @@ test('summarizeMatchedRules reports combined rule names', () => {
   expect(summary.all).toHaveLength(2);
 });
 
+test('getClientIp uses forwarded headers when proxy trust is enabled', () => {
+  const { getClientIp } = require('../utils/wafHelper');
+  const req = {
+    ip: '127.0.0.1',
+    headers: {
+      'x-forwarded-for': '203.0.113.10, 10.0.0.1',
+      'cf-connecting-ip': '203.0.113.44'
+    },
+    socket: { remoteAddress: '127.0.0.1' },
+    app: { get: () => false }
+  };
+  expect(getClientIp(req, true)).toBe('203.0.113.44');
+  expect(getClientIp(req, false)).toBe('127.0.0.1');
+});
+
 test('oversized regex patterns are rejected', () => {
   const huge = 'a'.repeat(MAX_REGEX_PATTERN_LENGTH + 1);
   expect(validatePattern(huge, 'regex')).toBe(false);
