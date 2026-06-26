@@ -14,6 +14,7 @@ const {
 const { getPortalStats } = require('../utils/portalStats');
 const policy = require('../utils/policy');
 const { createEngine, normalizeLocale } = require('../utils/translationEngine');
+const { createDateFormatters, resolveSiteTimezone } = require('../utils/timezoneHelper');
 
 function buildMenuTree(items = []) {
   const plainItems = items
@@ -118,11 +119,16 @@ async function loadSiteContext(req, res, next) {
       res.locals.portalConfig.header?.layout === 'portal' ||
       themePlain.header_layout === 'portal' ||
       res.locals.themePreset === 'myanmar-portal';
-    res.locals.formatDate = (value) => {
-      if (!value) return '';
-      const date = value instanceof Date ? value : new Date(value);
-      return date.toLocaleDateString(res.locals.locale || undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-    };
+    const dateFormatters = createDateFormatters({
+      timeZone: resolveSiteTimezone(res.locals.siteSettings),
+      locale: res.locals.locale
+    });
+    res.locals.siteTimezone = dateFormatters.siteTimezone;
+    res.locals.formatDate = dateFormatters.formatDate;
+    res.locals.formatDateTime = dateFormatters.formatDateTime;
+    res.locals.formatTime = dateFormatters.formatTime;
+    res.locals.toDatetimeLocalValue = dateFormatters.toDatetimeLocalValue;
+    res.locals.parseDatetimeLocal = dateFormatters.parseDatetimeLocal;
     const engine = res.locals.translationEngine;
     const { gravatarUrl } = require('../utils/commentHelper');
     res.locals.gravatarUrl = gravatarUrl;
@@ -147,7 +153,8 @@ async function loadSiteContext(req, res, next) {
     res.locals.widgetAreas = await loadAllWidgetAreas({
       recentPosts,
       isPortal: res.locals.isPortal,
-      formatDate: res.locals.formatDate
+      formatDate: res.locals.formatDate,
+      siteTimezone: res.locals.siteTimezone
     });
     res.locals.pluginPublicHead = await pluginLoader.collectHook('publicHead', { req, res });
     res.locals.pluginPublicFooter = await pluginLoader.collectHook('publicFooter', { req, res });

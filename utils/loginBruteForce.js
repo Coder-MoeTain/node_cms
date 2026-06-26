@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const appConfig = require('../config/app');
 const { LoginAttempt, SecuritySetting, BlockedIp } = require('../models');
+const { resolveRequestIpAsync } = require('./loginSessionHelper');
 
 const SETTING_KEYS = [
   'login_attempt_limiter',
@@ -71,13 +72,18 @@ async function countRecentFailedAttempts(ip, windowMinutes) {
   });
 }
 
+async function resolveLoginIp(req) {
+  return req.clientIp || resolveRequestIpAsync(req);
+}
+
 async function isIpTemporarilyBlocked(req) {
   const settings = await getBruteForceSettings();
   if (!settings.enabled) {
     return { blocked: false };
   }
 
-  const failedCount = await countRecentFailedAttempts(req.ip, settings.ipWindowMinutes);
+  const ip = await resolveLoginIp(req);
+  const failedCount = await countRecentFailedAttempts(ip, settings.ipWindowMinutes);
   if (failedCount >= settings.maxIpAttempts) {
     return {
       blocked: true,
@@ -103,14 +109,15 @@ async function maybeAutoBlockIp(req) {
     return false;
   }
 
-  const failedCount = await countRecentFailedAttempts(req.ip, settings.ipWindowMinutes);
+  const ip = await resolveLoginIp(req);
+  const failedCount = await countRecentFailedAttempts(ip, settings.ipWindowMinutes);
   if (failedCount < settings.autoBlockIpAttempts) {
     return false;
   }
 
   const reason = 'Automatic block: repeated failed login attempts';
   const [row] = await BlockedIp.findOrCreate({
-    where: { ip_address: req.ip },
+    where: { ip_address: ip },
     defaults: { reason, active: true, blocked_by: null }
   });
   if (!row.active) {

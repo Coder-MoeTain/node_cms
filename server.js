@@ -23,6 +23,7 @@ const { localeMiddleware } = require('./middleware/locale');
 const { portalVisitMiddleware } = require('./middleware/portalVisit');
 const pluginHooks = require('./middleware/pluginHooks');
 const { wafMiddleware } = require('./middleware/waf');
+const { clientIpMiddleware } = require('./middleware/clientIp');
 const errorHandler = require('./middleware/errorHandler');
 const notFoundMiddleware = require('./middleware/notFound');
 const policy = require('./utils/policy');
@@ -103,6 +104,20 @@ app.use((req, res, next) => {
   res.locals.mediaGalleryPickerLimit = appConfig.mediaGalleryPickerLimit;
   next();
 });
+app.use(async (req, res, next) => {
+  try {
+    const adminLoginPath = require('./utils/adminLoginPath');
+    const config = await adminLoginPath.getConfig();
+    res.locals.adminLoginUrl = config.loginUrl;
+    res.locals.adminHoneypotEnabled = config.honeypotEnabled;
+    res.locals.adminSecretLoginUrl = config.secretUrl;
+  } catch {
+    res.locals.adminLoginUrl = '/admin/login';
+    res.locals.adminHoneypotEnabled = false;
+    res.locals.adminSecretLoginUrl = '/admin/login';
+  }
+  next();
+});
 app.use(localeMiddleware);
 app.use(portalVisitMiddleware);
 app.use(loadSiteContext);
@@ -128,6 +143,7 @@ app.use(async (req, res, next) => {
 });
 app.use(pluginHooks);
 app.use(wafMiddleware);
+app.use(clientIpMiddleware);
 app.use((req, res, next) => {
   const maintenanceOn = res.locals.siteSettings?.maintenance_mode === 'true';
   if (!maintenanceOn || req.path.startsWith('/admin') || req.path.startsWith('/api')) {

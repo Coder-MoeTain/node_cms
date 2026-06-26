@@ -1,7 +1,7 @@
 const { Op } = require('sequelize');
 const sequelize = require('../config/database');
 const { LoginAttempt, WafSetting } = require('../models');
-const { getClientIp } = require('./wafHelper');
+const { getClientIp, isLoopbackIp } = require('./wafHelper');
 
 const TRUSTED_PROXY_CACHE_MS = 60 * 1000;
 let trustedProxyCache = { value: false, at: 0 };
@@ -22,16 +22,16 @@ async function loadTrustedProxyEnabled() {
 }
 
 function isTrustProxyRequest(req, trustedProxyEnabled = false) {
-  if (req.wafTrustProxy !== undefined) return Boolean(req.wafTrustProxy);
-  if (trustedProxyEnabled) return true;
-  return Boolean(req.app?.get('trust proxy'));
+  const { shouldTrustForwardedHeaders } = require('./wafHelper');
+  return shouldTrustForwardedHeaders(req, trustedProxyEnabled);
 }
 
 function resolveRequestIp(req, trustedProxyEnabled = false) {
-  return getClientIp(req, isTrustProxyRequest(req, trustedProxyEnabled));
+  return getClientIp(req, trustedProxyEnabled);
 }
 
 async function resolveRequestIpAsync(req) {
+  if (req.clientIp) return req.clientIp;
   const trustedProxyEnabled = await loadTrustedProxyEnabled();
   return resolveRequestIp(req, trustedProxyEnabled);
 }
@@ -191,6 +191,7 @@ module.exports = {
   resolveRequestIp,
   resolveRequestIpAsync,
   invalidateTrustedProxyCache,
+  isLoopbackIp,
   listActiveAdminSessions,
   countActiveAdminSessions,
   listLoginAttempts,

@@ -14,6 +14,15 @@ const {
 const { saveRevision } = require('../../utils/revisionHelper');
 const { renderBlocks } = require('../../utils/blockRenderer');
 const { loadTranslations, saveTranslations, TRANSLATION_LOCALES } = require('../../utils/contentTranslationStore');
+const { parseDatetimeLocal, resolveSiteTimezone } = require('../../utils/timezoneHelper');
+
+function resolvePublishedAt(body, req, status) {
+  if (body.published_at) {
+    const tz = resolveSiteTimezone(req.res?.locals?.siteSettings);
+    return parseDatetimeLocal(body.published_at, tz);
+  }
+  return status === 'published' ? new Date() : null;
+}
 
 const richTextSanitizeOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
@@ -88,7 +97,7 @@ async function buildPayload(body, req, type, record = null, transaction = null) 
     seo_description: sanitizePlainText(body.seo_description, 1000),
     og_image: sanitizePlainText(body.og_image, 255),
     allow_comments: type.supports_comments && body.allow_comments === 'on',
-    published_at: body.published_at || (status === 'published' ? new Date() : null)
+    published_at: resolvePublishedAt(body, req, status)
   };
 
   if (type.supports_featured_image) {

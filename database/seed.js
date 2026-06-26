@@ -374,10 +374,21 @@ async function seed({ closeConnection = false } = {}) {
     admin_session_timeout: 'true',
     force_strong_password: 'true',
     two_factor_auth: 'false',
-    maintenance_mode: 'false'
+    maintenance_mode: 'false',
+    admin_login_honeypot_enabled: 'false',
+    admin_login_secret_slug: ''
   };
   for (const [key, value] of Object.entries(securitySettings)) {
     await SecuritySetting.findOrCreate({ where: { key }, defaults: { value, enabled: value === 'true' } });
+  }
+  const existingSlug = await SecuritySetting.findOne({ where: { key: 'admin_login_secret_slug' } });
+  if (!existingSlug?.value) {
+    const adminLoginPath = require('../utils/adminLoginPath');
+    await SecuritySetting.upsert({
+      key: 'admin_login_secret_slug',
+      value: adminLoginPath.generateSecretSlug(),
+      enabled: true
+    });
   }
 
   for (const [setting_key, [setting_value, setting_type]] of Object.entries(wafSettings)) {

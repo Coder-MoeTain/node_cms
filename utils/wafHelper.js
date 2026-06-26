@@ -29,15 +29,52 @@ const staticExtensions = new Set([
 
 const dangerousUploadExtensions = ['.php', '.phtml', '.exe', '.sh', '.bat', '.cmd', '.jsp', '.asp', '.aspx'];
 
+function normalizeIp(ip) {
+  return String(ip || '').replace(/^::ffff:/, '').trim();
+}
+
+function isPrivateOrLoopbackIp(ip) {
+  const normalized = normalizeIp(ip);
+  if (!normalized || normalized === '127.0.0.1' || normalized === '::1' || normalized === 'localhost') {
+    return true;
+  }
+  if (/^10\./.test(normalized)) return true;
+  if (/^192\.168\./.test(normalized)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(normalized)) return true;
+  return false;
+}
+
+function isLoopbackIp(ip) {
+  const normalized = normalizeIp(ip);
+  return !normalized || normalized === '127.0.0.1' || normalized === '::1' || normalized === 'localhost';
+}
+
+function hasForwardedClientHeader(req) {
+  return Boolean(
+    req.headers['cf-connecting-ip']
+    || req.headers['true-client-ip']
+    || req.headers['x-real-ip']
+    || req.headers['x-forwarded-for']
+  );
+}
+
 function isTrustedProxyRequest(req, trustedProxyEnabled = false) {
   if (trustedProxyEnabled) return true;
   const trustProxySetting = req.app?.get('trust proxy');
   return Boolean(trustProxySetting);
 }
 
+function shouldTrustForwardedHeaders(req, trustedProxyEnabled = false) {
+  if (trustedProxyEnabled) return true;
+  if (req.wafTrustProxy) return true;
+  if (isTrustedProxyRequest(req, false)) return true;
+  const socketIp = req.socket?.remoteAddress || req.connection?.remoteAddress || '';
+  return isPrivateOrLoopbackIp(socketIp) && hasForwardedClientHeader(req);
+}
+
 function getClientIp(req, trustedProxyEnabled = false) {
-  const trustProxy = isTrustedProxyRequest(req, trustedProxyEnabled);
-  const normalize = (ip) => String(ip || '').replace(/^::ffff:/, '').trim();
+  const trustProxy = shouldTrustForwardedHeaders(req, trustedProxyEnabled);
+  const normalize = normalizeIp;
 
   if (trustProxy) {
     const cfIp = req.headers['cf-connecting-ip'];
@@ -52,6 +89,7 @@ function getClientIp(req, trustedProxyEnabled = false) {
     const forwarded = req.headers['x-forwarded-for'];
     if (forwarded) return normalize(String(forwarded).split(',')[0]);
 
+    if (Array.isArray(req.ips) && req.ips.length) return normalize(req.ips[0]);
     if (req.ip) return normalize(req.ip);
   }
 
@@ -435,6 +473,11 @@ function isDangerousUploadFilename(filename) {
 module.exports = {
   getClientIp,
   isTrustedProxyRequest,
+  shouldTrustForwardedHeaders,
+  isPrivateOrLoopbackIp,
+  isLoopbackIp,
+  hasForwardedClientHeader,
+  normalizeIp,
   sanitizeLogData,
   maskSensitiveFields,
   normalizeValue,

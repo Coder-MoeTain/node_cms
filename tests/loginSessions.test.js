@@ -92,6 +92,29 @@ test('admin can revoke another active session', async () => {
   expect(stillIn.status).toBe(200);
 });
 
+test('login records remote IP from X-Forwarded-For behind local reverse proxy', async () => {
+  const agent = request.agent(app);
+  const csrf = await getCsrf(agent, '/admin/login');
+  const response = await agent
+    .post('/admin/login')
+    .set('X-Forwarded-For', '198.51.100.55')
+    .type('form')
+    .send({ email: 'admin@example.com', password: 'Admin@12345', _csrf: csrf });
+
+  expect(response.status).toBe(302);
+  expect(response.headers.location).not.toMatch(/login/);
+
+  const attempt = await models.LoginAttempt.findOne({
+    where: { email: 'admin@example.com', ip_address: '198.51.100.55' },
+    order: [['id', 'DESC']]
+  });
+  expect(attempt).toBeTruthy();
+
+  const page = await agent.get('/admin/settings/login-sessions');
+  expect(page.status).toBe(200);
+  expect(page.text).toMatch(/198\.51\.100\.55/);
+});
+
 test('login records remote IP from X-Forwarded-For when trusted proxy is enabled', async () => {
   await models.WafSetting.update(
     { setting_value: 'true' },

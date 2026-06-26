@@ -24,7 +24,7 @@ test('admin can view site settings', async () => {
   await login(agent, 'admin@example.com', 'Admin@12345');
   const response = await agent.get('/admin/settings');
   expect(response.status).toBe(200);
-  expect(response.text).toMatch(/Settings|Site title/i);
+  expect(response.text).toMatch(/Settings|Site title|timezone/i);
 });
 
 test('admin can update site settings with placeholder social links', async () => {
@@ -56,6 +56,22 @@ test('admin can upload site logo without site_logo in form body', async () => {
   expect(response.status).toBe(302);
   const logo = await models.SiteSetting.findOne({ where: { key: 'site_logo' } });
   expect(logo?.value).toMatch(/^\/uploads\//);
+});
+
+test('admin can update site timezone', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/settings');
+  const response = await agent
+    .put('/admin/settings')
+    .type('form')
+    .send({
+      site_timezone: 'Asia/Tokyo',
+      _csrf: csrf
+    });
+  expect(response.status).toBe(302);
+  const tz = await models.SiteSetting.findOne({ where: { key: 'site_timezone' } });
+  expect(tz?.value).toBe('Asia/Tokyo');
 });
 
 test('author cannot access site settings', async () => {

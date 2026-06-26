@@ -36,9 +36,9 @@
                   <td><%= session.username %><% if (session.isCurrent) { %> <span class="np-badge np-badge-success">You</span><% } %></td>
                   <td><%= session.email %></td>
                   <td><code><%= session.ipAddress %></code></td>
-                  <td><%= session.loginAt ? new Date(session.loginAt).toLocaleString() : '—' %></td>
-                  <td><%= session.lastActivity ? new Date(session.lastActivity).toLocaleString() : '—' %></td>
-                  <td><%= session.expiresAt ? new Date(session.expiresAt).toLocaleString() : '—' %></td>
+                  <td><%= session.loginAt ? formatDateTime(session.loginAt) : '—' %></td>
+                  <td><%= session.lastActivity ? formatDateTime(session.lastActivity) : '—' %></td>
+                  <td><%= session.expiresAt ? formatDateTime(session.expiresAt) : '—' %></td>
                   <td><code title="<%= session.sessionId %>"><%= session.sessionIdShort %></code></td>
                   <td>
                     <form method="post" action="/admin/settings/login-sessions/revoke" class="d-inline" onsubmit="return confirm('<%= session.isCurrent ? 'Revoke your current session? You will be logged out.' : 'Revoke this session for ' + session.email + '?' %>');">
@@ -94,7 +94,7 @@
                 <tr>
                   <td><%= attempt.username %></td>
                   <td><code><%= attempt.ipAddress %></code></td>
-                  <td><%= attempt.createdAt ? new Date(attempt.createdAt).toLocaleString() : '—' %></td>
+                  <td><%= attempt.createdAt ? formatDateTime(attempt.createdAt) : '—' %></td>
                   <td>
                     <span class="np-badge np-badge-<%= attempt.success ? 'success' : 'danger' %>">
                       <%= attempt.success ? 'Success' : 'Failed' %>

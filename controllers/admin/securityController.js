@@ -2,9 +2,11 @@ const { SecuritySetting, LoginAttempt, BlockedIp, SiteSetting } = require('../..
 const { listActivityLogs, createActivityLog } = require('../../utils/activityLogHelper');
 const dbBackup = require('../../utils/databaseBackup');
 const loginBruteForce = require('../../utils/loginBruteForce');
+const adminLoginPath = require('../../utils/adminLoginPath');
 
 const BOOLEAN_SETTINGS = [
   'login_attempt_limiter',
+  'admin_login_honeypot_enabled',
   'csrf_protection',
   'xss_protection',
   'file_upload_validation',
@@ -24,13 +26,22 @@ const NUMERIC_SETTINGS = [
 
 async function index(req, res, next) {
   try {
-    const [settings, attempts, blockedIps, activityLogs] = await Promise.all([
+    const [settings, attempts, blockedIps, activityLogs, honeypotConfig] = await Promise.all([
       SecuritySetting.findAll({ order: [['key', 'ASC']] }),
       LoginAttempt.findAll({ limit: 50, order: [['created_at', 'DESC']] }),
       BlockedIp.findAll({ order: [['created_at', 'DESC']] }),
-      listActivityLogs({ limit: 50, order: [['created_at', 'DESC']] })
+      listActivityLogs({ limit: 50, order: [['created_at', 'DESC']] }),
+      adminLoginPath.getConfig()
     ]);
-    return res.render('admin/security/index', { title: 'Security Plugins', settings, attempts, blockedIps, activityLogs });
+    return res.render('admin/security/index', {
+      title: 'Security Plugins',
+      settings,
+      attempts,
+      blockedIps,
+      activityLogs,
+      honeypotConfig,
+      appUrl: (require('../../config/app').url || '').replace(/\/$/, '')
+    });
   } catch (error) {
     return next(error);
   }
@@ -52,6 +63,21 @@ async function updateSettings(req, res, next) {
       await SecuritySetting.upsert({ key, value: String(value), enabled: true });
     }
     loginBruteForce.clearSettingsCache();
+    adminLoginPath.clearConfigCache();
+
+    const honeypotEnabled = req.body.admin_login_honeypot_enabled === 'on';
+    let secretSlug = adminLoginPath.normalizeSecretSlug(req.body.admin_login_secret_slug);
+    if (honeypotEnabled && !secretSlug) {
+      secretSlug = adminLoginPath.generateSecretSlug();
+    }
+    if (honeypotEnabled) {
+      await SecuritySetting.upsert({
+        key: 'admin_login_secret_slug',
+        value: secretSlug,
+        enabled: true
+      });
+    }
+
     req.flash('success', 'Security settings updated.');
     return res.redirect('/admin/security');
   } catch (error) {
@@ -104,4 +130,25 @@ async function backupDatabase(req, res, next) {
   }
 }
 
-module.exports = { index, updateSettings, blockIp, unblockIp, backupDatabase };
+async function regenerateLoginPath(req, res, next) {
+  try {
+    const slug = adminLoginPath.generateSecretSlug();
+    await SecuritySetting.upsert({
+      key: 'admin_login_secret_slug',
+      value: slug,
+      enabled: true
+    });
+    await SecuritySetting.upsert({
+      key: 'admin_login_honeypot_enabled',
+      value: 'true',
+      enabled: true
+    });
+    adminLoginPath.clearConfigCache();
+    req.flash('success', `New secret admin login URL: /admin/${slug}`);
+    return res.redirect('/admin/security');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { index, updateSettings, blockIp, unblockIp, backupDatabase, regenerateLoginPath };

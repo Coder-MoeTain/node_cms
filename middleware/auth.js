@@ -1,7 +1,8 @@
 const appConfig = require('../config/app');
 const { User, Role, Permission } = require('../models');
 const policy = require('../utils/policy');
-const { resolveRequestIpAsync } = require('../utils/loginSessionHelper');
+const { resolveRequestIpAsync, isLoopbackIp } = require('../utils/loginSessionHelper');
+const adminLoginPath = require('../utils/adminLoginPath');
 
 async function refreshSessionUser(req) {
   const user = await User.findByPk(req.session.user.id, {
@@ -23,7 +24,7 @@ async function refreshSessionUser(req) {
 async function requireAuth(req, res, next) {
   if (!req.session.user) {
     req.flash('error', 'Please log in to continue.');
-    return res.redirect('/admin/login');
+    return res.redirect(await adminLoginPath.getLoginUrl());
   }
 
   const lastActivity = req.session.lastActivity || Date.now();
@@ -31,7 +32,7 @@ async function requireAuth(req, res, next) {
   if (Date.now() - lastActivity > timeoutMs) {
     req.session.destroy(() => {});
     req.flash('error', 'Your session expired. Please log in again.');
-    return res.redirect('/admin/login');
+    return res.redirect(await adminLoginPath.getLoginUrl());
   }
 
   try {
@@ -39,7 +40,7 @@ async function requireAuth(req, res, next) {
       const refreshed = await refreshSessionUser(req);
       if (!refreshed) {
         req.session.destroy(() => {});
-        return res.redirect('/admin/login');
+        return res.redirect(await adminLoginPath.getLoginUrl());
       }
       req.session.lastUserRefresh = Date.now();
     }
@@ -54,8 +55,12 @@ async function requireAuth(req, res, next) {
       return res.redirect(req.session.user.role === 'subscriber' ? '/' : '/admin/profile');
     }
 
+    const clientIp = req.clientIp || await resolveRequestIpAsync(req);
     req.session.lastActivity = Date.now();
-    req.session.lastActivityIp = await resolveRequestIpAsync(req);
+    req.session.lastActivityIp = clientIp;
+    if (isLoopbackIp(req.session.loginIp) && !isLoopbackIp(clientIp)) {
+      req.session.loginIp = clientIp;
+    }
     return next();
   } catch (error) {
     return next(error);

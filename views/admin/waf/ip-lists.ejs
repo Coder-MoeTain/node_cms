@@ -50,7 +50,7 @@
                       <td><code><%= row.ip_address %></code></td>
                       <td><span class="np-badge np-badge-<%= row.list_type === 'whitelist' ? 'success' : row.list_type === 'blacklist' ? 'danger' : 'warning' %>"><%= row.list_type %></span></td>
                       <td><%= row.reason || '-' %></td>
-                      <td><%= row.expires_at ? row.expires_at.toLocaleString() : '-' %></td>
+                      <td><%= row.expires_at ? formatDateTime(row.expires_at) : '-' %></td>
                       <td><span class="np-badge np-badge-<%= row.status ? 'success' : 'muted' %>"><%= row.status ? 'active' : 'inactive' %></span></td>
                       <td class="text-end">
                         <form method="post" action="/admin/waf/ip-lists/<%= row.id %>/delete" onsubmit="return confirm('Remove this IP entry?')">

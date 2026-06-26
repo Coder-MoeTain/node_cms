@@ -85,8 +85,8 @@
         <% if (hdr.showLanguageSwitcher) { %>
         <%- include('language-switcher', { langSwitcherVariant: 'portal' }) %>
         <% } %>
-        <% if (hdr.showLoginLinks && !isAdminLoggedIn) { %>
-        <a class="portal-utility-link" href="/admin/login">Login</a>
+        <% if (hdr.showLoginLinks && !isAdminLoggedIn && !adminHoneypotEnabled) { %>
+        <a class="portal-utility-link" href="<%= adminLoginUrl || '/admin/login' %>">Login</a>
         <a class="portal-utility-link portal-utility-link-accent" href="/contact?subject=Citizen+registration+request">Register</a>
         <% } else if (hdr.showLoginLinks && isAdminLoggedIn) { %>
         <a class="portal-utility-link" href="/admin">Dashboard</a>

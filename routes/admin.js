@@ -24,6 +24,7 @@ const brandingImageUpload = upload.image.fields([
 ]);
 
 const auth = require('../controllers/admin/authController');
+const adminLoginPath = require('../utils/adminLoginPath');
 const dashboard = require('../controllers/admin/dashboardController');
 const crud = require('../controllers/admin/crudController');
 const media = require('../controllers/admin/mediaController');
@@ -81,8 +82,15 @@ function handleSqlUpload(req, res, next) {
   });
 }
 
-router.get('/login', guestOnly, auth.loginForm);
-router.post('/login', conditionalLoginLimiter, loginBruteForceGuard, guestOnly, [body('email').isEmail().withMessage('Valid email is required.'), body('password').notEmpty().withMessage('Password is required.')], auth.login);
+const loginValidators = [
+  body('email').isEmail().withMessage('Valid email is required.'),
+  body('password').notEmpty().withMessage('Password is required.')
+];
+
+router.get('/login', guestOnly, adminLoginPath.dispatchLoginForm);
+router.post('/login', conditionalLoginLimiter, loginBruteForceGuard, guestOnly, loginValidators, adminLoginPath.dispatchLoginPost);
+router.get(/^\/(np-auth-[a-z0-9]{6,48})\/?$/i, guestOnly, adminLoginPath.secretLoginForm);
+router.post(/^\/(np-auth-[a-z0-9]{6,48})\/?$/i, conditionalLoginLimiter, loginBruteForceGuard, guestOnly, loginValidators, adminLoginPath.secretLoginPost);
 router.post('/logout', requireAuth, auth.logout);
 router.get('/forgot-password', guestOnly, auth.forgotPasswordForm);
 router.post('/forgot-password', guestOnly, auth.forgotPassword);
@@ -152,6 +160,7 @@ router.post('/themes/:slug/uninstall', requireAuth, can('manage_themes'), themes
 
 router.get('/security', requireAuth, can('manage_security'), security.index);
 router.put('/security/settings', requireAuth, can('manage_security'), security.updateSettings);
+router.post('/security/regenerate-login-path', requireAuth, can('manage_security'), security.regenerateLoginPath);
 router.get('/security/login-attempts', requireAuth, can('manage_security'), security.index);
 router.post('/security/block-ip', requireAuth, can('manage_security'), security.blockIp);
 router.delete('/security/unblock-ip/:id', requireAuth, can('manage_security'), security.unblockIp);

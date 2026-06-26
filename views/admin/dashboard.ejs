@@ -54,7 +54,7 @@
                         </div>
                       </td>
                       <td><span class="np-badge np-badge-<%= post.status === 'published' ? 'success' : (post.status === 'draft' ? 'info' : 'muted') %>"><%= post.status %></span></td>
-                      <td><%= post.created_at ? post.created_at.toLocaleDateString() : '' %></td>
+                      <td><%= post.created_at ? formatDate(post.created_at) : '' %></td>
                     </tr>
                   <% }) %>
                   <% if (!recentPosts.length) { %>
@@ -92,7 +92,7 @@
                 <li class="mb-1">
                   <span class="np-badge np-badge-<%= login.success ? 'success' : 'danger' %>"><%= login.success ? 'OK' : 'Failed' %></span>
                   <%= login.email || login.ip_address || 'Unknown' %>
-                  <span class="text-muted small"><%= login.created_at ? login.created_at.toLocaleString() : '' %></span>
+                  <span class="text-muted small"><%= login.created_at ? formatDateTime(login.created_at) : '' %></span>
                 </li>
               <% }) %>
               <% if (!recentLogins.length) { %><li class="text-muted">No login attempts logged.</li><% } %>

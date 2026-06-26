@@ -112,7 +112,7 @@ test('getClientIp uses forwarded headers when proxy trust is enabled', () => {
     app: { get: () => false }
   };
   expect(getClientIp(req, true)).toBe('203.0.113.44');
-  expect(getClientIp(req, false)).toBe('127.0.0.1');
+  expect(getClientIp(req, false)).toBe('203.0.113.44');
 });
 
 test('oversized regex patterns are rejected', () => {

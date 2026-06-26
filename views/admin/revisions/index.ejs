@@ -12,7 +12,7 @@
           <% if (!revisions.length) { %><tr><td colspan="4" class="text-muted">No revisions saved yet.</td></tr><% } %>
           <% revisions.forEach(function(rev) { %>
             <tr>
-              <td><%= rev.created_at ? new Date(rev.created_at).toLocaleString() : '—' %></td>
+              <td><%= rev.created_at ? formatDateTime(rev.created_at) : '—' %></td>
               <td><%= rev.author ? rev.author.name : '—' %></td>
               <td><%= rev.title || '—' %></td>
               <td class="text-end">

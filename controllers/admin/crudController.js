@@ -13,6 +13,15 @@ const { saveRevision } = require('../../utils/revisionHelper');
 const { renderBlocks, validateBlockSchema } = require('../../utils/blockRenderer');
 const { loadTranslations, saveTranslations, TRANSLATION_LOCALES } = require('../../utils/contentTranslationStore');
 const { buildPreviewUrl } = require('../../utils/previewHelper');
+const { parseDatetimeLocal, resolveSiteTimezone } = require('../../utils/timezoneHelper');
+
+function resolvePublishedAt(body, req, fallbackStatus) {
+  if (body.published_at) {
+    const tz = resolveSiteTimezone(req.res?.locals?.siteSettings);
+    return parseDatetimeLocal(body.published_at, tz);
+  }
+  return fallbackStatus === 'published' ? new Date() : null;
+}
 
 const richTextSanitizeOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
@@ -143,7 +152,7 @@ const configs = {
         seo_description: sanitizePlainText(body.seo_description, 1000),
         og_image: sanitizePlainText(body.og_image, 255),
         allow_comments: body.allow_comments === 'on',
-        published_at: body.published_at || (status === 'published' ? new Date() : null)
+        published_at: resolvePublishedAt(body, req, status)
       });
       return payload;
     },
@@ -171,7 +180,7 @@ const configs = {
       seo_description: sanitizePlainText(body.seo_description, 1000),
       og_image: sanitizePlainText(body.og_image, 255),
       author_id: record?.author_id || req.session.user.id,
-      published_at: body.published_at || (allowedStatus(body, req) === 'published' ? new Date() : null)
+      published_at: resolvePublishedAt(body, req, allowedStatus(body, req))
     })
   },
   categories: {

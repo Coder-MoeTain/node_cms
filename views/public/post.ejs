@@ -43,7 +43,7 @@
           <ul class="post-meta-list">
             <li>
               <i class="bi bi-calendar3" aria-hidden="true"></i>
-              <time datetime="<%= publishedDate %>"><%= publishedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) %></time>
+              <time datetime="<%= publishedDate %>"><%= formatDate(publishedDate, { month: 'long' }) %></time>
             </li>
             <li>
               <i class="bi bi-person" aria-hidden="true"></i>

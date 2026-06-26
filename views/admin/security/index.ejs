@@ -10,6 +10,33 @@
     <%- include('../partials/settings-nav') %>
 
     <div class="np-widget mb-3">
+      <div class="np-widget-header"><span>Admin Login Honeypot</span></div>
+      <div class="np-widget-body">
+        <p class="np-help-text">When enabled, <code>/admin/login</code> becomes a decoy page. Any login attempt there is treated as an attack and the IP is blocked automatically. Use the secret URL below for real admin access.</p>
+        <form method="post" action="/admin/security/settings?_method=PUT" class="mb-3">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="admin_login_honeypot_enabled" id="honeypot-enabled" <%= honeypotConfig.honeypotEnabled ? 'checked' : '' %>>
+            <label class="form-check-label" for="honeypot-enabled">Enable honeypot login at <code>/admin/login</code></label>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="admin-login-secret-slug">Secret login path</label>
+            <div class="input-group">
+              <span class="input-group-text">/admin/</span>
+              <input class="form-control" id="admin-login-secret-slug" name="admin_login_secret_slug" value="<%= honeypotConfig.secretSlug || '' %>" placeholder="np-auth-abc123" pattern="np-auth-[a-z0-9]{6,48}" title="Must start with np-auth-">
+            </div>
+            <p class="np-help-text mb-0 mt-2">Real login URL: <strong><%= appUrl || '' %><%= honeypotConfig.secretUrl %></strong></p>
+          </div>
+          <button class="np-btn np-btn-primary np-btn-small" type="submit">Save Honeypot Settings</button>
+        </form>
+        <form method="post" action="/admin/security/regenerate-login-path" class="d-inline" onsubmit="return confirm('Generate a new secret login URL? Update your bookmarks.');">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="np-btn np-btn-secondary np-btn-small" type="submit">Generate New Secret URL</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="np-widget mb-3">
       <div class="np-widget-header"><span>Database</span></div>
       <div class="np-widget-body d-flex flex-wrap justify-content-between align-items-center gap-3">
         <p class="np-help-text mb-0">Create backups, restore snapshots, or reset the database from <strong>Settings → Database</strong>.</p>
@@ -35,7 +62,8 @@
                 enable_security_headers: 'Send security headers (Helmet)',
                 enable_waf: 'Web Application Firewall (WAF)'
               }; %>
-              <% settings.filter(function(setting) { return !bruteForceNumeric.includes(setting.key); }).forEach(function(setting) { %>
+              <% const hiddenSecurityKeys = ['admin_login_honeypot_enabled', 'admin_login_secret_slug']; %>
+              <% settings.filter(function(setting) { return !bruteForceNumeric.includes(setting.key) && !hiddenSecurityKeys.includes(setting.key); }).forEach(function(setting) { %>
                 <tr>
                   <th scope="row"><%= securityFeatureLabels[setting.key] || setting.key.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); }) %></th>
                   <td>

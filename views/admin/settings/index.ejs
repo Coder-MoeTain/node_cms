@@ -34,6 +34,13 @@
                       <% } else if (row.key === 'posts_per_page' || row.key.startsWith('stat_') || row.key === 'portal_visit_count') { %>
                         <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="number" min="0" value="<%= row.value %>" <%= row.key.startsWith('stat_') ? 'readonly' : '' %>>
                         <% if (row.key.startsWith('stat_')) { %><p class="np-help-text mb-0">Updated automatically from site activity.</p><% } %>
+                      <% } else if (row.key === 'site_timezone') { %>
+                        <select class="form-select" id="setting-<%= row.key %>" name="<%= row.key %>">
+                          <% (timezoneOptions || []).forEach(function(opt) { %>
+                            <option value="<%= opt.value %>" <%= row.value === opt.value ? 'selected' : '' %>><%= opt.label %></option>
+                          <% }) %>
+                        </select>
+                        <p class="np-help-text mb-0">Dates and times across the site are displayed in this timezone.</p>
                       <% } else { %>
                         <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" value="<%= row.value %>">
                       <% } %>

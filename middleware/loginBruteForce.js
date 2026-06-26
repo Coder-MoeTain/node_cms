@@ -1,5 +1,6 @@
 const { loginLimiter } = require('./security');
 const loginBruteForce = require('../utils/loginBruteForce');
+const adminLoginPath = require('../utils/adminLoginPath');
 
 async function loginBruteForceGuard(req, res, next) {
   try {
@@ -14,7 +15,7 @@ async function loginBruteForceGuard(req, res, next) {
         'error',
         `Too many failed login attempts from your IP address. Please wait ${ipCheck.retryAfterMinutes} minutes before trying again.`
       );
-      return res.redirect('/admin/login');
+      return res.redirect(await adminLoginPath.getLoginUrl());
     }
 
     return next();

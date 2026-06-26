@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <% if (typeof csrfToken !== 'undefined' && csrfToken) { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+  <% if (typeof siteTimezone !== 'undefined' && siteTimezone) { %><meta name="site-timezone" content="<%= siteTimezone %>"><% } %>
   <title><%= title %> | NodePress Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

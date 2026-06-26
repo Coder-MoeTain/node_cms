@@ -71,7 +71,7 @@
       </section>
     <% }) %>
 
-    <p class="np-help-text" id="health-generated-at">Last checked: <%= report.generatedAt.toLocaleString() %></p>
+    <p class="np-help-text" id="health-generated-at">Last checked: <%= formatDateTime(report.generatedAt) %></p>
   </main>
 </div>
 <script>

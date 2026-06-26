@@ -39,7 +39,7 @@
             <tbody>
               <% logs.forEach(function(log) { %>
                 <tr>
-                  <td><%= log.created_at.toLocaleString() %></td>
+                  <td><%= formatDateTime(log.created_at) %></td>
                   <td><code><%= log.ip_address %></code></td>
                   <td><%= log.method %></td>
                   <td class="text-truncate" style="max-width:260px"><%= log.url %></td>

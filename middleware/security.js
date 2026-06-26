@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { BlockedIp } = require('../models');
 const appConfig = require('../config/app');
+const adminLoginPath = require('../utils/adminLoginPath');
 
 const loginLimiter = rateLimit({
   windowMs: (appConfig.loginBruteForce.rateLimitWindowMinutes || 15) * 60 * 1000,
@@ -14,7 +15,7 @@ const loginLimiter = rateLimit({
   handler(req, res) {
     if (req.flash) {
       req.flash('error', 'Too many login attempts. Try again later.');
-      return res.redirect('/admin/login');
+      return res.redirect(adminLoginPath.getLoginUrlSync());
     }
     return res.status(429).send('Too many login attempts. Try again later.');
   }
@@ -122,7 +123,9 @@ function applySecurityMiddleware(app) {
   app.use(cors({ origin: appConfig.corsOrigin, credentials: true }));
   app.use(async (req, res, next) => {
     try {
-      const blocked = await BlockedIp.findOne({ where: { ip_address: req.ip, active: true } });
+      const { resolveRequestIpAsync } = require('../utils/loginSessionHelper');
+      const ip = await resolveRequestIpAsync(req);
+      const blocked = await BlockedIp.findOne({ where: { ip_address: ip, active: true } });
       if (blocked) return res.status(403).send('Your IP address is blocked.');
       return next();
     } catch (error) {

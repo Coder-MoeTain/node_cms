@@ -30,7 +30,7 @@
               <td><strong><%= row.title %></strong><div class="text-muted small"><code><%= row.slug %></code></div></td>
               <td><%= row.status %></td>
               <td><%= row.author ? row.author.name : '—' %></td>
-              <td><%= row.created_at ? new Date(row.created_at).toLocaleDateString() : '—' %></td>
+              <td><%= row.created_at ? formatDate(row.created_at) : '—' %></td>
               <td class="text-end">
                 <% if (type.has_archive && row.status === 'published') { %>
                   <a href="/types/<%= type.slug %>/<%= row.slug %>" class="np-btn np-btn-link np-btn-small" target="_blank" rel="noopener">View</a>
