@@ -102,6 +102,42 @@ test('admin can open WAF rule create form and toggle a custom rule', async () =>
   await rule.destroy({ force: true });
 });
 
+test('admin can block IP from WAF log list', async () => {
+  const log = await models.WafLog.create({
+    request_id: `test-${Date.now()}`,
+    ip_address: '203.0.113.77',
+    method: 'GET',
+    url: '/wp-admin',
+    action_taken: 'block',
+    severity: 'high',
+    risk_score: 80,
+    category: 'cms_probe'
+  });
+
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const listPage = await agent.get('/admin/waf/logs');
+  expect(listPage.status).toBe(200);
+  expect(listPage.text).toMatch(/Block IP/);
+
+  const csrf = await getCsrf(agent, '/admin/waf/logs');
+  const block = await agent
+    .post(`/admin/waf/logs/${log.id}/block-ip`)
+    .type('form')
+    .send({ _csrf: csrf, return_to: '/admin/waf/logs' });
+  expect(block.status).toBe(302);
+  expect(block.headers.location).toBe('/admin/waf/logs');
+
+  const entry = await models.WafIpList.findOne({
+    where: { ip_address: '203.0.113.77', list_type: 'blacklist', status: true }
+  });
+  expect(entry).toBeTruthy();
+
+  await log.destroy({ force: true });
+  if (entry) await entry.destroy({ force: true });
+  clearWafCache();
+});
+
 test('admin can upload and activate a WebGuard ML model zip', async () => {
   const storageRoot = path.join(os.tmpdir(), `wg-admin-${Date.now()}`);
   fs.mkdirSync(storageRoot, { recursive: true });

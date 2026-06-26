@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const crypto = require('crypto');
 const { SecuritySetting, BlockedIp, WafIpList, LoginAttempt } = require('../models');
 const { resolveRequestIpAsync } = require('./loginSessionHelper');
@@ -22,17 +23,21 @@ function normalizeSecretSlug(slug) {
   return isValidSecretSlug(trimmed) ? trimmed : '';
 }
 
-async function loadConfig() {
-  if (cachedConfig && Date.now() < cacheExpiresAt) {
+async function loadConfig({ fresh = false } = {}) {
+  if (!fresh && cachedConfig && Date.now() < cacheExpiresAt) {
     return cachedConfig;
   }
 
   const rows = await SecuritySetting.findAll({
-    where: { key: ['admin_login_honeypot_enabled', 'admin_login_secret_slug'] }
+    where: {
+      key: { [Op.in]: ['admin_login_honeypot_enabled', 'admin_login_secret_slug'] }
+    }
   });
   const map = Object.fromEntries(rows.map((row) => [row.key, row]));
-  const honeypotEnabled = map.admin_login_honeypot_enabled?.enabled === true
-    || map.admin_login_honeypot_enabled?.value === 'true';
+  const honeypotRow = map.admin_login_honeypot_enabled;
+  const honeypotEnabled = honeypotRow?.enabled === true
+    || honeypotRow?.value === 'true'
+    || honeypotRow?.value === true;
   let secretSlug = normalizeSecretSlug(map.admin_login_secret_slug?.value);
 
   if (honeypotEnabled && !secretSlug) {
@@ -61,8 +66,13 @@ function clearConfigCache() {
   cacheExpiresAt = 0;
 }
 
-async function getConfig() {
-  return loadConfig();
+async function getConfig(options) {
+  return loadConfig(options);
+}
+
+async function isHoneypotActive() {
+  const config = await loadConfig({ fresh: true });
+  return Boolean(config.honeypotEnabled);
 }
 
 async function getLoginUrl(query = '') {
@@ -135,7 +145,7 @@ async function blockHoneypotAttacker(req, email = '') {
 
 async function dispatchLoginForm(req, res, next) {
   try {
-    const config = await loadConfig();
+    const config = await loadConfig({ fresh: true });
     const auth = require('../controllers/admin/authController');
     if (config.honeypotEnabled) {
       return auth.honeypotLoginForm(req, res);
@@ -148,7 +158,7 @@ async function dispatchLoginForm(req, res, next) {
 
 async function dispatchLoginPost(req, res, next) {
   try {
-    const config = await loadConfig();
+    const config = await loadConfig({ fresh: true });
     const auth = require('../controllers/admin/authController');
     if (config.honeypotEnabled) {
       return auth.honeypotLogin(req, res, next);
@@ -195,6 +205,7 @@ module.exports = {
   isValidSecretSlug,
   normalizeSecretSlug,
   getConfig,
+  isHoneypotActive,
   getLoginUrl,
   getLoginUrlSync,
   clearConfigCache,

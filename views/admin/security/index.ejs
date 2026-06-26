@@ -13,7 +13,12 @@
       <div class="np-widget-header"><span>Admin Login Honeypot</span></div>
       <div class="np-widget-body">
         <p class="np-help-text">When enabled, <code>/admin/login</code> becomes a decoy page. Any login attempt there is treated as an attack and the IP is blocked automatically. Use the secret URL below for real admin access.</p>
-        <form method="post" action="/admin/security/settings?_method=PUT" class="mb-3">
+        <% if (honeypotConfig.honeypotEnabled) { %>
+          <div class="alert alert-warning py-2 mb-3"><strong>Honeypot is active.</strong> Do not use <code>/admin/login</code> to sign in — use the secret URL below.</div>
+        <% } else { %>
+          <div class="alert alert-secondary py-2 mb-3"><strong>Honeypot is off.</strong> Admin login is at <code>/admin/login</code>.</div>
+        <% } %>
+        <form method="post" action="/admin/security/honeypot-settings" class="mb-3">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" name="admin_login_honeypot_enabled" id="honeypot-enabled" <%= honeypotConfig.honeypotEnabled ? 'checked' : '' %>>

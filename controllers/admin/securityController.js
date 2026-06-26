@@ -6,7 +6,6 @@ const adminLoginPath = require('../../utils/adminLoginPath');
 
 const BOOLEAN_SETTINGS = [
   'login_attempt_limiter',
-  'admin_login_honeypot_enabled',
   'csrf_protection',
   'xss_protection',
   'file_upload_validation',
@@ -65,11 +64,27 @@ async function updateSettings(req, res, next) {
     loginBruteForce.clearSettingsCache();
     adminLoginPath.clearConfigCache();
 
+    req.flash('success', 'Security settings updated.');
+    return res.redirect('/admin/security');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateHoneypotSettings(req, res, next) {
+  try {
     const honeypotEnabled = req.body.admin_login_honeypot_enabled === 'on';
     let secretSlug = adminLoginPath.normalizeSecretSlug(req.body.admin_login_secret_slug);
     if (honeypotEnabled && !secretSlug) {
       secretSlug = adminLoginPath.generateSecretSlug();
     }
+
+    await SecuritySetting.upsert({
+      key: 'admin_login_honeypot_enabled',
+      value: honeypotEnabled ? 'true' : 'false',
+      enabled: honeypotEnabled
+    });
+
     if (honeypotEnabled) {
       await SecuritySetting.upsert({
         key: 'admin_login_secret_slug',
@@ -78,7 +93,13 @@ async function updateSettings(req, res, next) {
       });
     }
 
-    req.flash('success', 'Security settings updated.');
+    adminLoginPath.clearConfigCache();
+    req.flash(
+      'success',
+      honeypotEnabled
+        ? `Honeypot enabled. Real login URL: /admin/${secretSlug}`
+        : 'Honeypot disabled. Admin login is at /admin/login.'
+    );
     return res.redirect('/admin/security');
   } catch (error) {
     return next(error);
@@ -151,4 +172,4 @@ async function regenerateLoginPath(req, res, next) {
   }
 }
 
-module.exports = { index, updateSettings, blockIp, unblockIp, backupDatabase, regenerateLoginPath };
+module.exports = { index, updateSettings, updateHoneypotSettings, blockIp, unblockIp, backupDatabase, regenerateLoginPath };
