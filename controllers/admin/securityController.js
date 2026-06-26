@@ -1,4 +1,4 @@
-const { SecuritySetting, LoginAttempt, BlockedIp } = require('../../models');
+const { SecuritySetting, LoginAttempt, BlockedIp, SiteSetting } = require('../../models');
 const { listActivityLogs, createActivityLog } = require('../../utils/activityLogHelper');
 const dbBackup = require('../../utils/databaseBackup');
 const loginBruteForce = require('../../utils/loginBruteForce');
@@ -39,7 +39,11 @@ async function index(req, res, next) {
 async function updateSettings(req, res, next) {
   try {
     for (const key of BOOLEAN_SETTINGS) {
-      await SecuritySetting.upsert({ key, value: req.body[key] === 'on' ? 'true' : 'false', enabled: req.body[key] === 'on' });
+      const enabled = req.body[key] === 'on';
+      await SecuritySetting.upsert({ key, value: enabled ? 'true' : 'false', enabled });
+      if (key === 'maintenance_mode') {
+        await SiteSetting.upsert({ key: 'maintenance_mode', value: enabled ? 'true' : 'false', group: 'security' });
+      }
     }
     for (const key of NUMERIC_SETTINGS) {
       const raw = String(req.body[key] || '').trim();

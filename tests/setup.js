@@ -35,6 +35,16 @@ async function resetSecuritySettings() {
     value: '10',
     enabled: true
   });
+  await models.SecuritySetting.upsert({
+    key: 'maintenance_mode',
+    value: 'false',
+    enabled: false
+  });
+  await models.SiteSetting.upsert({
+    key: 'maintenance_mode',
+    value: 'false',
+    group: 'security'
+  });
   loginBruteForce.clearSettingsCache();
 }
 

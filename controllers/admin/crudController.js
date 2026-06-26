@@ -12,6 +12,7 @@ const pluginLoader = require('../../utils/pluginLoader');
 const { saveRevision } = require('../../utils/revisionHelper');
 const { renderBlocks, validateBlockSchema } = require('../../utils/blockRenderer');
 const { loadTranslations, saveTranslations, TRANSLATION_LOCALES } = require('../../utils/contentTranslationStore');
+const { buildPreviewUrl } = require('../../utils/previewHelper');
 
 const richTextSanitizeOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
@@ -435,6 +436,9 @@ async function edit(req, res, next) {
     const translations = (resource === 'posts' || resource === 'pages')
       ? await loadTranslations(resource === 'pages' ? 'page' : 'post', record.id)
       : {};
+    const previewUrl = (resource === 'posts' || resource === 'pages') && record.slug
+      ? buildPreviewUrl(resource === 'pages' ? 'page' : 'post', record.slug, record.id)
+      : '';
     return res.render('admin/crud/form', {
       title: `Edit ${config.title}`,
       resource,
@@ -442,7 +446,8 @@ async function edit(req, res, next) {
       record,
       extra: config.formData ? await config.formData() : {},
       translations,
-      translationLocales: TRANSLATION_LOCALES
+      translationLocales: TRANSLATION_LOCALES,
+      previewUrl
     });
   } catch (error) {
     return next(error);

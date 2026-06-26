@@ -126,10 +126,15 @@ app.use(async (req, res, next) => {
 app.use(pluginHooks);
 app.use(wafMiddleware);
 app.use((req, res, next) => {
-  if (!req.path.startsWith('/admin') && res.locals.siteSettings.maintenance_mode === 'true') {
-    return res.status(503).render('errors/maintenance', { title: 'Maintenance' });
+  const maintenanceOn = res.locals.siteSettings?.maintenance_mode === 'true';
+  if (!maintenanceOn || req.path.startsWith('/admin') || req.path.startsWith('/api')) {
+    return next();
   }
-  return next();
+  const user = req.session?.user;
+  if (user && policy.canAccessAdmin(user, '/admin')) {
+    return next();
+  }
+  return res.status(503).render('errors/maintenance', { title: 'Maintenance' });
 });
 
 app.use('/admin', adminRoutes);

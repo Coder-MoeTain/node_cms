@@ -106,6 +106,8 @@ router.post('/media/upload-json', requireAuth, canAny(['manage_media', 'upload_m
 router.get('/media/:id/edit', requireAuth, canAny(['manage_media', 'upload_media']), media.edit);
 router.put('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), upload.single('file'), media.update);
 router.delete('/media/:id', requireAuth, canAny(['manage_media', 'upload_media']), media.destroy);
+router.post('/media/bulk-delete', requireAuth, can('manage_media'), media.bulkDestroy);
+router.post('/media/regenerate-thumbnails', requireAuth, can('manage_media'), media.regenerateThumbnails);
 
 router.get('/plugins', requireAuth, can('manage_plugins'), plugins.index);
 router.get('/plugins.json', requireAuth, can('manage_plugins'), plugins.pluginsJson);

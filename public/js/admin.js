@@ -452,26 +452,36 @@ document.getElementById('mediaGalleryUploadInput')?.addEventListener('change', a
   const status = document.querySelector('[data-media-gallery-upload-status]');
   if (!files.length) return;
 
-  status.textContent = 'Uploading…';
+  if (status) status.textContent = 'Uploading…';
   try {
     for (const file of files) {
       const uploaded = await npUploadImage(file);
+      const pickerItem = {
+        filePath: uploaded.filePath,
+        thumbnailPath: uploaded.thumbnailPath,
+        originalName: uploaded.originalName
+      };
       if (mediaPickerCallback) {
-        selectMediaItem({
-          filePath: uploaded.filePath,
-          thumbnailPath: uploaded.thumbnailPath,
-          originalName: uploaded.originalName
-        });
+        selectMediaItem(pickerItem);
         event.target.value = '';
-        status.textContent = '';
+        if (status) status.textContent = '';
+        return;
+      }
+      const activeField = activeMediaTargetField || window.activeMediaTargetField;
+      if (activeField) {
+        selectMediaItem(pickerItem);
+        event.target.value = '';
+        if (status) status.textContent = '';
         return;
       }
     }
-    status.textContent = files.length === 1 ? 'Photo uploaded.' : `${files.length} photos uploaded.`;
+    if (status) {
+      status.textContent = files.length === 1 ? 'Photo uploaded.' : `${files.length} photos uploaded.`;
+    }
     await loadMediaGallery();
-    setTimeout(() => { status.textContent = ''; }, 2500);
+    setTimeout(() => { if (status) status.textContent = ''; }, 2500);
   } catch (error) {
-    status.textContent = error.message || 'Upload failed.';
+    if (status) status.textContent = error.message || 'Upload failed.';
   }
   event.target.value = '';
 });
@@ -488,6 +498,7 @@ document.addEventListener('click', (event) => {
   window.activeMediaTargetField = activeMediaTargetField;
   const modal = document.getElementById('mediaGalleryModal');
   if (modal && window.bootstrap) {
+    elevateMediaGalleryModal();
     bootstrap.Modal.getOrCreateInstance(modal).show();
     loadMediaGallery();
   }

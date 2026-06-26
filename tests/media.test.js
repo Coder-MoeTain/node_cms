@@ -77,6 +77,15 @@ test('editor JSON upload returns image location', async () => {
   expect(response.status).toBe(200);
   expect(response.body.location).toMatch(/^\/uploads\//);
   expect(response.body.filePath).toBe(response.body.location);
+  expect(response.body.location).not.toMatch(/\.\./);
+
+  const fs = require('fs');
+  const path = require('path');
+  const diskPath = path.join(process.cwd(), 'public', response.body.location.replace(/^\//, '').replace(/\//g, path.sep));
+  expect(fs.existsSync(diskPath)).toBe(true);
+
+  const gallery = await agent.get('/admin/media/gallery?type=image');
+  expect(gallery.body.items.some((item) => item.filePath === response.body.filePath)).toBe(true);
 });
 
 test('guest cannot access media library', async () => {
