@@ -12,7 +12,9 @@ const { sqlUpload } = require('../middleware/sqlUpload');
 
 const crudImageUpload = upload.image.fields([
   { name: 'featured_image_file', maxCount: 1 },
-  { name: 'image_file', maxCount: 1 }
+  { name: 'image_file', maxCount: 1 },
+  { name: 'image_file_2', maxCount: 1 },
+  { name: 'image_file_3', maxCount: 1 }
 ]);
 
 const brandingImageUpload = upload.image.fields([

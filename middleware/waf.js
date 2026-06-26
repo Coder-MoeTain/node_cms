@@ -23,6 +23,13 @@ const {
   isDangerousUploadFilename,
   ipMatchesListEntry
 } = require('../utils/wafHelper');
+const { analyzeRequest } = require('../utils/webguardClient');
+const {
+  shouldUseMlWaf,
+  buildWebGuardAnalyzePayload,
+  mlResultToMatch,
+  attachMlMetadata
+} = require('../utils/wafMlHelper');
 
 const cache = {
   loadedAt: 0,
@@ -54,7 +61,12 @@ const DEFAULT_SETTINGS = {
   auto_block_window_minutes: 10,
   auto_block_duration_minutes: 60,
   trusted_proxy_enabled: false,
-  waf_response_message: 'Request blocked by Web Application Firewall.'
+  waf_response_message: 'Request blocked by Web Application Firewall.',
+  ml_waf_enabled: false,
+  ml_waf_confidence_threshold: 0.7,
+  ml_waf_model_id: '',
+  ml_waf_block_standalone: true,
+  ml_waf_reject_uncertain: true
 };
 
 const categorySettingMap = {
@@ -117,7 +129,7 @@ async function loadWafConfig() {
   cache.rules = rules.filter((rule) => {
     if (rule.pattern_type === 'regex' || !rule.pattern_type) {
       try {
-        // eslint-disable-next-line no-new
+         
         new RegExp(rule.pattern, 'i');
         return true;
       } catch (error) {
@@ -315,6 +327,29 @@ async function wafMiddleware(req, res, next) {
     }
 
     const matches = matchRequest(req, rules, settings);
+
+    let mlMatch = null;
+    if (shouldUseMlWaf(settings)) {
+      const normalizedRequest = normalizeRequestData(req);
+      const modelId = String(settings.ml_waf_model_id || '').trim();
+      const analyzePayload = buildWebGuardAnalyzePayload(req, normalizedRequest, modelId || undefined);
+      const mlResult = await analyzeRequest(analyzePayload);
+      if (mlResult.ok) {
+        mlMatch = mlResultToMatch(mlResult.data, settings);
+        if (mlMatch) matches.push(mlMatch);
+      } else if (!mlResult.failOpen) {
+        const payload = buildSafeLogPayload(req, [], 'block', 100);
+        payload.matched_rule_name = 'WebGuard ML service unavailable';
+        payload.category = 'custom';
+        payload.severity = 'high';
+        await logWafEvent(req, payload);
+        if (settings.waf_mode === 'block') {
+          return createWafBlockResponse(req, res, settings.waf_response_message);
+        }
+        return next();
+      }
+    }
+
     const riskScore = calculateRiskScore(matches, adminRoute);
     let actionTaken = getActionForRiskScore(riskScore, settings, adminRoute, matches);
     let wafDecision = await pluginLoader.applyFilters('beforeWafDecision', {
@@ -344,7 +379,8 @@ async function wafMiddleware(req, res, next) {
     );
 
     if (shouldLog) {
-      const payload = buildSafeLogPayload(req, matches, actionTaken === 'allow' && matches.length ? 'log' : actionTaken, riskScore);
+      let payload = buildSafeLogPayload(req, matches, actionTaken === 'allow' && matches.length ? 'log' : actionTaken, riskScore);
+      if (mlMatch) payload = attachMlMetadata(payload, mlMatch);
       const logRow = await logWafEvent(req, payload);
       await pluginLoader.doAction('afterWafLog', { ...payload, id: logRow?.id }, { req, res });
     }

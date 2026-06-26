@@ -31,5 +31,14 @@ module.exports = {
     ),
     rateLimitMax: Number(process.env.LOGIN_RATE_LIMIT_MAX || 10),
     rateLimitWindowMinutes: Number(process.env.LOGIN_RATE_LIMIT_WINDOW_MINUTES || 15)
+  },
+  webguard: {
+    enabled: Boolean(process.env.WEBGUARD_API_URL && (process.env.WEBGUARD_API_KEY || process.env.WEBGUARD_API_TOKEN)),
+    baseUrl: process.env.WEBGUARD_API_URL || '',
+    apiKey: process.env.WEBGUARD_API_KEY || '',
+    bearerToken: process.env.WEBGUARD_API_TOKEN || '',
+    timeoutMs: Number(process.env.WEBGUARD_TIMEOUT_MS || 500),
+    allowLocalhost: process.env.WEBGUARD_ALLOW_LOCALHOST === 'true',
+    failOpen: process.env.WEBGUARD_FAIL_OPEN !== 'false'
   }
 };

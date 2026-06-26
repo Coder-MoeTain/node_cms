@@ -195,6 +195,7 @@ CREATE TABLE sliders (
   title VARCHAR(180) NOT NULL,
   description TEXT NULL,
   image VARCHAR(255) NULL,
+  images JSON NULL,
   button_text VARCHAR(80) NULL,
   button_url VARCHAR(500) NULL,
   display_order INT NOT NULL DEFAULT 0,

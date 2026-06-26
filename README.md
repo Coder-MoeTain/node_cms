@@ -124,7 +124,7 @@ Admin Panel  -> http://localhost:3000/admin/login
 | Publishing | Drafts, publishing, private posts, scheduled dates, SEO fields, featured images, video embeds, tags, categories |
 | Design System | Space-agency inspired frontend, modern admin dashboard, dynamic logo, favicon, colors, layout, dark mode |
 | Media Library | Upload images, videos, PDFs, docs, copy URLs, and reuse assets in posts and pages |
-| Security | Sessions, bcrypt, Helmet, CSRF, rate limiting, upload validation, blocked IPs, login attempts, activity logs |
+| Security | Sessions, bcrypt, Helmet, CSRF, rate limiting, upload validation, blocked IPs, login attempts, activity logs, optional WebGuard ML WAF |
 | Internationalization | Server-side translation engine (en, my, zh-CN, ru) with glossary files and database cache — no Google Translate |
 | Portal Statistics | Live homepage stat counters (users, visitors, discussions, polls, blogs, events, mobile apps) from database activity |
 
@@ -265,7 +265,7 @@ Role:     Author (own posts & uploads only)
 | UI/UX | WordPress-style admin tables, bulk trash, theme customizer, plugin dashboard widgets |
 | Plugins | Hook system (`publicHead`, `publicFooter`, `dashboardWidgets`, `beforeMediaUpload`) |
 | Themes | Template/partial resolution, custom CSS/JS, header/footer layout classes |
-| WAF | Monitor/block modes, rules, IP lists, CSV export, automated tests |
+| WAF | Monitor/block modes, signature rules, IP lists, CSV export, optional WebGuard ML detection, automated tests |
 | RBAC | Post/media ownership, publish_posts gate, dedicated resource permissions |
 | API | Optional `API_KEY` protection via `X-API-Key` header |
 | Ops | PM2 ecosystem, health endpoints, Docker Compose, deployment docs |
@@ -275,6 +275,18 @@ Optional API key in `.env`:
 ```env
 API_KEY=your-long-random-api-key
 ```
+
+Optional WebGuard ML WAF integration (requires a running WebGuard-ML API in the parent `webguard` project with trained models):
+
+```env
+WEBGUARD_API_URL=http://127.0.0.1:8001
+WEBGUARD_API_KEY=your-webguard-service-api-key
+WEBGUARD_ALLOW_LOCALHOST=true
+WEBGUARD_TIMEOUT_MS=500
+WEBGUARD_FAIL_OPEN=true
+```
+
+Set `SERVICE_API_KEY` in the WebGuard `.env` to the same value as `WEBGUARD_API_KEY`. Enable ML detection under **Admin → WAF → Settings**.
 
 ## Scripts
 
@@ -317,6 +329,62 @@ Admin users with `manage_waf` or `manage_security` can manage it from `/admin/wa
 
 Default mode is `monitor`, so suspicious requests are logged before enforcement is enabled. Switch to `block` mode after reviewing logs and tuning false positives.
 
+### WebGuard ML detection
+
+NodePress can augment signature-based WAF scoring with trained models from the sibling **WebGuard-ML** project (`../webguard`). On each dynamic request, the WAF sends HTTP context to WebGuard’s `/api/ids/analyze` endpoint. Confident attack predictions (SQLi, XSS, CSRF) add an ML match to the risk score and appear in WAF logs as `WebGuard ML: <prediction>`.
+
+**How it works**
+
+1. Signature rules run first (existing behavior).
+2. If ML detection is enabled, NodePress calls WebGuard with method, URL, query, body, and selected headers.
+3. Predictions above the confidence threshold increase the risk score; high scores trigger log or block actions according to WAF mode.
+4. If WebGuard is unreachable and `WEBGUARD_FAIL_OPEN=true` (default), requests continue without ML scoring.
+
+**Setup**
+
+1. **WebGuard** — train or copy a model into `webguard/models/` (`rf_*.joblib` + preprocessor). In `webguard/.env`:
+
+   ```env
+   SERVICE_API_KEY=your-long-random-service-key
+   ```
+
+   Start the WebGuard API (default dev port is often `8001`).
+
+2. **NodePress** — in `.env`:
+
+   ```env
+   WEBGUARD_API_URL=http://127.0.0.1:8001
+   WEBGUARD_API_KEY=your-long-random-service-key
+   WEBGUARD_ALLOW_LOCALHOST=true
+   WEBGUARD_TIMEOUT_MS=500
+   WEBGUARD_FAIL_OPEN=true
+   ```
+
+3. Run `npm run migrate` (applies `018_waf_ml_integration.sql` for ML settings).
+
+4. **Admin → WAF → Settings** — confirm the WebGuard health banner, enable **ML detection**, set confidence threshold (default `0.7`), optionally set a **Model ID** (blank = latest model). Keep **monitor** mode for 24–48 hours before blocking.
+
+**Admin settings**
+
+| Setting | Description |
+| --- | --- |
+| Enable ML detection | Turn WebGuard scoring on/off |
+| Confidence threshold | Minimum model confidence (`0.1`–`1.0`) before acting |
+| Model ID | Specific WebGuard model stem; empty uses the latest `rf_*.joblib` |
+| ML detections can block alone | ML hits use `block` action, not only `log` |
+| Ignore uncertain predictions | Skip results where WebGuard marks `uncertain: true` |
+
+**Implementation files**
+
+| File | Role |
+| --- | --- |
+| `utils/webguardClient.js` | HTTP client, health check, SSRF-safe outbound calls |
+| `utils/wafMlHelper.js` | Request payload builder, label → category mapping |
+| `middleware/waf.js` | ML scoring integrated into risk calculation |
+| `database/migrations/018_waf_ml_integration.sql` | `ml_waf_*` settings in `waf_settings` |
+
+Tests: `tests/wafMl.test.js`, `tests/webguardClient.test.js`.
+
 ### WAF Database Setup
 
 For a fresh Sequelize setup:
@@ -352,9 +420,11 @@ mysql -u root -p nodepress_cms < database/seed_waf_rules.sql
 15. Admin can create custom rule.
 16. Invalid custom regex does not crash the app.
 17. Auto-block creates a temporary block after repeated high-risk events.
-18. Static assets still load.
-19. File uploads still work.
-20. Dangerous upload names are blocked.
+18. WebGuard ML (when configured) logs or blocks high-confidence predictions in monitor/block mode.
+19. WAF logs include `ml_prediction` metadata when ML detection fires.
+20. Static assets still load.
+21. File uploads still work.
+22. Dangerous upload names are blocked.
 
 ## Project Structure
 
@@ -546,6 +616,7 @@ Use `npm run seed` afterward to generate the bcrypt-hashed default admin account
 - Rich post/page HTML is sanitized before saving.
 - Sequelize protects database queries from SQL injection.
 - Login attempts, blocked IPs, and admin activity are logged.
+- Optional WebGuard ML scoring augments the WAF when `WEBGUARD_API_URL` and credentials are configured.
 
 Production recommendations:
 
@@ -558,7 +629,7 @@ Production recommendations:
 
 ## Web Application Firewall (WAF)
 
-NodePress includes a defensive WAF integrated with the admin security panel.
+NodePress includes a defensive WAF integrated with the admin security panel. Signature rules, IP lists, and rate limits are built in; optional **WebGuard ML** detection layers trained-model scoring on top when WebGuard is configured (see [WebGuard ML detection](#webguard-ml-detection)).
 
 ### Quick start
 
@@ -594,6 +665,13 @@ Requires `manage_waf` or `manage_security` permission.
 2. Visit `/?q=1%20UNION%20SELECT%201` — check `/admin/waf/logs` for a logged event.
 3. Switch to **block** mode and repeat — request should return 403.
 4. Confirm normal posts, pages, and media uploads still work.
+
+### Verify WebGuard ML (optional)
+
+1. Configure `WEBGUARD_API_URL` and `WEBGUARD_API_KEY` in `.env` (see [WebGuard ML detection](#webguard-ml-detection) above).
+2. Enable **ML detection** in WAF Settings; keep mode on **monitor**.
+3. Send a suspicious request (e.g. `/?id=1' OR '1'='1`) and confirm a **WebGuard ML:** entry in `/admin/waf/logs`.
+4. Review false positives before enabling **block** mode or lowering the confidence threshold.
 
 Full documentation: [docs/SECURITY.md](docs/SECURITY.md)
 
