@@ -28,6 +28,7 @@ const dashboard = require('../controllers/admin/dashboardController');
 const crud = require('../controllers/admin/crudController');
 const media = require('../controllers/admin/mediaController');
 const plugins = require('../controllers/admin/pluginController');
+const loginSessions = require('../controllers/admin/loginSessionsController');
 const settings = require('../controllers/admin/settingsController');
 const themes = require('../controllers/admin/themeController');
 const security = require('../controllers/admin/securityController');
@@ -122,6 +123,7 @@ router.post('/plugins/:slug/uninstall', requireAuth, can('manage_plugins'), plug
 router.get('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.settings);
 router.put('/plugins/:slug/settings', requireAuth, can('manage_plugins'), plugins.updateSettings);
 
+router.get('/settings/login-sessions', requireAuth, canAny(['manage_settings', 'manage_security']), loginSessions.index);
 router.get('/settings/media-gallery', requireAuth, canAny(['manage_settings', 'manage_media', 'upload_media']), settings.mediaGallery);
 router.get('/settings/database', requireAuth, canAny(['manage_settings', 'manage_security']), database.index);
 router.post('/settings/database/backup', requireAuth, canAny(['manage_settings', 'manage_security']), database.createBackup);

@@ -1,0 +1,120 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header">
+      <h1>Login &amp; Sessions</h1>
+      <p class="np-help-text mb-0">Review active admin sessions and login success/failure activity. Sessions expire after <%= sessionTimeoutMinutes %> minutes of inactivity.</p>
+    </div>
+    <%- include('../partials/settings-nav') %>
+
+    <div class="np-widget mb-3">
+      <div class="np-widget-header d-flex justify-content-between align-items-center">
+        <span>Active Admin Sessions</span>
+        <span class="np-badge np-badge-info"><%= sessions.length %> shown · <%= sessionTotal %> total</span>
+      </div>
+      <div class="np-widget-body p-0">
+        <div class="table-responsive">
+          <table class="np-list-table mb-0">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>IP address</th>
+                <th>Logged in</th>
+                <th>Last activity</th>
+                <th>Expires</th>
+                <th>Session</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% sessions.forEach(function(session) { %>
+                <tr>
+                  <td><%= session.username %><% if (session.isCurrent) { %> <span class="np-badge np-badge-success">You</span><% } %></td>
+                  <td><%= session.email %></td>
+                  <td><code><%= session.ipAddress %></code></td>
+                  <td><%= session.loginAt ? new Date(session.loginAt).toLocaleString() : '—' %></td>
+                  <td><%= session.lastActivity ? new Date(session.lastActivity).toLocaleString() : '—' %></td>
+                  <td><%= session.expiresAt ? new Date(session.expiresAt).toLocaleString() : '—' %></td>
+                  <td><code title="<%= session.sessionId %>"><%= session.sessionIdShort %></code></td>
+                </tr>
+              <% }) %>
+              <% if (!sessions.length) { %>
+                <tr><td colspan="7" class="text-muted">No active admin sessions found.</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="np-widget mb-3">
+      <div class="np-widget-header"><span>Login Activity</span></div>
+      <div class="np-widget-body">
+        <form method="get" action="/admin/settings/login-sessions" class="row g-2 align-items-end mb-3">
+          <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select class="form-select form-select-sm" name="status">
+              <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All</option>
+              <option value="success" <%= filters.status === 'success' ? 'selected' : '' %>>Success</option>
+              <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Failed</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Email / username</label>
+            <input class="form-control form-control-sm" type="search" name="email" value="<%= filters.email || '' %>" placeholder="admin@example.com">
+          </div>
+          <div class="col-md-2">
+            <button class="np-btn np-btn-secondary np-btn-small" type="submit">Filter</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="np-list-table mb-0">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>IP address</th>
+                <th>Time</th>
+                <th>Result</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% attempts.forEach(function(attempt) { %>
+                <tr>
+                  <td><%= attempt.username %></td>
+                  <td><code><%= attempt.ipAddress %></code></td>
+                  <td><%= attempt.createdAt ? new Date(attempt.createdAt).toLocaleString() : '—' %></td>
+                  <td>
+                    <span class="np-badge np-badge-<%= attempt.success ? 'success' : 'danger' %>">
+                      <%= attempt.success ? 'Success' : 'Failed' %>
+                    </span>
+                  </td>
+                  <td class="small text-muted"><%= attempt.reason || attempt.userAgent || '—' %></td>
+                </tr>
+              <% }) %>
+              <% if (!attempts.length) { %>
+                <tr><td colspan="5" class="text-muted">No login activity recorded.</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+        <% if (meta.pages > 1) { %>
+          <nav class="np-pagination mt-3" aria-label="Login activity pages">
+            <% const base = '/admin/settings/login-sessions?status=' + encodeURIComponent(filters.status || 'all') + (filters.email ? '&email=' + encodeURIComponent(filters.email) : ''); %>
+            <% if (meta.page > 1) { %>
+              <a class="np-btn np-btn-secondary np-btn-small" href="<%= base %>&page=<%= meta.page - 1 %>">Previous</a>
+            <% } %>
+            <span class="mx-2 text-muted small">Page <%= meta.page %> of <%= meta.pages %> · <%= meta.total %> entries</span>
+            <% if (meta.page < meta.pages) { %>
+              <a class="np-btn np-btn-secondary np-btn-small" href="<%= base %>&page=<%= meta.page + 1 %>">Next</a>
+            <% } %>
+          </nav>
+        <% } %>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>
