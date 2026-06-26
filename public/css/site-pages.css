@@ -417,3 +417,12 @@ body.theme-dark .portal-widget {
     margin-top: 0;
   }
 }
+
+/* Home page post list titles (+2pt) */
+.site-home-page .post-card-title {
+  font-size: calc(1.125rem - 1pt);
+}
+
+.portal-home-page .portal-post-title {
+  font-size: calc(0.95rem - 1pt);
+}

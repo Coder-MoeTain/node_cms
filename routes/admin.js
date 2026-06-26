@@ -179,6 +179,7 @@ router.post('/revisions/:id/restore', requireAuth, canAny(['manage_posts', 'mana
 
 router.get('/tools', requireAuth, can('manage_settings'), tools.index);
 router.get('/tools/health', requireAuth, canAny(['manage_settings', 'manage_security']), tools.siteHealth);
+router.get('/tools/health.json', requireAuth, canAny(['manage_settings', 'manage_security']), tools.siteHealthJson);
 router.get('/tools/export', requireAuth, can('manage_settings'), importExport.exportForm);
 router.get('/tools/export/download', requireAuth, can('manage_settings'), importExport.exportDownload);
 router.get('/tools/import', requireAuth, can('manage_settings'), importExport.importForm);
@@ -189,8 +190,11 @@ router.get('/updates', requireAuth, can('manage_settings'), updates.index);
 router.post('/updates/check', requireAuth, can('manage_settings'), updates.check);
 
 router.get('/widgets', requireAuth, can('manage_settings'), widgets.index);
+router.post('/widgets/seed-defaults', requireAuth, can('manage_settings'), widgets.seedDefaults);
 router.get('/widgets/:slug', requireAuth, can('manage_settings'), widgets.editArea);
 router.post('/widgets/:slug', requireAuth, can('manage_settings'), widgets.addWidget);
+router.put('/widgets/instance/:id', requireAuth, can('manage_settings'), widgets.updateWidget);
+router.post('/widgets/instance/:id/reorder', requireAuth, can('manage_settings'), widgets.reorderWidget);
 router.delete('/widgets/instance/:id', requireAuth, can('manage_settings'), widgets.deleteWidget);
 
 router.get('/templates', requireAuth, can('manage_themes'), templates.index);

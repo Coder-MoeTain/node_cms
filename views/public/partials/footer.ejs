@@ -91,6 +91,20 @@
         </div>
       </div>
       <% if ((activeTheme.footer_layout || 'four-columns') === 'four-columns') { %>
+      <% const footerWidgetKeys = ['footer-1', 'footer-2', 'footer-3'];
+         const footerWidgets = (typeof widgetAreas !== 'undefined' && widgetAreas)
+           ? footerWidgetKeys.filter((key) => widgetAreas[key])
+           : [];
+      %>
+      <% if (footerWidgets.length) { %>
+        <% footerWidgetKeys.forEach(function(key) { %>
+          <% if (widgetAreas[key]) { %>
+            <div class="col-lg-<%= footerWidgets.length === 1 ? '5' : footerWidgets.length === 2 ? '4' : '3' %> footer-widget-column">
+              <%- widgetAreas[key] %>
+            </div>
+          <% } %>
+        <% }) %>
+      <% } else { %>
       <div class="col-lg-5">
         <h5>Navigation</h5>
         <div class="footer-menu-grid">
@@ -115,6 +129,7 @@
           <% if (siteSettings.linkedin_link) { %><a href="<%= siteSettings.linkedin_link %>" rel="noopener noreferrer" aria-label="LinkedIn"><i class="bi bi-linkedin" aria-hidden="true"></i> LinkedIn</a><% } %>
         </div>
       </div>
+      <% } %>
       <% } %>
     </div>
     <% } %>

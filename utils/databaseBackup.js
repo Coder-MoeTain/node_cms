@@ -228,10 +228,9 @@ async function resetDatabase() {
   await seed();
 }
 
-async function repairSchemaAfterRestore() {
+async function ensureAppSchema() {
   const { sequelize } = require('../models');
-  const { ensureMissingSchemaTables } = require('../database/ensureBaseSchema');
-  const { applyPendingMigrations } = require('../database/migrationRunner');
+  const { ensureMissingSchemaTables, tableExists } = require('../database/ensureBaseSchema');
 
   try {
     await ensureMissingSchemaTables(sequelize);
@@ -242,8 +241,23 @@ async function repairSchemaAfterRestore() {
   try {
     await sequelize.sync();
   } catch (error) {
-    console.error('Sequelize sync after restore failed:', error.message);
+    console.error('Sequelize sync failed:', error.message);
   }
+
+  if (!(await tableExists(sequelize, 'activity_logs'))) {
+    try {
+      const { ActivityLog } = require('../models');
+      await ActivityLog.sync();
+    } catch (error) {
+      console.error('Activity log table repair failed:', error.message);
+    }
+  }
+}
+
+async function repairSchemaAfterRestore() {
+  await ensureAppSchema();
+  const { sequelize } = require('../models');
+  const { applyPendingMigrations } = require('../database/migrationRunner');
 
   try {
     await applyPendingMigrations(sequelize);
@@ -262,6 +276,7 @@ module.exports = {
   restoreBackup,
   restoreFromUploadedFile,
   repairSchemaAfterRestore,
+  ensureAppSchema,
   deleteBackup,
   resetDatabase,
   isSafeBackupFilename,

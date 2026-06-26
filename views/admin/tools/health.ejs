@@ -4,24 +4,80 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header mb-3">
-      <h1>Site Health</h1>
-      <span class="np-badge np-badge-<%= report.status === 'good' ? 'success' : report.status === 'critical' ? 'danger' : 'warning' %>"><%= report.status %></span>
+    <div class="np-page-header np-page-header-split mb-4">
+      <div>
+        <h1>Site Health</h1>
+        <p class="np-help-text mb-0">WordPress-style status checks for your installation. Resolve critical items first.</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button type="button" class="np-btn np-btn-secondary" id="health-refresh-btn" data-health-refresh>
+          <i class="bi bi-arrow-clockwise"></i> Re-run tests
+        </button>
+        <a href="/admin/tools" class="np-btn np-btn-secondary">All tools</a>
+      </div>
     </div>
-    <div class="np-table-wrap">
-      <table class="np-table">
-        <thead><tr><th>Check</th><th>Status</th><th>Details</th></tr></thead>
-        <tbody>
-          <% report.checks.forEach(function(check) { %>
-            <tr>
-              <td><%= check.label %></td>
-              <td><span class="np-badge np-badge-<%= check.status === 'good' ? 'success' : check.status === 'critical' ? 'danger' : 'warning' %>"><%= check.status %></span></td>
-              <td><%= check.value %></td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+
+    <div class="row g-3 mb-4" id="health-summary">
+      <div class="col-md-4">
+        <div class="np-health-score-card">
+          <div class="np-health-score-ring" data-score="<%= report.score %>">
+            <span class="np-health-score-value"><%= report.score %></span>
+          </div>
+          <div>
+            <strong>Health score</strong>
+            <p class="np-help-text mb-0 text-capitalize"><%= report.status %></p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="row g-3 h-100">
+          <div class="col-4"><div class="np-health-stat np-health-stat-good"><span><%= report.summary.good %></span><small>Passed</small></div></div>
+          <div class="col-4"><div class="np-health-stat np-health-stat-warn"><span><%= report.summary.recommended %></span><small>Recommended</small></div></div>
+          <div class="col-4"><div class="np-health-stat np-health-stat-bad"><span><%= report.summary.critical %></span><small>Critical</small></div></div>
+        </div>
+      </div>
     </div>
+
+    <% report.groups.forEach(function(group) { if (!group.checks.length) return; %>
+      <section class="np-widget mb-3">
+        <div class="np-widget-header">
+          <span><i class="bi <%= group.icon %> me-1"></i> <%= group.label %></span>
+          <span class="np-badge np-badge-secondary"><%= group.checks.length %></span>
+        </div>
+        <div class="np-widget-body p-0">
+          <div class="np-health-check-list">
+            <% group.checks.forEach(function(check) { %>
+              <article class="np-health-check" data-status="<%= check.status %>">
+                <div class="np-health-check-icon">
+                  <i class="bi <%= check.status === 'good' ? 'bi-check-circle-fill text-success' : check.status === 'critical' ? 'bi-x-circle-fill text-danger' : 'bi-exclamation-circle-fill text-warning' %>" aria-hidden="true"></i>
+                </div>
+                <div class="np-health-check-body">
+                  <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start">
+                    <div>
+                      <h2 class="h6 mb-1"><%= check.label %></h2>
+                      <p class="np-help-text mb-1"><%= check.description %></p>
+                      <p class="mb-0"><code class="np-health-value"><%= check.value %></code></p>
+                    </div>
+                    <span class="np-badge np-badge-<%= check.status === 'good' ? 'success' : check.status === 'critical' ? 'danger' : 'warning' %>"><%= check.badge || check.status %></span>
+                  </div>
+                  <% if (check.action) { %>
+                    <a class="np-health-action" href="<%= check.action %>"><%= check.actionLabel || 'Fix' %> <i class="bi bi-arrow-right-short"></i></a>
+                  <% } %>
+                </div>
+              </article>
+            <% }) %>
+          </div>
+        </div>
+      </section>
+    <% }) %>
+
+    <p class="np-help-text" id="health-generated-at">Last checked: <%= report.generatedAt.toLocaleString() %></p>
   </main>
 </div>
+<script>
+  document.querySelectorAll('.np-health-score-ring').forEach((el) => {
+    el.style.setProperty('--score', el.dataset.score || '0');
+  });
+</script>
+<script src="/js/admin-health.js" defer></script>
 <%- include('../partials/footer') %>

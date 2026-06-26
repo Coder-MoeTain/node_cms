@@ -1,5 +1,6 @@
 const { Op, fn, col } = require('sequelize');
-const { WafRule, WafLog, WafIpList, WafSetting, ActivityLog } = require('../../models');
+const { WafRule, WafLog, WafIpList, WafSetting } = require('../../models');
+const { createActivityLog } = require('../../utils/activityLogHelper');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { createSlug } = require('../../utils/slugGenerator');
 const { validatePattern, normalizeRequestData, matchRuleAgainstRequest, calculateRiskScore, summarizeMatchedRules } = require('../../utils/wafHelper');
@@ -408,7 +409,7 @@ async function addIpFromLog(req, res, next, listType) {
       created_by: req.session.user.id
     });
     clearWafCache();
-    await ActivityLog.create({
+    await createActivityLog({
       user_id: req.session.user.id,
       action: `${listType === 'whitelist' ? 'Whitelisted' : 'Blocked'} IP from WAF log`,
       entity_type: 'waf',

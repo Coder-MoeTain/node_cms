@@ -14,6 +14,18 @@ async function siteHealth(req, res, next) {
   }
 }
 
+async function siteHealthJson(req, res, next) {
+  try {
+    if (!policy.hasAnyPermission(req.session.user, ['manage_settings', 'manage_security'])) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const report = await runChecks();
+    return res.json(report);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function index(req, res, next) {
   try {
     if (!policy.hasPermission(req.session.user, 'manage_settings')) {
@@ -26,4 +38,4 @@ async function index(req, res, next) {
   }
 }
 
-module.exports = { siteHealth, index };
+module.exports = { siteHealth, siteHealthJson, index };
