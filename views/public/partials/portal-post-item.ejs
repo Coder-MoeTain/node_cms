@@ -7,12 +7,15 @@
    const showClosingDate = typeof showClosing !== 'undefined' && showClosing;
    const showExcerptText = typeof showExcerpt !== 'undefined' ? showExcerpt : false;
    const showReadMoreLink = typeof showReadMore !== 'undefined' && showReadMore;
-   const hasThumb = Boolean(post.featured_image);
+   const featuredImage = typeof resolvePublicMediaUrl === 'function'
+     ? resolvePublicMediaUrl(post.featured_image)
+     : (post.featured_image || '');
+   const hasThumb = Boolean(featuredImage);
 %>
 <article class="portal-post-item site-post-list-item<%= isHot ? ' is-hot' : '' %><%= hasThumb ? ' has-thumb' : '' %>">
   <% if (hasThumb) { %>
     <a class="portal-post-thumb" href="/post/<%= post.slug %>" aria-hidden="true" tabindex="-1">
-      <img src="<%= post.featured_image %>" alt="<%= post.title %>" loading="lazy">
+      <img src="<%= featuredImage %>" alt="<%= post.title %>" loading="lazy">
     </a>
   <% } %>
   <div class="portal-post-main">

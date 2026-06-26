@@ -80,6 +80,34 @@ function mediaFileExists(filePath) {
   }
 }
 
+function extractUploadsPath(filePath) {
+  const value = String(filePath || '').trim();
+  if (!value) return '';
+  if (value.startsWith('/uploads/')) return value.split(/[?#]/)[0];
+  const match = value.match(/\/uploads\/[^?\s#'"]+/i);
+  return match ? match[0] : '';
+}
+
+function resolvePublicMediaUrl(filePath) {
+  const value = String(filePath || '').trim();
+  if (!value) return '';
+
+  const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');
+  let relative = value;
+  if (appUrl && relative.startsWith(appUrl)) {
+    relative = relative.slice(appUrl.length);
+  }
+
+  const uploadsPath = extractUploadsPath(relative);
+  if (uploadsPath) {
+    if (!mediaFileExists(uploadsPath)) return '';
+    return mediaUrl(uploadsPath);
+  }
+
+  if (/^https?:\/\//i.test(value)) return value.slice(0, 2048);
+  return '';
+}
+
 function filterExistingMedia(rows = []) {
   return rows.filter((row) => {
     const plain = typeof row.get === 'function' ? row.get({ plain: true }) : row;
@@ -93,6 +121,8 @@ module.exports = {
   diskPathFromPublic,
   mediaUrl,
   mediaFileExists,
+  resolvePublicMediaUrl,
+  extractUploadsPath,
   filterExistingMedia,
   normalizeUploadUrlsInHtml
 };

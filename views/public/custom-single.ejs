@@ -10,7 +10,10 @@
       <span aria-current="page"><%= post.title %></span>
     </nav>
     <article>
-      <% if (post.featured_image) { %><figure class="mb-4"><img src="<%= post.featured_image %>" alt="<%= post.title %>" class="img-fluid rounded"></figure><% } %>
+      <% const featuredImage = typeof resolvePublicMediaUrl === 'function'
+           ? resolvePublicMediaUrl(post.featured_image)
+           : (post.featured_image || ''); %>
+      <% if (featuredImage) { %><figure class="mb-4"><img src="<%= featuredImage %>" alt="<%= post.title %>" class="img-fluid rounded"></figure><% } %>
       <h1><%= post.title %></h1>
       <% if (typeof canEditPost === 'function' && canEditPost(post)) { %>
         <p class="post-admin-actions"><%- include('partials/post-edit-link', { post }) %></p>

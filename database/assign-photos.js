@@ -13,6 +13,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { sequelize, Post, Page } = require('../models');
+const { executeMigrationStatement } = require('./migrationHelpers');
 
 const PHOTOS_SRC = path.join(__dirname, '../photos');
 const UPLOAD_DEST = path.join(__dirname, '../public/uploads/photo-pool');
@@ -71,10 +72,12 @@ function pickRandom(pool) {
 }
 
 async function ensurePageImageColumns() {
-  await sequelize.query(
+  await executeMigrationStatement(
+    sequelize,
     'ALTER TABLE pages ADD COLUMN IF NOT EXISTS featured_image VARCHAR(255) NULL AFTER excerpt'
   );
-  await sequelize.query(
+  await executeMigrationStatement(
+    sequelize,
     'ALTER TABLE pages ADD COLUMN IF NOT EXISTS og_image VARCHAR(255) NULL AFTER seo_description'
   );
 }

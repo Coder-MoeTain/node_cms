@@ -1,11 +1,14 @@
 <% const dateStr = post.published_at ? formatDate(post.published_at) : '';
    const dateIso = post.published_at ? post.published_at.toISOString().slice(0, 10) : '';
-   const hasThumb = Boolean(post.featured_image);
+   const featuredImage = typeof resolvePublicMediaUrl === 'function'
+     ? resolvePublicMediaUrl(post.featured_image)
+     : (post.featured_image || '');
+   const hasThumb = Boolean(featuredImage);
 %>
 <article class="site-post-item<%= hasThumb ? ' has-thumb' : '' %>">
   <% if (hasThumb) { %>
     <a class="site-post-thumb" href="/post/<%= post.slug %>" aria-hidden="true" tabindex="-1">
-      <img src="<%= post.featured_image %>" alt="<%= post.title %>" loading="lazy">
+      <img src="<%= featuredImage %>" alt="<%= post.title %>" loading="lazy">
     </a>
   <% } %>
   <div class="site-post-main">

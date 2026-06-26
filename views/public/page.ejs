@@ -1,8 +1,11 @@
 <%- include(themePartial('head')) %>
 <%- include(themePartial('header')) %>
-<% if (page.featured_image) { %>
+<% const pageFeaturedImage = typeof resolvePublicMediaUrl === 'function'
+     ? resolvePublicMediaUrl(page.featured_image)
+     : (page.featured_image || ''); %>
+<% if (pageFeaturedImage) { %>
   <figure class="post-hero">
-    <img src="<%= page.featured_image %>" alt="<%= page.title %>" decoding="async">
+    <img src="<%= pageFeaturedImage %>" alt="<%= page.title %>" decoding="async">
     <div class="post-hero-shade" aria-hidden="true"></div>
   </figure>
 <% } %>
