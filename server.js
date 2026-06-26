@@ -27,6 +27,7 @@ const errorHandler = require('./middleware/errorHandler');
 const notFoundMiddleware = require('./middleware/notFound');
 const policy = require('./utils/policy');
 const pluginLoader = require('./utils/pluginLoader');
+const { normalizePublicMediaUrl } = require('./utils/uploadHelper');
 
 const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
@@ -93,6 +94,7 @@ app.use((req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   res.locals.formData = {};
+  res.locals.normalizePublicMediaUrl = normalizePublicMediaUrl;
   next();
 });
 app.use(localeMiddleware);

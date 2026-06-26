@@ -1,5 +1,5 @@
 <% function renderComments(list, depth) { list.forEach(function(comment) { %>
-  <article class="post-comment<%= depth ? ' post-comment-reply' : '' %>" style="margin-left:<%= depth * 24 %>px">
+  <article class="post-comment<%= depth ? ' post-comment-reply' : '' %><% if (depth) { %> post-comment-depth-<%= Math.min(depth, 6) %><% } %>">
     <img class="post-comment-avatar rounded-circle" src="<%= gravatarUrl(comment.email, 48) %>" alt="" width="48" height="48">
     <div class="post-comment-body">
       <header class="post-comment-meta">

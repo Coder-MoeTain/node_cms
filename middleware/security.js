@@ -59,7 +59,7 @@ function buildCspDirectives(req, res) {
     styleSrc.push(nonce);
   }
 
-  return {
+  const directives = {
     defaultSrc: ["'self'"],
     scriptSrc,
     styleSrc,
@@ -72,6 +72,13 @@ function buildCspDirectives(req, res) {
     formAction: ["'self'"],
     frameAncestors: ["'self'"]
   };
+
+  // Bootstrap carousel applies transform/transition via element.style (style attributes).
+  if (!isAdmin) {
+    directives.styleSrcAttr = ["'unsafe-inline'"];
+  }
+
+  return directives;
 }
 
 function applySecurityMiddleware(app) {

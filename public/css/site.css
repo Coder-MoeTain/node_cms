@@ -450,15 +450,17 @@ a:hover {
 .hero-slide {
   align-items: center;
   background-color: #1d2327;
-  background-image:
-    linear-gradient(135deg, rgba(15, 23, 42, .85), rgba(15, 23, 42, .55)),
-    var(--hero-image, none);
+  background-image: linear-gradient(135deg, rgba(15, 23, 42, .85), rgba(15, 23, 42, .55));
   background-position: center;
   background-size: cover;
   color: #fff;
   display: flex;
   min-height: 480px;
   position: relative;
+}
+
+.hero-slide:has(.hero-slide-bg) {
+  background-image: none;
 }
 
 .hero-slide .container {
@@ -1107,6 +1109,13 @@ a:hover {
   gap: .85rem;
   padding: 1rem 1.1rem;
 }
+
+.post-comment-depth-1 { margin-inline-start: 24px; }
+.post-comment-depth-2 { margin-inline-start: 48px; }
+.post-comment-depth-3 { margin-inline-start: 72px; }
+.post-comment-depth-4 { margin-inline-start: 96px; }
+.post-comment-depth-5 { margin-inline-start: 120px; }
+.post-comment-depth-6 { margin-inline-start: 144px; }
 
 .post-comment-avatar {
   align-items: center;

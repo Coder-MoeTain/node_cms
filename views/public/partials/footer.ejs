@@ -142,7 +142,7 @@
 <% } %>
 <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="/js/site.js"></script>
-<% if (activeTheme.custom_js) { %><script id="theme-custom-js"><%- activeTheme.custom_js %></script><% } %>
+<% if (activeTheme.custom_js) { %><script id="theme-custom-js" nonce="<%= cspNonce %>"><%- activeTheme.custom_js %></script><% } %>
 <% (pluginPublicFooter || []).forEach(function(snippet) { %><%- snippet %><% }) %>
 </body>
 </html>
