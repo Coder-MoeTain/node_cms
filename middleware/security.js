@@ -49,7 +49,10 @@ function parseCspSourceList(value) {
 }
 
 function appendCloudflareInsightsCsp(directives) {
-  if (process.env.CSP_CLOUDFLARE_INSIGHTS !== 'true') return;
+  const disabled = process.env.CSP_CLOUDFLARE_INSIGHTS === 'false';
+  const enabled = process.env.CSP_CLOUDFLARE_INSIGHTS === 'true'
+    || (!disabled && process.env.NODE_ENV === 'production');
+  if (!enabled) return;
   directives.scriptSrc.push('https://static.cloudflareinsights.com');
   directives.connectSrc.push('https://cloudflareinsights.com');
 }

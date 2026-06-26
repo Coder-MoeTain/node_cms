@@ -28,7 +28,8 @@ const notFoundMiddleware = require('./middleware/notFound');
 const policy = require('./utils/policy');
 const pluginLoader = require('./utils/pluginLoader');
 const { normalizePublicMediaUrl } = require('./utils/uploadHelper');
-const { resolvePublicMediaUrl } = require('./utils/mediaHelper');
+const { resolvePublicMediaUrl, resolveBestMediaUrl } = require('./utils/mediaHelper');
+const { resolveVendorDir } = require('./utils/vendorAssets');
 
 const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
@@ -50,7 +51,7 @@ applySecurityMiddleware(app);
 app.use('/vendor/tinymce', express.static(path.join(__dirname, 'node_modules', 'tinymce')));
 app.use('/vendor/bootstrap', express.static(path.join(__dirname, 'node_modules', 'bootstrap', 'dist')));
 app.use('/vendor/bootstrap-icons', express.static(path.join(__dirname, 'node_modules', 'bootstrap-icons')));
-app.use('/vendor/cropperjs', express.static(path.join(__dirname, 'node_modules', 'cropperjs', 'dist')));
+app.use('/vendor/cropperjs', express.static(resolveVendorDir('cropperjs', 'dist')));
 app.use('/themes', express.static(path.join(__dirname, 'themes')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -98,6 +99,7 @@ app.use((req, res, next) => {
   res.locals.formData = {};
   res.locals.normalizePublicMediaUrl = normalizePublicMediaUrl;
   res.locals.resolvePublicMediaUrl = resolvePublicMediaUrl;
+  res.locals.resolveBestMediaUrl = resolveBestMediaUrl;
   next();
 });
 app.use(localeMiddleware);

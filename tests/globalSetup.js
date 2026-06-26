@@ -19,6 +19,7 @@ module.exports = async () => {
   }
 
   const env = { ...process.env };
+  execSync('node scripts/sync-vendor-assets.js', { stdio: 'inherit', env });
   execSync('node database/bootstrapTestDatabase.js', { stdio: 'inherit', env });
   execSync('node database/seed.js', { stdio: 'inherit', env });
 

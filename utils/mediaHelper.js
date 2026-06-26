@@ -115,6 +115,14 @@ function filterExistingMedia(rows = []) {
   });
 }
 
+function resolveBestMediaUrl(...paths) {
+  for (const filePath of paths) {
+    const resolved = resolvePublicMediaUrl(filePath);
+    if (resolved) return resolved;
+  }
+  return '';
+}
+
 async function regenerateImageVariants(media) {
   const originalPath = diskPathFromPublic(media.file_path);
   if (!fs.existsSync(originalPath)) {
@@ -140,6 +148,7 @@ module.exports = {
   mediaUrl,
   mediaFileExists,
   resolvePublicMediaUrl,
+  resolveBestMediaUrl,
   extractUploadsPath,
   filterExistingMedia,
   normalizeUploadUrlsInHtml,
