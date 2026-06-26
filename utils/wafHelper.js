@@ -29,15 +29,34 @@ const staticExtensions = new Set([
 
 const dangerousUploadExtensions = ['.php', '.phtml', '.exe', '.sh', '.bat', '.cmd', '.jsp', '.asp', '.aspx'];
 
+function isTrustedProxyRequest(req, trustedProxyEnabled = false) {
+  if (trustedProxyEnabled) return true;
+  const trustProxySetting = req.app?.get('trust proxy');
+  return Boolean(trustProxySetting);
+}
+
 function getClientIp(req, trustedProxyEnabled = false) {
-  const trustProxy = trustedProxyEnabled || req.app?.get('trust proxy');
-  if (trustProxy && req.ip) return req.ip.replace(/^::ffff:/, '');
-  const forwarded = req.headers['x-forwarded-for'];
-  if (trustProxy && forwarded) {
-    return String(forwarded).split(',')[0].trim().replace(/^::ffff:/, '');
+  const trustProxy = isTrustedProxyRequest(req, trustedProxyEnabled);
+  const normalize = (ip) => String(ip || '').replace(/^::ffff:/, '').trim();
+
+  if (trustProxy) {
+    const cfIp = req.headers['cf-connecting-ip'];
+    if (cfIp) return normalize(cfIp);
+
+    const trueClientIp = req.headers['true-client-ip'];
+    if (trueClientIp) return normalize(trueClientIp);
+
+    const realIp = req.headers['x-real-ip'];
+    if (realIp) return normalize(realIp);
+
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) return normalize(String(forwarded).split(',')[0]);
+
+    if (req.ip) return normalize(req.ip);
   }
+
   const socketIp = req.socket?.remoteAddress || req.connection?.remoteAddress || req.ip || '';
-  return socketIp.replace(/^::ffff:/, '');
+  return normalize(socketIp);
 }
 
 function maskSensitiveFields(data, parentKey = '') {
@@ -220,13 +239,14 @@ function extractFileMetadata(req) {
 
 function normalizeRequestData(req) {
   const skipRichText = Boolean(req.session?.user) && isAdminRoute(req);
+  const trustedProxy = req.wafTrustProxy === true;
   return {
     url: req.originalUrl || req.url || '',
     query: flattenInputs(req.query, {}, 'query'),
     body: flattenInputs(req.body, { skipRichText }, 'body'),
     headers: flattenInputs(req.headers, {}, 'headers'),
     userAgent: req.get('user-agent') || '',
-    ip: getClientIp(req),
+    ip: getClientIp(req, trustedProxy),
     files: extractFileMetadata(req),
     method: req.method,
     routeType: getRouteType(req),
@@ -414,6 +434,7 @@ function isDangerousUploadFilename(filename) {
 
 module.exports = {
   getClientIp,
+  isTrustedProxyRequest,
   sanitizeLogData,
   maskSensitiveFields,
   normalizeValue,

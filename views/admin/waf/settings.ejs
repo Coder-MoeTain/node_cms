@@ -36,7 +36,7 @@
             <div class="col-md-4"><label class="form-label">Max risk score (public)</label><input class="form-control" type="number" min="1" max="100" name="max_risk_score_public" value="<%= settings.max_risk_score_public || settings.max_risk_score || 50 %>"></div>
             <div class="col-md-4"><label class="form-label">Max risk score (admin)</label><input class="form-control" type="number" min="1" max="100" name="max_risk_score_admin" value="<%= settings.max_risk_score_admin || 40 %>"></div>
             <div class="col-md-8"><label class="form-label">Blocked response message</label><input class="form-control" name="waf_response_message" value="<%= settings.waf_response_message || 'Request blocked by Web Application Firewall.' %>"></div>
-            <div class="col-md-4"><label class="form-check mt-4"><input class="form-check-input" type="checkbox" name="trusted_proxy_enabled" <%= settings.trusted_proxy_enabled === 'true' ? 'checked' : '' %>> Trust configured proxy IP chain</label></div>
+            <div class="col-md-4"><label class="form-check mt-4"><input class="form-check-input" type="checkbox" name="trusted_proxy_enabled" <%= settings.trusted_proxy_enabled === 'true' ? 'checked' : '' %>> Trust proxy headers (X-Forwarded-For, CF-Connecting-IP)</label></div>
           </div>
         </div>
       </div>

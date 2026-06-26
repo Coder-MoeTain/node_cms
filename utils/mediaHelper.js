@@ -72,9 +72,14 @@ function normalizeUploadUrlsInHtml(html) {
 }
 
 function mediaFileExists(filePath) {
-  if (!filePath) return false;
+  const value = String(filePath || '').trim();
+  if (!value) return false;
+  const uploadsPath = extractUploadsPath(value);
+  if (!uploadsPath) {
+    return /^https?:\/\//i.test(value);
+  }
   try {
-    return fs.existsSync(diskPathFromPublic(filePath));
+    return fs.existsSync(diskPathFromPublic(uploadsPath));
   } catch {
     return false;
   }

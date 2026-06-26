@@ -700,6 +700,11 @@
 
 .media-gallery-item:hover { border-color: var(--np-primary); }
 
+.media-gallery-item--missing {
+  border-color: #f0ad4e;
+  opacity: 0.85;
+}
+
 .media-gallery-item img {
   aspect-ratio: 1;
   display: block;

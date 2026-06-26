@@ -295,7 +295,12 @@ async function wafMiddleware(req, res, next) {
     if (adminRoute && !settings.admin_protection_enabled) return next();
     if (!adminRoute && !settings.public_protection_enabled) return next();
 
-    const ipAddress = getClientIp(req, settings.trusted_proxy_enabled);
+    const trustProxy = settings.trusted_proxy_enabled === true
+      || settings.trusted_proxy_enabled === 'true'
+      || Boolean(req.app?.get('trust proxy'));
+    req.wafTrustProxy = trustProxy;
+
+    const ipAddress = getClientIp(req, trustProxy);
     const activeIpRows = findIpListMatches(ipAddress, await loadActiveIpLists());
 
     if (activeIpRows.some((row) => row.list_type === 'whitelist')) return next();

@@ -238,7 +238,7 @@ window.npOpenMediaPicker = function openMediaPicker(callback) {
   if (modal && window.bootstrap) {
     elevateMediaGalleryModal();
     bootstrap.Modal.getOrCreateInstance(modal).show();
-    loadMediaGallery();
+    loadMediaGallery({ loadAll: true });
   }
 };
 
@@ -393,7 +393,7 @@ function selectMediaItem(item) {
   closeMediaGalleryModal();
 }
 
-async function loadMediaGallery({ append = false, search } = {}) {
+async function loadMediaGallery({ append = false, search, loadAll = false } = {}) {
   const grid = document.querySelector('[data-media-gallery-grid]');
   if (!grid) return;
 
@@ -453,12 +453,16 @@ async function loadMediaGallery({ append = false, search } = {}) {
       return;
     }
 
-    const markup = items.map((item) => `
-      <button type="button" class="media-gallery-item" data-file-path="${escapeHtmlAttr(item.filePath)}" data-file-name="${escapeHtmlAttr(item.originalName)}">
-        <img src="${escapeHtmlAttr(item.thumbnailPath || item.filePath)}" alt="${escapeHtmlAttr(item.originalName)}">
+    const markup = items.map((item) => {
+      const thumb = item.thumbnailPath || item.filePath || '';
+      const imgSrc = thumb || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22140%22 height=%22105%22%3E%3Crect fill=%22%23e9ecef%22 width=%22140%22 height=%22105%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%236c757d%22 font-size=%2212%22%3ENo preview%3C/text%3E%3C/svg%3E';
+      const missingClass = item.fileAvailable === false ? ' media-gallery-item--missing' : '';
+      return `
+      <button type="button" class="media-gallery-item${missingClass}" data-file-path="${escapeHtmlAttr(item.filePath)}" data-file-name="${escapeHtmlAttr(item.originalName)}">
+        <img src="${escapeHtmlAttr(imgSrc)}" alt="${escapeHtmlAttr(item.originalName)}" loading="lazy">
         <span>${escapeHtmlAttr(item.originalName)}</span>
-      </button>
-    `).join('');
+      </button>`;
+    }).join('');
 
     if (append) {
       grid.insertAdjacentHTML('beforeend', markup);
@@ -495,6 +499,11 @@ async function loadMediaGallery({ append = false, search } = {}) {
       loadMoreBtn.disabled = false;
       loadMoreBtn.textContent = 'Load more photos';
     }
+
+    if (loadAll && mediaGalleryState.hasMore && !mediaGalleryState.search) {
+      await loadMediaGallery({ append: true, loadAll: true });
+      return;
+    }
   } catch (error) {
     if (!append) {
       grid.innerHTML = '<div class="media-gallery-empty">Unable to load media gallery.</div>';
@@ -506,7 +515,7 @@ async function loadMediaGallery({ append = false, search } = {}) {
 
 const mediaGalleryState = {
   page: 1,
-  limit: 120,
+  limit: Number(document.getElementById('mediaGalleryModal')?.dataset.pickerLimit) || 200,
   search: '',
   hasMore: false,
   total: 0,
@@ -530,7 +539,7 @@ document.querySelectorAll('[data-open-media-gallery]').forEach((button) => {
     activeMediaTargetField = button.dataset.openMediaGallery;
     window.activeMediaTargetField = activeMediaTargetField;
     mediaPickerCallback = null;
-    loadMediaGallery();
+    loadMediaGallery({ loadAll: true });
   });
 });
 
@@ -569,7 +578,7 @@ document.getElementById('mediaGalleryUploadInput')?.addEventListener('change', a
     if (status) {
       status.textContent = files.length === 1 ? 'Photo uploaded.' : `${files.length} photos uploaded.`;
     }
-    await loadMediaGallery();
+    await loadMediaGallery({ loadAll: true });
     setTimeout(() => { if (status) status.textContent = ''; }, 2500);
   } catch (error) {
     if (status) status.textContent = error.message || 'Upload failed.';
@@ -598,7 +607,7 @@ document.addEventListener('click', (event) => {
   if (modal && window.bootstrap) {
     elevateMediaGalleryModal();
     bootstrap.Modal.getOrCreateInstance(modal).show();
-    loadMediaGallery();
+    loadMediaGallery({ loadAll: true });
   }
 });
 
