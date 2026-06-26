@@ -1576,14 +1576,19 @@ a:hover {
   opacity: 0.9;
 }
 
-.portal-app-store-btn-light,
-.portal-view-all-light {
+.portal-mobile-app-panel .portal-app-store-btn,
+.portal-mobile-app-panel .portal-app-store-btn-light {
   color: #fff;
 }
 
-.portal-app-store-btn-light:hover,
-.portal-view-all-light:hover {
+.portal-mobile-app-panel .portal-app-store-btn:hover,
+.portal-mobile-app-panel .portal-app-store-btn-light:hover,
+.portal-mobile-app-panel .portal-view-all-light:hover {
   color: var(--portal-secondary, #f4b000);
+}
+
+.portal-mobile-app-panel .portal-view-all-light {
+  color: #fff;
 }
 
 @media (max-width: 767px) {

@@ -882,6 +882,18 @@ html[data-font-scale="large"] { font-size: 18px; }
   gap: 10px;
 }
 
+.portal-app-store-btn-light {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #fff;
+}
+
+.portal-app-store-btn-light:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+  color: var(--portal-secondary, #f4b000);
+}
+
 .portal-app-store-btn {
   background: var(--portal-primary, #0b5f8a);
   border: 1px solid var(--portal-primary-dark, #06466a);
