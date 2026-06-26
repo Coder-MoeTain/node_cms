@@ -41,18 +41,31 @@ function createCspNonce(req, res, next) {
   next();
 }
 
+function parseCspSourceList(value) {
+  return String(value || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function appendCloudflareInsightsCsp(directives) {
+  if (process.env.CSP_CLOUDFLARE_INSIGHTS !== 'true') return;
+  directives.scriptSrc.push('https://static.cloudflareinsights.com');
+  directives.connectSrc.push('https://cloudflareinsights.com');
+}
+
 function buildCspDirectives(req, res) {
   const nonce = res.locals.cspNonce ? `'nonce-${res.locals.cspNonce}'` : null;
   const isAdmin = req.path === '/admin' || req.path.startsWith('/admin/');
 
-  const scriptSrc = ["'self'", 'https://cdn.jsdelivr.net'];
+  const scriptSrc = ["'self'", 'https://cdn.jsdelivr.net', ...parseCspSourceList(process.env.CSP_SCRIPT_SRC_EXTRA)];
   if (isAdmin) {
     scriptSrc.push("'unsafe-inline'");
   } else if (nonce) {
     scriptSrc.push(nonce);
   }
 
-  const styleSrc = ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'];
+  const styleSrc = ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', ...parseCspSourceList(process.env.CSP_STYLE_SRC_EXTRA)];
   if (isAdmin) {
     styleSrc.push("'unsafe-inline'");
   } else if (nonce) {
@@ -66,12 +79,14 @@ function buildCspDirectives(req, res) {
     fontSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com', 'data:'],
     imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
     frameSrc: ["'self'", 'https://www.youtube.com', 'https://youtube.com', 'https://player.vimeo.com'],
-    connectSrc: ["'self'"],
+    connectSrc: ["'self'", ...parseCspSourceList(process.env.CSP_CONNECT_SRC_EXTRA)],
     objectSrc: ["'none'"],
     baseUri: ["'self'"],
     formAction: ["'self'"],
     frameAncestors: ["'self'"]
   };
+
+  appendCloudflareInsightsCsp(directives);
 
   // Bootstrap carousel applies transform/transition via element.style (style attributes).
   if (!isAdmin) {
