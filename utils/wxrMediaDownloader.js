@@ -12,7 +12,7 @@ function isRemoteMediaUrl(value) {
 }
 
 function safeFilename(name, mimeType = '') {
-  const base = path.basename(String(name || 'attachment').replace(/[^\w.\-]+/g, '-'), path.extname(name || ''));
+  const base = path.basename(String(name || 'attachment').replace(/[^\w.-]+/g, '-'), path.extname(name || ''));
   const ext = path.extname(name || '') || mimeExtension(mimeType);
   const stamp = Date.now();
   const rand = crypto.randomBytes(4).toString('hex');

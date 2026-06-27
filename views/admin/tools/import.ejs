@@ -7,7 +7,7 @@
     <h1 class="mb-3">Import</h1>
     <form method="post" action="/admin/tools/import/preview" enctype="multipart/form-data" class="mb-4">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="file" name="file" accept="application/json,.json,application/xml,text/xml,.xml" class="form-control mb-2" required>
+      <input type="file" name="file" accept="application/json,.json,application/xml,text/xml,.xml,text/csv,.csv" class="form-control mb-2" required>
       <button class="np-btn np-btn-primary" type="submit">Preview import</button>
     </form>
     <% if (preview) { %>

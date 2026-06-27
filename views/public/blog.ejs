@@ -1,6 +1,8 @@
 <%- include(themePartial('head')) %>
 <%- include(themePartial('header')) %>
-<% if (isPortal) { %>
+<% if (typeof fseTemplateHtml !== 'undefined' && fseTemplateHtml) { %>
+<%- include('partials/fse-template-shell', { fseMainClass: 'site-main' }) %>
+<% } else if (isPortal) { %>
 <main class="container portal-page portal-main py-4" id="main-content">
   <%- include('partials/page-header', { title: 'News & Blog', isPortal: true, crumbs: [{ label: 'Home', url: '/' }, { label: 'Blog' }] }) %>
   <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">

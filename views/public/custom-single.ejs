@@ -1,5 +1,8 @@
 <%- include(themePartial('head')) %>
 <%- include(themePartial('header')) %>
+<% if (typeof fseTemplateHtml !== 'undefined' && fseTemplateHtml) { %>
+<%- include('partials/fse-template-shell', { fseMainClass: 'site-main' }) %>
+<% } else { %>
 <main class="<%= isPortal ? 'portal-main portal-page' : '' %>" id="main-content">
   <div class="container py-4">
     <nav class="portal-breadcrumb mb-3" aria-label="Breadcrumb">
@@ -36,4 +39,5 @@
     </article>
   </div>
 </main>
+<% } %>
 <%- include(themePartial('footer')) %>

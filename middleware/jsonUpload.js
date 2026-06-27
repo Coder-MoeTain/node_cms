@@ -19,11 +19,12 @@ const jsonUpload = multer({
   limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter(req, file, callback) {
     const ext = path.extname(file.originalname).toLowerCase();
-    const allowed = ext === '.json' || ext === '.xml';
+    const allowed = ext === '.json' || ext === '.xml' || ext === '.csv';
     const jsonMime = file.mimetype === 'application/json' || file.mimetype === 'text/json';
     const xmlMime = file.mimetype === 'application/xml' || file.mimetype === 'text/xml';
-    if (!allowed && !jsonMime && !xmlMime) {
-      return callback(new Error('Only JSON or WordPress WXR (.xml) export files are allowed.'));
+    const csvMime = file.mimetype === 'text/csv' || file.mimetype === 'application/vnd.ms-excel';
+    if (!allowed && !jsonMime && !xmlMime && !csvMime) {
+      return callback(new Error('Only JSON, CSV, or WordPress WXR (.xml) export files are allowed.'));
     }
     callback(null, true);
   }

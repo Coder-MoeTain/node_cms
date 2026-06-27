@@ -188,6 +188,26 @@
   letter-spacing: 0.01em;
 }
 
+.site-utility-bar {
+  background: var(--site-surface-soft, #f3f4f6);
+  border-bottom: 1px solid var(--site-border, #e5e7eb);
+  font-size: 0.8125rem;
+}
+
+.site-utility-inner {
+  min-height: 34px;
+}
+
+.site-utility-link {
+  color: var(--site-primary, #0b5f8a);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.site-utility-link:hover {
+  text-decoration: underline;
+}
+
 .portal-utility-inner {
   min-height: 36px;
 }

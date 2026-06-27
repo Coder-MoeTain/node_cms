@@ -2,7 +2,8 @@ const { Op } = require('sequelize');
 const models = require('../../models');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { loadCustomFieldsMap } = require('../../utils/customFields');
-const { parseShortcodes } = require('../../utils/shortcodeParser');
+const { resolvePublicContent } = require('../../utils/publicContentRenderer');
+const { attachFseLocals } = require('../../utils/fsePublicHelper');
 const { siteScopeWhere } = require('../../utils/siteScope');
 const { translatePost, translatePosts } = require('../../utils/contentTranslator');
 
@@ -27,12 +28,16 @@ async function archive(req, res, next) {
     const posts = await translatePosts(engine, rows, 'custom_post', contentLocale);
     const title = engine?.isActive ? await engine.translate(type.name) : type.name;
 
-    return res.render('public/custom-archive', {
+    const themeSlug = res.locals.activeTheme?.theme_name || res.locals.activeTheme?.slug;
+    const locals = await attachFseLocals(`archive-${type.slug}`, {
       title,
       type,
       posts,
-      pagination: pageMeta(count, page, limit)
-    });
+      pagination: pageMeta(count, page, limit),
+      heading: title
+    }, themeSlug, { recentPosts: res.locals.recentPosts || [] });
+
+    return res.render('public/custom-archive', locals);
   } catch (error) {
     return next(error);
   }
@@ -66,15 +71,18 @@ async function single(req, res, next) {
       customFields = await loadCustomFieldsMap('custom_post', post.id, 'custom_post_type', type.slug);
     }
 
-    const content = parseShortcodes(post.content, { recentPosts: res.locals.recentPosts || [] });
+    const content = resolvePublicContent(post, { recentPosts: res.locals.recentPosts || [] });
 
-    return res.render('public/custom-single', {
+    const themeSlug = res.locals.activeTheme?.theme_name || res.locals.activeTheme?.slug;
+    const locals = await attachFseLocals(`single-${type.slug}`, {
       title: post.seo_title || post.title,
       type,
       post: { ...post, content },
       customFields,
       content
-    });
+    }, themeSlug, { recentPosts: res.locals.recentPosts || [] });
+
+    return res.render('public/custom-single', locals);
   } catch (error) {
     return next(error);
   }

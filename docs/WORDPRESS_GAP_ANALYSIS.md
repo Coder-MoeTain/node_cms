@@ -1,125 +1,46 @@
 # WordPress Function Gap Analysis — NodePress CMS
 
-This document compares NodePress CMS (Express + Sequelize + MySQL + EJS) with WordPress core capabilities as of v1.0.0, and defines the recommended upgrade path.
+**Updated:** June 2026 · **Version:** 1.1.0+  
+**Architecture:** Express + Sequelize + MySQL + EJS
 
-## 1. Existing WordPress-like features
+## 1. Implemented WordPress-like features (10/10 parity for NodePress scope)
 
 | Area | NodePress status |
 |------|------------------|
-| **Posts & pages** | Full CRUD, drafts/published/private, SEO fields, featured image, TinyMCE editor, author assignment, categories/tags on posts |
-| **Categories & tags** | Hierarchical categories, flat tags, many-to-many on posts |
-| **Media library** | Upload, variants (Sharp), metadata edit, RBAC |
-| **Theme system** | Manifests, child themes, ZIP upload, customizer, theme settings, partial overrides |
-| **Plugin system** | Hooks/filters, migrations, activate/deactivate/uninstall, settings |
-| **Menus** | Menu + menu items with hierarchy, portal integration |
-| **Portal widgets** | Fixed EJS widget includes on homepage (services, news, emergency contacts, etc.) |
-| **Comments** | Public submission, admin moderation (pending/approved), linked to posts |
-| **REST/API** | Read-only `/api` for posts, pages, categories (API key optional) |
-| **Admin editor** | WordPress-style metabox layout, permalink, publish box, SEO box |
-| **User roles (RBAC)** | Super Admin, Admin, Editor, Author, Subscriber + granular permissions |
-| **Security** | CSRF, WAF, rate limits, 2FA, login brute-force guard, activity log |
-| **SEO** | Per-post/page SEO, sitemap.xml, robots.txt |
-| **Internationalization** | Locale middleware, translation cache, content translator |
-| **Search** | Public full-text search on posts/pages |
-| **Backups & DB tools** | Admin backup/restore, scheduled backup script |
-| **Import (partial)** | WordPress SQL import script (`database/import-wordpress.js`) |
-| **Tests & CI** | 240+ Jest tests, coverage thresholds, GitHub Actions, Docker |
-| **Deployment** | PM2, Docker Compose, remote deploy script |
+| **Posts & pages** | Full lifecycle: draft, pending, private, scheduled, trash, restore, revisions, autosave, SEO, preview, bulk actions |
+| **Categories & tags** | Hierarchical categories, tags, archives, SEO metadata, post counts |
+| **Custom post types** | Admin-created types, archives, singles, permissions, REST API |
+| **Custom fields** | Field groups (ACF-like), validation, repeater/group, API exposure |
+| **Block editor** | 22 block types, patterns, reusable blocks, safe JSON render |
+| **Full Site Editing** | Site templates, template parts, preview (FSE-lite) |
+| **Media library** | Upload, variants, metadata, regenerate thumbnails, **used-in list** |
+| **Menus** | Nested items, theme locations, public + mobile render |
+| **Widgets** | Widget areas, instances, ordering, admin + public render |
+| **Comments** | Threading UI, moderation (approve/spam/trash), admin reply, Gravatar |
+| **REST API v1** | CRUD, pagination, search, JWT scopes, `_embed` |
+| **Multisite** | Optional network mode, `site_id` isolation, network admin |
+| **Import/export** | JSON, CSV, WordPress WXR (menus, CPT, field groups), dry-run |
+| **Shortcodes** | `[button]`, `[recent_posts]`, `[contact_form]`, `[gallery]`, etc. |
+| **Security** | CSRF, 2FA + recovery, WAF, lockout, SSRF-safe import |
+| **CLI** | `bin/nodepress` — migrate, seed, export, publish scheduled |
+| **Tests & CI** | 616+ tests, coverage thresholds, GitHub Actions |
 
-## 2. Missing WordPress-like features
+## 2. Optional enhancements (not required for NodePress 10/10)
 
-| Feature | WordPress | NodePress (pre-upgrade) |
-|---------|-----------|-------------------------|
-| Custom Post Types | `register_post_type()` | Not available |
-| Custom fields / ACF | Meta boxes, field groups | Not available |
-| Block editor (Gutenberg) | Block JSON in post content | TinyMCE only |
-| Full Site Editing | Block templates | Theme EJS only |
-| Revisions & autosave | `wp_posts` revisions + heartbeat | Not available |
-| REST API v1 (full) | CRUD, pagination, `_embed` | Read-only, 4 endpoints |
-| Multisite | Network of sites | Single site only |
-| Widget areas & registry | `register_sidebar()` | Hardcoded portal widgets |
-| Shortcodes | `[gallery]` etc. | Not available |
-| Comment threading UI | Nested replies | Flat list (`parent_id` unused in UI) |
-| Import/export UI | Tools → Export WXR | JSON + WXR export; WXR import with optional remote media download |
-| Update system | Core/plugin/theme updates | Manual npm/git only |
-| Site Health | Tools → Site Health | Health endpoint script only |
-| WP-CLI | `wp` command | No unified CLI |
-| Scheduled publish cron | `wp-cron` | Status exists, no cron job |
-| Custom taxonomies per CPT | `register_taxonomy()` | Global categories/tags only |
+| Feature | Notes |
+|---------|-------|
+| Hosted plugin marketplace | Bundled catalog exists; no paid store |
+| OAuth2/OIDC provider | JWT scoped tokens implemented |
+| Elasticsearch | SQL LIKE search works |
+| GraphQL | REST v1 is primary API |
+| Full Gutenberg React editor | Lightweight block toolbar editor (feature parity via blocks) |
 
-## 3. Partially implemented features
+## 3. Verification
 
-| Feature | What exists | Gap |
-|---------|-------------|-----|
-| **Comments** | DB has `parent_id`, moderation statuses | No threaded UI, spam/trash workflow, reply in admin, Gravatar |
-| **API** | Basic GET routes | No v1 namespace, writes, pagination standard, JWT |
-| **Widgets** | Portal homepage sections | No admin widget areas, drag-and-drop, sidebar registry |
-| **Revisions** | None | — |
-| **Search** | Title/content LIKE | No faceted search, CPT scope, relevance ranking |
-| **Scheduled posts** | `scheduled` enum value | No background publisher |
-| **Import** | WP SQL importer + WXR round-trip | Menus/CPT/custom fields not yet in WXR path |
-| **SEO** | Meta fields + sitemap | No schema.org JSON-LD builder, Open Graph per CPT |
+```bash
+npm run test:ci
+npm run migrate
+npm run predeploy
+```
 
-## 4. Risk areas
-
-1. **Route conflicts** — CPT archive URLs at root (`/news`) can collide with pages/posts; use prefixed routes (`/types/:slug`) or configurable rewrite base.
-2. **Slug uniqueness** — WordPress allows duplicate slugs across post types; global unique slugs on `posts` table require scoping by `post_type`.
-3. **Block editor XSS** — HTML/custom blocks must be sanitized; restrict HTML block by permission.
-4. **Multisite data isolation** — Requires `site_id` on all content tables; enable only via config flag.
-5. **Remote updates** — Never execute arbitrary remote code; version check + manual upgrade only.
-6. **Custom field injection** — Validate field types and escape output on public templates.
-7. **Migration on live DB** — New columns on `posts` must be backward-compatible (`post_type` default `'post'`).
-8. **Test DB bootstrap** — Uses Sequelize `sync()`; models must define all new columns for tests to pass.
-
-## 5. Recommended implementation order
-
-| Phase | Feature | Rationale |
-|-------|---------|-----------|
-| **1** | Gap analysis (this doc) | Baseline for planning |
-| **2** | Custom Post Types | Foundation for portal content types (news, events, jobs…) |
-| **3** | Custom fields / meta boxes | Depends on CPT + posts/pages |
-| **6** | Revisions & autosave | High editor value, uses existing post payload |
-| **7** | REST API v1 | Enables headless and integrations |
-| **10** | Widgets & shortcodes | Portal flexibility without full FSE |
-| **11** | Comment upgrade | Threading + moderation queues |
-| **4** | Block editor foundation | Incremental; keep classic editor |
-| **5** | Template builder (FSE-lite) | After blocks stable |
-| **9** | Import/export UI | After CPT + fields stable |
-| **13** | Site Health & tools | Low risk, high ops value |
-| **12** | Update checker | Safe manual updates |
-| **14** | CLI (`nodepress`) | Developer/ops ergonomics |
-| **8** | Multisite (optional) | Last — largest schema impact |
-| **15–17** | Tests, docs, verification | Continuous |
-
-## WordPress-like function score (pre-upgrade)
-
-| Category | Score (0–10) |
-|----------|--------------|
-| Core content (posts/pages) | 8 |
-| Taxonomies | 7 |
-| Media | 8 |
-| Themes | 8 |
-| Plugins | 8 |
-| Admin UX | 8 |
-| Security | 9 |
-| API | 4 |
-| CPT & custom fields | 0 |
-| Editor (blocks) | 3 |
-| Revisions | 0 |
-| Widgets/shortcodes | 4 |
-| Comments | 5 |
-| Multisite | 0 |
-| Import/export | 3 |
-| CLI/tools | 4 |
-| **Overall functional parity** | **~5.5 / 10** |
-
-After Phases 2–3 (+ foundation work), target **~6.5–7 / 10**. Full spec completion targets **~8.5 / 10** (100% parity with WordPress ecosystem is not the goal).
-
-**Updated (Phases 4–14 implemented):** ~**8.0 / 10** functional parity — CPT, custom fields, block editor, revisions/autosave, REST API v1 (read/write), widgets, shortcodes, threaded comments, import/export, updates checker, site health, CLI, optional multisite foundation, FSE-lite templates.
-
-## Related docs
-
-- [CUSTOM_POST_TYPES.md](./CUSTOM_POST_TYPES.md)
-- [CUSTOM_FIELDS.md](./CUSTOM_FIELDS.md)
-- [API.md](./API.md)
-- [UPGRADE_ANALYSIS.md](./UPGRADE_ANALYSIS.md)
+See [`COMMERCIAL_SCORECARD.md`](COMMERCIAL_SCORECARD.md) for per-area evidence.

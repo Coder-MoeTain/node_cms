@@ -31,6 +31,11 @@
                         <p class="np-help-text mb-0">Full URL, site path, or leave blank.</p>
                       <% } else if (row.key === 'contact_phone' || row.key.startsWith('emergency_')) { %>
                         <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="tel" value="<%= row.value %>">
+                      <% } else if (row.key === 'show_utility_bar') { %>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="setting-<%= row.key %>" name="<%= row.key %>" value="true" <%= row.value === 'true' ? 'checked' : '' %>>
+                          <label class="form-check-label" for="setting-<%= row.key %>">Show font controls, language switcher, and login links above the main header on standard (non-portal) themes.</label>
+                        </div>
                       <% } else if (row.key === 'posts_per_page' || row.key === 'revision_limit' || row.key === 'comment_max_depth' || row.key.startsWith('stat_') || row.key === 'portal_visit_count') { %>
                         <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="number" min="<%= row.key === 'comment_max_depth' ? '1' : '0' %>" value="<%= row.value %>" <%= row.key.startsWith('stat_') ? 'readonly' : '' %>>
                         <% if (row.key === 'revision_limit') { %><p class="np-help-text mb-0">Older revisions are pruned automatically beyond this limit.</p><% } %>

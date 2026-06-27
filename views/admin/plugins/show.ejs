@@ -20,75 +20,132 @@
       </div>
     </div>
 
+    <ul class="nav nav-tabs np-plugin-tabs mb-3" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="plugin-tab-overview" data-bs-toggle="tab" data-bs-target="#plugin-pane-overview" type="button" role="tab" aria-controls="plugin-pane-overview" aria-selected="true">Overview</button>
+      </li>
+      <% if (readme) { %>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="plugin-tab-readme" data-bs-toggle="tab" data-bs-target="#plugin-pane-readme" type="button" role="tab" aria-controls="plugin-pane-readme" aria-selected="false">Readme</button>
+        </li>
+      <% } %>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="plugin-tab-hooks" data-bs-toggle="tab" data-bs-target="#plugin-pane-hooks" type="button" role="tab" aria-controls="plugin-pane-hooks" aria-selected="false">Hooks</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="plugin-tab-migrations" data-bs-toggle="tab" data-bs-target="#plugin-pane-migrations" type="button" role="tab" aria-controls="plugin-pane-migrations" aria-selected="false">Migrations</button>
+      </li>
+      <% if (plugin.hasSettings) { %>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" href="/admin/plugins/<%= plugin.slug %>/settings">Settings</a>
+        </li>
+      <% } %>
+    </ul>
+
     <div class="row g-3">
       <div class="col-lg-8">
-        <div class="np-widget mb-3">
-          <div class="np-widget-header"><span>Overview</span></div>
-          <div class="np-widget-body">
-            <p class="mb-3"><%= plugin.description || 'No description provided.' %></p>
-            <dl class="row np-plugin-details-dl mb-0">
-              <dt class="col-sm-4">Status</dt>
-              <dd class="col-sm-8"><span class="np-badge np-badge-<%= isActive ? 'success' : 'secondary' %>"><%= isActive ? 'Active' : 'Inactive' %></span></dd>
-              <dt class="col-sm-4">Entry file</dt>
-              <dd class="col-sm-8"><code><%= plugin.entryFile %></code></dd>
-              <dt class="col-sm-4">On disk</dt>
-              <dd class="col-sm-8"><%= plugin.disk.exists ? `${plugin.disk.fileCount} files · ${plugin.disk.sizeLabel}` : 'Missing from disk' %></dd>
-              <% if (plugin.disk.modifiedAt) { %>
-                <dt class="col-sm-4">Last modified</dt>
-                <dd class="col-sm-8"><%= formatDateTime(plugin.disk.modifiedAt) %></dd>
-              <% } %>
-              <% if (plugin.requires) { %>
-                <dt class="col-sm-4">Requires</dt>
-                <dd class="col-sm-8"><%= plugin.requires %></dd>
-              <% } %>
-              <% if (plugin.homepage) { %>
-                <dt class="col-sm-4">Plugin homepage</dt>
-                <dd class="col-sm-8"><a href="<%= plugin.homepage %>" target="_blank" rel="noopener noreferrer"><%= plugin.homepage %></a></dd>
-              <% } %>
-              <% if (plugin.diskManifest && plugin.diskManifest.permissions) { %>
-                <dt class="col-sm-4">Permissions</dt>
-                <dd class="col-sm-8"><%= plugin.diskManifest.permissions.join(', ') %></dd>
-              <% } %>
-            </dl>
-            <% if (activationError) { %>
-              <div class="alert alert-warning mt-3 mb-0"><strong>Activation error:</strong> <%= activationError %></div>
-            <% } %>
-          </div>
-        </div>
-
-        <% if (readme) { %>
-          <div class="np-widget mb-3">
-            <div class="np-widget-header"><span><i class="bi bi-book me-1"></i> <%= readme.filename %></span></div>
-            <div class="np-widget-body np-plugin-readme"><%- readme.html %></div>
-          </div>
-        <% } %>
-
-        <div class="np-widget mb-3">
-          <div class="np-widget-header d-flex justify-content-between align-items-center">
-            <span>Hooks</span>
-            <span class="np-badge np-badge-secondary"><%= registeredHooks.length %> runtime</span>
-          </div>
-          <div class="np-widget-body">
-            <% if (manifestHooks.length) { %>
-              <p class="np-help-text">Declared in <code>plugin.json</code>:</p>
-              <div class="d-flex flex-wrap gap-2 mb-3">
-                <% manifestHooks.forEach(function(hook) { %>
-                  <span class="badge bg-light text-dark border"><code><%= hook %></code></span>
-                <% }) %>
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="plugin-pane-overview" role="tabpanel" aria-labelledby="plugin-tab-overview" tabindex="0">
+            <div class="np-widget mb-3">
+              <div class="np-widget-header"><span>Overview</span></div>
+              <div class="np-widget-body">
+                <p class="mb-3"><%= plugin.description || 'No description provided.' %></p>
+                <dl class="row np-plugin-details-dl mb-0">
+                  <dt class="col-sm-4">Status</dt>
+                  <dd class="col-sm-8"><span class="np-badge np-badge-<%= isActive ? 'success' : 'secondary' %>"><%= isActive ? 'Active' : 'Inactive' %></span></dd>
+                  <dt class="col-sm-4">Entry file</dt>
+                  <dd class="col-sm-8"><code><%= plugin.entryFile %></code></dd>
+                  <dt class="col-sm-4">On disk</dt>
+                  <dd class="col-sm-8"><%= plugin.disk.exists ? `${plugin.disk.fileCount} files · ${plugin.disk.sizeLabel}` : 'Missing from disk' %></dd>
+                  <% if (plugin.disk.modifiedAt) { %>
+                    <dt class="col-sm-4">Last modified</dt>
+                    <dd class="col-sm-8"><%= formatDateTime(plugin.disk.modifiedAt) %></dd>
+                  <% } %>
+                  <% if (plugin.requires) { %>
+                    <dt class="col-sm-4">Requires</dt>
+                    <dd class="col-sm-8"><%= plugin.requires %></dd>
+                  <% } %>
+                  <% if (plugin.homepage) { %>
+                    <dt class="col-sm-4">Plugin homepage</dt>
+                    <dd class="col-sm-8"><a href="<%= plugin.homepage %>" target="_blank" rel="noopener noreferrer"><%= plugin.homepage %></a></dd>
+                  <% } %>
+                  <% if (plugin.diskManifest && plugin.diskManifest.permissions) { %>
+                    <dt class="col-sm-4">Permissions</dt>
+                    <dd class="col-sm-8"><%= plugin.diskManifest.permissions.join(', ') %></dd>
+                  <% } %>
+                </dl>
+                <% if (activationError) { %>
+                  <div class="alert alert-warning mt-3 mb-0"><strong>Activation error:</strong> <%= activationError %></div>
+                <% } %>
               </div>
-            <% } %>
-            <p class="np-help-text mb-2">Currently registered when active:</p>
-            <% if (isActive && registeredHooks.length) { %>
-              <div class="d-flex flex-wrap gap-2">
-                <% registeredHooks.forEach(function(hook) { %>
-                  <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle"><%= hook %></span>
-                <% }) %>
+            </div>
+          </div>
+
+          <% if (readme) { %>
+            <div class="tab-pane fade" id="plugin-pane-readme" role="tabpanel" aria-labelledby="plugin-tab-readme" tabindex="0">
+              <div class="np-widget mb-3">
+                <div class="np-widget-header"><span><i class="bi bi-book me-1"></i> <%= readme.filename %></span></div>
+                <div class="np-widget-body np-plugin-readme"><%- readme.html %></div>
               </div>
-            <% } else if (!isActive) { %>
-              <p class="mb-0 text-muted">Activate this plugin to register its hooks.</p>
-            <% } else { %>
-              <p class="mb-0 text-muted">No hooks registered.</p>
-            <% } %>
+            </div>
+          <% } %>
+
+          <div class="tab-pane fade" id="plugin-pane-hooks" role="tabpanel" aria-labelledby="plugin-tab-hooks" tabindex="0">
+            <div class="np-widget mb-3">
+              <div class="np-widget-header d-flex justify-content-between align-items-center">
+                <span>Hooks</span>
+                <span class="np-badge np-badge-secondary"><%= registeredHooks.length %> runtime</span>
+              </div>
+              <div class="np-widget-body">
+                <% if (manifestHooks.length) { %>
+                  <p class="np-help-text">Declared in <code>plugin.json</code>:</p>
+                  <div class="d-flex flex-wrap gap-2 mb-3">
+                    <% manifestHooks.forEach(function(hook) { %>
+                      <span class="badge bg-light text-dark border"><code><%= hook %></code></span>
+                    <% }) %>
+                  </div>
+                <% } %>
+                <p class="np-help-text mb-2">Currently registered when active:</p>
+                <% if (isActive && registeredHooks.length) { %>
+                  <div class="d-flex flex-wrap gap-2">
+                    <% registeredHooks.forEach(function(hook) { %>
+                      <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle"><%= hook %></span>
+                    <% }) %>
+                  </div>
+                <% } else if (!isActive) { %>
+                  <p class="mb-0 text-muted">Activate this plugin to register its hooks.</p>
+                <% } else { %>
+                  <p class="mb-0 text-muted">No hooks registered.</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="plugin-pane-migrations" role="tabpanel" aria-labelledby="plugin-tab-migrations" tabindex="0">
+            <div class="np-widget mb-3">
+              <div class="np-widget-header"><span>Migrations</span></div>
+              <div class="np-widget-body">
+                <% const applied = (plugin.migrations || []).map(function(row) { return row.migration; }); %>
+                <% if (applied.length || pendingMigrations.length) { %>
+                  <ul class="list-unstyled mb-3 small np-plugin-migration-list">
+                    <% applied.forEach(function(file) { %>
+                      <li class="text-success"><i class="bi bi-check-circle-fill"></i> <%= file %></li>
+                    <% }) %>
+                    <% pendingMigrations.forEach(function(file) { %>
+                      <li class="text-muted"><i class="bi bi-circle"></i> <%= file %> (pending)</li>
+                    <% }) %>
+                  </ul>
+                  <% if (pendingMigrations.length) { %>
+                    <form method="post" action="/admin/plugins/<%= plugin.slug %>/migrate">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="np-btn np-btn-secondary" type="submit">Run <%= pendingMigrations.length %> pending migration(s)</button>
+                    </form>
+                  <% } %>
+                <% } else { %>
+                  <p class="text-muted mb-0">No migrations for this plugin.</p>
+                <% } %>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -123,31 +180,13 @@
           </div>
         </div>
 
-        <div class="np-widget mb-3">
-          <div class="np-widget-header"><span>Migrations</span></div>
-          <div class="np-widget-body">
-            <% const applied = (plugin.migrations || []).map(function(row) { return row.migration; }); %>
-            <% if (applied.length || pendingMigrations.length) { %>
-              <ul class="list-unstyled mb-0 small np-plugin-migration-list">
-                <% applied.forEach(function(file) { %>
-                  <li class="text-success"><i class="bi bi-check-circle-fill"></i> <%= file %></li>
-                <% }) %>
-                <% pendingMigrations.forEach(function(file) { %>
-                  <li class="text-muted"><i class="bi bi-circle"></i> <%= file %> (pending)</li>
-                <% }) %>
-              </ul>
-            <% } else { %>
-              <p class="text-muted mb-0">No migrations for this plugin.</p>
-            <% } %>
-          </div>
-        </div>
-
         <div class="np-widget">
           <div class="np-widget-header"><span>At a glance</span></div>
           <div class="np-widget-body">
             <ul class="list-unstyled mb-0 small">
               <li class="mb-2"><i class="bi bi-gear me-1"></i> <%= plugin.settingsCount %> configurable settings</li>
               <li class="mb-2"><i class="bi bi-link-45deg me-1"></i> <%= plugin.declaredHooksCount %> declared hooks</li>
+              <li class="mb-2"><i class="bi bi-database me-1"></i> <%= (plugin.migrations || []).length %> applied migration(s)</li>
               <li><i class="bi bi-hdd me-1"></i> <%= plugin.disk.sizeLabel %> on disk</li>
             </ul>
           </div>

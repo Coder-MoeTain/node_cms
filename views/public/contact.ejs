@@ -1,6 +1,9 @@
 <%- include(themePartial('head')) %>
 <%- include(themePartial('header')) %>
 <% const pre = typeof prefill !== 'undefined' ? prefill : {}; const errs = typeof fieldErrors !== 'undefined' ? fieldErrors : {}; %>
+<% if (typeof fseTemplateHtml !== 'undefined' && fseTemplateHtml) { %>
+<%- include('partials/fse-template-shell', { fseMainClass: isPortal ? 'portal-main' : 'site-main' }) %>
+<% } else { %>
 <main class="<%= isPortal ? 'container portal-page portal-main py-4' : 'site-page site-main py-5' %>" id="main-content">
   <div class="<%= isPortal ? '' : 'container' %>">
     <%- include('partials/page-header', {
@@ -63,4 +66,5 @@
     </div>
   </div>
 </main>
+<% } %>
 <%- include(themePartial('footer')) %>

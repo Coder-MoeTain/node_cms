@@ -11,6 +11,7 @@
     { "section": "Google Analytics", "key": "track_admin", "label": "Track admin pages", "type": "checkbox", "default": "false", "description": "Include /admin traffic in analytics (not recommended)." },
     { "section": "Google Analytics", "key": "debug_mode", "label": "Debug mode", "type": "checkbox", "default": "false", "description": "Log GA events to the browser console for testing." },
     { "section": "Privacy", "key": "respect_cookie_consent", "label": "Wait for cookie consent", "type": "checkbox", "default": "true", "description": "Defer tracking scripts until the visitor accepts the cookie banner." },
+    { "section": "Local analytics", "key": "local_page_views", "label": "Log page views locally", "type": "checkbox", "default": "true", "description": "Store anonymous page view rows via plugin migration (dashboard widget shows 7-day total)." },
     { "section": "Custom Tracking", "key": "custom_script", "label": "Custom tracking snippet", "type": "textarea", "default": "", "rows": 6, "description": "Optional raw HTML/JS appended after GA4 (e.g. Facebook Pixel, Hotjar)." },
     { "section": "Custom Tracking", "key": "footer_position", "label": "Snippet position", "type": "select", "default": "footer", "options": [{ "value": "footer", "label": "Footer (recommended)" }, { "value": "head", "label": "Head (early load)" }], "description": "Where to inject custom tracking code." }
   ]

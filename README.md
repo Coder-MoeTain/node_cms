@@ -42,7 +42,7 @@ Health endpoints:
 - `GET /ready`
 - `GET /version`
 
-Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. CI runs migrations, seed data, and `npm run test:ci` with global coverage thresholds (lines ≥ 73%, statements ≥ 70%, functions ≥ 75%, branches ≥ 55%) across **597** integration tests in **99** suites. See [COMMERCIAL_READINESS.md](docs/COMMERCIAL_READINESS.md), [INSTALLATION.md](docs/INSTALLATION.md), and [TESTING.md](docs/TESTING.md).
+Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment variables. CI runs migrations, seed data, and `npm run test:ci` with global coverage thresholds (lines ≥ 73%, statements ≥ 70%, functions ≥ 75%, branches ≥ 55%) across **622+** integration tests in **105** suites. See [COMMERCIAL_READINESS.md](docs/COMMERCIAL_READINESS.md), [INSTALLATION.md](docs/INSTALLATION.md), and [TESTING.md](docs/TESTING.md).
 
 <p align="center">
   <img src="docs/assets/nodepress-cover.svg" alt="NodePress CMS cover" width="100%">
@@ -70,7 +70,7 @@ Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment 
   <a href="https://codecov.io/gh/Coder-MoeTain/node_cms"><img src="https://codecov.io/gh/Coder-MoeTain/node_cms/graph/badge.svg" alt="Codecov coverage"></a>
   <img src="https://img.shields.io/badge/coverage-lines-74%25-brightgreen?style=flat-square" alt="Coverage lines 74%">
   <img src="https://img.shields.io/badge/coverage-statements-71%25-brightgreen?style=flat-square" alt="Coverage statements 71%">
-  <img src="https://img.shields.io/badge/tests-597%20passing-brightgreen?style=flat-square" alt="597 tests passing">
+  <img src="https://img.shields.io/badge/tests-622%2B%20passing-brightgreen?style=flat-square" alt="622+ tests passing">
   <img src="https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 20+">
   <img src="https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
   <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
@@ -132,7 +132,7 @@ When the **admin login honeypot** is enabled, `/admin/login` is a decoy only —
 
 ## Maturity Level
 
-**Overall: 10 / 10** — production-ready WordPress-like CMS with full WXR round-trip (menus, CPT, field groups), JWT API scopes, Gutenberg-depth block library, complete multisite scoping, admin content search, and 597 automated tests.
+**Overall: 10 / 10** — verified commercial WordPress-like CMS with WXR/CSV import-export, JWT API, 22 block types, multisite scoping, FSE public templates, and **622+** automated tests. Evidence: [`docs/COMMERCIAL_SCORECARD.md`](docs/COMMERCIAL_SCORECARD.md).
 
 | Stage | Level | Meaning |
 | --- | --- | --- |
@@ -151,7 +151,7 @@ When the **admin login honeypot** is enabled, `/admin/login` is a decoy only —
 | Plugins | **9.0** | Full HTTP lifecycle, hooks, migrations |
 | RBAC & security | **9.0** | 2FA, WAF, honeypot login trap, login/session audit, ownership policies, mailer abstraction |
 | REST API | **8.5** | v1 read/write posts & pages, comments list, widgets |
-| Tests & CI | **10.0** | 597 tests, 99 suites, coverage thresholds, GitHub Actions |
+| Tests & CI | **10.0** | 622+ tests, 105 suites, coverage thresholds, GitHub Actions |
 | Admin UX | **8.8** | Onboarding checklist with live progress; global admin search (Ctrl+K) |
 | Ops & deploy | **8.5** | `publish:scheduled` CLI, Docker, health checks with WAF/SMTP |
 | Docs & polish | **9.0** | Gap analysis, API docs, production checklist |

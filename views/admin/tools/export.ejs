@@ -5,9 +5,11 @@
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
     <h1 class="mb-3">Export</h1>
-    <p>Download a full site export as JSON or WordPress WXR (posts, pages, categories, tags, and local media attachments).</p>
+    <p>Download a full site export as JSON, CSV, or WordPress WXR (posts, pages, categories, tags, menus, CPT, field groups, and local media attachments).</p>
     <div class="d-flex flex-wrap gap-2">
       <a class="np-btn np-btn-primary" href="/admin/tools/export/download">Download JSON export</a>
+      <a class="np-btn np-btn-secondary" href="/admin/tools/export/csv?type=posts">Download posts CSV</a>
+      <a class="np-btn np-btn-secondary" href="/admin/tools/export/csv?type=pages">Download pages CSV</a>
       <a class="np-btn np-btn-secondary" href="/admin/tools/export/wxr">Download WordPress WXR</a>
     </div>
   </main>

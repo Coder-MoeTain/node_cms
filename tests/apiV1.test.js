@@ -24,6 +24,23 @@ describe('API v1', () => {
     expect(res.body.data.slug).toBe(pageSlug);
   });
 
+  test('GET /api/v1/posts/:slug supports _embed=author', async () => {
+    const admin = await models.User.findOne({ where: { email: 'admin@example.com' } });
+    const slug = `api-v1-embed-${Date.now()}`;
+    await models.Post.create({
+      title: 'Embed Test Post',
+      slug,
+      content: '<p>Embed</p>',
+      status: 'published',
+      post_type: 'post',
+      author_id: admin.id,
+      published_at: new Date()
+    });
+    const res = await request(app).get(`/api/v1/posts/${slug}?_embed=author`);
+    expect(res.status).toBe(200);
+    expect(res.body._embedded.author.email).toBe('admin@example.com');
+  });
+
   test('POST /api/v1/pages creates page with authenticated session', async () => {
     const slug = `api-v1-new-${Date.now()}`;
     const agent = request.agent(app);

@@ -91,6 +91,9 @@
                     <button class="np-btn np-btn-primary" type="submit" data-publish-submit><%= isEdit ? 'Update' : 'Publish' %></button>
                   </div>
                   <p class="np-help-text mt-2 mb-0" data-autosave-status aria-live="polite"></p>
+                  <% if (isEdit && ['posts', 'pages'].includes(resource)) { %>
+                    <a class="np-btn np-btn-link np-btn-small d-block mt-2" href="/admin/revisions?resource_type=<%= resource === 'pages' ? 'page' : 'post' %>&resource_id=<%= record.id %>">View revisions</a>
+                  <% } %>
                   <div class="mt-2"><a class="np-btn np-btn-link" href="/admin/<%= resource %>">Cancel</a></div>
                 </div>
               </div>

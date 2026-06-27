@@ -7,6 +7,10 @@ const { previewImport, importSite } = require('../../utils/importer');
 const { isWxrDocument, previewWxrImport } = require('../../utils/wxrImporter');
 const { exportSiteToWxr } = require('../../utils/wxrExporter');
 const { getCurrentSiteId } = require('../../utils/siteScope');
+const { exportPostsToCsv, exportPagesToCsv } = require('../../utils/csvExporter');
+const { csvToImportPayload, isPostsCsv } = require('../../utils/csvImporter');
+const { Post, Page } = require('../../models');
+const { Op } = require('sequelize');
 
 async function exportForm(req, res, next) {
   try {
@@ -65,6 +69,26 @@ async function importForm(req, res, next) {
   }
 }
 
+async function exportCsvDownload(req, res, next) {
+  try {
+    if (!policy.hasPermission(req.session.user, 'manage_settings')) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    const type = req.query.type === 'pages' ? 'pages' : 'posts';
+    const siteId = getCurrentSiteId(req);
+    const scope = siteId ? { [Op.or]: [{ site_id: null }, { site_id: siteId }] } : {};
+    const rows = type === 'pages'
+      ? await Page.findAll({ where: scope, order: [['updated_at', 'DESC']] })
+      : await Post.findAll({ where: { ...scope, post_type: 'post' }, order: [['updated_at', 'DESC']] });
+    const csv = type === 'pages' ? exportPagesToCsv(rows) : exportPostsToCsv(rows);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="nodepress-${type}-${Date.now()}.csv"`);
+    return res.send(csv);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function importPreview(req, res, next) {
   try {
     if (!policy.hasPermission(req.session.user, 'manage_settings')) {
@@ -72,17 +96,22 @@ async function importPreview(req, res, next) {
       return res.redirect('/admin/tools/import');
     }
     if (!req.file) {
-      req.flash('error', 'Upload a JSON or WordPress WXR export file.');
+      req.flash('error', 'Upload a JSON, CSV, or WordPress WXR export file.');
       return res.redirect('/admin/tools/import');
     }
     const raw = fs.readFileSync(req.file.path, 'utf8');
     fs.unlink(req.file.path, () => {});
     let data;
     let preview;
+    const ext = path.extname(req.file.originalname || '').toLowerCase();
     if (isWxrDocument(raw)) {
       const wxrPreview = await previewWxrImport(raw);
       data = wxrPreview.payload;
       preview = { ...wxrPreview.preview, wxr_items: wxrPreview.itemCount };
+    } else if (ext === '.csv' || (ext !== '.json' && isPostsCsv(raw))) {
+      data = csvToImportPayload(raw, req.query.type === 'pages' ? 'pages' : 'posts');
+      preview = await previewImport(data);
+      preview.format = 'csv';
     } else {
       data = JSON.parse(raw);
       preview = await previewImport(data);
@@ -126,4 +155,4 @@ async function importRun(req, res, next) {
   }
 }
 
-module.exports = { exportForm, exportDownload, exportWxrDownload, importForm, importPreview, importRun };
+module.exports = { exportForm, exportDownload, exportWxrDownload, exportCsvDownload, importForm, importPreview, importRun };

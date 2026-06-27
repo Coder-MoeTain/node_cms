@@ -14,7 +14,13 @@ async function installFromZip(zipPath, { overwrite = true } = {}) {
   }
 
   const { manifest, installPath } = await extractZipArchive(zipPath, themesRoot, 'theme.json', { archiveType: 'theme' });
-  themeValidator.validateManifest(manifest, { themePath: installPath, themesRoot, strict: false, requireTemplates: true, validateScreenshot: true });
+  themeValidator.validateManifest(manifest, {
+    themePath: installPath,
+    themesRoot,
+    strict: false,
+    requireTemplates: !manifest.parent,
+    validateScreenshot: true
+  });
 
   const scanIssues = scanThemeDirectory(installPath);
   if (scanIssues.length) {

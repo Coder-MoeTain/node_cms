@@ -1,5 +1,8 @@
 <%- include(themePartial('head')) %>
 <%- include(themePartial('header')) %>
+<% if (typeof fseTemplateHtml !== 'undefined' && fseTemplateHtml) { %>
+<%- include('partials/fse-template-shell', { fseMainClass: 'site-main' }) %>
+<% } else if (isPortal) { %>
 <main class="container portal-page portal-main py-4" id="main-content">
   <%- include('partials/page-header', { title: heading, isPortal: true, crumbs: [{ label: 'Home', url: '/' }, { label: heading }] }) %>
   <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
@@ -24,4 +27,30 @@
     <% } %>
   </div>
 </main>
+<% } else { %>
+<main class="container site-page py-4 py-lg-5" id="main-content">
+  <%- include('partials/page-header', { title: heading, subtitle: 'Browse posts in this archive.', isPortal: false, crumbs: [{ label: 'Home', url: '/' }, { label: heading }] }) %>
+  <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
+    <section class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
+      <% if (posts.length) { %>
+        <div class="row g-4">
+          <% posts.forEach(function(post) { %>
+            <div class="col-md-6">
+              <%- include(themePartial('post-card'), { post }) %>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="site-empty-state"><i class="bi bi-archive" aria-hidden="true"></i><p>No posts in this archive yet.</p></div>
+      <% } %>
+      <% if (pagination && pagination.pages > 1) { %>
+        <%- include('../partials/pagination', { pagination, paginationBase: '?', paginationClass: 'portal-pagination mt-4', paginationLabel: 'Archive pagination' }) %>
+      <% } %>
+    </section>
+    <% if (activeTheme.sidebar_position !== 'none') { %>
+      <div class="col-lg-4"><%- include(themePartial('standard-sidebar')) %></div>
+    <% } %>
+  </div>
+</main>
+<% } %>
 <%- include(themePartial('footer')) %>

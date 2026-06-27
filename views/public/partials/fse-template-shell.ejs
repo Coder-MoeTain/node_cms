@@ -1,0 +1,7 @@
+<% if (typeof fseTemplateHtml !== 'undefined' && fseTemplateHtml) { %>
+<main id="main-content" class="fse-template-main <%= typeof fseMainClass !== 'undefined' ? fseMainClass : 'site-main' %>">
+  <div class="container py-4 py-lg-5">
+    <div class="fse-template-content ds-prose"><%- fseTemplateHtml %></div>
+  </div>
+</main>
+<% } %>

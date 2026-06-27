@@ -73,13 +73,14 @@ describe('plugins admin UI routes', () => {
     expect(res.text).toMatch(/admin-plugins\.js/);
   });
 
-  test('plugin detail page shows overview section', async () => {
+  test('plugin detail page shows overview section and tabs', async () => {
     const agent = request.agent(app);
     await login(agent, 'admin@example.com', 'Admin@12345');
     const res = await agent.get('/admin/plugins/seo-booster');
     expect(res.status).toBe(200);
     expect(res.text).toMatch(/Overview/i);
     expect(res.text).toMatch(/At a glance/i);
+    expect(res.text).toMatch(/np-plugin-tabs/);
   });
 });
 

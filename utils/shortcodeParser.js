@@ -1,7 +1,7 @@
 const sanitizeHtml = require('sanitize-html');
 
 const ALLOWED_SHORTCODES = new Set([
-  'gallery', 'button', 'recent_posts', 'portal_services', 'emergency_contacts', 'subscribe'
+  'gallery', 'button', 'recent_posts', 'latest_posts', 'portal_services', 'emergency_contacts', 'subscribe', 'contact_form'
 ]);
 
 function parseAttributes(attrString = '') {
@@ -18,7 +18,8 @@ function renderShortcode(name, attrs, inner, context = {}) {
   switch (name) {
     case 'button':
       return `<a class="btn btn-primary np-shortcode-btn" href="${attrs.url || '#'}">${attrs.label || inner || 'Click'}</a>`;
-    case 'recent_posts': {
+    case 'recent_posts':
+    case 'latest_posts': {
       const posts = context.recentPosts || [];
       const limit = Number(attrs.limit) || 5;
       const items = posts.slice(0, limit).map((p) =>
@@ -26,6 +27,8 @@ function renderShortcode(name, attrs, inner, context = {}) {
       ).join('');
       return `<ul class="np-shortcode-recent-posts">${items}</ul>`;
     }
+    case 'contact_form':
+      return `<div class="np-shortcode-contact-form"><p><a class="btn btn-primary" href="${attrs.redirect || '/contact'}">${attrs.label || 'Contact us'}</a></p></div>`;
     case 'subscribe':
       return '<div class="np-shortcode-subscribe"><p>Subscribe to updates.</p></div>';
     default:

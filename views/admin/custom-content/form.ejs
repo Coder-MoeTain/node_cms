@@ -11,7 +11,7 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <form method="post" action="<%= action %>" enctype="multipart/form-data" data-editor-form>
+    <form method="post" action="<%= action %>" enctype="multipart/form-data" data-editor-form data-autosave-form data-resource-type="custom_post" data-resource-id="<%= record.id || '' %>">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="np-page-header mb-3">
         <h1><%= isEdit ? 'Edit' : 'Add' %> <%= type.name %></h1>
@@ -23,8 +23,7 @@
             <input type="hidden" name="slug" value="<%= val('slug') %>">
           <% } %>
           <% if (type.supports_editor) { %>
-            <div class="mb-3"><textarea class="form-control rich-editor" name="content" rows="14" data-main-content-editor><%- val('content') %></textarea></div>
-            <%- include('../partials/content-translate-toolbar') %>
+            <%- include('../partials/content-editor', { record: record }) %>
           <% } %>
           <% if (type.supports_excerpt) { %>
             <div class="np-metabox"><div class="np-metabox-header">Excerpt</div><div class="np-metabox-body"><textarea class="form-control" name="excerpt" rows="3"><%= val('excerpt') %></textarea></div></div>

@@ -41,11 +41,11 @@
   ];
 
   let contentTimer = null;
-  let latestContent = { posts: [], pages: [], media: [] };
+  let latestContent = { posts: [], pages: [], media: [], customPosts: [] };
 
   async function fetchContent(query) {
     if (query.trim().length < 2) {
-      latestContent = { posts: [], pages: [], media: [] };
+      latestContent = { posts: [], pages: [], media: [], customPosts: [] };
       return;
     }
     try {
@@ -54,9 +54,9 @@
       });
       if (!res.ok) return;
       const json = await res.json();
-      latestContent = json.data || { posts: [], pages: [], media: [] };
+      latestContent = json.data || { posts: [], pages: [], media: [], customPosts: [] };
     } catch {
-      latestContent = { posts: [], pages: [], media: [] };
+      latestContent = { posts: [], pages: [], media: [], customPosts: [] };
     }
   }
 
@@ -67,6 +67,9 @@
     }
     if (latestContent.pages?.length) {
       chunks.push(`<div class="topbar-search-group"><div class="topbar-search-group-label">Pages</div>${latestContent.pages.map((item) => `<a href="${item.href}" role="option">${item.title}</a>`).join('')}</div>`);
+    }
+    if (latestContent.customPosts?.length) {
+      chunks.push(`<div class="topbar-search-group"><div class="topbar-search-group-label">Custom content</div>${latestContent.customPosts.map((item) => `<a href="${item.href}" role="option">${item.title} <span class="text-muted">(${item.post_type})</span></a>`).join('')}</div>`);
     }
     if (latestContent.media?.length) {
       chunks.push(`<div class="topbar-search-group"><div class="topbar-search-group-label">Media</div>${latestContent.media.map((item) => `<a href="${item.href}" role="option">${item.title}</a>`).join('')}</div>`);

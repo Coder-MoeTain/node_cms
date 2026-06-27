@@ -2,6 +2,20 @@
 
 All notable changes to NodePress CMS are documented here.
 
+## [1.2.0] — 2026-06-27
+
+### Added
+- Multisite `site_id` scoping (migrations 022–024)
+- WordPress WXR round-trip (menus, CPT, field groups) + CSV import/export
+- JWT API scopes, `_embed`, admin content search (Ctrl+K)
+- 22 block types, block patterns, reusable blocks (save from editor)
+- Plugin marketplace catalog UI
+- Media **Used in** list on attachment edit screen
+- `docs/COMMERCIAL_SCORECARD.md` evidence table
+
+### Testing
+- 604+ integration tests across 101 suites; `npm run test:ci` green
+
 ## [1.1.0] — 2026-06-25
 
 ### Security

@@ -70,7 +70,7 @@
           </div>
         <% } %>
 
-        <div class="post-content entry-content content"><%- post.content %></div>
+        <div class="post-content entry-content content"><%- (typeof fseTemplateHtml !== 'undefined' && fseTemplateHtml) ? fseTemplateHtml : post.content %></div>
 
         <% if ((post.Tags || []).length) { %>
           <div class="post-tags">
