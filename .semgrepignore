@@ -1,0 +1,17 @@
+node_modules/
+coverage/
+public/vendor/
+tests/
+photos/
+database/backups/
+plugins/.tmp-extract-*/
+themes/.tmp-extract-*/
+themes/zip-*-theme/
+*.min.js
+*.min.css
+ci-artifact.zip
+full-suite-run*.txt
+test-output-full.txt
+test-plugin-out.txt
+test-run.log
+themes-only.txt
