@@ -36,6 +36,8 @@ const {
 const { expandSlidersToSlides } = require('../../utils/sliderHelper');
 const { searchPosts, searchPages } = require('../../utils/searchHelper');
 const { validateCommentParent } = require('../../utils/commentDepthHelper');
+const { buildPageBreadcrumbs, loadChildPages } = require('../../utils/pageHelper');
+const { getPermalinkSettings, pagePath } = require('../../utils/permalinkHelper');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
 
@@ -448,10 +450,18 @@ async function page(req, res, next) {
     }
 
     const seo = publicSeoFromRecord(row, '/page/');
+    const permalinkSettings = res.locals.permalinkSettings || await getPermalinkSettings(SiteSetting);
+    const [pageCrumbs, childPages] = await Promise.all([
+      buildPageBreadcrumbs(row, permalinkSettings),
+      loadChildPages(row.id)
+    ]);
     return renderPublic(res, 'page', {
       title: row.title,
       seo,
-      page: row
+      page: row,
+      pageCrumbs,
+      childPages,
+      pageUrl: (item) => pagePath(item, permalinkSettings)
     }, { before: 'beforePageRender', after: 'afterPageRender', template: 'page' }, { slug: row.slug });
   } catch (error) {
     return next(error);

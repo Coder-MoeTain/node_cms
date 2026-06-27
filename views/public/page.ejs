@@ -10,12 +10,25 @@
   </figure>
 <% } %>
 <main class="<%= isPortal ? 'container portal-page portal-main py-4' : 'container site-page py-4 py-lg-5' %>" id="main-content">
-  <%- include('partials/page-header', { title: page.title, isPortal: isPortal, crumbs: [{ label: 'Home', url: '/' }, { label: page.title }] }) %>
+  <%- include('partials/page-header', { title: page.title, isPortal: isPortal, crumbs: typeof pageCrumbs !== 'undefined' ? pageCrumbs : [{ label: 'Home', url: '/' }, { label: page.title }] }) %>
   <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
     <article class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
       <div class="portal-list-panel site-list-panel portal-card-bordered content-page ds-prose p-4">
         <div class="content portal-page-content entry-content"><%- page.content %></div>
       </div>
+      <% if (typeof childPages !== 'undefined' && childPages.length) { %>
+        <nav class="page-children mt-4" aria-label="Subpages">
+          <h2 class="h5 mb-3">Subpages</h2>
+          <ul class="list-unstyled mb-0">
+            <% childPages.forEach(function(child) { %>
+              <li class="mb-2">
+                <a href="<%= typeof pageUrl === 'function' ? pageUrl(child) : '/page/' + child.slug %>"><%= child.title %></a>
+                <% if (child.excerpt) { %><p class="small text-muted mb-0"><%= child.excerpt %></p><% } %>
+              </li>
+            <% }) %>
+          </ul>
+        </nav>
+      <% } %>
     </article>
     <% if (activeTheme.sidebar_position !== 'none') { %>
       <div class="col-lg-4"><%- include(themePartial(isPortal ? 'sidebar' : 'standard-sidebar')) %></div>

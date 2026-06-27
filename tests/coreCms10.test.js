@@ -77,6 +77,39 @@ test('page hierarchy parent_id saves via admin', async () => {
   const child = await models.Page.findOne({ where: { slug: childSlug } });
   expect(child.parent_id).toBe(parent.id);
   expect(child.menu_order).toBe(2);
+
+  const childRes = await request(app).get(`/page/${childSlug}`);
+  expect(childRes.status).toBe(200);
+  expect(childRes.text).toMatch(/Parent Page/);
+
+  const parentRes = await request(app).get(`/page/${parentSlug}`);
+  expect(parentRes.status).toBe(200);
+  expect(parentRes.text).toMatch(/Subpages/);
+  expect(parentRes.text).toMatch(/Child Page/);
+});
+
+test('pageHelper builds ancestor breadcrumbs', async () => {
+  const { buildPageBreadcrumbs } = require('../utils/pageHelper');
+  const { getPermalinkSettings } = require('../utils/permalinkHelper');
+  const parent = await models.Page.create({
+    title: 'Crumb Parent',
+    slug: `crumb-parent-${Date.now()}`,
+    content: '<p>P</p>',
+    status: 'published',
+    published_at: new Date()
+  });
+  const child = await models.Page.create({
+    title: 'Crumb Child',
+    slug: `crumb-child-${Date.now()}`,
+    content: '<p>C</p>',
+    status: 'published',
+    parent_id: parent.id,
+    published_at: new Date()
+  });
+  const settings = await getPermalinkSettings(models.SiteSetting);
+  const crumbs = await buildPageBreadcrumbs(child, settings);
+  expect(crumbs.some((c) => c.label === 'Crumb Parent' && c.url)).toBe(true);
+  expect(crumbs[crumbs.length - 1].label).toBe('Crumb Child');
 });
 
 test('API assigns taxonomy terms to posts', async () => {
