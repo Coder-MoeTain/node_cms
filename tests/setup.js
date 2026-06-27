@@ -77,9 +77,19 @@ async function resetWafState() {
 }
 
 async function resetPublicRenderState() {
+  const { Op } = require('sequelize');
   await models.SiteTemplate.update(
     { status: 'inactive' },
-    { where: { status: 'active', template_type: ['homepage', 'blog', '404'] } }
+    {
+      where: {
+        status: 'active',
+        [Op.or]: [
+          { slug: { [Op.like]: 'fse-%' } },
+          { slug: { [Op.like]: '%-verify' } },
+          { slug: { [Op.like]: 'loop%' } }
+        ]
+      }
+    }
   );
   await models.SiteSetting.upsert({
     key: 'permalink_structure',
