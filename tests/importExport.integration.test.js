@@ -30,7 +30,7 @@ describe('Import / export with real data', () => {
 
   test('exportSite includes live posts and pages from database', async () => {
     const payload = await exportSite({ includeMedia: false });
-    expect(payload.version).toBe('1.0');
+    expect(payload.version).toBe('1.1');
     expect(Array.isArray(payload.posts)).toBe(true);
     expect(payload.posts.some((row) => row.id === seedPostId || row.slug === 'export-seed-post')).toBe(true);
     expect(Array.isArray(payload.pages)).toBe(true);
@@ -92,7 +92,7 @@ describe('Import / export with real data', () => {
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/json/);
     const data = JSON.parse(res.text);
-    expect(data.version).toBe('1.0');
+    expect(data.version).toBe('1.1');
   });
 
   test('CLI export writes JSON file to disk', async () => {
@@ -105,7 +105,7 @@ describe('Import / export with real data', () => {
     });
     expect(fs.existsSync(out)).toBe(true);
     const data = JSON.parse(fs.readFileSync(out, 'utf8'));
-    expect(data.version).toBe('1.0');
+    expect(data.version).toBe('1.1');
     fs.unlinkSync(out);
   });
 

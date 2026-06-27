@@ -8,7 +8,12 @@ function meta(title, description = '', image = '', opts = {}) {
     description: description || opts.defaultDescription || 'NodePress CMS powered website',
     image,
     canonical,
-    siteName
+    siteName,
+    robots: opts.robots || 'index, follow',
+    noindex: Boolean(opts.noindex),
+    nofollow: Boolean(opts.nofollow),
+    ogTitle: opts.ogTitle || title,
+    ogDescription: opts.ogDescription || description
   };
 }
 

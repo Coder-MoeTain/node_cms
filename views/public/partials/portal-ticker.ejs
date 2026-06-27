@@ -10,7 +10,7 @@
     <div class="portal-ticker-links">
       <% tickerPosts.slice(0, 5).forEach(function(post, index) { %>
         <% if (index > 0) { %><span class="portal-ticker-sep" aria-hidden="true">|</span><% } %>
-        <a class="portal-ticker-link" href="/post/<%= post.slug %>"><%= post.title %></a>
+        <a class="portal-ticker-link" href="<%= postUrl(post) %>"><%= post.title %></a>
       <% }) %>
     </div>
     <a class="portal-ticker-more" href="/category/announcements">All announcements</a>

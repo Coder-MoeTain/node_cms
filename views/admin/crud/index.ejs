@@ -25,11 +25,11 @@
         <% if (!trashed) { %>
         <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/<%= resource %>">All <span class="count">(<%= pagination.total || rows.length %>)</span></a></li>
         <% if (resource === 'posts') { %>
-        <% ['published','draft','private','scheduled'].forEach(function(status) { %>
+        <% ['published','draft','pending','private','scheduled'].forEach(function(status) { %>
           <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/<%= resource %>?status=<%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></a></li>
         <% }) %>
         <% } else { %>
-        <% ['published','draft','private'].forEach(function(status) { %>
+        <% ['published','draft','pending','private','scheduled'].forEach(function(status) { %>
           <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/<%= resource %>?status=<%= status %>"><%= status.charAt(0).toUpperCase() + status.slice(1) %></a></li>
         <% }) %>
         <% } %>
@@ -48,7 +48,14 @@
         <select class="form-select form-select-sm" aria-label="Bulk actions" data-bulk-action disabled>
           <option value="">Bulk actions</option>
           <option value="delete">Move to Trash</option>
-          <% if (trashed) { %><option value="restore">Restore</option><% } %>
+          <% if (['posts','pages'].includes(resource)) { %>
+          <option value="publish">Publish</option>
+          <option value="draft">Move to Draft</option>
+          <option value="pending">Mark Pending Review</option>
+          <% if (resource === 'posts') { %><option value="change_category">Change Category</option><% } %>
+          <% if (can('manage_posts') || can('manage_pages')) { %><option value="change_author">Change Author</option><% } %>
+          <% } %>
+          <% if (trashed) { %><option value="restore">Restore</option><option value="delete">Delete Permanently</option><% } %>
         </select>
         <button class="np-btn np-btn-secondary np-btn-small" type="button" data-bulk-apply disabled>Apply</button>
       </div>

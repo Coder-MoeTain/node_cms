@@ -1,0 +1,32 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header">
+      <h1><%= taxonomy.name %> — Terms</h1>
+      <a class="np-btn np-btn-secondary" href="/admin/taxonomies">← Taxonomies</a>
+    </div>
+    <form method="post" action="/admin/taxonomies/<%= taxonomy.slug %>/terms?_csrf=<%= csrfToken %>" class="np-card p-4 mb-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <h2 class="h5">Add term</h2>
+      <div class="row g-2">
+        <div class="col-md-4"><input class="form-control" name="name" placeholder="Name" required></div>
+        <div class="col-md-4"><input class="form-control" name="slug" placeholder="Slug"></div>
+        <div class="col-md-4"><button class="np-btn np-btn-primary w-100" type="submit">Add</button></div>
+      </div>
+    </form>
+    <div class="table-responsive">
+      <table class="table np-table">
+        <thead><tr><th>Name</th><th>Slug</th><th>Count</th></tr></thead>
+        <tbody>
+          <% rows.forEach(function(term) { %>
+          <tr><td><%= term.name %></td><td><code><%= term.slug %></code></td><td><%= term.count %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

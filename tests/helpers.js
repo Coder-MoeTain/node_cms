@@ -78,6 +78,25 @@ async function login(agent, email, password, totp) {
   throw new Error(`Login failed for ${email}`);
 }
 
+function getAgentSessionId(agent) {
+  const appConfig = require('../config/app');
+  const cookieName = appConfig.sessionName;
+  const cookieString = typeof agent.jar.getCookieStringSync === 'function'
+    ? agent.jar.getCookieStringSync('http://127.0.0.1/')
+    : '';
+  if (!cookieString) return null;
+  const prefix = `${cookieName}=`;
+  const match = cookieString.split(';').map((part) => part.trim()).find((part) => part.startsWith(prefix));
+  if (!match) return null;
+  let value = decodeURIComponent(match.slice(prefix.length));
+  if (value.startsWith('s:')) {
+    value = value.slice(2);
+    const dot = value.indexOf('.');
+    if (dot >= 0) value = value.slice(0, dot);
+  }
+  return value;
+}
+
 async function ensurePortalTheme(models, portalConfig) {
   const { buildPortalConfigBlock } = require('../utils/portalConfig');
   await models.ThemeSetting.findOrCreate({
@@ -102,4 +121,4 @@ async function ensurePortalTheme(models, portalConfig) {
   return active;
 }
 
-module.exports = { getCsrf, postForm, putForm, login, logout, ensurePortalTheme, TEST_IMAGE, writeTestUpload, removeTestUpload };
+module.exports = { getCsrf, postForm, putForm, login, logout, getAgentSessionId, ensurePortalTheme, TEST_IMAGE, writeTestUpload, removeTestUpload };

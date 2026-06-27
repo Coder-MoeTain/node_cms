@@ -82,13 +82,13 @@ function logPluginAudit(req, action, details = {}) {
     user_id: req.session?.user?.id || null,
     action,
     resource_type: 'plugin',
-    resource_id: details.slug || null,
+    resource_id: null,
     ip_address: req.ip,
     user_agent: req.get('user-agent'),
     status: details.status || 'success',
     old_value_json: details.old_value,
     new_value_json: details.new_value,
-    details
+    details: { ...details, slug: details.slug || null }
   });
 }
 
@@ -97,13 +97,13 @@ function logThemeAudit(req, action, details = {}) {
     user_id: req.session?.user?.id || null,
     action,
     resource_type: 'theme',
-    resource_id: details.slug || null,
+    resource_id: null,
     ip_address: req.ip,
     user_agent: req.get('user-agent'),
     status: details.status || 'success',
     old_value_json: details.old_value,
     new_value_json: details.new_value,
-    details
+    details: { ...details, slug: details.slug || null }
   });
 }
 

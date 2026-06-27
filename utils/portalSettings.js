@@ -27,7 +27,13 @@ const PORTAL_SETTING_DEFINITIONS = {
   app_store_link: { value: '/contact', group: 'portal_apps', label: 'App Store link' },
   play_store_link: { value: '/contact', group: 'portal_apps', label: 'Google Play link' },
   site_logo: { value: '', group: 'branding', label: 'Site logo' },
-  favicon: { value: '', group: 'branding', label: 'Favicon' }
+  favicon: { value: '', group: 'branding', label: 'Favicon' },
+  permalink_structure: { value: '/post/%slug%', group: 'seo', label: 'Post permalink structure' },
+  page_permalink_structure: { value: '/page/%slug%', group: 'seo', label: 'Page permalink structure' },
+  revision_limit: { value: '25', group: 'general', label: 'Revision history limit per post/page' },
+  comment_max_depth: { value: '5', group: 'general', label: 'Maximum comment reply depth' },
+  public_site_title: { value: 'NodePress CMS', group: 'public', label: 'Public site title' },
+  public_site_tagline: { value: 'Official information portal', group: 'public', label: 'Public site tagline' }
 };
 
 const SETTING_GROUP_LABELS = {
@@ -37,10 +43,12 @@ const SETTING_GROUP_LABELS = {
   emergency: 'Emergency hotlines',
   portal_stats: 'Portal statistics',
   portal_apps: 'Mobile applications',
-  branding: 'Branding'
+  branding: 'Branding',
+  seo: 'SEO & Permalinks',
+  public: 'Public API'
 };
 
-const SETTING_GROUP_ORDER = ['general', 'portal', 'contact', 'emergency', 'portal_stats', 'portal_apps', 'branding'];
+const SETTING_GROUP_ORDER = ['general', 'seo', 'public', 'portal', 'contact', 'emergency', 'portal_stats', 'portal_apps', 'branding'];
 
 function getSettingGroup(key) {
   return PORTAL_SETTING_DEFINITIONS[key]?.group || 'general';

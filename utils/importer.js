@@ -6,8 +6,13 @@ const ALLOWED_ROOT_KEYS = new Set([
   'posts',
   'pages',
   'custom_posts',
+  'custom_post_types',
+  'field_groups',
   'categories',
   'tags',
+  'taxonomies',
+  'post_taxonomy_terms',
+  'media',
   'menus',
   'widget_areas',
   'exported_at',
@@ -67,6 +72,8 @@ async function previewImport(data) {
     custom_posts: (validated.custom_posts || []).length,
     categories: (validated.categories || []).length,
     tags: (validated.tags || []).length,
+    taxonomies: (validated.taxonomies || []).length,
+    media: (validated.media || []).length,
     menus: (validated.menus || []).length,
     widget_areas: (validated.widget_areas || []).length
   };
@@ -99,16 +106,47 @@ async function importSite(data, { dryRun = false, userId = null } = {}) {
       await models.Tag.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
       logs.push(`Tag: ${rest.slug}`);
     }
+    for (const row of validated.taxonomies || []) {
+      const { id, terms, ...rest } = row;
+      const [taxonomy] = await models.Taxonomy.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
+      for (const term of terms || []) {
+        const { id: termId, taxonomy_id, ...termRest } = term;
+        await models.TaxonomyTerm.findOrCreate({
+          where: { taxonomy_id: taxonomy.id, slug: termRest.slug },
+          defaults: { ...termRest, taxonomy_id: taxonomy.id }
+        });
+      }
+      logs.push(`Taxonomy: ${rest.slug}`);
+    }
+    for (const row of validated.media || []) {
+      const { id, uploader, ...rest } = row;
+      if (!rest.file_path) continue;
+      await models.Media.findOrCreate({ where: { file_path: rest.file_path }, defaults: rest });
+      logs.push(`Media: ${rest.file_path}`);
+    }
     for (const row of validated.posts || []) {
-      const { id, Tags, Category, author, ...rest } = row;
+      const { id, Tags, Category, author, taxonomyTerms, ...rest } = row;
       rest.post_type = rest.post_type || 'post';
       if (rest.content) rest.content = sanitizeImportedHtml(rest.content);
       if (rest.excerpt) rest.excerpt = sanitizeImportedHtml(rest.excerpt);
-      await models.Post.findOrCreate({ where: { slug: rest.slug, post_type: 'post' }, defaults: rest });
+      const [post] = await models.Post.findOrCreate({ where: { slug: rest.slug, post_type: 'post' }, defaults: rest });
       logs.push(`Post: ${rest.slug}`);
+      if (post && Array.isArray(row.taxonomy_term_ids)) {
+        await post.setTaxonomyTerms(row.taxonomy_term_ids);
+      }
+    }
+    for (const row of validated.post_taxonomy_terms || []) {
+      const post = await models.Post.findByPk(row.post_id);
+      const term = await models.TaxonomyTerm.findByPk(row.term_id);
+      if (post && term) {
+        const existing = await post.getTaxonomyTerms();
+        const ids = new Set(existing.map((t) => t.id));
+        ids.add(term.id);
+        await post.setTaxonomyTerms([...ids]);
+      }
     }
     for (const row of validated.pages || []) {
-      const { id, author, ...rest } = row;
+      const { id, author, parent, children, ...rest } = row;
       if (rest.content) rest.content = sanitizeImportedHtml(rest.content);
       await models.Page.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
       logs.push(`Page: ${rest.slug}`);

@@ -4,17 +4,19 @@ Public read API for headless integrations. All routes are under `/api` and requi
 
 ## Authentication
 
-Send the key in a header:
+Send the key in a header (required in production):
 
 ```http
 X-API-Key: your-api-key
 ```
 
-Or as a query parameter (less secure):
+Or as a Bearer token:
 
 ```http
-GET /api/posts?api_key=your-api-key
+Authorization: Bearer your-api-key
 ```
+
+Query-string API keys (`?api_key=`) are **rejected** for security. Use headers only.
 
 When `API_KEY` is unset, the middleware allows requests (development only).
 

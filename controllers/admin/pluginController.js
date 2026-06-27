@@ -33,6 +33,7 @@ async function show(req, res, next) {
     const pendingMigrations = getPendingMigrationFiles(plugin.slug, plugin.migrations || []);
     const activationErrors = pluginLoader.getActivationErrors();
     const registeredHooks = pluginLoader.listRegisteredHooks();
+    const hookErrors = require('../../utils/hookManager').getHookErrors().filter((e) => e.pluginSlug === plugin.slug);
     const manifestHooks = (plugin.manifest?.hooks || []);
     const readme = readPluginReadme(plugin.slug);
 
@@ -42,6 +43,7 @@ async function show(req, res, next) {
       readme,
       pendingMigrations,
       registeredHooks,
+      hookErrors,
       manifestHooks,
       activationError: activationErrors.get(plugin.slug) || null,
       isActive: plugin.active
@@ -173,8 +175,8 @@ async function upload(req, res, next) {
       return res.redirect('/admin/plugins');
     }
     const overwrite = req.body.overwrite === 'on' || req.body.overwrite === 'true';
-    const { manifest } = await pluginInstaller.installFromZip(req.file.path, { overwrite });
-    pluginLoader.validateManifest(manifest, { pluginPath: path.join(pluginLoader.pluginsRoot, manifest.slug), strict: false });
+    const { manifest } = await pluginInstaller.installFromZip(req.file.path, { overwrite, strict: true });
+    pluginLoader.validateManifest(manifest, { pluginPath: path.join(pluginLoader.pluginsRoot, manifest.slug), strict: true });
     const isNew = !(await Plugin.findOne({ where: { slug: manifest.slug } }));
     await pluginLoader.syncInstalledPlugins();
     await pluginLoader.runPluginMigrations(manifest.slug);
@@ -287,39 +289,14 @@ async function updateSettings(req, res, next) {
     const plugin = await Plugin.findOne({ where: { slug: req.params.slug } });
     if (!plugin) return res.status(404).render('errors/404', { title: 'Plugin Not Found' });
 
-    const manifest = plugin.manifest || {};
-    const manifestFields = manifest.settings || [];
-    const fields = manifestFields.length
-      ? manifestFields
-      : [
-        { key: 'note', type: 'text' },
-        { key: 'public_snippet', type: 'textarea' }
-      ];
-
-    for (const field of fields) {
-      if (!field.key) continue;
-      let value;
-      if (field.type === 'checkbox') {
-        value = req.body[field.key] === 'on' ? 'true' : 'false';
-      } else {
-        value = req.body[field.key];
-        if (value === undefined) continue;
-        if (Array.isArray(value)) value = value.join(',');
-      }
-      await PluginSetting.upsert({
-        plugin_id: plugin.id,
-        key: field.key,
-        value: String(value ?? ''),
-        value_type: field.type === 'checkbox' ? 'boolean' : 'string'
-      });
-    }
-
+    await pluginLoader.savePluginSettings(req.params.slug, req.body, req.session?.user);
     if (plugin.active) await pluginLoader.loadActivePlugins(req.app);
     await logPluginAction(req, 'plugin.settings_updated', { slug: plugin.slug });
     req.flash('success', 'Plugin settings saved.');
     return res.redirect(`/admin/plugins/${plugin.slug}/settings`);
   } catch (error) {
-    return next(error);
+    req.flash('error', error.message || 'Failed to save plugin settings.');
+    return res.redirect(`/admin/plugins/${req.params.slug}/settings`);
   }
 }
 

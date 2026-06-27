@@ -31,9 +31,19 @@
                         <p class="np-help-text mb-0">Full URL, site path, or leave blank.</p>
                       <% } else if (row.key === 'contact_phone' || row.key.startsWith('emergency_')) { %>
                         <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="tel" value="<%= row.value %>">
-                      <% } else if (row.key === 'posts_per_page' || row.key.startsWith('stat_') || row.key === 'portal_visit_count') { %>
-                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="number" min="0" value="<%= row.value %>" <%= row.key.startsWith('stat_') ? 'readonly' : '' %>>
+                      <% } else if (row.key === 'posts_per_page' || row.key === 'revision_limit' || row.key === 'comment_max_depth' || row.key.startsWith('stat_') || row.key === 'portal_visit_count') { %>
+                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" type="number" min="<%= row.key === 'comment_max_depth' ? '1' : '0' %>" value="<%= row.value %>" <%= row.key.startsWith('stat_') ? 'readonly' : '' %>>
+                        <% if (row.key === 'revision_limit') { %><p class="np-help-text mb-0">Older revisions are pruned automatically beyond this limit.</p><% } %>
+                        <% if (row.key === 'comment_max_depth') { %><p class="np-help-text mb-0">Maximum nesting level for public comment replies.</p><% } %>
                         <% if (row.key.startsWith('stat_')) { %><p class="np-help-text mb-0">Updated automatically from site activity.</p><% } %>
+                      <% } else if (row.key === 'permalink_structure' || row.key === 'page_permalink_structure') { %>
+                        <input class="form-control" id="setting-<%= row.key %>" name="<%= row.key %>" value="<%= row.value %>" data-permalink-setting>
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                          <% ['%year%', '%month%', '%day%', '%slug%', '%post_id%'].forEach(function(token) { %>
+                            <button type="button" class="np-btn np-btn-small np-btn-secondary" data-permalink-token="<%= token %>" data-target="setting-<%= row.key %>"><%= token %></button>
+                          <% }) %>
+                        </div>
+                        <p class="np-help-text mb-0">Use tokens to build custom URL structures. Default: /post/%slug% and /page/%slug%</p>
                       <% } else if (row.key === 'site_timezone') { %>
                         <select class="form-select" id="setting-<%= row.key %>" name="<%= row.key %>">
                           <% (timezoneOptions || []).forEach(function(opt) { %>
@@ -54,6 +64,17 @@
       <% }) %>
       <p class="mt-3"><button class="np-btn np-btn-primary" type="submit" data-loading-label="Saving…">Save Changes</button></p>
     </form>
+    <script>
+      document.querySelectorAll('[data-permalink-token]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = document.getElementById(btn.dataset.target);
+          if (!target) return;
+          const token = btn.dataset.permalinkToken;
+          const base = target.value.replace(/\/$/, '');
+          target.value = `${base}/${token}`.replace(/\/+/g, '/');
+        });
+      });
+    </script>
   </main>
 </div>
 <%- include('../partials/media-modal') %>

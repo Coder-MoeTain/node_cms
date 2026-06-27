@@ -7,6 +7,9 @@
   <title><%= (typeof seo !== 'undefined' && seo && seo.title) || title %></title>
   <meta name="description" content="<%= (typeof seo !== 'undefined' && seo && seo.description) || siteSettings.site_tagline || '' %>">
   <link rel="canonical" href="<%= (typeof seo !== 'undefined' && seo && seo.canonical) || '' %>">
+  <% if (typeof seo !== 'undefined' && seo && (seo.noindex || seo.nofollow)) { %>
+  <meta name="robots" content="<%= seo.robots || 'noindex, nofollow' %>">
+  <% } %>
   <% const seoToolkitActive = (typeof activePluginSlugs !== 'undefined' && activePluginSlugs.includes('seo-booster')); %>
   <% if (!seoToolkitActive) { %>
   <meta property="og:type" content="website">

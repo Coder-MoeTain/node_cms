@@ -6,6 +6,7 @@
   const action = isEdit ? `/admin/${resource}/${record.id}?_method=PUT&${csrfQuery}` : `/admin/${resource}?${csrfQuery}`;
   const val = (name, fallback = '') => record[name] == null ? fallback : record[name];
   const selectedTags = record.Tags ? record.Tags.map((tag) => String(tag.id)) : [];
+  const selectedTaxonomyTerms = record.taxonomyTerms ? record.taxonomyTerms.map((term) => String(term.id)) : [];
   const selectedPermissions = record.Permissions ? record.Permissions.map((permission) => String(permission.id)) : [];
   let publishedAtValue = '';
   if (record.published_at) {
@@ -34,9 +35,9 @@
           <div class="editor-layout">
             <div class="editor-main">
               <input class="np-editor-title" name="title" value="<%= val('title') %>" placeholder="Add title" required data-slug-source>
-              <div class="np-permalink" data-permalink-wrap>
+              <div class="np-permalink" data-permalink-wrap data-permalink-structure="<%= resource === 'pages' ? (typeof permalinkSettings !== 'undefined' && permalinkSettings ? permalinkSettings.page : '/page/%slug%') : (typeof permalinkSettings !== 'undefined' && permalinkSettings ? permalinkSettings.post : '/post/%slug%') %>">
                 <span>Permalink:</span>
-                <span data-permalink-display><%= resource === 'pages' ? '/page/' : '/post/' %><%= val('slug') || 'sample-post' %></span>
+                <span data-permalink-display><%= resource === 'pages' ? (typeof permalinkSettings !== 'undefined' && permalinkSettings ? permalinkSettings.page : '/page/') : (typeof permalinkSettings !== 'undefined' && permalinkSettings ? permalinkSettings.post : '/post/') %><%= val('slug') || 'sample-post' %></span>
                 <button class="np-btn np-btn-link np-btn-small" type="button" data-permalink-edit>Edit</button>
                 <span class="permalink-edit d-none" data-permalink-editor>
                   <span><%= resource === 'pages' ? '/page/' : '/post/' %></span>
@@ -55,7 +56,14 @@
                 <div class="np-metabox-header" data-metabox-toggle aria-expanded="true">SEO</div>
                 <div class="np-metabox-body">
                   <div class="mb-2"><label class="form-label">SEO Title</label><input class="form-control" name="seo_title" value="<%= val('seo_title') %>"></div>
-                  <div><label class="form-label">Meta Description</label><input class="form-control" name="seo_description" value="<%= val('seo_description') %>"></div>
+                  <div class="mb-2"><label class="form-label">Meta Description</label><textarea class="form-control" name="seo_description" rows="2"><%= val('seo_description') %></textarea></div>
+                  <div class="mb-2"><label class="form-label">Canonical URL</label><input class="form-control" name="canonical_url" value="<%= val('canonical_url') %>" placeholder="Leave blank for default"></div>
+                  <div class="mb-2"><label class="form-label">Open Graph Title</label><input class="form-control" name="og_title" value="<%= val('og_title') %>"></div>
+                  <div class="mb-2"><label class="form-label">Open Graph Description</label><textarea class="form-control" name="og_description" rows="2"><%= val('og_description') %></textarea></div>
+                  <div class="mb-2"><label class="form-label">Open Graph Image URL</label><input class="form-control" name="og_image" value="<%= val('og_image') %>"></div>
+                  <div class="form-check mb-1"><input class="form-check-input" type="checkbox" name="robots_noindex" id="robots_noindex" <%= val('robots_noindex') ? 'checked' : '' %>><label class="form-check-label" for="robots_noindex">Noindex (hide from search engines)</label></div>
+                  <div class="form-check mb-1"><input class="form-check-input" type="checkbox" name="robots_nofollow" id="robots_nofollow" <%= val('robots_nofollow') ? 'checked' : '' %>><label class="form-check-label" for="robots_nofollow">Nofollow links</label></div>
+                  <div class="form-check"><input class="form-check-input" type="checkbox" name="sitemap_include" id="sitemap_include" <%= val('sitemap_include', true) !== false ? 'checked' : '' %>><label class="form-check-label" for="sitemap_include">Include in sitemap</label></div>
                 </div>
               </div>
               <%- include('../partials/content-translations', { translations: typeof translations !== 'undefined' ? translations : {}, translationLocales: typeof translationLocales !== 'undefined' ? translationLocales : ['en', 'my', 'zh-CN', 'ru'] }) %>
@@ -66,7 +74,12 @@
                 <div class="np-metabox-body">
                   <div class="publish-status-row mb-2">
                     <span class="publish-label">Status:</span>
-                    <select class="form-select form-select-sm" name="status" data-status-select><% ['draft','published','private','scheduled'].forEach(function(status) { const canUseStatus = resource === 'pages' ? can('manage_pages') : (status === 'draft' || canPublishPost(isEdit ? record : null)); if (canUseStatus) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status.charAt(0).toUpperCase() + status.slice(1) %></option><% } }) %></select>
+                    <select class="form-select form-select-sm" name="status" data-status-select><% ['draft','pending','published','private','scheduled'].forEach(function(status) { const canUseStatus = resource === 'pages' ? can('manage_pages') : (status === 'draft' || status === 'pending' || canPublishPost(isEdit ? record : null)); if (canUseStatus) { %><option value="<%= status %>" <%= val('status','draft') === status ? 'selected' : '' %>><%= status.charAt(0).toUpperCase() + status.slice(1) %></option><% } }) %></select>
+                  </div>
+                  <div class="publish-status-row mb-3">
+                    <span class="publish-label">Visibility:</span>
+                    <input class="form-control form-control-sm" name="content_password" type="password" placeholder="<%= isEdit ? 'Set new password (optional)' : 'Password (optional)' %>" autocomplete="new-password">
+                    <% if (isEdit) { %><label class="form-check mt-1"><input class="form-check-input" type="checkbox" name="clear_content_password" value="on"><span class="form-check-label">Remove password protection</span></label><% } %>
                   </div>
                   <div class="publish-status-row mb-3">
                     <span class="publish-label">Publish:</span>
@@ -86,6 +99,24 @@
                   <div class="np-metabox-header">Featured Image</div>
                   <div class="np-metabox-body">
                     <%- include('../partials/featured-image-field', { name: 'featured_image', fileName: 'featured_image_file', value: val('featured_image') }) %>
+                  </div>
+                </div>
+                <div class="np-metabox">
+                  <div class="np-metabox-header">Page Attributes</div>
+                  <div class="np-metabox-body">
+                    <div class="mb-2">
+                      <label class="form-label">Parent Page</label>
+                      <select class="form-select" name="parent_id">
+                        <option value="">None (top level)</option>
+                        <% (extra.pages || []).forEach(function(page) { %>
+                          <option value="<%= page.id %>" <%= String(val('parent_id')) === String(page.id) ? 'selected' : '' %>><%= page.title %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="form-label">Order</label>
+                      <input class="form-control" type="number" name="menu_order" value="<%= val('menu_order', 0) %>" min="0">
+                    </div>
                   </div>
                 </div>
               <% } %>
@@ -114,6 +145,23 @@
                     <p class="np-help-text">Hold Ctrl or Cmd to select multiple tags.</p>
                   </div>
                 </div>
+                <% if ((extra.taxonomies || []).length) { %>
+                <div class="np-metabox">
+                  <div class="np-metabox-header" data-metabox-toggle aria-expanded="true">Custom Taxonomies</div>
+                  <div class="np-metabox-body">
+                    <select class="form-select" name="taxonomy_terms" multiple size="8" aria-label="Custom taxonomy terms">
+                      <% (extra.taxonomies || []).forEach(function(taxonomy) { %>
+                        <optgroup label="<%= taxonomy.name %>">
+                          <% (taxonomy.terms || []).forEach(function(term) { %>
+                            <option value="<%= term.id %>" <%= selectedTaxonomyTerms.includes(String(term.id)) ? 'selected' : '' %>><%= term.name %></option>
+                          <% }) %>
+                        </optgroup>
+                      <% }) %>
+                    </select>
+                    <p class="np-help-text">Assign terms from custom taxonomies. Manage taxonomies under Admin → Taxonomies.</p>
+                  </div>
+                </div>
+                <% } %>
                 <div class="np-metabox">
                   <div class="np-metabox-header">Featured Image</div>
                   <div class="np-metabox-body">

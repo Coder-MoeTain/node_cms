@@ -50,6 +50,10 @@ const Site = require('./Site')(sequelize);
 const SiteDomain = require('./SiteDomain')(sequelize);
 const SiteUser = require('./SiteUser')(sequelize);
 const NetworkSiteSetting = require('./NetworkSiteSetting')(sequelize);
+const SlugRedirect = require('./SlugRedirect')(sequelize);
+const Taxonomy = require('./Taxonomy')(sequelize);
+const TaxonomyTerm = require('./TaxonomyTerm')(sequelize);
+const PostTaxonomyTerm = require('./PostTaxonomyTerm')(sequelize);
 
 Role.belongsToMany(Permission, { through: 'role_permissions', foreignKey: 'role_id', otherKey: 'permission_id' });
 Permission.belongsToMany(Role, { through: 'role_permissions', foreignKey: 'permission_id', otherKey: 'role_id' });
@@ -66,9 +70,18 @@ User.hasMany(Post, { foreignKey: 'author_id', as: 'posts' });
 Post.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
 User.hasMany(Page, { foreignKey: 'author_id', as: 'pages' });
 Page.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
+Page.belongsTo(Page, { foreignKey: 'parent_id', as: 'parent' });
+Page.hasMany(Page, { foreignKey: 'parent_id', as: 'children' });
 
 Post.belongsToMany(Tag, { through: 'post_tags', foreignKey: 'post_id', otherKey: 'tag_id' });
 Tag.belongsToMany(Post, { through: 'post_tags', foreignKey: 'tag_id', otherKey: 'post_id' });
+
+Taxonomy.hasMany(TaxonomyTerm, { foreignKey: 'taxonomy_id', as: 'terms' });
+TaxonomyTerm.belongsTo(Taxonomy, { foreignKey: 'taxonomy_id', as: 'taxonomy' });
+TaxonomyTerm.hasMany(TaxonomyTerm, { foreignKey: 'parent_id', as: 'children' });
+TaxonomyTerm.belongsTo(TaxonomyTerm, { foreignKey: 'parent_id', as: 'parent' });
+Post.belongsToMany(TaxonomyTerm, { through: PostTaxonomyTerm, foreignKey: 'post_id', otherKey: 'term_id', as: 'taxonomyTerms' });
+TaxonomyTerm.belongsToMany(Post, { through: PostTaxonomyTerm, foreignKey: 'term_id', otherKey: 'post_id', as: 'posts' });
 
 User.hasMany(Media, { foreignKey: 'uploaded_by' });
 Media.belongsTo(User, { foreignKey: 'uploaded_by', as: 'uploader' });
@@ -171,5 +184,8 @@ module.exports = {
   SiteDomain,
   SiteUser,
   NetworkSiteSetting,
-  ContentTranslation
+  ContentTranslation,
+  SlugRedirect,
+  Taxonomy,
+  TaxonomyTerm
 };

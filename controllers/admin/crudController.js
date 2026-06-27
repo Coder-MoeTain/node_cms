@@ -5,7 +5,9 @@ const models = require('../../models');
 const { resolveImageValue } = require('../../utils/uploadHelper');
 const { resolveSliderImages } = require('../../utils/sliderHelper');
 const { normalizeUploadUrlsInHtml } = require('../../utils/mediaHelper');
-const { createSlug, createUniqueSlug } = require('../../utils/slugGenerator');
+const { createUniqueSlug } = require('../../utils/slugGenerator');
+const { recordSlugChange } = require('../../utils/slugRedirectHelper');
+const { hashContentPassword } = require('../../utils/contentPasswordHelper');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const policy = require('../../utils/policy');
 const pluginLoader = require('../../utils/pluginLoader');
@@ -63,6 +65,31 @@ async function saveContentRevision(resource, record, userId, transaction) {
 function normalizeArray(value) {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
+}
+
+function contentSeoPayload(body) {
+  return {
+    seo_title: sanitizePlainText(body.seo_title, 220),
+    seo_description: sanitizePlainText(body.seo_description, 1000),
+    og_image: sanitizePlainText(body.og_image, 255),
+    canonical_url: sanitizePlainText(body.canonical_url, 500),
+    og_title: sanitizePlainText(body.og_title, 220),
+    og_description: sanitizePlainText(body.og_description, 1000),
+    robots_noindex: body.robots_noindex === 'on',
+    robots_nofollow: body.robots_nofollow === 'on',
+    sitemap_include: body.sitemap_include !== 'off'
+  };
+}
+
+async function resolveContentPassword(body, record, hashField) {
+  const raw = body.content_password;
+  if (raw === undefined || raw === null) return undefined;
+  const trimmed = String(raw).trim();
+  if (!trimmed) {
+    if (record && body.clear_content_password === 'on') return null;
+    return undefined;
+  }
+  return hashContentPassword(trimmed);
 }
 
 function sanitizePlainText(value, maxLength = 1000) {
@@ -127,8 +154,16 @@ const configs = {
     title: 'Posts',
     permission: 'manage_posts',
     searchFields: ['title', 'slug', 'excerpt'],
-    include: [{ model: models.Category }, { model: models.User, as: 'author' }, models.Tag],
-    formData: async () => ({ categories: await models.Category.findAll(), tags: await models.Tag.findAll(), users: await models.User.findAll() }),
+    include: [{ model: models.Category }, { model: models.User, as: 'author' }, models.Tag, { model: models.TaxonomyTerm, as: 'taxonomyTerms' }],
+    formData: async () => ({
+      categories: await models.Category.findAll(),
+      tags: await models.Tag.findAll(),
+      users: await models.User.findAll(),
+      taxonomies: await models.Taxonomy.findAll({
+        where: { status: 'active' },
+        include: [{ model: models.TaxonomyTerm, as: 'terms', separate: true, order: [['name', 'ASC']] }]
+      })
+    }),
     payload: async (body, req, record = null, transaction = null) => {
       const status = allowedStatus(body, req, record);
       const canAssignAuthor = policy.can(req.session.user, 'manage_posts');
@@ -148,40 +183,62 @@ const configs = {
         status,
         category_id: body.category_id || null,
         author_id: canAssignAuthor ? body.author_id || req.session.user.id : req.session.user.id,
-        seo_title: sanitizePlainText(body.seo_title, 220),
-        seo_description: sanitizePlainText(body.seo_description, 1000),
-        og_image: sanitizePlainText(body.og_image, 255),
+        updated_by: req.session.user.id,
         allow_comments: body.allow_comments === 'on',
-        published_at: resolvePublishedAt(body, req, status)
+        published_at: resolvePublishedAt(body, req, status),
+        ...contentSeoPayload(body)
       });
+      const passwordHash = await resolveContentPassword(body, record, 'post_password_hash');
+      if (passwordHash !== undefined) payload.post_password_hash = passwordHash;
       return payload;
     },
-    afterSave: async (record, body, transaction = null) => record.setTags(normalizeArray(body.tags), { transaction })
+    afterSave: async (record, body, transaction = null) => {
+      await record.setTags(normalizeArray(body.tags), { transaction });
+      const termIds = normalizeArray(body.taxonomy_terms).map((id) => Number(id)).filter(Boolean);
+      await record.setTaxonomyTerms(termIds, { transaction });
+    }
   },
   pages: {
     model: models.Page,
     title: 'Pages',
     permission: 'manage_pages',
     searchFields: ['title', 'slug', 'excerpt'],
-    include: [{ model: models.User, as: 'author' }],
-    payload: async (body, req, record = null, transaction = null) => applyBlockContent(body, {
-      title: sanitizePlainText(body.title, 220),
-      slug: await createUniqueSlug(models.Page, body.slug || body.title, 'page', record?.id),
-      content: sanitizeHtml(normalizeUploadUrlsInHtml(body.content || ''), richTextSanitizeOptions),
-      excerpt: sanitizePlainText(body.excerpt, 1000),
-      featured_image: await resolveImageValue(req, {
-        fileField: 'featured_image_file',
-        pathField: 'featured_image',
-        record,
-        transaction
-      }),
-      status: allowedStatus(body, req, record),
-      seo_title: sanitizePlainText(body.seo_title, 220),
-      seo_description: sanitizePlainText(body.seo_description, 1000),
-      og_image: sanitizePlainText(body.og_image, 255),
-      author_id: record?.author_id || req.session.user.id,
-      published_at: resolvePublishedAt(body, req, allowedStatus(body, req))
-    })
+    include: [{ model: models.User, as: 'author' }, { model: models.Page, as: 'parent', attributes: ['id', 'title', 'slug'] }],
+    formData: async (record = null) => ({
+      pages: await models.Page.findAll({
+        where: record?.id ? { id: { [Op.ne]: record.id } } : {},
+        order: [['title', 'ASC']],
+        attributes: ['id', 'title', 'slug']
+      })
+    }),
+    payload: async (body, req, record = null, transaction = null) => {
+      const status = allowedStatus(body, req, record);
+      const parentId = body.parent_id ? Number(body.parent_id) : null;
+      const payload = applyBlockContent(body, {
+        title: sanitizePlainText(body.title, 220),
+        slug: await createUniqueSlug(models.Page, body.slug || body.title, 'page', record?.id),
+        content: sanitizeHtml(normalizeUploadUrlsInHtml(body.content || ''), richTextSanitizeOptions),
+        excerpt: sanitizePlainText(body.excerpt, 1000),
+        featured_image: await resolveImageValue(req, {
+          fileField: 'featured_image_file',
+          pathField: 'featured_image',
+          record,
+          transaction
+        }),
+        status,
+        parent_id: parentId && (!record || parentId !== record.id) ? parentId : null,
+        menu_order: Number(body.menu_order) || 0,
+        author_id: policy.can(req.session.user, 'manage_pages') && body.author_id
+          ? body.author_id
+          : (record?.author_id || req.session.user.id),
+        updated_by: req.session.user.id,
+        published_at: resolvePublishedAt(body, req, status),
+        ...contentSeoPayload(body)
+      });
+      const passwordHash = await resolveContentPassword(body, record, 'page_password_hash');
+      if (passwordHash !== undefined) payload.page_password_hash = passwordHash;
+      return payload;
+    }
   },
   categories: {
     model: models.Category,
@@ -193,6 +250,8 @@ const configs = {
       name: sanitizePlainText(body.name, 120),
       slug: await createUniqueSlug(models.Category, body.slug || body.name, 'category', record?.id),
       description: sanitizePlainText(body.description, 1000),
+      seo_title: sanitizePlainText(body.seo_title, 220),
+      seo_description: sanitizePlainText(body.seo_description, 1000),
       parent_id: body.parent_id || null,
       image: await resolveImageValue(req, { fileField: 'image_file', pathField: 'image', record, transaction })
     })
@@ -202,7 +261,13 @@ const configs = {
     title: 'Tags',
     permission: 'manage_tags',
     searchFields: ['name', 'slug'],
-    payload: async (body, req, record = null) => ({ name: sanitizePlainText(body.name, 120), slug: await createUniqueSlug(models.Tag, body.slug || body.name, 'tag', record?.id), description: sanitizePlainText(body.description, 1000) })
+    payload: async (body, req, record = null) => ({
+      name: sanitizePlainText(body.name, 120),
+      slug: await createUniqueSlug(models.Tag, body.slug || body.name, 'tag', record?.id),
+      description: sanitizePlainText(body.description, 1000),
+      seo_title: sanitizePlainText(body.seo_title, 220),
+      seo_description: sanitizePlainText(body.seo_description, 1000)
+    })
   },
   banners: {
     model: models.Banner,
@@ -327,10 +392,12 @@ async function index(req, res, next) {
       where.post_type = 'post';
       if (req.query.status) where.status = req.query.status;
       if (req.query.category_id) where.category_id = req.query.category_id;
+      if (req.query.author_id) where.author_id = req.query.author_id;
       if (!policy.can(req.session.user, 'manage_posts')) where.author_id = req.session.user.id;
     }
-    if (resource === 'pages' && req.query.status) {
-      where.status = req.query.status;
+    if (resource === 'pages') {
+      if (req.query.status) where.status = req.query.status;
+      if (req.query.author_id) where.author_id = req.query.author_id;
     }
     if (resource === 'menu-items' && req.query.menu_id) {
       where.menu_id = req.query.menu_id;
@@ -360,6 +427,7 @@ async function index(req, res, next) {
       filters: {
         status: req.query.status || '',
         category_id: req.query.category_id || '',
+        author_id: req.query.author_id || '',
         menu_id: req.query.menu_id || ''
       },
       extra: config.formData ? await config.formData() : {}
@@ -381,14 +449,20 @@ async function create(req, res, next) {
     if (resource === 'menu-items' && req.query.menu_id) {
       defaults.menu_id = req.query.menu_id;
     }
+    let permalinkSettings = null;
+    if (['posts', 'pages'].includes(resource)) {
+      const { getPermalinkSettings } = require('../../utils/permalinkHelper');
+      permalinkSettings = await getPermalinkSettings(models.SiteSetting);
+    }
     return res.render('admin/crud/form', {
       title: `Add ${config.title}`,
       resource,
       config,
       record: defaults,
-      extra: config.formData ? await config.formData() : {},
+      extra: config.formData ? await config.formData(defaults) : {},
       translations: {},
-      translationLocales: TRANSLATION_LOCALES
+      translationLocales: TRANSLATION_LOCALES,
+      permalinkSettings
     });
   } catch (error) {
     return next(error);
@@ -448,15 +522,21 @@ async function edit(req, res, next) {
     const previewUrl = (resource === 'posts' || resource === 'pages') && record.slug
       ? buildPreviewUrl(resource === 'pages' ? 'page' : 'post', record.slug, record.id)
       : '';
+    let permalinkSettings = null;
+    if (['posts', 'pages'].includes(resource)) {
+      const { getPermalinkSettings } = require('../../utils/permalinkHelper');
+      permalinkSettings = await getPermalinkSettings(models.SiteSetting);
+    }
     return res.render('admin/crud/form', {
       title: `Edit ${config.title}`,
       resource,
       config,
       record,
-      extra: config.formData ? await config.formData() : {},
+      extra: config.formData ? await config.formData(record) : {},
       translations,
       translationLocales: TRANSLATION_LOCALES,
-      previewUrl
+      previewUrl,
+      permalinkSettings
     });
   } catch (error) {
     return next(error);
@@ -490,6 +570,9 @@ async function update(req, res, next) {
       }
       if (resource === 'posts' || resource === 'pages') {
         await saveContentRevision(resource, record, req.session.user.id, transaction);
+        if (record.slug && payload.slug && record.slug !== payload.slug) {
+          await recordSlugChange(resource === 'pages' ? 'page' : 'post', record.id, record.slug, payload.slug, transaction);
+        }
       }
       await record.update(payload, { transaction });
       if (config.afterSave) await config.afterSave(record, req.body, transaction);
@@ -584,8 +667,9 @@ async function bulkDestroy(req, res, next) {
     const resource = req.params.resource;
     const config = getConfig(resource);
     const action = req.body.action || 'trash';
+    const ids = normalizeBulkIds(req.body).map((id) => Number(id)).filter(Boolean);
+
     if (action === 'restore') {
-      const ids = normalizeBulkIds(req.body).map((id) => Number(id)).filter(Boolean);
       let restored = 0;
       for (const id of ids) {
         const record = await config.model.findByPk(id, { paranoid: false });
@@ -597,12 +681,71 @@ async function bulkDestroy(req, res, next) {
       req.flash('success', restored ? `${restored} item(s) restored.` : 'No items restored.');
       return res.redirect(`/admin/${resource}${req.body.return_trashed ? '?trashed=1' : ''}`);
     }
+
+    if (action === 'delete' && req.body.return_trashed) {
+      let removed = 0;
+      for (const id of ids) {
+        const record = await config.model.findByPk(id, { paranoid: false });
+        if (!record) continue;
+        if (!policy.canManageResource(req.session.user, resource, 'bulk', record)) continue;
+        await record.destroy({ force: true });
+        removed += 1;
+      }
+      req.flash('success', removed ? `${removed} item(s) permanently deleted.` : 'No items deleted.');
+      return res.redirect(`/admin/${resource}?trashed=1`);
+    }
+
+    if (['publish', 'draft', 'pending'].includes(action) && ['posts', 'pages'].includes(resource)) {
+      const status = action === 'publish' ? 'published' : action;
+      let updated = 0;
+      for (const id of ids) {
+        const record = await config.model.findByPk(id);
+        if (!record) continue;
+        if (!policy.canManageResource(req.session.user, resource, 'bulk', record)) continue;
+        if (status !== 'draft' && !policy.canPublishPost(req.session.user, record) && !policy.hasPermission(req.session.user, 'manage_pages')) continue;
+        const patch = { status, updated_by: req.session.user.id };
+        if (status === 'published' && !record.published_at) patch.published_at = new Date();
+        await record.update(patch);
+        updated += 1;
+      }
+      req.flash('success', updated ? `${updated} item(s) updated.` : 'No items updated.');
+      return res.redirect(`/admin/${resource}`);
+    }
+
+    if (action === 'change_category' && resource === 'posts' && req.body.bulk_category_id !== undefined) {
+      let updated = 0;
+      for (const id of ids) {
+        const record = await config.model.findByPk(id);
+        if (!record) continue;
+        if (!policy.canManageResource(req.session.user, resource, 'bulk', record)) continue;
+        await record.update({ category_id: req.body.bulk_category_id || null, updated_by: req.session.user.id });
+        updated += 1;
+      }
+      req.flash('success', updated ? `${updated} post(s) moved to category.` : 'No posts updated.');
+      return res.redirect(`/admin/${resource}`);
+    }
+
+    if (action === 'change_author' && ['posts', 'pages'].includes(resource) && req.body.bulk_author_id) {
+      if (!policy.can(req.session.user, resource === 'pages' ? 'manage_pages' : 'manage_posts')) {
+        req.flash('error', 'You cannot reassign authors.');
+        return res.redirect(`/admin/${resource}`);
+      }
+      let updated = 0;
+      for (const id of ids) {
+        const record = await config.model.findByPk(id);
+        if (!record) continue;
+        await record.update({ author_id: req.body.bulk_author_id, updated_by: req.session.user.id });
+        updated += 1;
+      }
+      req.flash('success', updated ? `${updated} item(s) reassigned.` : 'No items updated.');
+      return res.redirect(`/admin/${resource}`);
+    }
+
     if (action !== 'trash') {
       req.flash('error', 'Unsupported bulk action.');
       return res.redirect(`/admin/${resource}`);
     }
 
-    const ids = normalizeBulkIds(req.body).map((id) => Number(id)).filter(Boolean);
     if (!ids.length) {
       req.flash('error', 'No items selected.');
       return res.redirect(`/admin/${resource}`);

@@ -35,7 +35,7 @@ describe('WordPress-like features', () => {
 
   test('exportSite returns structured payload', async () => {
     const data = await exportSite({ includeMedia: false });
-    expect(data.version).toBe('1.0');
+    expect(data.version).toBe('1.1');
     expect(Array.isArray(data.posts)).toBe(true);
   });
 

@@ -1,0 +1,78 @@
+openapi: 3.0.3
+info:
+  title: NodePress CMS API v1
+  version: 1.1.0
+  description: REST API for headless integrations. Authenticate with X-API-Key or Authorization Bearer.
+servers:
+  - url: /api/v1
+security:
+  - ApiKeyAuth: []
+paths:
+  /search:
+    get:
+      summary: Unified content search
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Search results }
+  /posts:
+    get:
+      summary: List posts
+    post:
+      summary: Create post
+  /posts/{idOrSlug}:
+    get:
+      summary: Get post
+    put:
+      summary: Update post
+    delete:
+      summary: Delete post
+  /pages:
+    get:
+      summary: List pages
+  /pages/{idOrSlug}:
+    get:
+      summary: Get page
+    put:
+      summary: Update page
+    delete:
+      summary: Delete page
+  /categories:
+    get:
+      summary: List categories
+    post:
+      summary: Create category
+  /tags:
+    get:
+      summary: List tags
+  /taxonomies:
+    get:
+      summary: List custom taxonomies
+  /taxonomies/{slug}/terms:
+    get:
+      summary: List taxonomy terms
+  /media:
+    get:
+      summary: List media
+  /menus:
+    get:
+      summary: List menus
+  /comments:
+    get:
+      summary: List comments
+    post:
+      summary: Submit comment (public)
+  /settings:
+    get:
+      summary: Public settings
+    put:
+      summary: Update allowed settings
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key

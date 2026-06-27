@@ -1,6 +1,8 @@
 const express = require('express');
 const { body } = require('express-validator');
 const { publicMutationLimiter } = require('../middleware/security');
+const { slugRedirectMiddleware } = require('../middleware/slugRedirect');
+const { permalinkResolver } = require('../middleware/permalinkResolver');
 const site = require('../controllers/public/siteController');
 const customContent = require('../controllers/public/customContentController');
 
@@ -9,12 +11,17 @@ const router = express.Router();
 router.get('/types/:typeSlug', customContent.archive);
 router.get('/types/:typeSlug/:itemSlug', customContent.single);
 
+router.use(permalinkResolver);
+
 router.get('/', site.home);
 router.get('/blog', site.blog);
-router.get('/post/:slug', site.post);
+router.get('/post/:slug', slugRedirectMiddleware('post'), site.post);
+router.post('/post/:slug', slugRedirectMiddleware('post'), site.post);
 router.get('/category/:slug', site.category);
 router.get('/tag/:slug', site.tag);
-router.get('/page/:slug', site.page);
+router.get('/taxonomy/:taxonomySlug/:termSlug', site.taxonomyTerm);
+router.get('/page/:slug', slugRedirectMiddleware('page'), site.page);
+router.post('/page/:slug', slugRedirectMiddleware('page'), site.page);
 router.get('/search', site.search);
 router.get('/contact', site.contact);
 router.post(

@@ -696,28 +696,64 @@ function updateBulkState() {
 }
 
 document.querySelector('[data-bulk-apply]')?.addEventListener('click', async () => {
-  const action = document.querySelector('[data-bulk-action]')?.value;
+  const actionSelect = document.querySelector('[data-bulk-action]');
+  const action = actionSelect?.value;
   const selected = rowChecks().filter((box) => box.checked);
   if (!action || !selected.length) return;
-  if (action === 'delete') {
-    const ok = await npConfirm(`Move ${selected.length} item(s) to trash?`, 'Move to trash');
-    if (!ok) return;
-    const form = document.getElementById('bulk-form');
-    if (form) {
-      form.querySelectorAll('input[name="ids"]').forEach((input) => input.remove());
-      selected.forEach((box) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'ids';
-        input.value = box.value;
-        form.appendChild(input);
-      });
-      form.submit();
-      return;
+
+  const labels = {
+    delete: 'Move to trash',
+    publish: 'Publish',
+    draft: 'Move to draft',
+    pending: 'Mark pending review',
+    restore: 'Restore',
+    change_category: 'Change category',
+    change_author: 'Change author'
+  };
+  const confirmLabel = labels[action] || action;
+  const ok = await npConfirm(`${confirmLabel} for ${selected.length} item(s)?`, confirmLabel);
+  if (!ok) return;
+
+  const form = document.getElementById('bulk-form');
+  if (!form) return;
+
+  const actionInput = form.querySelector('[data-bulk-form-action]');
+  if (actionInput) actionInput.value = action === 'delete' && form.querySelector('[name="return_trashed"]') ? 'delete' : (action === 'delete' ? 'trash' : action);
+
+  form.querySelectorAll('input[name="ids"]').forEach((input) => input.remove());
+  selected.forEach((box) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'ids';
+    input.value = box.value;
+    form.appendChild(input);
+  });
+
+  if (action === 'change_category') {
+    const categoryId = window.prompt('Enter category ID (leave blank for uncategorized):', '');
+    if (categoryId === null) return;
+    let field = form.querySelector('[name="bulk_category_id"]');
+    if (!field) {
+      field = document.createElement('input');
+      field.type = 'hidden';
+      field.name = 'bulk_category_id';
+      form.appendChild(field);
     }
-    selected.forEach((box) => {
-      const rowForm = box.closest('tr')?.querySelector('form[data-confirm]');
-      if (rowForm) rowForm.requestSubmit();
-    });
+    field.value = categoryId;
   }
+
+  if (action === 'change_author') {
+    const authorId = window.prompt('Enter author user ID:', '');
+    if (!authorId) return;
+    let field = form.querySelector('[name="bulk_author_id"]');
+    if (!field) {
+      field = document.createElement('input');
+      field.type = 'hidden';
+      field.name = 'bulk_author_id';
+      form.appendChild(field);
+    }
+    field.value = authorId;
+  }
+
+  form.submit();
 });

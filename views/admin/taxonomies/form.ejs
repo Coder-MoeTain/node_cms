@@ -1,0 +1,22 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <h1><%= title %></h1>
+    <form method="post" action="/admin/taxonomies?_csrf=<%= csrfToken %>" class="np-card p-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="name" required></div>
+      <div class="mb-3"><label class="form-label">Slug</label><input class="form-control" name="slug" placeholder="auto from name"></div>
+      <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="2"></textarea></div>
+      <div class="mb-3"><label class="form-label">Post types (comma-separated)</label><input class="form-control" name="post_types" value="post"></div>
+      <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="hierarchical" id="hierarchical"><label class="form-check-label" for="hierarchical">Hierarchical</label></div>
+      <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="public" id="public" checked><label class="form-check-label" for="public">Public</label></div>
+      <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="show_in_api" id="show_in_api" checked><label class="form-check-label" for="show_in_api">Show in API</label></div>
+      <button class="np-btn np-btn-primary" type="submit">Save Taxonomy</button>
+      <a class="np-btn np-btn-secondary" href="/admin/taxonomies">Cancel</a>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

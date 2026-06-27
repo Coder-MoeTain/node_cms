@@ -4,7 +4,7 @@ const { extractZipArchive } = require('./packageArchive');
 const pluginValidator = require('./pluginValidator');
 const { Plugin } = require('../models');
 
-async function installFromZip(zipPath, { activate = false, overwrite = true } = {}) {
+async function installFromZip(zipPath, { activate = false, overwrite = true, strict = true } = {}) {
   const pluginsRoot = path.join(process.cwd(), 'plugins');
   const slugBefore = await peekZipSlug(zipPath, 'plugin.json');
   if (slugBefore && !overwrite) {
@@ -13,7 +13,7 @@ async function installFromZip(zipPath, { activate = false, overwrite = true } = 
   }
 
   const { manifest, installPath } = await extractZipArchive(zipPath, pluginsRoot, 'plugin.json', { archiveType: 'plugin' });
-  pluginValidator.validateManifest(manifest, { pluginPath: installPath, strict: false });
+  pluginValidator.validateManifest(manifest, { pluginPath: installPath, strict });
   return { manifest, installPath };
 }
 

@@ -39,7 +39,8 @@ test('bootstrap test database script resets schema for CI', () => {
   expect(fs.existsSync(script)).toBe(true);
   const source = fs.readFileSync(script, 'utf8');
   expect(source).toMatch(/DROP DATABASE IF EXISTS/);
-  expect(source).toMatch(/sequelize\.sync/);
+  expect(source).toMatch(/ensureBaseSchema/);
+  expect(source).toMatch(/applyPendingMigrations/);
 });
 
 test('remote deploy script runs migrations and PM2 reload', () => {

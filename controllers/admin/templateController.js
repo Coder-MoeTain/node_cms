@@ -91,7 +91,7 @@ async function editPart(req, res, next) {
   }
 }
 
-async function saveBlockRecord(req, record, redirectPath) {
+async function saveBlockRecord(req, res, record, redirectPath) {
   const validation = validateBlockSchema(req.body.block_content_json || '[]');
   if (!validation.valid) {
     req.flash('error', validation.error);
@@ -115,7 +115,7 @@ async function update(req, res, next) {
     const record = await models.SiteTemplate.findByPk(req.params.id);
     if (!record) return res.status(404).render('errors/404', { title: 'Not Found' });
 
-    return saveBlockRecord(req, record, `/admin/templates/${record.id}/edit`);
+    return saveBlockRecord(req, res, record, `/admin/templates/${record.id}/edit`);
   } catch (error) {
     return next(error);
   }
@@ -128,7 +128,7 @@ async function updatePart(req, res, next) {
     const record = await models.TemplatePart.findByPk(req.params.id);
     if (!record) return res.status(404).render('errors/404', { title: 'Not Found' });
 
-    return saveBlockRecord(req, record, `/admin/templates/parts/${record.id}/edit`);
+    return saveBlockRecord(req, res, record, `/admin/templates/parts/${record.id}/edit`);
   } catch (error) {
     return next(error);
   }
