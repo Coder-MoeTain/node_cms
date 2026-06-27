@@ -43,10 +43,10 @@ const sequelize = new Sequelize(
       deletedAt: 'deleted_at'
     },
     pool: {
-      max: 10,
+      max: isTest ? 5 : 10,
       min: 0,
       acquire: 30000,
-      idle: 10000
+      idle: isTest ? 5000 : 10000
     }
   }
 );
