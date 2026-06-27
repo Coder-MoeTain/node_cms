@@ -7,55 +7,141 @@
     : `/admin/custom-post-types?_csrf=${encodeURIComponent(csrfToken)}`;
   const val = (name, fallback = '') => record[name] == null ? fallback : record[name];
   const checked = (name, def = true) => (record.id ? val(name, def) : def) ? 'checked' : '';
+  const groups = { content: 'Content fields', features: 'Features', visibility: 'Visibility & API' };
 %>
 <div class="admin-main">
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header mb-3">
-      <h1><%= isEdit ? 'Edit' : 'Add' %> Custom Post Type</h1>
-    </div>
-    <form method="post" action="<%= action %>">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="row g-4">
-        <div class="col-lg-8">
-          <div class="np-metabox mb-3">
-            <div class="np-metabox-header">General</div>
-            <div class="np-metabox-body">
-              <div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="name" value="<%= val('name') %>" required></div>
-              <div class="mb-3"><label class="form-label">Slug</label><input class="form-control" name="slug" value="<%= val('slug') %>" placeholder="auto from name"></div>
-              <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="3"><%= val('description') %></textarea></div>
-              <div class="mb-3"><label class="form-label">Menu icon (Bootstrap Icons class)</label><input class="form-control" name="icon" value="<%= val('icon', 'bi-file-earmark') %>"></div>
-            </div>
-          </div>
-          <div class="np-metabox">
-            <div class="np-metabox-header">Supports</div>
-            <div class="np-metabox-body">
-              <% [
-                ['supports_title','Title'],['supports_editor','Editor'],['supports_excerpt','Excerpt'],
-                ['supports_featured_image','Featured image'],['supports_comments','Comments'],
-                ['supports_revisions','Revisions'],['supports_custom_fields','Custom fields'],
-                ['has_archive','Archive page'],['show_in_menu','Show in admin menu'],['show_in_api','Expose in REST API']
-              ].forEach(function(pair) { %>
-                <div class="form-check"><input class="form-check-input" type="checkbox" name="<%= pair[0] %>" id="<%= pair[0] %>" <%= checked(pair[0], pair[0] !== 'supports_comments') %>><label class="form-check-label" for="<%= pair[0] %>"><%= pair[1] %></label></div>
-              <% }) %>
-            </div>
-          </div>
+    <div id="np-cpt-form">
+      <nav aria-label="breadcrumb" class="mb-2">
+        <ol class="breadcrumb np-breadcrumb">
+          <li class="breadcrumb-item"><a href="/admin/custom-post-types">Content Types</a></li>
+          <li class="breadcrumb-item active" aria-current="page"><%= isEdit ? record.name : 'New type' %></li>
+        </ol>
+      </nav>
+
+      <div class="np-page-header np-page-header-split mb-4">
+        <div>
+          <h1><%= isEdit ? 'Edit content type' : 'Add content type' %></h1>
+          <p class="np-help-text mb-0">Configure labels, supports, and where this type appears in admin and on the public site.</p>
         </div>
-        <aside class="col-lg-4">
-          <div class="np-metabox">
-            <div class="np-metabox-header">Status</div>
-            <div class="np-metabox-body">
-              <select class="form-select" name="status">
-                <option value="active" <%= val('status','active') === 'active' ? 'selected' : '' %>>Active</option>
-                <option value="inactive" <%= val('status') === 'inactive' ? 'selected' : '' %>>Inactive</option>
-              </select>
-              <button type="submit" class="np-btn np-btn-primary w-100 mt-3"><%= isEdit ? 'Update' : 'Create' %></button>
-            </div>
-          </div>
-        </aside>
+        <% if (isEdit && record.status) { %>
+          <span class="np-badge np-badge-<%= record.status === 'active' ? 'success' : 'secondary' %> align-self-start"><%= record.status %></span>
+        <% } %>
       </div>
-    </form>
+
+      <form method="post" action="<%= action %>" data-cpt-form>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <div class="np-widget mb-4">
+              <div class="np-widget-header"><span><i class="bi bi-info-circle me-1"></i> General</span></div>
+              <div class="np-widget-body">
+                <div class="mb-3">
+                  <label class="form-label" for="cpt-name">Name</label>
+                  <input class="form-control" id="cpt-name" name="name" value="<%= val('name') %>" required data-cpt-name-input>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="cpt-slug">Slug</label>
+                  <input class="form-control font-monospace" id="cpt-slug" name="slug" value="<%= val('slug') %>" placeholder="auto from name" data-cpt-slug-input>
+                  <p class="np-help-text mt-1 mb-0">Public archive: <code data-cpt-slug-preview>/types/<%= val('slug') || 'your-slug' %></code></p>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="cpt-description">Description</label>
+                  <textarea class="form-control" id="cpt-description" name="description" rows="3"><%= val('description') %></textarea>
+                </div>
+                <div class="mb-0">
+                  <label class="form-label">Menu icon</label>
+                  <input type="hidden" name="icon" value="<%= val('icon', 'bi-file-earmark') %>" data-cpt-icon-input>
+                  <div class="np-cpt-icon-preview mb-2">
+                    <span class="np-cpt-icon-preview-badge"><i class="bi <%= val('icon', 'bi-file-earmark') %>" data-cpt-icon-preview></i></span>
+                    <input class="form-control" type="text" value="<%= val('icon', 'bi-file-earmark') %>" data-cpt-icon-text placeholder="bi-file-earmark">
+                  </div>
+                  <div class="np-cpt-icon-grid">
+                    <% iconPresets.forEach(function(icon) { %>
+                      <button type="button" class="np-cpt-icon-option<%= val('icon', 'bi-file-earmark') === icon ? ' is-selected' : '' %>" data-cpt-icon-pick="<%= icon %>" title="<%= icon %>">
+                        <i class="bi <%= icon %>"></i>
+                      </button>
+                    <% }) %>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <% Object.keys(groups).forEach(function(groupKey) { %>
+              <div class="np-widget mb-4">
+                <div class="np-widget-header"><span><%= groups[groupKey] %></span></div>
+                <div class="np-widget-body">
+                  <div class="row g-2">
+                    <% Object.entries(supportFlags).filter(function(entry) { return entry[1].group === groupKey; }).forEach(function(entry) {
+                      const key = entry[0];
+                      const meta = entry[1];
+                      const defaultOn = key !== 'supports_comments';
+                    %>
+                      <div class="col-md-6">
+                        <div class="np-cpt-support-option">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="<%= key %>" id="<%= key %>" <%= checked(key, defaultOn) %>>
+                            <label class="form-check-label" for="<%= key %>">
+                              <i class="bi <%= meta.icon %> me-1"></i> <%= meta.label %>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    <% }) %>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+
+          <aside class="col-lg-4">
+            <div class="np-widget mb-4">
+              <div class="np-widget-header"><span><i class="bi bi-sliders me-1"></i> Publish</span></div>
+              <div class="np-widget-body">
+                <label class="form-label" for="cpt-status">Status</label>
+                <select class="form-select mb-3" id="cpt-status" name="status">
+                  <option value="active" <%= val('status','active') === 'active' ? 'selected' : '' %>>Active</option>
+                  <option value="inactive" <%= val('status') === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                </select>
+                <button type="submit" class="np-btn np-btn-primary w-100 mb-2"><%= isEdit ? 'Save changes' : 'Create type' %></button>
+                <a class="np-btn np-btn-secondary w-100" href="/admin/custom-post-types">Cancel</a>
+              </div>
+            </div>
+
+            <% if (isEdit) { %>
+              <div class="np-widget mb-4">
+                <div class="np-widget-header"><span><i class="bi bi-bar-chart me-1"></i> Usage</span></div>
+                <div class="np-widget-body">
+                  <dl class="np-cpt-details-dl mb-3">
+                    <dt>Items</dt><dd><%= record.itemCount || 0 %></dd>
+                    <dt>Published</dt><dd><%= record.publishedCount || 0 %></dd>
+                    <dt>Drafts</dt><dd><%= record.draftCount || 0 %></dd>
+                    <dt>Field groups</dt><dd><%= record.fieldGroupCount || 0 %></dd>
+                  </dl>
+                  <% if (record.status === 'active') { %>
+                    <a class="np-btn np-btn-secondary np-btn-small w-100 mb-2" href="/admin/content/<%= record.slug %>">Manage content</a>
+                    <a class="np-btn np-btn-secondary np-btn-small w-100" href="/admin/content/<%= record.slug %>/create">Add new item</a>
+                  <% } %>
+                </div>
+              </div>
+            <% } %>
+
+            <div class="np-widget">
+              <div class="np-widget-header"><span><i class="bi bi-link-45deg me-1"></i> Related</span></div>
+              <div class="np-widget-body">
+                <ul class="np-cpt-tips mb-0">
+                  <li><a href="/admin/field-groups">Field Groups</a> — attach custom fields to this type.</li>
+                  <li>See <strong>CUSTOM_POST_TYPES.md</strong> in the project docs for REST API details.</li>
+                </ul>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </form>
+    </div>
   </main>
 </div>
+<script src="/js/admin-content-types.js"></script>
 <%- include('../partials/footer') %>

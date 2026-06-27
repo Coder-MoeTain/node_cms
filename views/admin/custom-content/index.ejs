@@ -4,52 +4,127 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header">
-      <h1><%= type.name %></h1>
-      <a class="np-btn np-btn-primary" href="/admin/content/<%= type.slug %>/create"><i class="bi bi-plus-lg"></i> Add New</a>
+    <div id="np-custom-content-admin">
+      <nav aria-label="breadcrumb" class="mb-2">
+        <ol class="breadcrumb np-breadcrumb">
+          <li class="breadcrumb-item"><a href="/admin/custom-post-types">Content Types</a></li>
+          <li class="breadcrumb-item active" aria-current="page"><%= type.name %></li>
+        </ol>
+      </nav>
+
+      <div class="np-page-header np-page-header-split mb-3">
+        <div class="d-flex align-items-start gap-3">
+          <div class="np-cpt-card-icon"><i class="bi <%= type.icon || 'bi-file-earmark' %>" aria-hidden="true"></i></div>
+          <div>
+            <h1><%= type.name %></h1>
+            <% if (type.description) { %><p class="np-help-text mb-0"><%= type.description %></p><% } %>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="np-btn np-btn-secondary np-btn-small" href="/admin/custom-post-types/<%= type.id %>/edit"><i class="bi bi-gear"></i> Type settings</a>
+          <% if (type.has_archive && type.status === 'active') { %>
+            <a class="np-btn np-btn-secondary np-btn-small" href="/types/<%= type.slug %>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> View archive</a>
+          <% } %>
+          <a class="np-btn np-btn-primary" href="/admin/content/<%= type.slug %>/create"><i class="bi bi-plus-lg"></i> Add New</a>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="np-cpt-stat">
+            <i class="bi bi-files" aria-hidden="true"></i>
+            <div><strong><%= totalItems || 0 %></strong><span>All items</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-cpt-stat np-cpt-stat-success">
+            <i class="bi bi-check-circle" aria-hidden="true"></i>
+            <div><strong><%= statusCounts.published || 0 %></strong><span>Published</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-cpt-stat">
+            <i class="bi bi-pencil" aria-hidden="true"></i>
+            <div><strong><%= statusCounts.draft || 0 %></strong><span>Drafts</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-cpt-stat">
+            <i class="bi bi-lock" aria-hidden="true"></i>
+            <div><strong><%= statusCounts.private || 0 %></strong><span>Private</span></div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="np-subsub list-unstyled mb-3">
+        <li class="<%= !filters.status ? 'active' : '' %>">
+          <a href="/admin/content/<%= type.slug %>">All <span class="count">(<%= totalItems || 0 %>)</span></a>
+        </li>
+        <% ['published','draft','private'].forEach(function(status) { %>
+          <li class="<%= filters.status === status ? 'active' : '' %>">
+            <a href="/admin/content/<%= type.slug %>?status=<%= status %>">
+              <%= status.charAt(0).toUpperCase() + status.slice(1) %>
+              <span class="count">(<%= statusCounts[status] || 0 %>)</span>
+            </a>
+          </li>
+        <% }) %>
+      </ul>
+
+      <div class="list-toolbar mb-3">
+        <form class="admin-search" method="get">
+          <% if (filters.status) { %><input type="hidden" name="status" value="<%= filters.status %>"><% } %>
+          <input type="search" name="q" value="<%= query || '' %>" placeholder="Search <%= type.name.toLowerCase() %>…" class="form-control" aria-label="Search">
+          <button class="np-btn np-btn-secondary" type="submit">Search</button>
+        </form>
+      </div>
+
+      <div class="np-table-wrap">
+        <table class="np-table">
+          <thead>
+            <tr><th>Title</th><th>Status</th><th>Author</th><th>Date</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% if (!rows.length) { %>
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state py-4">
+                    <i class="bi bi-inbox d-block"></i>
+                    <strong>No <%= type.name.toLowerCase() %> yet</strong>
+                    <p class="mb-2">Create your first item to populate the archive and admin list.</p>
+                    <a class="np-btn np-btn-primary np-btn-small" href="/admin/content/<%= type.slug %>/create">Add <%= type.name %></a>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+            <% rows.forEach(function(row) { %>
+              <tr>
+                <td>
+                  <strong><a href="/admin/content/<%= type.slug %>/<%= row.id %>/edit" class="text-decoration-none"><%= row.title %></a></strong>
+                  <div class="text-muted small"><code><%= row.slug %></code></div>
+                </td>
+                <td><span class="np-badge np-badge-<%= row.status === 'published' ? 'success' : (row.status === 'draft' ? 'secondary' : 'muted') %>"><%= row.status %></span></td>
+                <td><%= row.author ? row.author.name : '—' %></td>
+                <td><%= row.created_at ? formatDate(row.created_at) : '—' %></td>
+                <td class="text-end text-nowrap">
+                  <% if (type.has_archive && row.status === 'published') { %>
+                    <a href="/types/<%= type.slug %>/<%= row.slug %>" class="np-btn np-btn-link np-btn-small" target="_blank" rel="noopener">View</a>
+                  <% } %>
+                  <a href="/admin/content/<%= type.slug %>/<%= row.id %>/edit" class="np-btn np-btn-link np-btn-small">Edit</a>
+                  <% if (type.supports_revisions) { %>
+                    <a href="/admin/revisions?resource_type=custom_post&resource_id=<%= row.id %>" class="np-btn np-btn-link np-btn-small">Revisions</a>
+                  <% } %>
+                  <form method="post" action="/admin/content/<%= type.slug %>/<%= row.id %>?_method=DELETE&_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" data-confirm="Move this item to trash?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="np-btn np-btn-link np-btn-small text-danger">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('../../partials/pagination', { pagination, basePath: `/admin/content/${type.slug}` }) %>
     </div>
-    <ul class="np-subsub list-unstyled">
-      <li class="<%= !filters.status ? 'active' : '' %>"><a href="/admin/content/<%= type.slug %>">All</a></li>
-      <% ['published','draft','private'].forEach(function(status) { %>
-        <li class="<%= filters.status === status ? 'active' : '' %>"><a href="/admin/content/<%= type.slug %>?status=<%= status %>"><%= status %></a></li>
-      <% }) %>
-    </ul>
-    <div class="list-toolbar mb-3">
-      <form class="admin-search" method="get">
-        <% if (filters.status) { %><input type="hidden" name="status" value="<%= filters.status %>"><% } %>
-        <input type="search" name="q" value="<%= query || '' %>" placeholder="Search…" class="form-control">
-      </form>
-    </div>
-    <div class="np-table-wrap">
-      <table class="np-table">
-        <thead><tr><th>Title</th><th>Status</th><th>Author</th><th>Date</th><th></th></tr></thead>
-        <tbody>
-          <% if (!rows.length) { %><tr><td colspan="5" class="text-muted">No items yet.</td></tr><% } %>
-          <% rows.forEach(function(row) { %>
-            <tr>
-              <td><strong><%= row.title %></strong><div class="text-muted small"><code><%= row.slug %></code></div></td>
-              <td><%= row.status %></td>
-              <td><%= row.author ? row.author.name : '—' %></td>
-              <td><%= row.created_at ? formatDate(row.created_at) : '—' %></td>
-              <td class="text-end">
-                <% if (type.has_archive && row.status === 'published') { %>
-                  <a href="/types/<%= type.slug %>/<%= row.slug %>" class="np-btn np-btn-link np-btn-small" target="_blank" rel="noopener">View</a>
-                <% } %>
-                <a href="/admin/content/<%= type.slug %>/<%= row.id %>/edit" class="np-btn np-btn-link np-btn-small">Edit</a>
-                <% if (type.supports_revisions) { %>
-                  <a href="/admin/revisions?resource_type=custom_post&resource_id=<%= row.id %>" class="np-btn np-btn-link np-btn-small">Revisions</a>
-                <% } %>
-                <form method="post" action="/admin/content/<%= type.slug %>/<%= row.id %>?_method=DELETE&_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" onsubmit="return confirm('Delete?');">
-                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                  <button type="submit" class="np-btn np-btn-link np-btn-small text-danger">Delete</button>
-                </form>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
-    <%- include('../../partials/pagination', { pagination, basePath: `/admin/content/${type.slug}` }) %>
   </main>
 </div>
 <%- include('../partials/footer') %>

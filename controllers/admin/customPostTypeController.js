@@ -2,8 +2,14 @@ const sanitizeHtml = require('sanitize-html');
 const { Op } = require('sequelize');
 const models = require('../../models');
 const { createUniqueSlug } = require('../../utils/slugGenerator');
-const { getPagination, pageMeta } = require('../../utils/pagination');
 const policy = require('../../utils/policy');
+const {
+  DEFAULT_TYPES,
+  ICON_PRESETS,
+  SUPPORT_FLAGS,
+  enrichContentType,
+  loadContentTypeCounts
+} = require('../../utils/contentTypeRegistry');
 
 function sanitizeText(value, max = 500) {
   return sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).slice(0, max);
@@ -40,20 +46,33 @@ async function index(req, res, next) {
       req.flash('error', 'You do not have permission to manage custom post types.');
       return res.redirect('/admin');
     }
-    const { page, limit, offset } = getPagination(req, 20);
+
     const query = req.query.q || '';
-    const where = query ? { [Op.or]: [{ name: { [Op.like]: `%${query}%` } }, { slug: { [Op.like]: `%${query}%` } }] } : {};
-    const { rows, count } = await models.CustomPostType.findAndCountAll({
-      where,
-      limit,
-      offset,
-      order: [['name', 'ASC']]
-    });
+    const where = query
+      ? { [Op.or]: [{ name: { [Op.like]: `%${query}%` } }, { slug: { [Op.like]: `%${query}%` } }] }
+      : {};
+
+    const [rows, counts] = await Promise.all([
+      models.CustomPostType.findAll({ where, order: [['name', 'ASC']] }),
+      loadContentTypeCounts(models)
+    ]);
+
+    const enriched = rows.map((row) => enrichContentType(row, counts));
+    const stats = {
+      total: enriched.length,
+      active: enriched.filter((row) => row.status === 'active').length,
+      inMenu: enriched.filter((row) => row.show_in_menu && row.status === 'active').length,
+      totalItems: enriched.reduce((sum, row) => sum + row.itemCount, 0)
+    };
+
     return res.render('admin/custom-post-types/index', {
-      title: 'Custom Post Types',
-      rows,
+      title: 'Content Types',
+      rows: enriched,
       query,
-      pagination: pageMeta(count, page, limit)
+      stats,
+      canManageContent: policy.hasAnyPermission(req.session.user, [
+        'manage_custom_content', 'manage_posts', 'create_posts', 'edit_posts'
+      ])
     });
   } catch (error) {
     return next(error);
@@ -66,7 +85,12 @@ async function create(req, res, next) {
       req.flash('error', 'You do not have permission.');
       return res.redirect('/admin/custom-post-types');
     }
-    return res.render('admin/custom-post-types/form', { title: 'Add Custom Post Type', record: {} });
+    return res.render('admin/custom-post-types/form', {
+      title: 'Add Content Type',
+      record: {},
+      iconPresets: ICON_PRESETS,
+      supportFlags: SUPPORT_FLAGS
+    });
   } catch (error) {
     return next(error);
   }
@@ -81,7 +105,7 @@ async function store(req, res, next) {
     const data = payloadFromBody(req.body);
     data.slug = await createUniqueSlug(models.CustomPostType, data.slug || data.name, 'type');
     await models.CustomPostType.create(data);
-    req.flash('success', 'Custom post type created.');
+    req.flash('success', 'Content type created.');
     return res.redirect('/admin/custom-post-types');
   } catch (error) {
     return next(error);
@@ -96,7 +120,16 @@ async function edit(req, res, next) {
     }
     const record = await models.CustomPostType.findByPk(req.params.id);
     if (!record) return res.status(404).render('errors/404', { title: 'Not Found' });
-    return res.render('admin/custom-post-types/form', { title: 'Edit Custom Post Type', record });
+
+    const counts = await loadContentTypeCounts(models);
+    const enriched = enrichContentType(record, counts);
+
+    return res.render('admin/custom-post-types/form', {
+      title: `Edit Content Type — ${record.name}`,
+      record: enriched,
+      iconPresets: ICON_PRESETS,
+      supportFlags: SUPPORT_FLAGS
+    });
   } catch (error) {
     return next(error);
   }
@@ -113,7 +146,7 @@ async function update(req, res, next) {
     const data = payloadFromBody(req.body, record);
     data.slug = await createUniqueSlug(models.CustomPostType, data.slug || data.name, 'type', record.id);
     await record.update(data);
-    req.flash('success', 'Custom post type updated.');
+    req.flash('success', 'Content type updated.');
     return res.redirect('/admin/custom-post-types');
   } catch (error) {
     return next(error);
@@ -134,11 +167,97 @@ async function destroy(req, res, next) {
       return res.redirect('/admin/custom-post-types');
     }
     await record.destroy();
-    req.flash('success', 'Custom post type deleted.');
+    req.flash('success', 'Content type deleted.');
     return res.redirect('/admin/custom-post-types');
   } catch (error) {
     return next(error);
   }
 }
 
-module.exports = { index, create, store, edit, update, destroy };
+async function seedDefaults(req, res, next) {
+  try {
+    if (!policy.hasPermission(req.session.user, 'manage_custom_post_types')) {
+      req.flash('error', 'You do not have permission.');
+      return res.redirect('/admin/custom-post-types');
+    }
+
+    let created = 0;
+    for (const preset of DEFAULT_TYPES) {
+      const [, wasCreated] = await models.CustomPostType.findOrCreate({
+        where: { slug: preset.slug },
+        defaults: {
+          name: preset.name,
+          description: preset.description,
+          icon: preset.icon,
+          supports_title: true,
+          supports_editor: true,
+          supports_excerpt: preset.supports_excerpt !== false,
+          supports_featured_image: true,
+          supports_comments: preset.supports_comments === true,
+          supports_revisions: true,
+          supports_custom_fields: true,
+          has_archive: preset.has_archive !== false,
+          show_in_menu: true,
+          show_in_api: true,
+          status: 'active'
+        }
+      });
+      if (wasCreated) created += 1;
+    }
+
+    req.flash('success', created
+      ? `Added ${created} starter content type${created === 1 ? '' : 's'} (News, Events, Jobs).`
+      : 'Starter content types already exist.');
+    return res.redirect('/admin/custom-post-types');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function duplicate(req, res, next) {
+  try {
+    if (!policy.hasPermission(req.session.user, 'manage_custom_post_types')) {
+      req.flash('error', 'You do not have permission.');
+      return res.redirect('/admin/custom-post-types');
+    }
+
+    const record = await models.CustomPostType.findByPk(req.params.id);
+    if (!record) return res.status(404).render('errors/404', { title: 'Not Found' });
+
+    const baseSlug = `${record.slug}-copy`;
+    const slug = await createUniqueSlug(models.CustomPostType, baseSlug, 'type');
+    await models.CustomPostType.create({
+      name: `${record.name} (Copy)`,
+      slug,
+      description: record.description,
+      icon: record.icon,
+      supports_title: record.supports_title,
+      supports_editor: record.supports_editor,
+      supports_excerpt: record.supports_excerpt,
+      supports_featured_image: record.supports_featured_image,
+      supports_comments: record.supports_comments,
+      supports_revisions: record.supports_revisions,
+      supports_custom_fields: record.supports_custom_fields,
+      has_archive: record.has_archive,
+      show_in_menu: false,
+      show_in_api: record.show_in_api,
+      status: 'inactive'
+    });
+
+    req.flash('success', 'Content type duplicated as inactive copy.');
+    return res.redirect('/admin/custom-post-types');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = {
+  index,
+  create,
+  store,
+  edit,
+  update,
+  destroy,
+  seedDefaults,
+  duplicate
+};

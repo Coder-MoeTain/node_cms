@@ -1,0 +1,76 @@
+<form method="post" action="<%= formAction %>" id="np-template-edit-form" data-template-edit-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="np-widget mb-4">
+        <div class="np-widget-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <span><i class="bi bi-bricks me-1"></i> Block content</span>
+          <div class="btn-group btn-group-sm" role="group" aria-label="Editor mode">
+            <input type="radio" class="btn-check" name="editor_view" id="view-visual" value="visual" checked data-template-editor-toggle>
+            <label class="btn btn-outline-secondary" for="view-visual">Visual</label>
+            <input type="radio" class="btn-check" name="editor_view" id="view-json" value="json" data-template-editor-toggle>
+            <label class="btn btn-outline-secondary" for="view-json">JSON</label>
+            <input type="radio" class="btn-check" name="editor_view" id="view-preview" value="preview" data-template-editor-toggle>
+            <label class="btn btn-outline-secondary" for="view-preview">Preview</label>
+          </div>
+        </div>
+        <div class="np-widget-body">
+          <div data-template-visual-editor>
+            <div data-block-editor-wrap>
+              <input type="hidden" name="block_content_json" data-block-json-input value="">
+              <div data-block-editor data-initial-blocks='<%- JSON.stringify(initialBlocks) %>'></div>
+            </div>
+          </div>
+          <div class="d-none" data-template-json-editor>
+            <label class="form-label" for="block-json-raw">Block JSON</label>
+            <textarea class="form-control font-monospace" id="block-json-raw" rows="18" data-template-json-textarea><%= record.block_content_json || '[]' %></textarea>
+            <p class="np-help-text mt-2 mb-0">Advanced editing — invalid JSON will be rejected on save.</p>
+          </div>
+          <div class="d-none" data-template-preview-panel>
+            <div class="np-block-preview np-template-live-preview" data-template-server-preview><%- previewHtml %></div>
+            <p class="np-help-text mt-2 mb-0">Server-rendered preview from saved blocks. Save to refresh after JSON edits.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="np-widget mb-4">
+        <div class="np-widget-header"><span><i class="bi bi-sliders me-1"></i> Settings</span></div>
+        <div class="np-widget-body">
+          <div class="mb-3">
+            <label class="form-label" for="template-name">Name</label>
+            <input class="form-control" id="template-name" name="name" value="<%= record.name %>" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="template-status">Status</label>
+            <select class="form-select" id="template-status" name="status">
+              <option value="active" <%= record.status === 'active' ? 'selected' : '' %>>Active</option>
+              <option value="inactive" <%= record.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+            </select>
+            <p class="np-help-text mt-1 mb-0">Inactive templates are stored but not applied on the public site.</p>
+          </div>
+          <dl class="np-template-details-dl mb-0">
+            <dt>Slug</dt><dd><code><%= record.slug %></code></dd>
+            <% if (record.template_type) { %>
+              <dt>Type</dt><dd><%= record.typeMeta.label %></dd>
+            <% } %>
+            <% if (record.part_type) { %>
+              <dt>Part type</dt><dd><%= record.typeMeta.label %></dd>
+            <% } %>
+            <% if (record.theme_slug) { %>
+              <dt>Theme</dt><dd><code><%= record.theme_slug %></code></dd>
+            <% } %>
+            <dt>Blocks</dt><dd><%= record.blockCount %></dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2">
+        <button class="np-btn np-btn-primary" type="submit"><i class="bi bi-check-lg"></i> Save</button>
+        <a class="np-btn np-btn-secondary" href="/admin/templates">Cancel</a>
+      </div>
+    </div>
+  </div>
+</form>

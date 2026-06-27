@@ -194,8 +194,10 @@ router.post('/waf/logs/:id/block-ip', requireAuth, wafPermission, waf.blockIpFro
 router.post('/waf/logs/:id/whitelist-ip', requireAuth, wafPermission, waf.whitelistIpFromLog);
 
 router.get('/custom-post-types', requireAuth, can('manage_custom_post_types'), customPostTypes.index);
+router.post('/custom-post-types/defaults', requireAuth, can('manage_custom_post_types'), customPostTypes.seedDefaults);
 router.get('/custom-post-types/create', requireAuth, can('manage_custom_post_types'), customPostTypes.create);
 router.post('/custom-post-types', requireAuth, can('manage_custom_post_types'), customPostTypes.store);
+router.post('/custom-post-types/:id/duplicate', requireAuth, can('manage_custom_post_types'), customPostTypes.duplicate);
 router.get('/custom-post-types/:id/edit', requireAuth, can('manage_custom_post_types'), customPostTypes.edit);
 router.put('/custom-post-types/:id', requireAuth, can('manage_custom_post_types'), customPostTypes.update);
 router.delete('/custom-post-types/:id', requireAuth, can('manage_custom_post_types'), customPostTypes.destroy);
@@ -240,6 +242,11 @@ router.delete('/widgets/instance/:id', requireAuth, can('manage_settings'), widg
 
 router.get('/templates', requireAuth, can('manage_themes'), templates.index);
 router.post('/templates/defaults', requireAuth, can('manage_themes'), templates.createDefault);
+router.get('/templates/parts/:id/edit', requireAuth, can('manage_themes'), templates.editPart);
+router.put('/templates/parts/:id', requireAuth, can('manage_themes'), templates.updatePart);
+router.delete('/templates/parts/:id', requireAuth, can('manage_themes'), templates.destroyPart);
+router.post('/templates/:id/duplicate', requireAuth, can('manage_themes'), templates.duplicate);
+router.delete('/templates/:id', requireAuth, can('manage_themes'), templates.destroy);
 router.get('/templates/:id/edit', requireAuth, can('manage_themes'), templates.edit);
 router.put('/templates/:id', requireAuth, can('manage_themes'), templates.update);
 
