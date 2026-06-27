@@ -1,8 +1,9 @@
 const models = require('../models');
+const sequelize = require('../config/database');
 
 async function exportSite(options = {}) {
   const includeMedia = options.includeMedia !== false;
-  const [posts, pages, categories, tags, types, fieldGroups, menus, widgetAreas] = await Promise.all([
+  const [posts, pages, categories, tags, types, fieldGroups, menus, widgetAreas, taxonomies] = await Promise.all([
     models.Post.findAll({ where: { post_type: 'post' } }),
     models.Page.findAll(),
     models.Category.findAll(),
@@ -10,12 +11,14 @@ async function exportSite(options = {}) {
     models.CustomPostType.findAll(),
     models.FieldGroup.findAll({ include: [{ model: models.CustomField, as: 'fields' }] }),
     models.Menu.findAll({ include: [{ model: models.MenuItem, as: 'items' }] }),
-    models.WidgetArea.findAll({ include: [{ model: models.WidgetInstance, as: 'widgets' }] })
+    models.WidgetArea.findAll({ include: [{ model: models.WidgetInstance, as: 'widgets' }] }),
+    models.Taxonomy.findAll({ include: [{ model: models.TaxonomyTerm, as: 'terms' }] })
   ]);
 
   const customPosts = await models.Post.findAll({ where: { post_type: { [require('sequelize').Op.ne]: 'post' } } });
+  const [postTaxonomyTerms] = await sequelize.query('SELECT post_id, term_id FROM post_taxonomy_terms');
   const payload = {
-    version: '1.0',
+    version: '1.1',
     exported_at: new Date().toISOString(),
     posts: posts.map((r) => r.get({ plain: true })),
     pages: pages.map((r) => r.get({ plain: true })),
@@ -23,6 +26,8 @@ async function exportSite(options = {}) {
     custom_posts: customPosts.map((r) => r.get({ plain: true })),
     categories: categories.map((r) => r.get({ plain: true })),
     tags: tags.map((r) => r.get({ plain: true })),
+    taxonomies: taxonomies.map((r) => r.get({ plain: true })),
+    post_taxonomy_terms: postTaxonomyTerms,
     field_groups: fieldGroups.map((r) => r.get({ plain: true })),
     menus: menus.map((r) => r.get({ plain: true })),
     widget_areas: widgetAreas.map((r) => r.get({ plain: true }))

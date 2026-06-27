@@ -34,7 +34,15 @@ async function bootstrapTestDatabase() {
 
   const { sequelize } = require('../models');
   await sequelize.authenticate();
-  await sequelize.sync();
+
+  const { ensureBaseSchema } = require('./ensureBaseSchema');
+  await ensureBaseSchema(sequelize);
+
+  const { applyPendingMigrations } = require('./migrationRunner');
+  const appliedBeforeWidgets = await applyPendingMigrations(sequelize);
+  if (appliedBeforeWidgets.length) {
+    console.log(`Applied ${appliedBeforeWidgets.length} test migration(s) before widget seed`);
+  }
 
   const { ensureDefaultWidgetAreas } = require('../utils/widgetRegistry');
   const models = require('../models');
@@ -42,11 +50,6 @@ async function bootstrapTestDatabase() {
 
   const sessionStore = new SequelizeStore({ db: sequelize, tableName: 'sessions' });
   await sessionStore.sync();
-
-  const applied = await applyPendingMigrations(sequelize);
-  if (applied.length) {
-    console.log(`Applied ${applied.length} test migration(s)`);
-  }
 
   console.log(`Test database bootstrapped: ${database}`);
   await sequelize.close();

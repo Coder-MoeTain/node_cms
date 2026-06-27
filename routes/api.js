@@ -1,8 +1,15 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const { Post, Page, Category, Tag } = require('../models');
 
 const router = express.Router();
 const v1 = require('./api/v1');
+
+router.get('/v1/openapi.yaml', (req, res) => {
+  const file = path.join(__dirname, '..', 'docs', 'openapi.yaml');
+  res.type('text/yaml').send(fs.readFileSync(file, 'utf8'));
+});
 
 router.use('/v1', v1);
 

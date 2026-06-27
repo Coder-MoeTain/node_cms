@@ -57,7 +57,10 @@ function removeMediaFiles(media) {
 
 function mediaUrl(filePath) {
   const cdn = process.env.CDN_URL;
-  return cdn ? `${cdn.replace(/\/$/, '')}${filePath}` : filePath;
+  if (cdn && cdn !== 'undefined' && String(cdn).trim()) {
+    return `${String(cdn).replace(/\/$/, '')}${filePath}`;
+  }
+  return filePath;
 }
 
 function normalizeUploadUrlsInHtml(html) {

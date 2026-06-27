@@ -35,10 +35,12 @@ test('slugGenerator creates unique slugs', async () => {
 });
 
 test('mediaHelper builds CDN URLs and disk paths', () => {
+  const hadCdn = Object.prototype.hasOwnProperty.call(process.env, 'CDN_URL');
   const original = process.env.CDN_URL;
   process.env.CDN_URL = 'https://cdn.example.com';
   expect(mediaUrl('/uploads/test.png')).toBe('https://cdn.example.com/uploads/test.png');
-  process.env.CDN_URL = original;
+  if (hadCdn) process.env.CDN_URL = original;
+  else delete process.env.CDN_URL;
   expect(diskPathFromPublic('/uploads/test.png')).toContain('uploads');
 });
 

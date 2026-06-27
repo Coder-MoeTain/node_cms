@@ -2,6 +2,7 @@ const request = require('supertest');
 const sequelize = require('../config/database');
 const { app, models } = require('../server');
 const { login, getCsrf, postForm } = require('./helpers');
+const { listActiveAdminSessions } = require('../utils/loginSessionHelper');
 
 beforeAll(async () => {
   await models.User.update({ force_password_change: false }, { where: { email: 'admin@example.com' } });
@@ -54,17 +55,17 @@ test('admin can revoke another active session', async () => {
   const agent1 = request.agent(app);
   const agent2 = request.agent(app);
 
-  const [beforeRows] = await sequelize.query(
-    'SELECT sid FROM sessions WHERE expires > UTC_TIMESTAMP()'
+  const beforeSessions = await listActiveAdminSessions({ limit: 100 });
+  const beforeIds = new Set(
+    beforeSessions.filter((row) => row.email === 'admin@example.com').map((row) => row.sessionId)
   );
-  const beforeIds = new Set(beforeRows.map((row) => row.sid));
 
   await login(agent2, 'admin@example.com', 'Admin@12345');
 
-  const [afterAgent2] = await sequelize.query(
-    'SELECT sid FROM sessions WHERE expires > UTC_TIMESTAMP()'
-  );
-  const agent2Sid = afterAgent2.find((row) => !beforeIds.has(row.sid))?.sid;
+  const afterSessions = await listActiveAdminSessions({ limit: 100 });
+  const agent2Sid = afterSessions.find(
+    (row) => row.email === 'admin@example.com' && !beforeIds.has(row.sessionId)
+  )?.sessionId;
   expect(agent2Sid).toBeTruthy();
 
   await login(agent1, 'admin@example.com', 'Admin@12345');

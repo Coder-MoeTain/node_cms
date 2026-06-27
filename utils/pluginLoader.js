@@ -44,6 +44,13 @@ function discoverPluginManifests() {
 }
 
 async function upsertPluginRow(item) {
+  try {
+    validateManifest(item.manifest, { pluginPath: item.path, strict: true });
+  } catch (error) {
+    console.warn(`Skipping invalid plugin "${item.manifest?.slug || 'unknown'}": ${error.message}`);
+    return null;
+  }
+
   const payload = {
     name: item.manifest.name,
     version: item.manifest.version,
@@ -172,8 +179,11 @@ function registerPluginAssets(app) {
 
 function registerPluginRoutes(app) {
   if (!app) return;
+  const { requireAuth } = require('../middleware/auth');
+  const { canAny } = require('../middleware/permission');
+
   for (const entry of registeredRoutes) {
-    const { method, routePath, handler, admin, pluginSlug } = entry;
+    const { method, routePath, handler, admin, pluginSlug, permissions } = entry;
     const wrapped = async (req, res, next) => {
       try {
         await handler(req, res, next);
@@ -184,16 +194,14 @@ function registerPluginRoutes(app) {
         return next(error);
       }
     };
-    if (admin) {
-      app[method.toLowerCase()](routePath, wrapped);
-    } else {
-      app[method.toLowerCase()](routePath, wrapped);
-    }
+    const adminPermissions = Array.isArray(permissions) && permissions.length ? permissions : ['manage_plugins'];
+    const middlewares = admin ? [requireAuth, canAny(adminPermissions), wrapped] : [wrapped];
+    app[method.toLowerCase()](routePath, ...middlewares);
   }
 }
 
-function trackPluginRoute(pluginSlug, method, routePath, handler, { admin = false } = {}) {
-  registeredRoutes.push({ pluginSlug, method, routePath, handler, admin });
+function trackPluginRoute(pluginSlug, method, routePath, handler, { admin = false, permissions = null } = {}) {
+  registeredRoutes.push({ pluginSlug, method, routePath, handler, admin, permissions });
 }
 
 async function loadActivePlugins(app = null) {
@@ -227,7 +235,10 @@ async function loadActivePlugins(app = null) {
       delete require.cache[require.resolve(entryPath)];
       const plugin = require(entryPath);
       const hooks = hookManager.createPluginApi(row.slug);
-      hooks.registerRoute = (method, routePath, handler, opts) => trackPluginRoute(row.slug, method, routePath, handler, opts);
+      hooks.registerRoute = (method, routePath, handler, opts) => trackPluginRoute(row.slug, method, routePath, handler, {
+        ...opts,
+        permissions: item.manifest.permissions
+      });
       if (typeof plugin.register === 'function') {
         await plugin.register({ app, hooks, manifest: item.manifest });
       }
@@ -303,7 +314,23 @@ async function getPluginManagerStats() {
   };
 }
 
+async function checkPluginDependents(slug) {
+  const activeRows = await Plugin.findAll({ where: { active: true } });
+  for (const row of activeRows) {
+    if (row.slug === slug) continue;
+    const manifest = row.manifest || getManifestBySlug(row.slug);
+    if (!manifest) continue;
+    for (const dep of manifest.dependencies || []) {
+      const depSlug = typeof dep === 'string' ? dep : dep.slug;
+      if (depSlug === slug) {
+        throw new Error(`Cannot deactivate "${slug}": active plugin "${manifest.slug}" depends on it.`);
+      }
+    }
+  }
+}
+
 async function deactivatePlugin(slug, app = null, user = null) {
+  await checkPluginDependents(slug);
   await invokePluginLifecycle(slug, 'onDeactivate', app);
   await Plugin.update({ active: false }, { where: { slug } });
   await clearPluginError(slug);

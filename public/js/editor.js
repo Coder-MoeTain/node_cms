@@ -7,13 +7,26 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
+function buildPermalinkPath(structure, slug) {
+  const now = new Date();
+  return String(structure || '/post/%slug%')
+    .replace(/%slug%/g, slug)
+    .replace(/%postname%/g, slug)
+    .replace(/%year%/g, String(now.getFullYear()))
+    .replace(/%month%/g, String(now.getMonth() + 1).padStart(2, '0'))
+    .replace(/%day%/g, String(now.getDate()).padStart(2, '0'))
+    .replace(/%post_id%/g, '1')
+    .replace(/%type%/g, 'post');
+}
+
 function updatePermalinkPreview() {
   const slugInput = document.querySelector('[data-slug-target]');
   const display = document.querySelector('[data-permalink-display]');
   const permalinkInput = document.querySelector('[data-permalink-input]');
+  const wrap = document.querySelector('[data-permalink-wrap]');
+  const structure = wrap?.dataset?.permalinkStructure || '/post/%slug%';
   const slug = slugInput?.value || 'sample-post';
-  const base = display?.textContent?.split(slug)[0] || '/post/';
-  if (display) display.textContent = `${base.replace(/\/$/, '')}/${slug}`.replace('//', '/');
+  if (display) display.textContent = buildPermalinkPath(structure, slug);
   if (permalinkInput && document.activeElement !== permalinkInput) permalinkInput.value = slug;
 }
 

@@ -97,7 +97,7 @@ jobs:
               echo "pm2 not installed on target; run npm start manually"
             fi
             if [ -f scripts/health-check.js ]; then
-              node scripts/health-check.js || true
+              node scripts/health-check.js
             fi
 
       - name: Deployment skipped (secrets not configured)

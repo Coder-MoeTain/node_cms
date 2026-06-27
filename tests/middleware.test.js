@@ -15,36 +15,36 @@ function mockRes(overrides = {}) {
   return res;
 }
 
-test('permission can allows user with matching permission', () => {
+test('permission can allows user with matching permission', async () => {
   const req = { session: { user: { permissions: ['manage_posts'] } }, flash: jest.fn() };
   const res = mockRes();
   const next = jest.fn();
-  can('manage_posts')(req, res, next);
+  await can('manage_posts')(req, res, next);
   expect(next).toHaveBeenCalled();
 });
 
-test('permission can redirects unauthorized users', () => {
+test('permission can redirects unauthorized users', async () => {
   const req = { session: { user: { permissions: [] } }, flash: jest.fn() };
   const res = mockRes();
   const next = jest.fn();
-  can('manage_posts')(req, res, next);
+  await can('manage_posts')(req, res, next);
   expect(res.redirect).toHaveBeenCalledWith('/admin/profile');
   expect(next).not.toHaveBeenCalled();
 });
 
-test('permission canAny passes when one permission matches', () => {
+test('permission canAny passes when one permission matches', async () => {
   const req = { session: { user: { permissions: ['create_posts'] } }, flash: jest.fn() };
   const res = mockRes();
   const next = jest.fn();
-  canAny(['manage_posts', 'create_posts'])(req, res, next);
+  await canAny(['manage_posts', 'create_posts'])(req, res, next);
   expect(next).toHaveBeenCalled();
 });
 
-test('permission canResource blocks author from categories', () => {
+test('permission canResource blocks author from categories', async () => {
   const req = { session: { user: { permissions: ['create_posts', 'edit_posts'] } }, flash: jest.fn() };
   const res = mockRes();
   const next = jest.fn();
-  canResource('categories', 'index')(req, res, next);
+  await canResource('categories', 'index')(req, res, next);
   expect(res.redirect).toHaveBeenCalled();
 });
 

@@ -6,6 +6,8 @@ const {
   Page,
   Category,
   Tag,
+  Taxonomy,
+  TaxonomyTerm,
   User,
   Banner,
   Slider,
@@ -17,6 +19,7 @@ const {
 const { canPreviewContent } = require('../../utils/previewHelper');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { meta, postSchema, websiteSchema } = require('../../utils/seoHelper');
+const { buildSeoMeta, isContentUnlocked, verifyContentPassword, setContentUnlockCookie } = require('../../utils/contentPasswordHelper');
 const appConfig = require('../../config/app');
 const pluginLoader = require('../../utils/pluginLoader');
 const themeLoader = require('../../utils/themeLoader');
@@ -31,8 +34,33 @@ const {
   translateSliders
 } = require('../../utils/contentTranslator');
 const { expandSlidersToSlides } = require('../../utils/sliderHelper');
+const { searchPosts, searchPages } = require('../../utils/searchHelper');
+const { validateCommentParent } = require('../../utils/commentDepthHelper');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
+
+async function renderProtectedContent(res, locals, options = {}) {
+  return res.render('public/password-protected', {
+    title: 'Protected Content',
+    resourceType: options.resourceType,
+    resourceId: options.resourceId,
+    slug: options.slug,
+    actionUrl: options.actionUrl,
+    error: options.error || null,
+    returnTitle: locals.title || 'Content',
+    csrfToken: res.locals.csrfToken
+  });
+}
+
+function publicSeoFromRecord(record, pathPrefix) {
+  const built = buildSeoMeta(record, { pathPrefix, baseUrl: appConfig.url });
+  return meta(built.ogTitle, built.ogDescription, built.image, {
+    canonical: built.canonical,
+    robots: built.robots,
+    noindex: built.noindex,
+    nofollow: built.nofollow
+  });
+}
 
 async function renderTheme(res, template, locals, templateContext = {}) {
   return res.render(await themeLoader.resolveTemplate(template, templateContext), locals);
@@ -229,17 +257,42 @@ async function post(req, res, next) {
     const loaded = await loadPostForRender(req.params.slug, req);
     if (!loaded) return res.status(404).render('public/error', { title: 'Post Not Found', code: 404, message: 'This post could not be found or is no longer published.' });
     const { row, relatedPosts, prevPost, nextPost } = loaded;
+
+    if (row.post_password_hash && !isContentUnlocked(req, 'post', row.id, row.post_password_hash)) {
+      if (req.method === 'POST' && req.body.content_password) {
+        const ok = await verifyContentPassword(req.body.content_password, row.post_password_hash);
+        if (ok) {
+          setContentUnlockCookie(res, 'post', row.id, row.post_password_hash);
+          return res.redirect(`/post/${row.slug}`);
+        }
+        return renderProtectedContent(res, 'post', { title: row.title }, {
+          resourceType: 'post',
+          resourceId: row.id,
+          slug: row.slug,
+          actionUrl: `/post/${row.slug}`,
+          error: 'Incorrect password.'
+        });
+      }
+      return renderProtectedContent(res, 'post', { title: row.title }, {
+        resourceType: 'post',
+        resourceId: row.id,
+        slug: row.slug,
+        actionUrl: `/post/${row.slug}`
+      });
+    }
+
     await row.increment('views_count');
+    const seo = publicSeoFromRecord(row, '/post/');
     return renderPublic(res, 'post', {
       title: row.title,
-      seo: meta(row.seo_title || row.title, row.seo_description || row.excerpt, row.og_image || row.featured_image),
+      seo,
       post: row,
       relatedPosts,
       prevPost,
       nextPost,
       commentTree: row.comments || [],
       commentCount: row.commentCount || 0,
-      schema: postSchema(row, `${req.protocol}://${req.get('host')}${req.originalUrl}`)
+      schema: postSchema(row, seo.canonical || `${req.protocol}://${req.get('host')}/post/${row.slug}`)
     }, { before: 'beforePostRender', after: 'afterPostRender', template: 'post' }, {
       postType: row.post_type || 'post',
       slug: row.slug
@@ -263,9 +316,15 @@ async function category(req, res, next) {
       order: [['published_at', 'DESC']]
     });
     const translatedCategory = await translateCategory(res.locals.translationEngine, categoryRow);
+    const seo = meta(
+      categoryRow.seo_title || translatedCategory.name,
+      categoryRow.seo_description || translatedCategory.description,
+      '',
+      { canonical: `${appConfig.url}/category/${categoryRow.slug}` }
+    );
     return renderPublic(res, 'category', {
       title: translatedCategory.name,
-      seo: meta(translatedCategory.name, translatedCategory.description),
+      seo,
       heading: translatedCategory.name,
       posts: rows,
       pagination: pageMeta(count, page, limit)
@@ -289,13 +348,63 @@ async function tag(req, res, next) {
       order: [['published_at', 'DESC']]
     });
     const translatedTag = await translateTag(res.locals.translationEngine, tagRow);
+    const seo = meta(
+      tagRow.seo_title || translatedTag.name,
+      tagRow.seo_description || translatedTag.description,
+      '',
+      { canonical: `${appConfig.url}/tag/${tagRow.slug}` }
+    );
     return renderPublic(res, 'tag', {
       title: translatedTag.name,
-      seo: meta(translatedTag.name, translatedTag.description),
+      seo,
       heading: translatedTag.name,
       posts: rows,
       pagination: pageMeta(count, page, limit)
     }, null, { slug: tagRow.slug });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function taxonomyTerm(req, res, next) {
+  try {
+    const taxonomyRow = await Taxonomy.findOne({
+      where: { slug: req.params.taxonomySlug, status: 'active', public: true }
+    });
+    if (!taxonomyRow) {
+      return res.status(404).render('public/error', { title: 'Not Found', code: 404, message: 'This taxonomy could not be found.' });
+    }
+    const termRow = await TaxonomyTerm.findOne({
+      where: { taxonomy_id: taxonomyRow.id, slug: req.params.termSlug }
+    });
+    if (!termRow) {
+      return res.status(404).render('public/error', { title: 'Not Found', code: 404, message: 'This term could not be found.' });
+    }
+    const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
+    const { rows, count } = await Post.findAndCountAll({
+      where: { status: 'published', post_type: 'post' },
+      include: [
+        ...publishedPostInclude,
+        { model: TaxonomyTerm, as: 'taxonomyTerms', where: { id: termRow.id }, required: true }
+      ],
+      distinct: true,
+      limit,
+      offset,
+      order: [['published_at', 'DESC']]
+    });
+    const seo = meta(
+      termRow.seo_title || termRow.name,
+      termRow.seo_description || termRow.description,
+      '',
+      { canonical: `${appConfig.url}/taxonomy/${taxonomyRow.slug}/${termRow.slug}` }
+    );
+    return renderPublic(res, 'tag', {
+      title: `${termRow.name} — ${taxonomyRow.name}`,
+      seo,
+      heading: termRow.name,
+      posts: rows,
+      pagination: pageMeta(count, page, limit)
+    }, null, { slug: termRow.slug });
   } catch (error) {
     return next(error);
   }
@@ -306,14 +415,42 @@ async function page(req, res, next) {
     const previewRequested = Boolean(req.query.preview);
     const where = { slug: req.params.slug };
     if (!previewRequested) where.status = 'published';
-    const row = await Page.findOne({ where });
+    const row = await Page.findOne({
+      where,
+      include: [{ model: Page, as: 'parent', attributes: ['id', 'title', 'slug'] }]
+    });
     if (!row) return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
     if (row.status !== 'published' && !canPreviewContent(req, 'page', row)) {
       return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
     }
+
+    if (row.page_password_hash && !isContentUnlocked(req, 'page', row.id, row.page_password_hash)) {
+      if (req.method === 'POST' && req.body.content_password) {
+        const ok = await verifyContentPassword(req.body.content_password, row.page_password_hash);
+        if (ok) {
+          setContentUnlockCookie(res, 'page', row.id, row.page_password_hash);
+          return res.redirect(`/page/${row.slug}`);
+        }
+        return renderProtectedContent(res, 'page', { title: row.title }, {
+          resourceType: 'page',
+          resourceId: row.id,
+          slug: row.slug,
+          actionUrl: `/page/${row.slug}`,
+          error: 'Incorrect password.'
+        });
+      }
+      return renderProtectedContent(res, 'page', { title: row.title }, {
+        resourceType: 'page',
+        resourceId: row.id,
+        slug: row.slug,
+        actionUrl: `/page/${row.slug}`
+      });
+    }
+
+    const seo = publicSeoFromRecord(row, '/page/');
     return renderPublic(res, 'page', {
       title: row.title,
-      seo: meta(row.seo_title || row.title, row.seo_description, row.og_image || row.featured_image),
+      seo,
       page: row
     }, { before: 'beforePageRender', after: 'afterPageRender', template: 'page' }, { slug: row.slug });
   } catch (error) {
@@ -330,36 +467,16 @@ async function search(req, res, next) {
     let count = 0;
 
     if (q) {
-      const postResult = await Post.findAndCountAll({
-        where: {
-          status: 'published',
-          post_type: 'post',
-          [Op.or]: [
-            { title: { [Op.like]: `%${q}%` } },
-            { excerpt: { [Op.like]: `%${q}%` } },
-            { content: { [Op.like]: `%${q}%` } }
-          ]
-        },
-        include: publishedPostInclude,
-        distinct: true,
+      const postResult = await searchPosts(q, {
         limit,
         offset,
+        include: publishedPostInclude,
+        distinct: true,
         order: [['published_at', 'DESC']]
       });
       posts = postResult.rows;
       count = postResult.count;
-
-      pages = await Page.findAll({
-        where: {
-          status: 'published',
-          [Op.or]: [
-            { title: { [Op.like]: `%${q}%` } },
-            { content: { [Op.like]: `%${q}%` } }
-          ]
-        },
-        limit: 8,
-        order: [['updated_at', 'DESC']]
-      });
+      pages = await searchPages(q, { limit: 8 });
     }
 
     return renderPublic(res, 'search', {
@@ -483,6 +600,23 @@ async function comment(req, res, next) {
       user_agent: req.get('user-agent'),
       status: 'pending'
     };
+    const depthCheck = await validateCommentParent(commentPayload.parent_id, postRow.id);
+    if (!depthCheck.valid) {
+      const loaded = await loadPostForRender(postRow.slug);
+      if (!loaded) return res.redirect('back');
+      const { row, relatedPosts, prevPost, nextPost } = loaded;
+      return renderPublic(res, 'post', {
+        title: row.title,
+        seo: meta(row.seo_title || row.title, row.seo_description || row.excerpt, row.og_image || row.featured_image),
+        post: row,
+        relatedPosts,
+        prevPost,
+        nextPost,
+        commentPrefill,
+        formError: depthCheck.error,
+        schema: postSchema(row, `${req.protocol}://${req.get('host')}/post/${row.slug}`)
+      }, { before: 'beforePostRender', after: 'afterPostRender', template: 'post' });
+    }
     const allowed = await pluginLoader.applyFilters('beforeCommentSave', commentPayload, { req, res, post: postRow });
     if (!allowed) {
       const loaded = await loadPostForRender(postRow.slug);
@@ -518,19 +652,30 @@ async function comment(req, res, next) {
 async function sitemap(req, res, next) {
   try {
     const [posts, pages] = await Promise.all([
-      Post.findAll({ where: { status: 'published', post_type: 'post' }, attributes: ['slug', 'updated_at'] }),
-      Page.findAll({ where: { status: 'published' }, attributes: ['slug', 'updated_at'] })
+      Post.findAll({
+        where: { status: 'published', post_type: 'post', sitemap_include: true },
+        attributes: ['slug', 'updated_at']
+      }),
+      Page.findAll({
+        where: { status: 'published', sitemap_include: true },
+        attributes: ['slug', 'updated_at']
+      })
     ]);
+    const { getPermalinkSettings, postPath, pagePath } = require('../../utils/permalinkHelper');
+    const permalinkSettings = await getPermalinkSettings(SiteSetting);
     const host = `${req.protocol}://${req.get('host')}`;
-    const urls = [
-      `${host}/`,
-      `${host}/blog`,
-      ...posts.map((row) => `${host}/post/${row.slug}`),
-      ...pages.map((row) => `${host}/page/${row.slug}`)
+    const entries = [
+      { loc: `${host}/`, lastmod: null },
+      { loc: `${host}/blog`, lastmod: null },
+      ...posts.map((row) => ({ loc: `${host}${postPath(row, permalinkSettings)}`, lastmod: row.updated_at })),
+      ...pages.map((row) => ({ loc: `${host}${pagePath(row, permalinkSettings)}`, lastmod: row.updated_at }))
     ];
     res.type('application/xml');
-    return res.send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls
-      .map((url) => `<url><loc>${url}</loc></url>`)
+    return res.send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${entries
+      .map((entry) => {
+        const lastmod = entry.lastmod ? `<lastmod>${new Date(entry.lastmod).toISOString()}</lastmod>` : '';
+        return `<url><loc>${entry.loc}</loc>${lastmod}</url>`;
+      })
       .join('')}</urlset>`);
   } catch (error) {
     return next(error);
@@ -541,4 +686,4 @@ function robots(req, res) {
   res.type('text/plain').send(`User-agent: *\nAllow: /\nSitemap: ${req.protocol}://${req.get('host')}/sitemap.xml`);
 }
 
-module.exports = { home, blog, post, category, tag, page, search, contact, submitContact, comment, sitemap, robots };
+module.exports = { home, blog, post, category, tag, taxonomyTerm, page, search, contact, submitContact, comment, sitemap, robots };

@@ -21,9 +21,16 @@ async function removeTheme(slug) {
 async function restoreDefaultTheme() {
   await models.Theme.update({ active: false }, { where: {} });
   await models.ThemeSetting.update({ active: false }, { where: {} });
+  const [classic] = await models.Theme.findOrCreate({
+    where: { slug: 'classic-blog' },
+    defaults: { name: 'Classic Blog', slug: 'classic-blog', version: '1.0.0', active: true }
+  });
+  await models.ThemeSetting.findOrCreate({
+    where: { theme_name: 'classic-blog' },
+    defaults: { theme_name: 'classic-blog', active: true }
+  });
   await models.ThemeSetting.update({ active: true }, { where: { theme_name: 'classic-blog' } });
-  const classic = await models.Theme.findOne({ where: { slug: 'classic-blog' } });
-  if (classic) await classic.update({ active: true });
+  await classic.update({ active: true });
 }
 
 beforeAll(async () => {

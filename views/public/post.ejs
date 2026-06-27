@@ -103,7 +103,7 @@
         <% if (prevPost || nextPost) { %>
           <nav class="post-nav-links" aria-label="Post navigation">
             <% if (prevPost) { %>
-              <a class="post-nav-card post-nav-card--prev" href="/post/<%= prevPost.slug %>">
+              <a class="post-nav-card post-nav-card--prev" href="<%= postUrl(prevPost) %>">
                 <span class="post-nav-direction"><i class="bi bi-arrow-left" aria-hidden="true"></i> Previous</span>
                 <span class="post-nav-title"><%= prevPost.title %></span>
               </a>
@@ -111,7 +111,7 @@
               <span class="post-nav-spacer"></span>
             <% } %>
             <% if (nextPost) { %>
-              <a class="post-nav-card post-nav-card--next" href="/post/<%= nextPost.slug %>">
+              <a class="post-nav-card post-nav-card--next" href="<%= postUrl(nextPost) %>">
                 <span class="post-nav-direction">Next <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
                 <span class="post-nav-title"><%= nextPost.title %></span>
               </a>

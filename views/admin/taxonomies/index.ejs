@@ -1,0 +1,29 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header">
+      <h1>Taxonomies</h1>
+      <a class="np-btn np-btn-primary" href="/admin/taxonomies/create"><i class="bi bi-plus-lg"></i> Add Taxonomy</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table np-table">
+        <thead><tr><th>Name</th><th>Slug</th><th>Post types</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% taxonomies.forEach(function(t) { %>
+          <tr>
+            <td><%= t.name %></td>
+            <td><code><%= t.slug %></code></td>
+            <td><%= Array.isArray(t.post_types) ? t.post_types.join(', ') : 'post' %></td>
+            <td><%= t.status %></td>
+            <td><a href="/admin/taxonomies/<%= t.slug %>/terms">Manage terms</a></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

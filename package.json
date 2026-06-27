@@ -52,6 +52,24 @@
   ],
   "author": "NodePress CMS",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Coder-MoeTain/node_cms.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Coder-MoeTain/node_cms/issues"
+  },
+  "homepage": "https://github.com/Coder-MoeTain/node_cms#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Coder-MoeTain/node_cms.git"
+  },
   "dependencies": {
     "adm-zip": "^0.5.17",
     "bcrypt": "^6.0.0",

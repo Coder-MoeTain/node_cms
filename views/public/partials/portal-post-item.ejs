@@ -14,14 +14,14 @@
 %>
 <article class="portal-post-item site-post-list-item<%= isHot ? ' is-hot' : '' %><%= hasThumb ? ' has-thumb' : '' %>">
   <% if (hasThumb) { %>
-    <a class="portal-post-thumb" href="/post/<%= post.slug %>" aria-hidden="true" tabindex="-1">
+    <a class="portal-post-thumb" href="<%= postUrl(post) %>" aria-hidden="true" tabindex="-1">
       <img src="<%= featuredImage %>" alt="<%= post.title %>" loading="lazy">
     </a>
   <% } %>
   <div class="portal-post-main">
     <% if (isHot) { %><span class="portal-hot-badge">Hot</span><% } %>
     <h3 class="portal-post-title">
-      <a href="/post/<%= post.slug %>"><%= post.title %></a>
+      <a href="<%= postUrl(post) %>"><%= post.title %></a>
     </h3>
     <% if (showExcerptText && post.excerpt) { %><p class="portal-post-excerpt"><%= post.excerpt.length > 140 ? post.excerpt.slice(0, 140) + '…' : post.excerpt %></p><% } %>
     <div class="portal-post-meta">
@@ -31,6 +31,6 @@
       <% if (showClosingDate && post.excerpt) { %><span class="portal-post-closing">Closing: <%= post.excerpt.slice(0, 60) %></span><% } %>
       <%- include('post-edit-link', { post }) %>
     </div>
-    <% if (showReadMoreLink) { %><a class="portal-read-more" href="/post/<%= post.slug %>">Read more <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
+    <% if (showReadMoreLink) { %><a class="portal-read-more" href="<%= postUrl(post) %>">Read more <i class="bi bi-arrow-right" aria-hidden="true"></i></a><% } %>
   </div>
 </article>

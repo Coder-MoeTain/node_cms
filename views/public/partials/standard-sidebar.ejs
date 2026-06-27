@@ -31,7 +31,7 @@
           <ul class="list-unstyled mb-0">
             <% recentPosts.forEach(function(post) { %>
               <li class="mb-2 pb-2 border-bottom">
-                <a href="/post/<%= post.slug %>"><%= post.title %></a>
+                <a href="<%= postUrl(post) %>"><%= post.title %></a>
                 <% if (post.published_at) { %><small class="text-muted d-block"><%= formatDate(post.published_at) %></small><% } %>
               </li>
             <% }) %>

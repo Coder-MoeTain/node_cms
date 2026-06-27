@@ -15,6 +15,7 @@ const { getPortalStats } = require('../utils/portalStats');
 const policy = require('../utils/policy');
 const { createEngine, normalizeLocale } = require('../utils/translationEngine');
 const { createDateFormatters, resolveSiteTimezone } = require('../utils/timezoneHelper');
+const { getPermalinkSettings, postPath, pagePath } = require('../utils/permalinkHelper');
 
 function buildMenuTree(items = []) {
   const plainItems = items
@@ -176,6 +177,10 @@ async function loadSiteContext(req, res, next) {
       if (type === 'page') return `/admin/pages/${post.id}/edit`;
       return `/admin/content/${type}/${post.id}/edit`;
     };
+    const permalinkSettings = await getPermalinkSettings(SiteSetting);
+    res.locals.permalinkSettings = permalinkSettings;
+    res.locals.postUrl = (post) => postPath(post, permalinkSettings);
+    res.locals.pageUrl = (page) => pagePath(page, permalinkSettings);
     return next();
   } catch (error) {
     return next(error);

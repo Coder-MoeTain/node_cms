@@ -48,6 +48,7 @@ const network = require('../controllers/admin/networkController');
 const autosave = require('../controllers/admin/autosaveController');
 const comments = require('../controllers/admin/commentController');
 const translation = require('../controllers/admin/translationController');
+const taxonomies = require('../controllers/admin/taxonomyController');
 
 const router = express.Router();
 
@@ -265,6 +266,12 @@ router.post('/comments/:id/moderate', requireAuth, can('manage_comments'), comme
 router.get('/comments/:id/reply', requireAuth, can('manage_comments'), comments.reply);
 router.post('/comments/:id/reply', requireAuth, can('manage_comments'), comments.storeReply);
 router.post('/comments/bulk', requireAuth, can('manage_comments'), comments.bulk);
+
+router.get('/taxonomies', requireAuth, can('manage_categories'), taxonomies.index);
+router.get('/taxonomies/create', requireAuth, can('manage_categories'), taxonomies.create);
+router.post('/taxonomies', requireAuth, can('manage_categories'), taxonomies.store);
+router.get('/taxonomies/:slug/terms', requireAuth, can('manage_categories'), taxonomies.terms);
+router.post('/taxonomies/:slug/terms', requireAuth, can('manage_categories'), taxonomies.storeTerm);
 
 function resourcePermission(req, res, next) {
   try {
