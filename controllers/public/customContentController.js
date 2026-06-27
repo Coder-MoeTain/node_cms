@@ -6,13 +6,14 @@ const { resolvePublicContent } = require('../../utils/publicContentRenderer');
 const { attachFseLocals } = require('../../utils/fsePublicHelper');
 const { siteScopeWhere } = require('../../utils/siteScope');
 const { translatePost, translatePosts } = require('../../utils/contentTranslator');
+const { renderPublicError } = require('../../utils/publicErrorRender');
 
 async function archive(req, res, next) {
   try {
     const type = await models.CustomPostType.findOne({
       where: siteScopeWhere(req, { slug: req.params.typeSlug, status: 'active', has_archive: true })
     });
-    if (!type) return res.status(404).render('errors/404', { title: 'Not Found' });
+    if (!type) return renderPublicError(res, { title: 'Not Found', code: 404, message: 'This content type could not be found.' });
 
     const { page, limit, offset } = getPagination(req, 10);
     const { rows, count } = await models.Post.findAndCountAll({
@@ -48,7 +49,7 @@ async function single(req, res, next) {
     const type = await models.CustomPostType.findOne({
       where: siteScopeWhere(req, { slug: req.params.typeSlug, status: 'active' })
     });
-    if (!type) return res.status(404).render('errors/404', { title: 'Not Found' });
+    if (!type) return renderPublicError(res, { title: 'Not Found', code: 404, message: 'This content type could not be found.' });
 
     const postRow = await models.Post.findOne({
       where: siteScopeWhere(req, {
@@ -58,7 +59,7 @@ async function single(req, res, next) {
       }),
       include: [{ model: models.User, as: 'author', attributes: ['id', 'name'] }]
     });
-    if (!postRow) return res.status(404).render('errors/404', { title: 'Not Found' });
+    if (!postRow) return renderPublicError(res, { title: 'Not Found', code: 404, message: 'This item could not be found or is no longer published.' });
 
     await postRow.increment('views_count');
 

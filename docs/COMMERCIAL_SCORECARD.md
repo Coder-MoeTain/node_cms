@@ -8,7 +8,7 @@
 ## Final verification fixes (this pass)
 
 - FSE public templates render on blog, archive, search, contact, CPT archive/single
-- FSE **404/error** pages via `renderPublicError` (standard + portal + FSE shell)
+- FSE **404/error** pages via `renderPublicError` (standard + portal + FSE shell); CPT public routes included
 - Revision compare UI (checkboxes + Compare button) and posts/pages revision links
 - Page revision restore preserves `block_content_json` and excerpt
 - Admin Ctrl+K search includes custom post content
@@ -16,7 +16,7 @@
 - Autosave **conflict warning** when another user updates content (`resource` snapshot on GET)
 - API `_embed=author` fix (`profile_image` field)
 - `docs/MULTISITE.md` synced to migrations 022–024
-- `docs/COMMERCIAL_READINESS.md` synced to 622 tests / 22 blocks
+- `docs/COMMERCIAL_READINESS.md` synced to 626 tests / 22 blocks
 - Integration tests: `fsePublicRoutes`, `publicErrorRender`, `revisionsAdminUi`, extended `adminSearchApi`, `apiV1` embed
 
 ## Score table
@@ -30,7 +30,7 @@
 | Public UI | **10/10** | Portal + standard layouts, utility bar, accessibility baseline |
 | Admin UI/UX | **10/10** | Ctrl+K search (incl. CPT), revisions UX, onboarding, list tables |
 | Security | **10/10** | CSRF, 2FA, WAF, JWT scopes, SSRF-safe import, `.env` ignored |
-| Tests/CI | **10/10** | 622 tests, coverage thresholds, GitHub Actions CI + security workflow |
+| Tests/CI | **10/10** | 626 tests, 106 suites, coverage thresholds, GitHub Actions CI + security workflow |
 | Documentation | **10/10** | 28 docs including MULTISITE, BLOCK_EDITOR, IMPORT_EXPORT, this scorecard |
 | Commercial readiness | **10/10** | Valid package.json, `.gitignore`, health endpoints, Docker/PM2 configs |
 

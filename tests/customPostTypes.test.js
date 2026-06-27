@@ -94,6 +94,7 @@ describe('Custom Post Types', () => {
     await type.update({ status: 'inactive' });
     const archive = await request(app).get(`/types/${typeSlug}`);
     expect(archive.status).toBe(404);
+    expect(archive.text).toMatch(/site-main|portal-main|could not be found|404/i);
     await type.update({ status: 'active' });
   });
 
