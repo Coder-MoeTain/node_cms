@@ -38,6 +38,7 @@ const { searchPosts, searchPages } = require('../../utils/searchHelper');
 const { validateCommentParent } = require('../../utils/commentDepthHelper');
 const { buildPageBreadcrumbs, loadChildPages } = require('../../utils/pageHelper');
 const { getPermalinkSettings, pagePath } = require('../../utils/permalinkHelper');
+const { siteScopeWhere } = require('../../utils/siteScope');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
 
@@ -128,11 +129,11 @@ async function renderPublic(res, template, locals, renderHooks = null, templateC
   return renderTheme(res, template, data, templateContext);
 }
 
-async function postsForCategorySlug(slug, limit = 6) {
-  const categoryRow = await Category.findOne({ where: { slug } });
+async function postsForCategorySlug(slug, limit = 6, req = null) {
+  const categoryRow = await Category.findOne({ where: siteScopeWhere(req, { slug }) });
   if (!categoryRow) return [];
   return Post.findAll({
-    where: { category_id: categoryRow.id, status: 'published', post_type: 'post' },
+    where: siteScopeWhere(req, { category_id: categoryRow.id, status: 'published', post_type: 'post' }),
     include: publishedPostInclude,
     limit,
     order: [['published_at', 'DESC']]
@@ -152,15 +153,15 @@ async function home(req, res, next) {
       hotPosts,
       mediaItems
     ] = await Promise.all([
-      Post.findAll({ where: { status: 'published', post_type: 'post' }, include: publishedPostInclude, limit: 6, order: [['published_at', 'DESC']] }),
+      Post.findAll({ where: siteScopeWhere(req, { status: 'published', post_type: 'post' }), include: publishedPostInclude, limit: 6, order: [['published_at', 'DESC']] }),
       Banner.findAll({ where: { active: true }, order: [['display_order', 'ASC']] }),
       Slider.findAll({ where: { active: true }, order: [['display_order', 'ASC']] }),
-      postsForCategorySlug('news', 6),
-      postsForCategorySlug('announcements', 6),
-      postsForCategorySlug('tenders', 5),
-      postsForCategorySlug('jobs', 5),
-      Post.findAll({ where: { status: 'published', post_type: 'post' }, include: publishedPostInclude, limit: 8, order: [['views_count', 'DESC']] }),
-      Media.findAll({ where: { file_type: { [Op.in]: ['image', 'video'] } }, limit: 8, order: [['created_at', 'DESC']] })
+      postsForCategorySlug('news', 6, req),
+      postsForCategorySlug('announcements', 6, req),
+      postsForCategorySlug('tenders', 5, req),
+      postsForCategorySlug('jobs', 5, req),
+      Post.findAll({ where: siteScopeWhere(req, { status: 'published', post_type: 'post' }), include: publishedPostInclude, limit: 8, order: [['views_count', 'DESC']] }),
+      Media.findAll({ where: siteScopeWhere(req, { file_type: { [Op.in]: ['image', 'video'] } }), limit: 8, order: [['created_at', 'DESC']] })
     ]);
 
     const latestNews = newsPosts.length ? newsPosts : posts.slice(0, 6);
@@ -197,7 +198,7 @@ async function blog(req, res, next) {
   try {
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const { rows, count } = await Post.findAndCountAll({
-      where: { status: 'published', post_type: 'post' },
+      where: siteScopeWhere(req, { status: 'published', post_type: 'post' }),
       include: publishedPostInclude,
       distinct: true,
       limit,
@@ -216,7 +217,7 @@ async function loadPostForRender(slug, req) {
   if (!previewRequested) where.status = 'published';
 
   const row = await Post.findOne({
-    where,
+    where: siteScopeWhere(req, where),
     include: [...publishedPostInclude]
   });
   if (!row) return null;
@@ -230,23 +231,23 @@ async function loadPostForRender(slug, req) {
   row.setDataValue('commentCount', countComments(buildCommentTree(allComments)));
   const [relatedPosts, prevPost, nextPost] = await Promise.all([
     Post.findAll({
-      where: {
+      where: siteScopeWhere(req, {
         id: { [Op.ne]: row.id },
         status: 'published',
         post_type: 'post',
         ...(row.category_id ? { category_id: row.category_id } : {})
-      },
+      }),
       include: publishedPostInclude,
       limit: 3,
       order: [['published_at', 'DESC']]
     }),
     Post.findOne({
-      where: { status: 'published', post_type: 'post', published_at: { [Op.lt]: row.published_at || row.created_at } },
+      where: siteScopeWhere(req, { status: 'published', post_type: 'post', published_at: { [Op.lt]: row.published_at || row.created_at } }),
       order: [['published_at', 'DESC']],
       attributes: ['title', 'slug']
     }),
     Post.findOne({
-      where: { status: 'published', post_type: 'post', published_at: { [Op.gt]: row.published_at || row.created_at } },
+      where: siteScopeWhere(req, { status: 'published', post_type: 'post', published_at: { [Op.gt]: row.published_at || row.created_at } }),
       order: [['published_at', 'ASC']],
       attributes: ['title', 'slug']
     })
@@ -306,11 +307,11 @@ async function post(req, res, next) {
 
 async function category(req, res, next) {
   try {
-    const categoryRow = await Category.findOne({ where: { slug: req.params.slug } });
+    const categoryRow = await Category.findOne({ where: siteScopeWhere(req, { slug: req.params.slug }) });
     if (!categoryRow) return res.status(404).render('public/error', { title: 'Category Not Found', code: 404, message: 'This category could not be found.' });
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const { rows, count } = await Post.findAndCountAll({
-      where: { category_id: categoryRow.id, status: 'published', post_type: 'post' },
+      where: siteScopeWhere(req, { category_id: categoryRow.id, status: 'published', post_type: 'post' }),
       include: publishedPostInclude,
       distinct: true,
       limit,
@@ -342,7 +343,7 @@ async function tag(req, res, next) {
     const tagRow = await Tag.findOne({ where: { slug: req.params.slug } });
     if (!tagRow) return res.status(404).render('public/error', { title: 'Tag Not Found', code: 404, message: 'This tag could not be found.' });
     const { rows, count } = await Post.findAndCountAll({
-      where: { status: 'published', post_type: 'post' },
+      where: siteScopeWhere(req, { status: 'published', post_type: 'post' }),
       include: [...publishedPostInclude, { model: Tag, where: { id: tagRow.id } }],
       distinct: true,
       limit,
@@ -384,7 +385,7 @@ async function taxonomyTerm(req, res, next) {
     }
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const { rows, count } = await Post.findAndCountAll({
-      where: { status: 'published', post_type: 'post' },
+      where: siteScopeWhere(req, { status: 'published', post_type: 'post' }),
       include: [
         ...publishedPostInclude,
         { model: TaxonomyTerm, as: 'taxonomyTerms', where: { id: termRow.id }, required: true }
@@ -418,7 +419,7 @@ async function page(req, res, next) {
     const where = { slug: req.params.slug };
     if (!previewRequested) where.status = 'published';
     const row = await Page.findOne({
-      where,
+      where: siteScopeWhere(req, where),
       include: [{ model: Page, as: 'parent', attributes: ['id', 'title', 'slug'] }]
     });
     if (!row) return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
@@ -482,11 +483,12 @@ async function search(req, res, next) {
         offset,
         include: publishedPostInclude,
         distinct: true,
-        order: [['published_at', 'DESC']]
+        order: [['published_at', 'DESC']],
+        scopeReq: req
       });
       posts = postResult.rows;
       count = postResult.count;
-      pages = await searchPages(q, { limit: 8 });
+      pages = await searchPages(q, { limit: 8, scopeReq: req });
     }
 
     return renderPublic(res, 'search', {
@@ -663,11 +665,11 @@ async function sitemap(req, res, next) {
   try {
     const [posts, pages] = await Promise.all([
       Post.findAll({
-        where: { status: 'published', post_type: 'post', sitemap_include: true },
+        where: siteScopeWhere(req, { status: 'published', post_type: 'post', sitemap_include: true }),
         attributes: ['slug', 'updated_at']
       }),
       Page.findAll({
-        where: { status: 'published', sitemap_include: true },
+        where: siteScopeWhere(req, { status: 'published', sitemap_include: true }),
         attributes: ['slug', 'updated_at']
       })
     ]);

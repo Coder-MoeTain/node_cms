@@ -26,6 +26,8 @@ const brandingImageUpload = upload.image.fields([
 const auth = require('../controllers/admin/authController');
 const adminLoginPath = require('../utils/adminLoginPath');
 const dashboard = require('../controllers/admin/dashboardController');
+const adminSearch = require('../controllers/admin/searchController');
+const marketplace = require('../controllers/admin/marketplaceController');
 const crud = require('../controllers/admin/crudController');
 const media = require('../controllers/admin/mediaController');
 const plugins = require('../controllers/admin/pluginController');
@@ -107,6 +109,7 @@ router.get('/profile/2fa/recovery-codes', requireAuth, auth.recoveryCodesView);
 router.use(requireAuth, activityLogMiddleware('admin'));
 
 router.get('/', requireAuth, can('view_dashboard'), dashboard.dashboard);
+router.get('/api/search', requireAuth, adminSearch.adminSearch);
 router.post('/quick-draft', requireAuth, canAny(['manage_posts', 'create_posts']), dashboard.quickDraft);
 
 router.get('/media', requireAuth, canAny(['manage_media', 'upload_media']), media.index);
@@ -120,6 +123,7 @@ router.post('/media/bulk-delete', requireAuth, can('manage_media'), media.bulkDe
 router.post('/media/regenerate-thumbnails', requireAuth, can('manage_media'), media.regenerateThumbnails);
 
 router.get('/plugins', requireAuth, can('manage_plugins'), plugins.index);
+router.get('/plugins/marketplace', requireAuth, can('manage_plugins'), marketplace.index);
 router.get('/plugins.json', requireAuth, can('manage_plugins'), plugins.pluginsJson);
 router.post('/plugins/sync', requireAuth, can('manage_plugins'), plugins.syncPlugins);
 router.post('/plugins/bulk', requireAuth, can('manage_plugins'), plugins.bulkAction);
@@ -226,6 +230,7 @@ router.get('/tools/health', requireAuth, canAny(['manage_settings', 'manage_secu
 router.get('/tools/health.json', requireAuth, canAny(['manage_settings', 'manage_security']), tools.siteHealthJson);
 router.get('/tools/export', requireAuth, can('manage_settings'), importExport.exportForm);
 router.get('/tools/export/download', requireAuth, can('manage_settings'), importExport.exportDownload);
+router.get('/tools/export/wxr', requireAuth, can('manage_settings'), importExport.exportWxrDownload);
 router.get('/tools/import', requireAuth, can('manage_settings'), importExport.importForm);
 router.post('/tools/import/preview', requireAuth, can('manage_settings'), jsonUpload.single('file'), importExport.importPreview);
 router.post('/tools/import', requireAuth, can('manage_settings'), importExport.importRun);
@@ -254,6 +259,8 @@ router.put('/templates/:id', requireAuth, can('manage_themes'), templates.update
 router.get('/network', requireAuth, network.index);
 router.get('/network/create', requireAuth, network.create);
 router.post('/network', requireAuth, network.store);
+router.get('/network/:id/settings', requireAuth, network.settingsForm);
+router.post('/network/:id/settings', requireAuth, network.settingsUpdate);
 
 router.post('/autosave', requireAuth, autosave.store);
 router.get('/autosave', requireAuth, autosave.show);

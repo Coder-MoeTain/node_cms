@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"
+  xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:wp="http://wordpress.org/export/1.2/">
+  <channel>
+    <title>Sample WordPress Site</title>
+    <item>
+      <title>Hello WXR World</title>
+      <link>https://example.com/hello-wxr-world/</link>
+      <content:encoded><![CDATA[<p>Imported from WordPress WXR.</p>]]></content:encoded>
+      <excerpt:encoded><![CDATA[Imported excerpt]]></excerpt:encoded>
+      <wp:post_type>post</wp:post_type>
+      <wp:status>publish</wp:status>
+      <wp:post_name>hello-wxr-world</wp:post_name>
+      <category domain="category" nicename="news"><![CDATA[News]]></category>
+      <category domain="post_tag" nicename="wxr"><![CDATA[WXR]]></category>
+    </item>
+    <item>
+      <title>About Us</title>
+      <content:encoded><![CDATA[<p>About page body.</p>]]></content:encoded>
+      <wp:post_type>page</wp:post_type>
+      <wp:status>publish</wp:status>
+      <wp:post_name>about-us</wp:post_name>
+    </item>
+    <item>
+      <title>Skipped Attachment</title>
+      <wp:post_type>attachment</wp:post_type>
+      <wp:status>inherit</wp:status>
+    </item>
+    <item>
+      <title>Hero Image</title>
+      <wp:post_type>attachment</wp:post_type>
+      <wp:status>inherit</wp:status>
+      <wp:attachment_url>https://example.com/wp-content/uploads/hero.jpg</wp:attachment_url>
+      <wp:post_mime_type>image/jpeg</wp:post_mime_type>
+    </item>
+  </channel>
+</rss>

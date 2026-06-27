@@ -1,6 +1,11 @@
 const { Op } = require('sequelize');
 const sequelize = require('../config/database');
 const { Post, Page } = require('../models');
+const { siteScopeWhere } = require('./siteScope');
+
+function scopedWhere(scopeReq, baseWhere) {
+  return scopeReq ? siteScopeWhere(scopeReq, baseWhere) : baseWhere;
+}
 
 function escapeSearchTerm(query) {
   return String(query || '').trim().replace(/[+\-><()~*"@]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -51,9 +56,10 @@ async function searchPosts(query, options = {}) {
     status = 'published',
     include = [],
     order = [['published_at', 'DESC']],
-    distinct = false
+    distinct = false,
+    scopeReq = null
   } = options;
-  const baseWhere = { status, post_type: 'post' };
+  const baseWhere = scopedWhere(scopeReq, { status, post_type: 'post' });
   const against = booleanAgainst(term);
 
   try {
@@ -80,8 +86,8 @@ async function searchPosts(query, options = {}) {
 async function searchPostsList(query, options = {}) {
   const term = escapeSearchTerm(query);
   if (!term) return [];
-  const { limit = 20, status = 'published', order = [['published_at', 'DESC']] } = options;
-  const baseWhere = { status, post_type: 'post' };
+  const { limit = 20, status = 'published', order = [['published_at', 'DESC']], scopeReq = null } = options;
+  const baseWhere = scopedWhere(scopeReq, { status, post_type: 'post' });
   const against = booleanAgainst(term);
   try {
     return await Post.findAll({
@@ -101,8 +107,8 @@ async function searchPostsList(query, options = {}) {
 async function searchPages(query, options = {}) {
   const term = escapeSearchTerm(query);
   if (!term) return [];
-  const { limit = 10, status = 'published', order = [['updated_at', 'DESC']] } = options;
-  const baseWhere = { status };
+  const { limit = 10, status = 'published', order = [['updated_at', 'DESC']], scopeReq = null } = options;
+  const baseWhere = scopedWhere(scopeReq, { status });
   const against = booleanAgainst(term);
   try {
     return await Page.findAll({

@@ -1,0 +1,51 @@
+{
+  "plugins": [
+    {
+      "slug": "seo-booster",
+      "name": "SEO Booster",
+      "description": "Meta tags, Open Graph, and sitemap enhancements.",
+      "version": "1.0.0",
+      "author": "NodePress",
+      "license": "MIT",
+      "bundled": true
+    },
+    {
+      "slug": "super-cache",
+      "name": "Super Cache",
+      "description": "Page caching for faster public responses.",
+      "version": "1.0.0",
+      "author": "NodePress",
+      "license": "MIT",
+      "bundled": true
+    },
+    {
+      "slug": "akismet-shield",
+      "name": "Akismet Shield",
+      "description": "Comment spam protection integration.",
+      "version": "1.0.0",
+      "author": "NodePress",
+      "license": "MIT",
+      "bundled": true
+    }
+  ],
+  "themes": [
+    {
+      "slug": "portal",
+      "name": "Government Portal",
+      "description": "Agency portal theme with live statistics widgets.",
+      "version": "1.0.0",
+      "author": "NodePress",
+      "license": "MIT",
+      "bundled": true
+    },
+    {
+      "slug": "default",
+      "name": "NodePress Default",
+      "description": "Clean blog theme with sidebar widgets.",
+      "version": "1.0.0",
+      "author": "NodePress",
+      "license": "MIT",
+      "bundled": true
+    }
+  ]
+}

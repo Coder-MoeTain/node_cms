@@ -130,3 +130,254 @@ test('resolveBestMediaUrl falls back when thumbnail is missing', () => {
   const { resolveBestMediaUrl } = require('../utils/mediaHelper');
   expect(resolveBestMediaUrl('/uploads/missing-thumb.webp', '/uploads/missing-all.webp')).toBe('');
 });
+
+test('shortcodeParser renders allowed shortcodes safely', () => {
+  const { parseShortcodes, parseAttributes } = require('../utils/shortcodeParser');
+  expect(parseShortcodes('[unknown]')).toBe('[unknown]');
+  expect(parseShortcodes(null)).toBe('');
+  expect(parseAttributes('label="Go" url="https://example.com"')).toEqual({
+    label: 'Go',
+    url: 'https://example.com'
+  });
+  const button = parseShortcodes('[button url="https://example.com" label="Go"]');
+  expect(button).toContain('btn btn-primary');
+  expect(button).toContain('Go');
+  const recent = parseShortcodes('[recent_posts limit="2"]', {
+    recentPosts: [{ slug: 'a', title: 'Post A' }, { slug: 'b', title: 'Post B' }, { slug: 'c', title: 'Post C' }]
+  });
+  expect(recent).toContain('Post A');
+  expect(recent).not.toContain('Post C');
+  expect(parseShortcodes('[subscribe]')).toContain('np-shortcode-subscribe');
+  expect(parseShortcodes('[gallery]inner[/gallery]')).toContain('np-shortcode-gallery');
+});
+
+test('pageHelper loadChildPages returns published children ordered by menu_order', async () => {
+  const { loadChildPages } = require('../utils/pageHelper');
+  const { models } = require('../server');
+  const parent = await models.Page.create({
+    title: 'Parent For Children',
+    slug: `parent-children-${Date.now()}`,
+    content: '<p>P</p>',
+    status: 'published',
+    published_at: new Date()
+  });
+  const childB = await models.Page.create({
+    title: 'Child B',
+    slug: `child-b-${Date.now()}`,
+    content: '<p>B</p>',
+    status: 'published',
+    parent_id: parent.id,
+    menu_order: 2,
+    published_at: new Date()
+  });
+  await models.Page.create({
+    title: 'Child Draft',
+    slug: `child-draft-${Date.now()}`,
+    content: '<p>D</p>',
+    status: 'draft',
+    parent_id: parent.id,
+    menu_order: 1,
+    published_at: null
+  });
+  const childA = await models.Page.create({
+    title: 'Child A',
+    slug: `child-a-${Date.now()}`,
+    content: '<p>A</p>',
+    status: 'published',
+    parent_id: parent.id,
+    menu_order: 1,
+    published_at: new Date()
+  });
+  const children = await loadChildPages(parent.id);
+  expect(children.map((row) => row.id)).toEqual([childA.id, childB.id]);
+});
+
+test('blockRenderer renders block types and validates schema', () => {
+  const { renderBlock, renderBlocks, validateBlockSchema } = require('../utils/blockRenderer');
+  expect(renderBlock(null)).toBe('');
+  expect(renderBlock({ type: 'heading', content: 'Title', attrs: { level: 9 } })).toBe('<h6>Title</h6>');
+  expect(renderBlock({ type: 'image', attrs: { src: '/img.png', alt: 'A' } })).toContain('np-block-image');
+  expect(renderBlock({ type: 'image', attrs: {} })).toBe('');
+  expect(renderBlock({ type: 'quote', content: 'Q', attrs: { cite: 'Author' } })).toContain('<cite>Author</cite>');
+  expect(renderBlock({ type: 'button', attrs: { url: '/go', label: 'Go' } })).toContain('btn-primary');
+  expect(renderBlock({ type: 'list', items: ['a', 'b'], attrs: { ordered: true } })).toMatch(/<ol>/);
+  expect(renderBlock({ type: 'list', items: ['a'] })).toMatch(/<ul>/);
+  expect(renderBlock({ type: 'html', content: '<p>safe</p><script>x</script>' })).not.toMatch(/<script>/);
+  expect(renderBlock({ type: 'spacer', attrs: { height: 48 } })).toContain('48px');
+  expect(renderBlock({ type: 'custom', content: 'x' })).toContain('np-block-custom');
+  expect(renderBlocks('not-json')).toBe('');
+  expect(renderBlocks({ bad: true })).toBe('');
+  expect(renderBlocks(JSON.stringify([{ type: 'paragraph', content: 'Hi' }]))).toContain('<p>Hi</p>');
+  expect(validateBlockSchema([{ content: 'no type' }]).valid).toBe(false);
+  expect(validateBlockSchema([{ type: 1 }]).valid).toBe(false);
+});
+
+test('vendorAssets resolves vendor directory from public or node_modules', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const { resolveVendorDir } = require('../utils/vendorAssets');
+  const bootstrap = resolveVendorDir('bootstrap', 'dist/css');
+  expect(fs.existsSync(bootstrap)).toBe(true);
+  const missing = resolveVendorDir('definitely-not-a-real-vendor-package-xyz');
+  expect(missing).toContain(path.join('public', 'vendor'));
+});
+
+test('importer validates payload shape and strips prototype pollution keys', async () => {
+  const { validateImportPayload, previewImport, sanitizeImportedHtml } = require('../utils/importer');
+  expect(() => validateImportPayload(null)).toThrow(/Invalid import file/);
+  expect(() => validateImportPayload({ unsupported: [] })).toThrow(/unsupported keys/);
+  const cleaned = validateImportPayload({
+    posts: [{ title: 'A', slug: 'a' }],
+    pages: []
+  });
+  expect(cleaned.posts).toHaveLength(1);
+  expect(await previewImport({ posts: [{ slug: 'a' }], pages: [{ slug: 'b' }] })).toMatchObject({
+    posts: 1,
+    pages: 1
+  });
+  expect(sanitizeImportedHtml('<p>ok</p><script>x</script>')).not.toMatch(/<script>/);
+  const huge = { posts: new Array(5001).fill({ slug: 'x' }) };
+  expect(() => validateImportPayload(huge)).toThrow(/maximum record count/);
+});
+
+test('themeValidator enforces manifest rules and screenshot safety', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const { validateManifest, validateScreenshotPath } = require('../utils/themeValidator');
+  const themesRoot = path.join(process.cwd(), 'themes');
+
+  expect(() => validateManifest(null)).toThrow(/JSON object/);
+  expect(() => validateManifest({ name: 'X', slug: 'Bad_Slug', version: '1.0.0' })).toThrow(/kebab-case/);
+  expect(() => validateManifest({
+    name: 'Loop',
+    slug: 'loop-theme',
+    version: '1.0.0',
+    parent: 'loop-theme'
+  })).toThrow(/own parent/);
+  expect(() => validateManifest({
+    name: 'Bad Settings',
+    slug: 'bad-settings',
+    version: '1.0.0',
+    settings: []
+  })).toThrow(/settings.*object/);
+
+  const manifest = validateManifest({
+    name: 'Default',
+    slug: 'default',
+    version: '1.0.0',
+    settings: { colors: { primary: '#000' } }
+  }, { themesRoot, strict: false });
+  expect(manifest._normalizedSettings.colors.primary).toBe('#000');
+
+  expect(() => validateScreenshotPath({ screenshot: '../evil.png' }, themesRoot)).toThrow(/not safe/);
+  const defaultTheme = path.join(themesRoot, 'default');
+  if (fs.existsSync(defaultTheme)) {
+    expect(() => validateScreenshotPath({ screenshot: 'missing.png' }, defaultTheme)).toThrow(/not found/);
+  }
+});
+
+test('widgetRegistry builds form payloads and parses stored settings', () => {
+  const { buildWidgetFromForm, settingsToFormValues } = require('../utils/widgetRegistry');
+  const built = buildWidgetFromForm({
+    title: 'Recent',
+    limit: '99',
+    show_date: 'on',
+    status: 'active'
+  }, 'recent_posts');
+  expect(built.widget_type).toBe('recent_posts');
+  expect(JSON.parse(built.settings_json).limit).toBeLessThanOrEqual(20);
+  const invalid = settingsToFormValues({
+    title: 'X',
+    status: 'active',
+    settings_json: 'not-json'
+  });
+  expect(invalid.title).toBe('X');
+  const parsed = settingsToFormValues({
+    title: 'Y',
+    settings_json: JSON.stringify({ limit: 3, show_date: false, dropdown: true })
+  });
+  expect(parsed.show_date).toBe(false);
+  expect(parsed.dropdown).toBe(true);
+});
+
+test('widgetRegistry stores non-number menu slug fields', () => {
+  const { buildWidgetFromForm } = require('../utils/widgetRegistry');
+  const built = buildWidgetFromForm({
+    title: 'Footer Links',
+    menu_slug: ' footer-menu '
+  }, 'navigation_menu');
+  expect(JSON.parse(built.settings_json).menu_slug).toBe('footer-menu');
+});
+
+test('sliderHelper parses JSON image strings and empty slider records', () => {
+  const { expandSlidersToSlides, getSliderImageAt } = require('../utils/sliderHelper');
+  expect(getSliderImageAt({ images: '["/a.jpg","/b.jpg"]' }, 2)).toBe('/b.jpg');
+  expect(getSliderImageAt({ images: 'broken-json' }, 1)).toBe('');
+  expect(expandSlidersToSlides([{ title: 'Empty' }])).toEqual([{ title: 'Empty', image: null }]);
+});
+
+test('autosaveHelper returns null when stored JSON is invalid', async () => {
+  const { saveAutosave, loadAutosave } = require('../utils/autosaveHelper');
+  const { models } = require('../server');
+  const admin = await models.User.findOne({ where: { email: 'admin@example.com' } });
+  const post = await models.Post.create({
+    title: 'Autosave Invalid JSON',
+    slug: `autosave-invalid-${Date.now()}`,
+    content: '<p>x</p>',
+    status: 'draft',
+    post_type: 'post',
+    author_id: admin.id
+  });
+  await saveAutosave('post', post.id, { title: 'Draft' }, admin.id);
+  await models.Autosave.update(
+    { draft_data_json: 'not-json' },
+    { where: { resource_type: 'post', resource_id: post.id, created_by: admin.id } }
+  );
+  expect(await loadAutosave('post', post.id, admin.id)).toBeNull();
+});
+
+test('autosaveHelper deleteAutosave removes stored drafts', async () => {
+  const { saveAutosave, loadAutosave, deleteAutosave } = require('../utils/autosaveHelper');
+  const { models } = require('../server');
+  const admin = await models.User.findOne({ where: { email: 'admin@example.com' } });
+  const post = await models.Post.create({
+    title: 'Autosave Delete',
+    slug: `autosave-delete-${Date.now()}`,
+    content: '<p>x</p>',
+    status: 'draft',
+    post_type: 'post',
+    author_id: admin.id
+  });
+  await saveAutosave('post', post.id, { title: 'Draft' }, admin.id);
+  await deleteAutosave('post', post.id, admin.id);
+  expect(await loadAutosave('post', post.id, admin.id)).toBeNull();
+});
+
+test('locales flagCodeForLocale falls back to en for unknown codes', () => {
+  const { flagCodeForLocale } = require('../utils/locales');
+  expect(flagCodeForLocale('zh-CN')).toBe('zh');
+  expect(flagCodeForLocale('unknown-locale')).toBe('en');
+});
+
+test('contentPasswordHelper hashes, verifies, and builds SEO meta', async () => {
+  const {
+    hashContentPassword,
+    verifyContentPassword,
+    isContentUnlocked,
+    buildSeoMeta
+  } = require('../utils/contentPasswordHelper');
+  expect(await hashContentPassword('')).toBeNull();
+  expect(await hashContentPassword('  ')).toBeNull();
+  const hash = await hashContentPassword('secret');
+  expect(await verifyContentPassword('secret', hash)).toBe(true);
+  expect(await verifyContentPassword('', hash)).toBe(false);
+  expect(isContentUnlocked({ cookies: {} }, 'post', 1, null)).toBe(true);
+  const seo = buildSeoMeta({
+    title: 'T',
+    slug: 't',
+    seo_title: 'SEO',
+    robots_noindex: true
+  }, { pathPrefix: '/post/' });
+  expect(seo.noindex).toBe(true);
+  expect(seo.canonical).toContain('/post/t');
+});

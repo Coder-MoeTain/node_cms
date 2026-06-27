@@ -9,7 +9,8 @@ const storage = multer.diskStorage({
     callback(null, dir);
   },
   filename(req, file, callback) {
-    callback(null, `${Date.now()}-import.json`);
+    const ext = path.extname(file.originalname).toLowerCase() || '.json';
+    callback(null, `${Date.now()}-import${ext}`);
   }
 });
 
@@ -18,8 +19,11 @@ const jsonUpload = multer({
   limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter(req, file, callback) {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (ext !== '.json' && file.mimetype !== 'application/json') {
-      return callback(new Error('Only JSON export files are allowed.'));
+    const allowed = ext === '.json' || ext === '.xml';
+    const jsonMime = file.mimetype === 'application/json' || file.mimetype === 'text/json';
+    const xmlMime = file.mimetype === 'application/xml' || file.mimetype === 'text/xml';
+    if (!allowed && !jsonMime && !xmlMime) {
+      return callback(new Error('Only JSON or WordPress WXR (.xml) export files are allowed.'));
     }
     callback(null, true);
   }

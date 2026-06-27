@@ -11,7 +11,9 @@ const {
   ContactMessage,
   Comment,
   ThemeSetting,
-  WafSetting
+  WafSetting,
+  SiteSetting,
+  MenuItem
 } = require('../../models');
 const { createUniqueSlug } = require('../../utils/slugGenerator');
 const pluginLoader = require('../../utils/pluginLoader');
@@ -35,7 +37,10 @@ async function dashboard(req, res, next) {
       securityAlerts,
       messages,
       activeTheme,
-      wafModeSetting
+      wafModeSetting,
+      siteTitleSetting,
+      siteLogoSetting,
+      menuItemCount
     ] = await Promise.all([
       Post.count({ where: { post_type: 'post' } }),
       Post.count({ where: { status: 'published', post_type: 'post' } }),
@@ -52,7 +57,10 @@ async function dashboard(req, res, next) {
       LoginAttempt.count({ where: { success: false } }),
       ContactMessage.count({ where: { status: 'unread' } }),
       ThemeSetting.findOne({ where: { active: true } }),
-      WafSetting.findOne({ where: { setting_key: 'waf_mode' } })
+      WafSetting.findOne({ where: { setting_key: 'waf_mode' } }),
+      SiteSetting.findOne({ where: { key: 'site_title' } }),
+      SiteSetting.findOne({ where: { key: 'site_logo' } }),
+      MenuItem.count({ where: { active: true } })
     ]);
 
     let uploadsWritable = false;
@@ -80,6 +88,14 @@ async function dashboard(req, res, next) {
         wafMode: wafModeSetting?.setting_value || 'monitor',
         activeTheme: activeTheme?.theme_name || 'classic-blog',
         https: Boolean(req.secure || req.headers['x-forwarded-proto'] === 'https')
+      },
+      onboardingStatus: {
+        siteTitleConfigured: Boolean(
+          siteTitleSetting?.value && String(siteTitleSetting.value).trim() !== 'NodePress CMS'
+        ),
+        logoUploaded: Boolean(String(siteLogoSetting?.value || '').trim()),
+        themeActive: Boolean(activeTheme?.theme_name),
+        menuConfigured: menuItemCount > 0
       }
     });
   } catch (error) {

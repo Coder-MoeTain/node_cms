@@ -15,7 +15,7 @@ Commercial-ready WordPress-inspired admin interface for NodePress CMS.
 | 7 | Media library | Existing `media/index.ejs`, `media.js` |
 | 8 | Themes & plugins | Existing theme/plugin admin + customizer |
 | 9 | Settings & security | Existing settings/WAF views + form table classes |
-| 10 | Onboarding & help | `onboarding.ejs`, `help.ejs`, `admin-search.js` |
+| 10 | Onboarding & help | `onboarding.ejs` (live progress from dashboard), `help.ejs`, `admin-search.js` (Ctrl+K, CPT/taxonomy/field-group destinations) |
 | 11 | Mobile responsiveness | Drawer sidebar, stacked dashboard, mobile list cards |
 | 12 | Accessibility | Skip link, focus-visible, reduced motion, ARIA labels |
 | 13 | CSS/JS cleanup | Design system layer, modular admin JS |

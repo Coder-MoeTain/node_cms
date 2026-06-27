@@ -28,12 +28,23 @@ Default admin: `admin@example.com` / `Admin@12345`
 | `auth.test.js`, `authExtended.test.js`, `authTwoFactor.test.js` | Login, lockout, 2FA |
 | `rbac.test.js`, `rbacOwnership.test.js`, `policy.test.js` | Permissions |
 | `posts.test.js`, `pages.test.js`, `crudAdmin.test.js` | CRUD |
+| `adminTaxonomyWidgetsTranslation.test.js` | Taxonomies, widgets, translate-content API |
+| `adminCustomContentRevision.test.js` | Custom content CRUD, field groups, revision compare/restore |
+| `adminCrudImportExport.test.js` | CRUD bulk/trash, CPT admin, import/export UI |
+| `adminCrudMenusUsers.test.js` | Menus, users, bulk category/author, messages, banners |
+| `adminCrudRolesSliders.test.js` | Roles/permissions CRUD, sliders CRUD, bulk edge cases |
+| `wxrImport.test.js` | WordPress WXR parse, preview, import, admin upload |
+| `wxrExport.test.js` | WXR XML generation and round-trip parse |
+| `wxrMediaDownloader.test.js` | SSRF-safe remote media download + WXR export route |
 | `customPostTypes.test.js` | Custom post types (admin → public → API) |
 | `customFields.test.js` | Field groups, validation, public render |
 | `revisionsAutosave.test.js` | Revision history, restore, autosave API |
 | `templatesFse.test.js` | Site templates / block JSON editor |
 | `importExport.integration.test.js` | Export, import, dry-run, CLI export |
-| `networkMultisite.test.js` | Multisite flag, network admin, site resolver |
+| `networkMultisite.test.js` | Multisite flag, network admin, site resolver, per-site settings |
+| `multisiteSiteScope.test.js` | Content isolation by `site_id`, network branding overlay, admin settings UI |
+| `multisiteApiScope.test.js` | API v1 types/tags/posts scoped by network site domain |
+| `siteScope.test.js` | Multisite scope helper unit tests |
 | `cli.test.js` | `bin/nodepress` commands |
 | `wordpressFeatures.test.js` | Widgets, comments, health, blocks |
 | `media.test.js`, `uploads*.test.js`, `zipUpload.test.js` | Uploads |

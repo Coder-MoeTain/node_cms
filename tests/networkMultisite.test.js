@@ -3,6 +3,11 @@ const appConfig = require('../config/app');
 const { app, models } = require('../server');
 const { login, getCsrf } = require('./helpers');
 const { siteResolver } = require('../middleware/siteResolver');
+const {
+  getNetworkSiteSetting,
+  setNetworkSiteSetting,
+  listNetworkSiteSettings
+} = require('../utils/networkSiteSettings');
 
 describe('Multisite / network mode', () => {
   const originalMultisite = appConfig.multisiteEnabled;
@@ -90,5 +95,35 @@ describe('Multisite / network mode', () => {
 
     await models.SiteDomain.destroy({ where: { site_id: row.id } });
     await row.destroy();
+  });
+
+  test('network site settings are isolated per site', async () => {
+    const siteA = await models.Site.create({
+      name: 'Site A',
+      slug: `site-a-${Date.now()}`,
+      domain: null,
+      path: '/',
+      status: 'active'
+    });
+    const siteB = await models.Site.create({
+      name: 'Site B',
+      slug: `site-b-${Date.now()}`,
+      domain: null,
+      path: '/',
+      status: 'active'
+    });
+
+    await setNetworkSiteSetting(siteA.id, 'public_site_title', 'Portal A');
+    await setNetworkSiteSetting(siteB.id, 'public_site_title', 'Portal B');
+
+    expect(await getNetworkSiteSetting(siteA.id, 'public_site_title')).toBe('Portal A');
+    expect(await getNetworkSiteSetting(siteB.id, 'public_site_title')).toBe('Portal B');
+
+    const settingsA = await listNetworkSiteSettings(siteA.id);
+    expect(settingsA.some((row) => row.setting_key === 'public_site_title' && row.setting_value === 'Portal A')).toBe(true);
+
+    await models.NetworkSiteSetting.destroy({ where: { site_id: [siteA.id, siteB.id] } });
+    await siteA.destroy();
+    await siteB.destroy();
   });
 });

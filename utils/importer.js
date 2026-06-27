@@ -1,5 +1,6 @@
 const sanitizeHtml = require('sanitize-html');
 const models = require('../models');
+const { hydrateImportMedia, isRemoteMediaUrl } = require('./wxrMediaDownloader');
 
 const MAX_IMPORT_RECORDS = 5000;
 const ALLOWED_ROOT_KEYS = new Set([
@@ -16,7 +17,8 @@ const ALLOWED_ROOT_KEYS = new Set([
   'menus',
   'widget_areas',
   'exported_at',
-  'version'
+  'version',
+  'site_id'
 ]);
 
 function stripDangerousKeys(value) {
@@ -70,6 +72,8 @@ async function previewImport(data) {
     posts: (validated.posts || []).length,
     pages: (validated.pages || []).length,
     custom_posts: (validated.custom_posts || []).length,
+    custom_post_types: (validated.custom_post_types || []).length,
+    field_groups: (validated.field_groups || []).length,
     categories: (validated.categories || []).length,
     tags: (validated.tags || []).length,
     taxonomies: (validated.taxonomies || []).length,
@@ -79,49 +83,75 @@ async function previewImport(data) {
   };
 }
 
-async function importSite(data, { dryRun = false, userId = null } = {}) {
+async function importSite(data, { dryRun = false, userId = null, downloadRemoteMedia = false, fetchImpl, siteId = null } = {}) {
   const validated = validateImportPayload(data);
   const summary = await previewImport(validated);
   const logs = [];
+  const withSite = (row) => (siteId ? { ...row, site_id: siteId } : row);
 
   if (dryRun) {
-    return { dryRun: true, summary, logs: ['Dry run only — no records written.'] };
+    if (downloadRemoteMedia && (validated.media || []).some((row) => isRemoteMediaUrl(row.source_url || row.file_path))) {
+      logs.push('Dry run — remote media would be downloaded.');
+    }
+    return { dryRun: true, summary, logs: ['Dry run only — no records written.', ...logs] };
   }
 
   const job = await models.ImportJob.create({
-    job_type: 'json',
+    job_type: downloadRemoteMedia ? 'wxr' : 'json',
     status: 'running',
     created_by: userId,
     summary_json: JSON.stringify(summary)
   });
 
   try {
+    if (downloadRemoteMedia && validated.media?.length) {
+      validated.media = await hydrateImportMedia(validated.media, { userId, downloadRemote: true, fetchImpl });
+      const downloaded = validated.media.filter((row) => row.file_path && !isRemoteMediaUrl(row.file_path));
+      logs.push(`Downloaded ${downloaded.length} remote media file(s).`);
+    }
+    for (const row of validated.custom_post_types || []) {
+      const { id, ...rest } = row;
+      await models.CustomPostType.findOrCreate({ where: { slug: rest.slug }, defaults: withSite(rest) });
+      logs.push(`CPT: ${rest.slug}`);
+    }
+    for (const row of validated.field_groups || []) {
+      const { id, fields, ...rest } = row;
+      const [group] = await models.FieldGroup.findOrCreate({ where: { slug: rest.slug }, defaults: withSite(rest) });
+      for (const field of fields || []) {
+        const { id: fieldId, field_group_id, ...fieldRest } = field;
+        await models.CustomField.findOrCreate({
+          where: { field_group_id: group.id, name: fieldRest.name },
+          defaults: { ...fieldRest, field_group_id: group.id }
+        });
+      }
+      logs.push(`Field group: ${rest.slug}`);
+    }
     for (const row of validated.categories || []) {
       const { id, ...rest } = row;
-      await models.Category.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
+      await models.Category.findOrCreate({ where: { slug: rest.slug }, defaults: withSite(rest) });
       logs.push(`Category: ${rest.slug}`);
     }
     for (const row of validated.tags || []) {
       const { id, ...rest } = row;
-      await models.Tag.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
+      await models.Tag.findOrCreate({ where: { slug: rest.slug }, defaults: withSite(rest) });
       logs.push(`Tag: ${rest.slug}`);
     }
     for (const row of validated.taxonomies || []) {
       const { id, terms, ...rest } = row;
-      const [taxonomy] = await models.Taxonomy.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
+      const [taxonomy] = await models.Taxonomy.findOrCreate({ where: { slug: rest.slug }, defaults: withSite(rest) });
       for (const term of terms || []) {
         const { id: termId, taxonomy_id, ...termRest } = term;
         await models.TaxonomyTerm.findOrCreate({
           where: { taxonomy_id: taxonomy.id, slug: termRest.slug },
-          defaults: { ...termRest, taxonomy_id: taxonomy.id }
+          defaults: withSite({ ...termRest, taxonomy_id: taxonomy.id })
         });
       }
       logs.push(`Taxonomy: ${rest.slug}`);
     }
     for (const row of validated.media || []) {
-      const { id, uploader, ...rest } = row;
-      if (!rest.file_path) continue;
-      await models.Media.findOrCreate({ where: { file_path: rest.file_path }, defaults: rest });
+      const { id, uploader, source_url, external, download_error, ...rest } = row;
+      if (!rest.file_path || isRemoteMediaUrl(rest.file_path)) continue;
+      await models.Media.findOrCreate({ where: { file_path: rest.file_path }, defaults: withSite(rest) });
       logs.push(`Media: ${rest.file_path}`);
     }
     for (const row of validated.posts || []) {
@@ -129,8 +159,22 @@ async function importSite(data, { dryRun = false, userId = null } = {}) {
       rest.post_type = rest.post_type || 'post';
       if (rest.content) rest.content = sanitizeImportedHtml(rest.content);
       if (rest.excerpt) rest.excerpt = sanitizeImportedHtml(rest.excerpt);
-      const [post] = await models.Post.findOrCreate({ where: { slug: rest.slug, post_type: 'post' }, defaults: rest });
+      const [post] = await models.Post.findOrCreate({ where: { slug: rest.slug, post_type: 'post' }, defaults: withSite(rest) });
       logs.push(`Post: ${rest.slug}`);
+      if (post && Array.isArray(row.custom_fields_meta)) {
+        for (const meta of row.custom_fields_meta) {
+          const fieldName = String(meta.key || '').replace(/^np_field_/, '');
+          const field = fieldName
+            ? await models.CustomField.findOne({ where: { name: fieldName } })
+            : null;
+          if (field) {
+            await models.CustomFieldValue.findOrCreate({
+              where: { custom_field_id: field.id, resource_type: 'post', resource_id: post.id },
+              defaults: { value_text: meta.value || '' }
+            });
+          }
+        }
+      }
       if (post && Array.isArray(row.taxonomy_term_ids)) {
         await post.setTaxonomyTerms(row.taxonomy_term_ids);
       }
@@ -148,12 +192,34 @@ async function importSite(data, { dryRun = false, userId = null } = {}) {
     for (const row of validated.pages || []) {
       const { id, author, parent, children, ...rest } = row;
       if (rest.content) rest.content = sanitizeImportedHtml(rest.content);
-      await models.Page.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
+      await models.Page.findOrCreate({ where: { slug: rest.slug }, defaults: withSite(rest) });
       logs.push(`Page: ${rest.slug}`);
+    }
+    for (const row of validated.custom_posts || []) {
+      const { id, Tags, Category, author, taxonomyTerms, custom_fields_meta, ...rest } = row;
+      if (rest.content) rest.content = sanitizeImportedHtml(rest.content);
+      const postType = rest.post_type || 'custom';
+      const [post] = await models.Post.findOrCreate({
+        where: { slug: rest.slug, post_type: postType },
+        defaults: withSite({ ...rest, post_type: postType })
+      });
+      logs.push(`Custom post (${postType}): ${rest.slug}`);
+      if (post && Array.isArray(custom_fields_meta)) {
+        for (const meta of custom_fields_meta) {
+          const fieldName = String(meta.key || '').replace(/^np_field_/, '');
+          const field = fieldName ? await models.CustomField.findOne({ where: { name: fieldName } }) : null;
+          if (field) {
+            await models.CustomFieldValue.findOrCreate({
+              where: { custom_field_id: field.id, resource_type: 'custom_post', resource_id: post.id },
+              defaults: { value_text: meta.value || '' }
+            });
+          }
+        }
+      }
     }
     for (const row of validated.menus || []) {
       const { id, items, ...rest } = row;
-      const [menu] = await models.Menu.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
+      const [menu] = await models.Menu.findOrCreate({ where: { slug: rest.slug }, defaults: withSite(rest) });
       for (const item of items || []) {
         const { id: itemId, menu_id, ...itemRest } = item;
         await models.MenuItem.findOrCreate({
@@ -165,12 +231,12 @@ async function importSite(data, { dryRun = false, userId = null } = {}) {
     }
     for (const row of validated.widget_areas || []) {
       const { id, widgets, ...rest } = row;
-      const [area] = await models.WidgetArea.findOrCreate({ where: { slug: rest.slug }, defaults: rest });
+      const [area] = await models.WidgetArea.findOrCreate({ where: { slug: rest.slug }, defaults: withSite(rest) });
       for (const widget of widgets || []) {
         const { id: widgetId, widget_area_id, ...widgetRest } = widget;
         await models.WidgetInstance.findOrCreate({
           where: { widget_area_id: area.id, widget_type: widgetRest.widget_type, title: widgetRest.title || '' },
-          defaults: { ...widgetRest, widget_area_id: area.id }
+          defaults: withSite({ ...widgetRest, widget_area_id: area.id })
         });
       }
       logs.push(`Widget area: ${rest.slug}`);

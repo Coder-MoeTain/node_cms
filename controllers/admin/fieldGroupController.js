@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const models = require('../../models');
 const { createUniqueSlug } = require('../../utils/slugGenerator');
 const policy = require('../../utils/policy');
+const { siteScopeWhere, assignSiteScope } = require('../../utils/siteScope');
 
 function sanitizeText(value, max = 500) {
   return sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).slice(0, max);
@@ -20,6 +21,7 @@ async function index(req, res, next) {
       return res.redirect('/admin');
     }
     const groups = await models.FieldGroup.findAll({
+      where: siteScopeWhere(req),
       include: [{ model: models.CustomField, as: 'fields' }],
       order: [['display_order', 'ASC'], ['name', 'ASC']]
     });
@@ -55,7 +57,7 @@ async function store(req, res, next) {
       return res.redirect('/admin/field-groups');
     }
     const slug = await createUniqueSlug(models.FieldGroup, req.body.slug || req.body.name, 'group');
-    const group = await models.FieldGroup.create({
+    const group = await models.FieldGroup.create(assignSiteScope(req, {
       name: sanitizeText(req.body.name, 120),
       slug,
       description: sanitizeText(req.body.description, 2000),
@@ -63,7 +65,7 @@ async function store(req, res, next) {
       location_value: sanitizeText(req.body.location_value, 120),
       display_order: Number(req.body.display_order) || 0,
       status: req.body.status === 'inactive' ? 'inactive' : 'active'
-    });
+    }));
     await syncFields(group, req.body);
     req.flash('success', 'Field group created.');
     return res.redirect('/admin/field-groups');

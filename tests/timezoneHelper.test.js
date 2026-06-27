@@ -41,5 +41,8 @@ describe('timezoneHelper', () => {
     expect(formatters.siteTimezone).toBe('UTC');
     expect(formatters.formatDate('2024-01-02T12:00:00.000Z')).toMatch(/Jan/);
     expect(formatters.formatDateTime('2024-01-02T12:00:00.000Z')).toMatch(/Jan/);
+    expect(formatters.formatTime('2024-01-02T12:00:00.000Z')).toMatch(/\d/);
+    expect(formatters.toDatetimeLocalValue('2024-01-02T12:00:00.000Z')).toMatch(/2024/);
+    expect(parseDatetimeLocal('', 'UTC')).toBeNull();
   });
 });

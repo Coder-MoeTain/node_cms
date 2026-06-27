@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) =>
   sequelize.define('Comment', {
+    site_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     post_id: { type: DataTypes.INTEGER, allowNull: false },
     parent_id: DataTypes.INTEGER,
     user_id: DataTypes.INTEGER,

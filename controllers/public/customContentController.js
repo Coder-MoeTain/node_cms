@@ -3,18 +3,19 @@ const models = require('../../models');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { loadCustomFieldsMap } = require('../../utils/customFields');
 const { parseShortcodes } = require('../../utils/shortcodeParser');
+const { siteScopeWhere } = require('../../utils/siteScope');
 const { translatePost, translatePosts } = require('../../utils/contentTranslator');
 
 async function archive(req, res, next) {
   try {
     const type = await models.CustomPostType.findOne({
-      where: { slug: req.params.typeSlug, status: 'active', has_archive: true }
+      where: siteScopeWhere(req, { slug: req.params.typeSlug, status: 'active', has_archive: true })
     });
     if (!type) return res.status(404).render('errors/404', { title: 'Not Found' });
 
     const { page, limit, offset } = getPagination(req, 10);
     const { rows, count } = await models.Post.findAndCountAll({
-      where: { post_type: type.slug, status: 'published' },
+      where: siteScopeWhere(req, { post_type: type.slug, status: 'published' }),
       include: [{ model: models.User, as: 'author', attributes: ['id', 'name'] }],
       limit,
       offset,
@@ -40,16 +41,16 @@ async function archive(req, res, next) {
 async function single(req, res, next) {
   try {
     const type = await models.CustomPostType.findOne({
-      where: { slug: req.params.typeSlug, status: 'active' }
+      where: siteScopeWhere(req, { slug: req.params.typeSlug, status: 'active' })
     });
     if (!type) return res.status(404).render('errors/404', { title: 'Not Found' });
 
     const postRow = await models.Post.findOne({
-      where: {
+      where: siteScopeWhere(req, {
         post_type: type.slug,
         slug: req.params.itemSlug,
         status: { [Op.in]: ['published', 'private'] }
-      },
+      }),
       include: [{ model: models.User, as: 'author', attributes: ['id', 'name'] }]
     });
     if (!postRow) return res.status(404).render('errors/404', { title: 'Not Found' });

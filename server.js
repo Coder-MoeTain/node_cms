@@ -19,6 +19,7 @@ const models = require('./models');
 const { applySecurityMiddleware, apiLimiter } = require('./middleware/security');
 const { csrfProtection } = require('./middleware/csrf');
 const { loadSiteContext } = require('./middleware/siteContext');
+const { siteResolver } = require('./middleware/siteResolver');
 const { localeMiddleware } = require('./middleware/locale');
 const { portalVisitMiddleware } = require('./middleware/portalVisit');
 const pluginHooks = require('./middleware/pluginHooks');
@@ -120,9 +121,8 @@ app.use(async (req, res, next) => {
 });
 app.use(localeMiddleware);
 app.use(portalVisitMiddleware);
-app.use(loadSiteContext);
-const { siteResolver } = require('./middleware/siteResolver');
 app.use(siteResolver);
+app.use(loadSiteContext);
 app.use(async (req, res, next) => {
   if (req.path.startsWith('/admin') && req.session?.user) {
     res.locals.pluginAdminMenuItems = await pluginLoader.collectHook('adminMenuItems', { req, res });

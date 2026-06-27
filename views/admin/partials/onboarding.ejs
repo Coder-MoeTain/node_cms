@@ -2,13 +2,14 @@
   First-time admin onboarding checklist — Phase 10
   Uses stats passed from dashboard; no backend changes required.
 %>
+<% const onboarding = typeof onboardingStatus !== 'undefined' ? onboardingStatus : {}; %>
 <% const checklist = [
-  { label: 'Set site title and tagline', done: false, href: '/admin/settings', can: can('manage_settings') },
-  { label: 'Upload site logo', done: false, href: '/admin/themes/customize', can: can('manage_themes') },
-  { label: 'Choose and activate a theme', done: (typeof stats !== 'undefined' && stats.posts >= 0), href: '/admin/themes', can: can('manage_themes') },
+  { label: 'Set site title and tagline', done: Boolean(onboarding.siteTitleConfigured), href: '/admin/settings', can: can('manage_settings') },
+  { label: 'Upload site logo', done: Boolean(onboarding.logoUploaded), href: '/admin/themes/customize', can: can('manage_themes') },
+  { label: 'Choose and activate a theme', done: Boolean(onboarding.themeActive), href: '/admin/themes', can: can('manage_themes') },
   { label: 'Create your first page', done: (typeof stats !== 'undefined' && stats.pages > 0), href: '/admin/pages/create', can: can('manage_pages') },
   { label: 'Publish your first post', done: (typeof stats !== 'undefined' && stats.publishedPosts > 0), href: '/admin/posts/create', can: canManageResource('posts', 'create') },
-  { label: 'Configure navigation menu', done: false, href: '/admin/menus', can: can('manage_menus') },
+  { label: 'Configure navigation menu', done: Boolean(onboarding.menuConfigured), href: '/admin/menus', can: can('manage_menus') },
   { label: 'Review security settings', done: false, href: '/admin/security', can: can('manage_security') },
   { label: 'Enable WAF protection', done: (typeof siteHealth !== 'undefined' && siteHealth.wafMode === 'block'), href: '/admin/waf/settings', can: can('manage_waf') }
 ].filter(function(item) { return item.can !== false; });

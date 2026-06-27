@@ -30,6 +30,50 @@ function renderBlock(block, context = {}) {
       const items = (block.items || []).map((item) => `<li>${escapeText(item)}</li>`).join('');
       return `<${tag}>${items}</${tag}>`;
     }
+    case 'columns': {
+      const cols = attrs.columns || block.columns || [];
+      const inner = cols.map((col) => `<div class="np-block-column">${escapeText(col)}</div>`).join('');
+      return `<div class="np-block-columns np-block-columns-${cols.length || 2}">${inner}</div>`;
+    }
+    case 'gallery': {
+      const images = attrs.images || block.images || [];
+      const items = images.map((img) => {
+        const src = typeof img === 'string' ? img : img.src;
+        const alt = typeof img === 'string' ? '' : (img.alt || '');
+        return src ? `<figure><img src="${escapeText(src)}" alt="${escapeText(alt)}"></figure>` : '';
+      }).join('');
+      return `<div class="np-block-gallery">${items}</div>`;
+    }
+    case 'cover':
+      return attrs.src
+        ? `<div class="np-block-cover" style="background-image:url('${escapeText(attrs.src)}')"><div class="np-block-cover-inner"><h2>${escapeText(attrs.title || block.content || '')}</h2></div></div>`
+        : `<div class="np-block-cover"><div class="np-block-cover-inner">${escapeText(block.content || '')}</div></div>`;
+    case 'embed': {
+      const url = attrs.url || block.content || '';
+      if (!url) return '';
+      if (/youtube\.com|youtu\.be/.test(url)) {
+        const id = url.match(/(?:v=|youtu\.be\/)([\w-]+)/)?.[1];
+        return id ? `<div class="np-block-embed"><iframe src="https://www.youtube.com/embed/${escapeText(id)}" allowfullscreen loading="lazy"></iframe></div>` : '';
+      }
+      return `<div class="np-block-embed"><a href="${escapeText(url)}">${escapeText(url)}</a></div>`;
+    }
+    case 'separator':
+      return '<hr class="np-block-separator">';
+    case 'code':
+      return `<pre class="np-block-code"><code>${escapeText(block.content)}</code></pre>`;
+    case 'video':
+      return attrs.src ? `<video class="np-block-video" controls src="${escapeText(attrs.src)}"></video>` : '';
+    case 'audio':
+      return attrs.src ? `<audio class="np-block-audio" controls src="${escapeText(attrs.src)}"></audio>` : '';
+    case 'file':
+      return attrs.url
+        ? `<p class="np-block-file"><a href="${escapeText(attrs.url)}" download>${escapeText(attrs.label || 'Download file')}</a></p>`
+        : '';
+    case 'table': {
+      const rows = block.rows || attrs.rows || [];
+      const body = rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeText(cell)}</td>`).join('')}</tr>`).join('');
+      return `<table class="np-block-table"><tbody>${body}</tbody></table>`;
+    }
     case 'html':
       return sanitizeHtml(block.content || '', {
         allowedTags: sanitizeHtml.defaults.allowedTags,
@@ -70,4 +114,9 @@ function validateBlockSchema(json) {
   return { valid: true, blocks };
 }
 
-module.exports = { renderBlocks, renderBlock, validateBlockSchema };
+const BLOCK_TYPES = [
+  'paragraph', 'heading', 'image', 'quote', 'button', 'list', 'columns', 'gallery',
+  'cover', 'embed', 'separator', 'code', 'video', 'audio', 'file', 'table', 'html', 'spacer'
+];
+
+module.exports = { renderBlocks, renderBlock, validateBlockSchema, BLOCK_TYPES };
