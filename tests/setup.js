@@ -76,6 +76,25 @@ async function resetWafState() {
   clearWafCache();
 }
 
+async function resetPublicRenderState() {
+  await models.SiteTemplate.update(
+    { status: 'inactive' },
+    { where: { status: 'active', template_type: ['homepage', 'blog', '404'] } }
+  );
+  await models.SiteSetting.upsert({
+    key: 'permalink_structure',
+    value: '/post/%slug%',
+    group: 'seo'
+  });
+  await models.SiteSetting.upsert({
+    key: 'page_permalink_structure',
+    value: '/page/%slug%',
+    group: 'seo'
+  });
+  const { ensureStandardTheme } = require('./helpers');
+  await ensureStandardTheme(models);
+}
+
 beforeEach(async () => {
   try {
     await sequelize.authenticate();
@@ -86,4 +105,8 @@ beforeEach(async () => {
   await resetLoginSecurityState();
   await resetSecuritySettings();
   await resetWafState();
+});
+
+afterEach(async () => {
+  await resetPublicRenderState();
 });

@@ -1,6 +1,7 @@
 const request = require('supertest');
 const { app, models } = require('../server');
 const { renderBlocks } = require('../utils/blockRenderer');
+const { ensureStandardTheme } = require('./helpers');
 
 describe('FSE public route rendering', () => {
   const blocks = [
@@ -9,6 +10,7 @@ describe('FSE public route rendering', () => {
   ];
 
   beforeAll(async () => {
+    await ensureStandardTheme(models);
     const [row] = await models.SiteTemplate.findOrCreate({
       where: { slug: 'fse-blog-test', theme_slug: 'classic-blog' },
       defaults: {

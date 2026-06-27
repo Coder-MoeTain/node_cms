@@ -6,6 +6,19 @@ const { resolveIsolatedTestDatabaseName } = require('../utils/testDatabase');
 const { applyPendingMigrations } = require('./migrationRunner');
 require('dotenv').config();
 
+async function authenticateWithRetry(sequelize, label = 'MySQL', attempts = 20, delayMs = 2000) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await sequelize.authenticate();
+      return;
+    } catch (error) {
+      if (attempt >= attempts) throw error;
+      console.warn(`${label} not ready (attempt ${attempt}/${attempts}): ${error.message}`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
 async function bootstrapTestDatabase() {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('bootstrapTestDatabase is only for NODE_ENV=test');
@@ -27,13 +40,13 @@ async function bootstrapTestDatabase() {
     logging: false
   });
 
-  await bootstrap.authenticate();
+  await authenticateWithRetry(bootstrap, 'Test bootstrap MySQL');
   await bootstrap.query(`DROP DATABASE IF EXISTS \`${database}\``);
   await bootstrap.query(`CREATE DATABASE \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
   await bootstrap.close();
 
   const { sequelize } = require('../models');
-  await sequelize.authenticate();
+  await authenticateWithRetry(sequelize, 'Test app MySQL');
 
   const { ensureBaseSchema } = require('./ensureBaseSchema');
   await ensureBaseSchema(sequelize);
