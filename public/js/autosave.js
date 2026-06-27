@@ -124,6 +124,39 @@
     }
   }
 
+  function showConflictWarning(resource) {
+    if (document.querySelector('[data-autosave-conflict]')) return;
+    const banner = document.createElement('div');
+    banner.className = 'alert alert-warning mb-3';
+    banner.setAttribute('data-autosave-conflict', '1');
+    banner.setAttribute('role', 'alert');
+    const editor = resource?.updated_by_name || 'another user';
+    banner.textContent = `Editing conflict: this content was updated by ${editor}. Review changes before saving.`;
+    form.prepend(banner);
+    if (statusEl) statusEl.textContent = 'Conflict detected — review before saving';
+  }
+
+  async function checkConflict() {
+    if (!resourceId || !form.dataset.resourceUpdatedAt) return;
+    try {
+      const csrf = form.querySelector('[name="_csrf"]')?.value;
+      const res = await fetch(`/admin/autosave?resource_type=${encodeURIComponent(resourceType)}&resource_id=${encodeURIComponent(resourceId)}`, {
+        headers: { 'CSRF-Token': csrf, 'X-CSRF-Token': csrf }
+      });
+      if (!res.ok) return;
+      const payload = await res.json();
+      if (!payload?.resource?.updated_at) return;
+      const serverTs = new Date(payload.resource.updated_at).getTime();
+      const baselineTs = new Date(form.dataset.resourceUpdatedAt).getTime();
+      if (!Number.isFinite(serverTs) || !Number.isFinite(baselineTs) || serverTs <= baselineTs) return;
+      const currentUserId = form.dataset.currentUserId || '';
+      if (String(payload.resource.updated_by) === String(currentUserId)) return;
+      showConflictWarning(payload.resource);
+    } catch {
+      // ignore polling errors
+    }
+  }
+
   form.addEventListener('input', () => {
     if (restored) restored = false;
     if (timer) clearTimeout(timer);
@@ -154,4 +187,7 @@
   });
 
   loadDraft();
+  if (resourceId && form.dataset.resourceUpdatedAt) {
+    setInterval(checkConflict, 60000);
+  }
 })();

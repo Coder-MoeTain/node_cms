@@ -1,6 +1,7 @@
 const request = require('supertest');
 const bcrypt = require('bcrypt');
 const { app, models } = require('../server');
+const { ensureStandardTheme } = require('./helpers');
 
 let testPost;
 
@@ -40,6 +41,18 @@ beforeAll(async () => {
 afterEach(async () => {
   await models.SiteSetting.upsert({ key: 'permalink_structure', value: '/post/%slug%', group: 'seo' });
   await models.SiteSetting.upsert({ key: 'page_permalink_structure', value: '/page/%slug%', group: 'seo' });
+  await models.SiteTemplate.update(
+    { status: 'inactive' },
+    { where: { status: 'active', template_type: ['homepage', 'blog'] } }
+  );
+});
+
+beforeEach(async () => {
+  await ensureStandardTheme(models);
+  await models.SiteTemplate.update(
+    { status: 'inactive' },
+    { where: { status: 'active', template_type: ['homepage', 'blog'] } }
+  );
 });
 
 test('custom permalink structure resolves dated post URLs', async () => {
@@ -61,9 +74,9 @@ test('postUrl helper uses permalink settings from site context', async () => {
     group: 'seo'
   });
 
-  const res = await request(app).get('/');
+  const res = await request(app).get('/articles/permalink-test-post');
   expect(res.status).toBe(200);
-  expect(res.text).toMatch('/articles/permalink-test-post');
+  expect(res.text).toMatch(/Permalink Test Post/);
 });
 
 test('taxonomy term archive lists assigned posts', async () => {

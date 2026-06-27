@@ -1,6 +1,6 @@
 # Commercial Scorecard — Final Verification (June 2026)
 
-**Verification run:** `npm run test:ci` — **622 tests**, **105 suites**, all passing  
+**Verification run:** `npm run test:ci` — **626 tests**, **106 suites**, all passing  
 **Lint:** 0 errors (135 pre-existing warnings)  
 **Audit:** `npm audit --audit-level=high` passes (20 moderate in dependency tree)  
 **Migrations:** 24 applied, 0 pending
@@ -8,13 +8,16 @@
 ## Final verification fixes (this pass)
 
 - FSE public templates render on blog, archive, search, contact, CPT archive/single
+- FSE **404/error** pages via `renderPublicError` (standard + portal + FSE shell)
 - Revision compare UI (checkboxes + Compare button) and posts/pages revision links
 - Page revision restore preserves `block_content_json` and excerpt
 - Admin Ctrl+K search includes custom post content
 - Autosave localStorage fallback for new (unsaved) create forms
+- Autosave **conflict warning** when another user updates content (`resource` snapshot on GET)
 - API `_embed=author` fix (`profile_image` field)
 - `docs/MULTISITE.md` synced to migrations 022–024
-- Integration tests: `fsePublicRoutes`, `revisionsAdminUi`, extended `adminSearchApi`, `apiV1` embed
+- `docs/COMMERCIAL_READINESS.md` synced to 622 tests / 22 blocks
+- Integration tests: `fsePublicRoutes`, `publicErrorRender`, `revisionsAdminUi`, extended `adminSearchApi`, `apiV1` embed
 
 ## Score table
 

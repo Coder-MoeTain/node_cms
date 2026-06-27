@@ -37,6 +37,7 @@ describe('fsePublicHelper', () => {
     expect(result).not.toBeNull();
     expect(result.html).toMatch(/FSE Public Helper Test/);
     expect(renderBlocks(blocks)).toMatch(/Rendered for public FSE wiring/);
+    await models.SiteTemplate.update({ status: 'inactive' }, { where: { slug: 'fse-helper-test-home' } });
   });
 
   test('attachFseLocals merges fseTemplateHtml into view locals', async () => {
@@ -60,6 +61,7 @@ describe('fsePublicHelper', () => {
     expect(locals.title).toBe('Test Page');
     expect(locals.fseTemplateHtml).toMatch(/Attach locals test body/);
     expect(locals.fseTemplate.slug).toBe('fse-helper-test-page');
+    await models.SiteTemplate.update({ status: 'inactive' }, { where: { slug: 'fse-helper-test-page' } });
   });
 
   afterAll(async () => {
