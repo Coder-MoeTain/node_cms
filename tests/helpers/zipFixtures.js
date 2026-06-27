@@ -27,8 +27,10 @@ function themeTemplateFiles(slug, extra = {}) {
       templates: REQUIRED_THEME_TEMPLATES
     }, null, 2)
   };
-  for (const template of REQUIRED_THEME_TEMPLATES) {
-    files[`templates/${template}.ejs`] = `<section class="theme-${slug}"><%= title || '${template}' %></section>`;
+  if (!extra.manifestOnly) {
+    for (const template of REQUIRED_THEME_TEMPLATES) {
+      files[`templates/${template}.ejs`] = `<section class="theme-${slug}"><%= title || '${template}' %></section>`;
+    }
   }
   return files;
 }

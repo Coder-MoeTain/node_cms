@@ -13,9 +13,14 @@
         <div class="card h-100">
           <div class="card-header">Revision #<%= left.id %> — <%= left.created_at %></div>
           <div class="card-body">
-            <h2 class="h5"><%= left.title %></h2>
-            <div class="np-revision-content"><%- left.content %></div>
-            <% if (left.excerpt) { %><p class="text-muted mt-2"><%= left.excerpt %></p><% } %>
+            <h2 class="h5<%= left.title !== right.title ? ' text-warning-emphasis' : '' %>"><%= left.title %><% if (left.title !== right.title) { %> <span class="badge bg-warning-subtle text-warning-emphasis">Changed</span><% } %></h2>
+            <div class="np-revision-content<%= left.content !== right.content ? ' border border-warning-subtle p-2 rounded' : '' %>"><%- left.content %></div>
+            <% if (left.excerpt || right.excerpt) { %>
+              <p class="text-muted mt-2<%= left.excerpt !== right.excerpt ? ' text-warning-emphasis' : '' %>"><strong>Excerpt:</strong> <%= left.excerpt || '—' %></p>
+            <% } %>
+            <% if (left.block_content_json && left.block_content_json !== right.block_content_json) { %>
+              <p class="small text-warning-emphasis mt-2"><span class="badge bg-warning-subtle text-warning-emphasis">Block JSON differs</span></p>
+            <% } %>
           </div>
         </div>
       </div>
@@ -23,9 +28,14 @@
         <div class="card h-100">
           <div class="card-header">Revision #<%= right.id %> — <%= right.created_at %></div>
           <div class="card-body">
-            <h2 class="h5"><%= right.title %></h2>
-            <div class="np-revision-content"><%- right.content %></div>
-            <% if (right.excerpt) { %><p class="text-muted mt-2"><%= right.excerpt %></p><% } %>
+            <h2 class="h5<%= left.title !== right.title ? ' text-warning-emphasis' : '' %>"><%= right.title %><% if (left.title !== right.title) { %> <span class="badge bg-warning-subtle text-warning-emphasis">Changed</span><% } %></h2>
+            <div class="np-revision-content<%= left.content !== right.content ? ' border border-warning-subtle p-2 rounded' : '' %>"><%- right.content %></div>
+            <% if (left.excerpt || right.excerpt) { %>
+              <p class="text-muted mt-2<%= left.excerpt !== right.excerpt ? ' text-warning-emphasis' : '' %>"><strong>Excerpt:</strong> <%= right.excerpt || '—' %></p>
+            <% } %>
+            <% if (left.block_content_json && left.block_content_json !== right.block_content_json) { %>
+              <p class="small text-warning-emphasis mt-2"><span class="badge bg-warning-subtle text-warning-emphasis">Block JSON differs</span></p>
+            <% } %>
           </div>
         </div>
       </div>

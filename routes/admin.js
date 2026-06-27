@@ -27,6 +27,7 @@ const auth = require('../controllers/admin/authController');
 const adminLoginPath = require('../utils/adminLoginPath');
 const dashboard = require('../controllers/admin/dashboardController');
 const adminSearch = require('../controllers/admin/searchController');
+const blockEditorApi = require('../controllers/admin/blockEditorController');
 const marketplace = require('../controllers/admin/marketplaceController');
 const crud = require('../controllers/admin/crudController');
 const media = require('../controllers/admin/mediaController');
@@ -110,6 +111,11 @@ router.use(requireAuth, activityLogMiddleware('admin'));
 
 router.get('/', requireAuth, can('view_dashboard'), dashboard.dashboard);
 router.get('/api/search', requireAuth, adminSearch.adminSearch);
+router.get('/api/block-patterns', requireAuth, blockEditorApi.listPatterns);
+router.get('/api/block-patterns/:slug', requireAuth, blockEditorApi.getPattern);
+router.get('/api/reusable-blocks', requireAuth, blockEditorApi.listReusable);
+router.get('/api/reusable-blocks/:slug', requireAuth, blockEditorApi.getReusable);
+router.post('/api/reusable-blocks', requireAuth, blockEditorApi.saveReusable);
 router.post('/quick-draft', requireAuth, canAny(['manage_posts', 'create_posts']), dashboard.quickDraft);
 
 router.get('/media', requireAuth, canAny(['manage_media', 'upload_media']), media.index);
@@ -230,6 +236,7 @@ router.get('/tools/health', requireAuth, canAny(['manage_settings', 'manage_secu
 router.get('/tools/health.json', requireAuth, canAny(['manage_settings', 'manage_security']), tools.siteHealthJson);
 router.get('/tools/export', requireAuth, can('manage_settings'), importExport.exportForm);
 router.get('/tools/export/download', requireAuth, can('manage_settings'), importExport.exportDownload);
+router.get('/tools/export/csv', requireAuth, can('manage_settings'), importExport.exportCsvDownload);
 router.get('/tools/export/wxr', requireAuth, can('manage_settings'), importExport.exportWxrDownload);
 router.get('/tools/import', requireAuth, can('manage_settings'), importExport.importForm);
 router.post('/tools/import/preview', requireAuth, can('manage_settings'), jsonUpload.single('file'), importExport.importPreview);

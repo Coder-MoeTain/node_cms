@@ -39,6 +39,8 @@ const { validateCommentParent } = require('../../utils/commentDepthHelper');
 const { buildPageBreadcrumbs, loadChildPages } = require('../../utils/pageHelper');
 const { getPermalinkSettings, pagePath } = require('../../utils/permalinkHelper');
 const { siteScopeWhere } = require('../../utils/siteScope');
+const { attachFseLocals } = require('../../utils/fsePublicHelper');
+const { resolvePublicContent } = require('../../utils/publicContentRenderer');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
 
@@ -126,7 +128,11 @@ async function renderPublic(res, template, locals, renderHooks = null, templateC
   if (data === null) {
     return res.status(404).render('public/error', { title: 'Not Found', code: 404, message: 'This content is not available.' });
   }
-  return renderTheme(res, template, data, templateContext);
+  const themeSlug = res.locals.activeTheme?.theme_name || res.locals.activeTheme?.slug;
+  const enriched = await attachFseLocals(template, data, themeSlug, {
+    recentPosts: res.locals.recentPosts || []
+  });
+  return renderTheme(res, template, enriched, templateContext);
 }
 
 async function postsForCategorySlug(slug, limit = 6, req = null) {
@@ -286,10 +292,13 @@ async function post(req, res, next) {
 
     await row.increment('views_count');
     const seo = publicSeoFromRecord(row, '/post/');
+    const renderContext = { recentPosts: res.locals.recentPosts || [] };
+    const postView = row.get({ plain: true });
+    postView.content = resolvePublicContent(row, renderContext);
     return renderPublic(res, 'post', {
       title: row.title,
       seo,
-      post: row,
+      post: postView,
       relatedPosts,
       prevPost,
       nextPost,
@@ -452,6 +461,9 @@ async function page(req, res, next) {
 
     const seo = publicSeoFromRecord(row, '/page/');
     const permalinkSettings = res.locals.permalinkSettings || await getPermalinkSettings(SiteSetting);
+    const renderContext = { recentPosts: res.locals.recentPosts || [] };
+    const pageView = row.get({ plain: true });
+    pageView.content = resolvePublicContent(row, renderContext);
     const [pageCrumbs, childPages] = await Promise.all([
       buildPageBreadcrumbs(row, permalinkSettings),
       loadChildPages(row.id)
@@ -459,7 +471,7 @@ async function page(req, res, next) {
     return renderPublic(res, 'page', {
       title: row.title,
       seo,
-      page: row,
+      page: pageView,
       pageCrumbs,
       childPages,
       pageUrl: (item) => pagePath(item, permalinkSettings)

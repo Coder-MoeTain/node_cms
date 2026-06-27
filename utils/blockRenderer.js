@@ -74,6 +74,22 @@ function renderBlock(block, context = {}) {
       const body = rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeText(cell)}</td>`).join('')}</tr>`).join('');
       return `<table class="np-block-table"><tbody>${body}</tbody></table>`;
     }
+    case 'latest-posts': {
+      const limit = Number(attrs.limit) || 5;
+      return `[recent_posts limit="${limit}"]`;
+    }
+    case 'contact-form':
+      return `[contact_form redirect="${escapeText(attrs.redirect || '/contact')}" label="${escapeText(attrs.label || 'Contact us')}"]`;
+    case 'shortcode':
+      return block.content || attrs.code || '';
+    case 'media-gallery': {
+      const images = attrs.images || block.images || [];
+      const items = images.map((img) => {
+        const src = typeof img === 'string' ? img : img.src;
+        return src ? `<img src="${escapeText(src)}" alt="${escapeText(typeof img === 'string' ? '' : (img.alt || ''))}">` : '';
+      }).join('');
+      return `<div class="np-block-media-gallery">${items}</div>`;
+    }
     case 'html':
       return sanitizeHtml(block.content || '', {
         allowedTags: sanitizeHtml.defaults.allowedTags,
@@ -116,7 +132,8 @@ function validateBlockSchema(json) {
 
 const BLOCK_TYPES = [
   'paragraph', 'heading', 'image', 'quote', 'button', 'list', 'columns', 'gallery',
-  'cover', 'embed', 'separator', 'code', 'video', 'audio', 'file', 'table', 'html', 'spacer'
+  'cover', 'embed', 'separator', 'code', 'video', 'audio', 'file', 'table', 'html', 'spacer',
+  'latest-posts', 'contact-form', 'shortcode', 'media-gallery'
 ];
 
 module.exports = { renderBlocks, renderBlock, validateBlockSchema, BLOCK_TYPES };

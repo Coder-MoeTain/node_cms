@@ -1,5 +1,12 @@
 <%- include(themePartial('head')) %>
 <%- include(themePartial('header')) %>
+<% if (typeof fseTemplateHtml !== 'undefined' && fseTemplateHtml) { %>
+<main id="main-content" class="fse-template-main site-main">
+  <div class="container py-4 py-lg-5">
+    <div class="fse-template-content ds-prose"><%- fseTemplateHtml %></div>
+  </div>
+</main>
+<% } else { %>
 <% const usePortalHome = (portalConfig.header && portalConfig.header.layout === 'portal') || activeTheme.header_layout === 'portal' || themePreset === 'myanmar-portal'; %>
 <main id="main-content" class="<%= usePortalHome ? 'portal-main portal-home-page' : 'site-main site-home-page' %>">
   <% if (usePortalHome) { %>
@@ -70,4 +77,5 @@
     </section>
   <% } %>
 </main>
+<% } %>
 <%- include(themePartial('footer')) %>

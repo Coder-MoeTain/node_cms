@@ -36,6 +36,15 @@ Default admin: `admin@example.com` / `Admin@12345`
 | `wxrImport.test.js` | WordPress WXR parse, preview, import, admin upload |
 | `wxrExport.test.js` | WXR XML generation and round-trip parse |
 | `wxrMediaDownloader.test.js` | SSRF-safe remote media download + WXR export route |
+| `loop11Commercial.test.js` | CSV import/export, block patterns, public content renderer |
+| `loop12Commercial.test.js` | Media used-in list, reusable blocks persistence |
+| `fsePublicHelper.test.js` | FSE public template loading and locals merge |
+| `loop13Commercial.test.js` | Autosave, CPT `_embed`, reusable HTTP API, plugin tabs, child ZIP, archive layout, analytics migration |
+| `fsePublicRoutes.test.js` | Public HTTP routes render active FSE templates |
+| `revisionsAdminUi.test.js` | Revision compare UI, post edit link, page block restore |
+| `jwtToken.test.js` | JWT sign/verify and API scopes |
+| `adminSearchApi.test.js` | Admin live content search API |
+| `marketplace.test.js` | Plugin marketplace catalog |
 | `customPostTypes.test.js` | Custom post types (admin → public → API) |
 | `customFields.test.js` | Field groups, validation, public render |
 | `revisionsAutosave.test.js` | Revision history, restore, autosave API |

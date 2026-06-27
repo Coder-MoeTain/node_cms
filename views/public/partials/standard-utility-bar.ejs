@@ -1,0 +1,20 @@
+<% const showBar = (portalConfig.header && portalConfig.header.showUtilityBar) || siteSettings.show_utility_bar === 'true'; %>
+<% if (showBar) { %>
+<div class="site-utility-bar">
+  <div class="container site-utility-inner d-flex flex-wrap align-items-center justify-content-between gap-2 py-1">
+    <div class="site-font-controls" role="group" aria-label="Font size">
+      <button type="button" class="site-font-btn" data-font-scale="small" aria-label="Decrease font size">A-</button>
+      <button type="button" class="site-font-btn active" data-font-scale="normal" aria-label="Default font size">A</button>
+      <button type="button" class="site-font-btn" data-font-scale="large" aria-label="Increase font size">A+</button>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <%- include('language-switcher', { langSwitcherVariant: 'inline' }) %>
+      <% if (!isAdminLoggedIn && !adminHoneypotEnabled) { %>
+        <a class="site-utility-link" href="<%= adminLoginUrl || '/admin/login' %>">Login</a>
+      <% } else if (isAdminLoggedIn) { %>
+        <a class="site-utility-link" href="/admin">Dashboard</a>
+      <% } %>
+    </div>
+  </div>
+</div>
+<% } %>

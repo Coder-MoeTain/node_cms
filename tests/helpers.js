@@ -121,4 +121,20 @@ async function ensurePortalTheme(models, portalConfig) {
   return active;
 }
 
-module.exports = { getCsrf, postForm, putForm, login, logout, getAgentSessionId, ensurePortalTheme, TEST_IMAGE, writeTestUpload, removeTestUpload };
+async function ensureStandardTheme(models) {
+  await models.ThemeSetting.update({ active: false }, { where: {} });
+  const [updated] = await models.ThemeSetting.update({
+    active: true,
+    header_layout: 'standard',
+    custom_css: ''
+  }, { where: { theme_name: 'classic-blog' } });
+  if (!updated) {
+    await models.ThemeSetting.findOrCreate({
+      where: { theme_name: 'classic-blog' },
+      defaults: { theme_name: 'classic-blog', active: true, header_layout: 'standard' }
+    });
+  }
+  return models.ThemeSetting.findOne({ where: { active: true } });
+}
+
+module.exports = { getCsrf, postForm, putForm, login, logout, getAgentSessionId, ensurePortalTheme, ensureStandardTheme, TEST_IMAGE, writeTestUpload, removeTestUpload };

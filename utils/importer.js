@@ -18,7 +18,8 @@ const ALLOWED_ROOT_KEYS = new Set([
   'widget_areas',
   'exported_at',
   'version',
-  'site_id'
+  'site_id',
+  'source'
 ]);
 
 function stripDangerousKeys(value) {

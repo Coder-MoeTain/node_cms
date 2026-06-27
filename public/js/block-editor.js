@@ -17,6 +17,10 @@
     { type: 'audio', label: 'Audio', icon: '♪' },
     { type: 'file', label: 'File', icon: '📎' },
     { type: 'table', label: 'Table', icon: '⊞' },
+    { type: 'latest-posts', label: 'Latest posts', icon: '↻' },
+    { type: 'contact-form', label: 'Contact form', icon: '✉' },
+    { type: 'shortcode', label: 'Shortcode', icon: '[]' },
+    { type: 'media-gallery', label: 'Media gallery', icon: '▦' },
     { type: 'html', label: 'HTML', icon: '<>' },
     { type: 'spacer', label: 'Spacer', icon: '↕' }
   ];
@@ -37,6 +41,10 @@
       case 'audio': return { type, content: '', attrs: { src: '' } };
       case 'file': return { type, content: '', attrs: { url: '#', label: 'Download' } };
       case 'table': return { type, content: '', rows: [['Header 1', 'Header 2'], ['Cell', 'Cell']] };
+      case 'latest-posts': return { type, content: '', attrs: { limit: 5 } };
+      case 'contact-form': return { type, content: '', attrs: { redirect: '/contact', label: 'Contact us' } };
+      case 'shortcode': return { type, content: '[recent_posts limit="5"]' };
+      case 'media-gallery': return { type, content: '', attrs: { images: [] } };
       case 'spacer': return { type, content: '', attrs: { height: 32 } };
       default: return { type, content: '' };
     }
@@ -63,6 +71,8 @@
           return `<p>${escapeHtml(b.content)}</p>`;
         }).join('');
       }
+      const form = container.closest('form');
+      if (form) form.dispatchEvent(new Event('input', { bubbles: true }));
       render();
     }
 
@@ -70,6 +80,54 @@
       container.innerHTML = '';
       const toolbar = document.createElement('div');
       toolbar.className = 'np-block-toolbar mb-3';
+      const patternBtn = document.createElement('button');
+      patternBtn.type = 'button';
+      patternBtn.className = 'np-btn np-btn-secondary np-btn-small me-2 mb-1';
+      patternBtn.textContent = 'Patterns';
+      patternBtn.addEventListener('click', async () => {
+        try {
+          const res = await fetch('/admin/api/block-patterns', { headers: { Accept: 'application/json' } });
+          const json = await res.json();
+          const slug = window.prompt(`Insert pattern slug:\n${(json.data || []).map((p) => p.slug).join(', ')}`);
+          if (!slug) return;
+          const detail = await fetch(`/admin/api/block-patterns/${encodeURIComponent(slug)}`, { headers: { Accept: 'application/json' } });
+          const pattern = (await detail.json()).data;
+          if (pattern?.blocks?.length) {
+            blocks.push(...pattern.blocks.map((b) => JSON.parse(JSON.stringify(b))));
+            sync();
+          }
+        } catch (error) {
+          window.alert(error.message || 'Could not load pattern.');
+        }
+      });
+      toolbar.appendChild(patternBtn);
+      const reusableBtn = document.createElement('button');
+      reusableBtn.type = 'button';
+      reusableBtn.className = 'np-btn np-btn-secondary np-btn-small me-2 mb-1';
+      reusableBtn.textContent = 'Reusable';
+      reusableBtn.addEventListener('click', async () => {
+        try {
+          const res = await fetch('/admin/api/reusable-blocks', { headers: { Accept: 'application/json' } });
+          const json = await res.json();
+          const list = json.data || [];
+          if (!list.length) {
+            window.alert('No reusable blocks saved yet. Use ★ on a block to save one.');
+            return;
+          }
+          const slug = window.prompt(`Insert reusable block slug:\n${list.map((b) => `${b.slug} — ${b.title}`).join('\n')}`);
+          if (!slug) return;
+          const detail = await fetch(`/admin/api/reusable-blocks/${encodeURIComponent(slug.trim())}`, { headers: { Accept: 'application/json' } });
+          if (!detail.ok) throw new Error('Block not found');
+          const reusable = (await detail.json()).data;
+          if (reusable?.blocks?.length) {
+            blocks.push(...reusable.blocks.map((b) => JSON.parse(JSON.stringify(b))));
+            sync();
+          }
+        } catch (error) {
+          window.alert(error.message || 'Could not load reusable block.');
+        }
+      });
+      toolbar.appendChild(reusableBtn);
       BLOCK_TYPES.forEach((bt) => {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -88,6 +146,7 @@
             <button type="button" data-up="${index}">↑</button>
             <button type="button" data-down="${index}">↓</button>
             <button type="button" data-dup="${index}">⧉</button>
+            <button type="button" data-save-reusable="${index}">★</button>
             <button type="button" data-del="${index}">✕</button>
           </span></div>`;
 
@@ -160,6 +219,13 @@
             <input class="form-control" data-field="title" placeholder="Title" value="${escapeHtml(block.attrs?.title || block.content || '')}">`;
         } else if (block.type === 'table') {
           card.innerHTML += `<textarea class="form-control" data-field="rows" rows="5">${escapeHtml((block.rows || []).map((r) => r.join('\t')).join('\n'))}</textarea>`;
+        } else if (block.type === 'latest-posts') {
+          card.innerHTML += `<label>Limit <input class="form-control" type="number" min="1" max="20" data-field="limit" value="${block.attrs?.limit || 5}"></label>`;
+        } else if (block.type === 'contact-form') {
+          card.innerHTML += `<input class="form-control mb-1" data-field="redirect" placeholder="Redirect URL" value="${escapeHtml(block.attrs?.redirect || '/contact')}">
+            <input class="form-control" data-field="label" placeholder="Button label" value="${escapeHtml(block.attrs?.label || 'Contact us')}">`;
+        } else if (block.type === 'shortcode') {
+          card.innerHTML += `<textarea class="form-control" data-field="content" rows="3">${escapeHtml(block.content || '')}</textarea>`;
         } else if (block.type === 'separator') {
           card.innerHTML += '<p class="text-muted small mb-0">Horizontal rule</p>';
         } else {
@@ -168,6 +234,22 @@
 
         card.querySelector('[data-del]')?.addEventListener('click', () => { blocks.splice(index, 1); sync(); });
         card.querySelector('[data-dup]')?.addEventListener('click', () => { blocks.splice(index + 1, 0, JSON.parse(JSON.stringify(block))); sync(); });
+        card.querySelector('[data-save-reusable]')?.addEventListener('click', async () => {
+          const title = window.prompt('Reusable block name');
+          if (!title) return;
+          try {
+            const csrf = document.querySelector('input[name="_csrf"]')?.value || '';
+            const res = await fetch('/admin/api/reusable-blocks', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': csrf },
+              body: JSON.stringify({ title, blocks: [JSON.parse(JSON.stringify(block))] })
+            });
+            if (!res.ok) throw new Error('Save failed');
+            window.alert('Saved as reusable block.');
+          } catch (error) {
+            window.alert(error.message || 'Could not save reusable block.');
+          }
+        });
         card.querySelector('[data-up]')?.addEventListener('click', () => {
           if (index > 0) { const t = blocks[index - 1]; blocks[index - 1] = blocks[index]; blocks[index] = t; sync(); }
         });

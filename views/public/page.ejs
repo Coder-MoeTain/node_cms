@@ -14,7 +14,11 @@
   <div class="row g-4 layout-<%= activeTheme.sidebar_position || 'right' %>">
     <article class="<%= activeTheme.sidebar_position === 'none' ? 'col-12' : 'col-lg-8' %>">
       <div class="portal-list-panel site-list-panel portal-card-bordered content-page ds-prose p-4">
-        <div class="content portal-page-content entry-content"><%- page.content %></div>
+        <% if (typeof fseTemplateHtml !== 'undefined' && fseTemplateHtml) { %>
+          <div class="fse-template-content entry-content"><%- fseTemplateHtml %></div>
+        <% } else { %>
+          <div class="content portal-page-content entry-content"><%- page.content %></div>
+        <% } %>
       </div>
       <% if (typeof childPages !== 'undefined' && childPages.length) { %>
         <nav class="page-children mt-4" aria-label="Subpages">

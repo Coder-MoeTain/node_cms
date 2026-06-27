@@ -12,7 +12,7 @@ async function buildEmbedded(req, record, embedParam) {
 
   if (embed.includes('author') && record.author_id) {
     const author = await User.findByPk(record.author_id, {
-      attributes: ['id', 'name', 'email', 'avatar_url']
+      attributes: ['id', 'name', 'email', 'profile_image']
     });
     if (author) embedded.author = author;
   }

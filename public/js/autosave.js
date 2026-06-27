@@ -9,6 +9,7 @@
   const statusEl = document.querySelector('[data-autosave-status]');
   let timer = null;
   let restored = false;
+  const localKey = `np-autosave:${resourceType}:${resourceId || 'new'}`;
 
   function collectDraft() {
     const data = {};
@@ -31,10 +32,55 @@
       }
     });
     form.dispatchEvent(new Event('input', { bubbles: true }));
+    if (draft.block_content_json) {
+      const editorEl = document.querySelector('[data-block-editor]');
+      if (editorEl?.__npBlockEditor?.setBlocks) {
+        try {
+          const blocks = typeof draft.block_content_json === 'string'
+            ? JSON.parse(draft.block_content_json)
+            : draft.block_content_json;
+          editorEl.__npBlockEditor.setBlocks(Array.isArray(blocks) ? blocks : []);
+        } catch {
+          // ignore invalid block JSON
+        }
+      }
+    }
+  }
+
+  function loadLocalDraft() {
+    try {
+      const raw = localStorage.getItem(localKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed?.draft_data || parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveLocalDraft() {
+    try {
+      localStorage.setItem(localKey, JSON.stringify({ draft_data: collectDraft(), saved_at: new Date().toISOString() }));
+    } catch {
+      // ignore quota errors
+    }
+  }
+
+  function clearLocalDraft() {
+    try { localStorage.removeItem(localKey); } catch { /* ignore */ }
   }
 
   async function loadDraft() {
-    if (!resourceId) return;
+    if (!resourceId) {
+      const local = loadLocalDraft();
+      if (!local || !local.title) return;
+      const shouldRestore = window.confirm('Recover unsaved changes from your browser draft?');
+      if (!shouldRestore) return;
+      applyDraft(local);
+      restored = true;
+      if (statusEl) statusEl.textContent = 'Recovered local draft';
+      return;
+    }
     try {
       const csrf = form.querySelector('[name="_csrf"]')?.value;
       const res = await fetch(`/admin/autosave?resource_type=${encodeURIComponent(resourceType)}&resource_id=${encodeURIComponent(resourceId)}`, {
@@ -42,10 +88,12 @@
       });
       if (!res.ok) return;
       const payload = await res.json();
-      if (!payload?.draft?.draft_data) return;
+      if (!payload?.draft) return;
+      const draft = payload.draft.draft_data || payload.draft;
+      if (!draft || typeof draft !== 'object') return;
       const shouldRestore = window.confirm('Recover unsaved changes from your last autosave?');
       if (!shouldRestore) return;
-      applyDraft(payload.draft.draft_data);
+      applyDraft(draft);
       restored = true;
       if (statusEl) statusEl.textContent = 'Recovered autosaved draft';
     } catch {
@@ -54,7 +102,13 @@
   }
 
   async function saveDraft() {
-    if (!resourceId) return;
+    if (!resourceId) {
+      saveLocalDraft();
+      if (statusEl) {
+        statusEl.textContent = 'Draft saved locally ' + (window.npFormatTime ? window.npFormatTime(new Date()) : new Date().toLocaleTimeString());
+      }
+      return;
+    }
     try {
       const csrf = form.querySelector('[name="_csrf"]')?.value;
       const res = await fetch('/admin/autosave', {
@@ -78,6 +132,7 @@
   });
 
   form.addEventListener('submit', async () => {
+    clearLocalDraft();
     if (!resourceId) return;
     try {
       const csrf = form.querySelector('[name="_csrf"]')?.value;

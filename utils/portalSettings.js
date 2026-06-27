@@ -32,6 +32,7 @@ const PORTAL_SETTING_DEFINITIONS = {
   page_permalink_structure: { value: '/page/%slug%', group: 'seo', label: 'Page permalink structure' },
   revision_limit: { value: '25', group: 'general', label: 'Revision history limit per post/page' },
   comment_max_depth: { value: '5', group: 'general', label: 'Maximum comment reply depth' },
+  show_utility_bar: { value: 'false', group: 'general', label: 'Show utility bar on standard themes' },
   public_site_title: { value: 'NodePress CMS', group: 'public', label: 'Public site title' },
   public_site_tagline: { value: 'Official information portal', group: 'public', label: 'Public site tagline' }
 };

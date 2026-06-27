@@ -33,6 +33,21 @@
               <p class="np-help-text mt-2 mb-0"><%= media.mime_type %> · <%= Math.round(media.file_size / 1024) %> KB<% if (media.width) { %> · <%= media.width %>×<%= media.height %><% } %></p>
             </div>
           </div>
+          <% if (typeof usedIn !== 'undefined' && (usedIn.posts.length || usedIn.pages.length)) { %>
+          <div class="np-widget mt-3">
+            <div class="np-widget-header"><span>Used in</span></div>
+            <div class="np-widget-body">
+              <ul class="list-unstyled mb-0 small">
+                <% usedIn.posts.forEach(function(item) { %>
+                  <li class="mb-1"><a href="<%= item.href %>"><%= item.title %></a> <span class="text-muted">(<%= item.post_type %>)</span></li>
+                <% }) %>
+                <% usedIn.pages.forEach(function(item) { %>
+                  <li class="mb-1"><a href="<%= item.href %>"><%= item.title %></a> <span class="text-muted">(page)</span></li>
+                <% }) %>
+              </ul>
+            </div>
+          </div>
+          <% } %>
         </div>
         <div class="col-lg-8">
           <div class="np-widget">

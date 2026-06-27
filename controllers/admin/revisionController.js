@@ -50,7 +50,9 @@ async function restore(req, res, next) {
       if (page) {
         await page.update({
           title: revision.title || page.title,
-          content: revision.content || page.content
+          content: revision.content || page.content,
+          excerpt: revision.excerpt || page.excerpt,
+          block_content_json: revision.block_content_json || page.block_content_json
         });
       }
     }

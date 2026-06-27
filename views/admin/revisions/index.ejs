@@ -4,14 +4,18 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header mb-3"><h1>Revisions</h1></div>
+    <div class="np-page-header np-page-header-split mb-3">
+      <div><h1>Revisions</h1><p class="np-help-text mb-0">Select two revisions to compare side by side.</p></div>
+      <button type="button" class="np-btn np-btn-secondary" id="compare-revisions-btn" disabled>Compare selected</button>
+    </div>
     <div class="np-table-wrap">
-      <table class="np-table">
-        <thead><tr><th>Date</th><th>Author</th><th>Title</th><th></th></tr></thead>
+      <table class="np-table" id="revisions-table">
+        <thead><tr><th scope="col" style="width:2.5rem"></th><th>Date</th><th>Author</th><th>Title</th><th></th></tr></thead>
         <tbody>
-          <% if (!revisions.length) { %><tr><td colspan="4" class="text-muted">No revisions saved yet.</td></tr><% } %>
+          <% if (!revisions.length) { %><tr><td colspan="5" class="text-muted">No revisions saved yet.</td></tr><% } %>
           <% revisions.forEach(function(rev) { %>
             <tr>
+              <td><input type="checkbox" class="form-check-input revision-compare-check" value="<%= rev.id %>" aria-label="Select revision <%= rev.id %>"></td>
               <td><%= rev.created_at ? formatDateTime(rev.created_at) : '—' %></td>
               <td><%= rev.author ? rev.author.name : '—' %></td>
               <td><%= rev.title || '—' %></td>
@@ -28,4 +32,28 @@
     </div>
   </main>
 </div>
+<script>
+(function () {
+  const checks = () => Array.from(document.querySelectorAll('.revision-compare-check:checked'));
+  const btn = document.getElementById('compare-revisions-btn');
+  function syncBtn() {
+    const selected = checks();
+    btn.disabled = selected.length !== 2;
+  }
+  document.querySelectorAll('.revision-compare-check').forEach((el) => {
+    el.addEventListener('change', () => {
+      const selected = checks();
+      if (selected.length > 2) {
+        selected.slice(0, -1).forEach((c) => { c.checked = false; });
+      }
+      syncBtn();
+    });
+  });
+  btn?.addEventListener('click', () => {
+    const ids = checks().map((c) => c.value);
+    if (ids.length !== 2) return;
+    window.location.href = `/admin/revisions/compare?left=${encodeURIComponent(ids[0])}&right=${encodeURIComponent(ids[1])}`;
+  });
+})();
+</script>
 <%- include('../partials/footer') %>

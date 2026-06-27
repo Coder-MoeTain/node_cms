@@ -73,6 +73,13 @@ async function updateSettings(req, res, next) {
         group: getSettingGroup(key)
       });
     }
+    if (!Object.prototype.hasOwnProperty.call(req.body, 'show_utility_bar')) {
+      await SiteSetting.upsert({
+        key: 'show_utility_bar',
+        value: 'false',
+        group: getSettingGroup('show_utility_bar')
+      });
+    }
     req.flash('success', 'Settings updated.');
     return res.redirect('/admin/settings');
   } catch (error) {

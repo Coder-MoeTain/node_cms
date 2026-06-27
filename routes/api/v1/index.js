@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const {
-  Post, Page, Category, Tag, CustomPostType, Media, Comment, Menu, MenuItem, WidgetArea, WidgetInstance, Taxonomy, TaxonomyTerm
+  Post, Page, Category, Tag, CustomPostType, Media, Comment, Menu, MenuItem, WidgetArea, WidgetInstance, Taxonomy, TaxonomyTerm, User
 } = require('../../../models');
 const { getPagination, pageMeta } = require('../../../utils/pagination');
 const { loadCustomFieldsMap } = require('../../../utils/customFields');
@@ -154,13 +154,18 @@ router.get('/types/:slug/content/:idOrSlug', async (req, res, next) => {
     if (!type) return handlers.apiError(res, 404, 'Post type not found.');
     const base = { post_type: type.slug, status: 'published' };
     Object.assign(base, Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug });
-    const item = await Post.findOne({ where: siteScopeWhere(req, base) });
+    const item = await Post.findOne({
+      where: siteScopeWhere(req, base),
+      include: [{ model: User, as: 'author' }, { model: Category }, Tag]
+    });
     if (!item) return handlers.apiError(res, 404, 'Content not found.');
     let customFields = {};
     if (type.supports_custom_fields) {
       customFields = await loadCustomFieldsMap('custom_post', item.id, 'custom_post_type', type.slug);
     }
-    return res.json({ data: item, custom_fields: customFields });
+    const embedded = await buildEmbedded(req, item, req.query._embed);
+    const payload = { data: item, custom_fields: customFields };
+    return res.json(attachEmbed(payload, embedded));
   } catch (error) {
     return next(error);
   }

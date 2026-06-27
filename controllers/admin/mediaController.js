@@ -5,6 +5,7 @@ const policy = require('../../utils/policy');
 const { buildMediaPayload, removeMediaFiles, filterExistingMedia, regenerateImageVariants, resolveBestMediaUrl, resolvePublicMediaUrl, mediaFileExists } = require('../../utils/mediaHelper');
 const { finalizeQuarantinedUpload } = require('../../utils/uploadSecurity');
 const { getPagination, pageMeta } = require('../../utils/pagination');
+const { findMediaUsage } = require('../../utils/mediaUsage');
 
 async function index(req, res, next) {
   try {
@@ -66,7 +67,8 @@ async function edit(req, res, next) {
       req.flash('error', 'You can only edit media you uploaded.');
       return res.redirect('/admin/media');
     }
-    return res.render('admin/media/edit', { title: 'Edit Media', media });
+    const usedIn = await findMediaUsage(media.file_path);
+    return res.render('admin/media/edit', { title: 'Edit Media', media, usedIn });
   } catch (error) {
     return next(error);
   }

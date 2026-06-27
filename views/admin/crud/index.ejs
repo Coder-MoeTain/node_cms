@@ -119,6 +119,7 @@
                 <% } %>
                 <div class="row-actions">
                   <% if (canManageResource(resource, 'edit', row)) { %><a href="/admin/<%= resource %>/<%= row.id %>/edit">Edit</a><% } %>
+                  <% if (!trashed && ['posts', 'pages'].includes(resource) && canManageResource(resource, 'edit', row)) { %><span class="sep">|</span><a href="/admin/revisions?resource_type=<%= resource === 'pages' ? 'page' : 'post' %>&resource_id=<%= row.id %>">Revisions</a><% } %>
                   <% if (row.slug && row.status === 'published') { %><span class="sep">|</span><a href="/<%= resource === 'pages' ? 'page' : 'post' %>/<%= row.slug %>" target="_blank" rel="noopener">View</a><% } %>
                   <% if (trashed && canManageResource(resource, 'destroy', row)) { %>
                     <form class="d-inline" method="post" action="/admin/<%= resource %>/<%= row.id %>/restore">
@@ -201,6 +202,7 @@
           </div>
           <div class="row-actions">
             <% if (canManageResource(resource, 'edit', row)) { %><a href="/admin/<%= resource %>/<%= row.id %>/edit">Edit</a><% } %>
+            <% if (!trashed && ['posts', 'pages'].includes(resource) && canManageResource(resource, 'edit', row)) { %><span class="sep">|</span><a href="/admin/revisions?resource_type=<%= resource === 'pages' ? 'page' : 'post' %>&resource_id=<%= row.id %>">Revisions</a><% } %>
             <% if (row.slug && row.status === 'published') { %><span class="sep">|</span><a href="/<%= resource === 'pages' ? 'page' : 'post' %>/<%= row.slug %>" target="_blank" rel="noopener">View</a><% } %>
           </div>
         </article>
