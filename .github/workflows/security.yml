@@ -55,10 +55,16 @@ jobs:
 
   semgrep:
     runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
     steps:
       - uses: actions/checkout@v4
-      - uses: returntocorp/semgrep-action@v1
-        with:
-          config: p/nodejs p/javascript p/expressjs
-        env:
-          SEMGREP_TIMEOUT: 300
+      - name: Scan application code
+        run: |
+          semgrep scan \
+            --config p/nodejs \
+            --config p/javascript \
+            --config p/expressjs \
+            --severity ERROR \
+            --metrics off \
+            controllers middleware routes utils config server.js

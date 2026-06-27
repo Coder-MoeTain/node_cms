@@ -2,22 +2,9 @@ const path = require('path');
 const { Sequelize } = require('sequelize');
 const session = require('express-session');
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
-const { resolveIsolatedTestDatabaseName } = require('../utils/testDatabase');
+const { resolveIsolatedTestDatabaseName, authenticateWithRetry } = require('../utils/testDatabase');
 const { applyPendingMigrations } = require('./migrationRunner');
 require('dotenv').config();
-
-async function authenticateWithRetry(sequelize, label = 'MySQL', attempts = 20, delayMs = 2000) {
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    try {
-      await sequelize.authenticate();
-      return;
-    } catch (error) {
-      if (attempt >= attempts) throw error;
-      console.warn(`${label} not ready (attempt ${attempt}/${attempts}): ${error.message}`);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-  }
-}
 
 async function bootstrapTestDatabase() {
   if (process.env.NODE_ENV !== 'test') {

@@ -11,6 +11,20 @@ function resolveIsolatedTestDatabaseName(env = process.env) {
   return testDb;
 }
 
+async function authenticateWithRetry(sequelize, label = 'MySQL', attempts = 20, delayMs = 2000) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await sequelize.authenticate();
+      return;
+    } catch (error) {
+      if (attempt >= attempts) throw error;
+      console.warn(`${label} not ready (attempt ${attempt}/${attempts}): ${error.message}`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
 module.exports = {
-  resolveIsolatedTestDatabaseName
+  resolveIsolatedTestDatabaseName,
+  authenticateWithRetry
 };

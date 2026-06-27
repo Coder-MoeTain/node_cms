@@ -1,12 +1,14 @@
 node_modules/
 coverage/
-public/vendor/
+public/
 tests/
 photos/
-database/backups/
-plugins/.tmp-extract-*/
-themes/.tmp-extract-*/
-themes/zip-*-theme/
+database/
+plugins/
+themes/
+views/
+scripts/
+bin/
 *.min.js
 *.min.css
 ci-artifact.zip
@@ -15,3 +17,4 @@ test-output-full.txt
 test-plugin-out.txt
 test-run.log
 themes-only.txt
+docs/

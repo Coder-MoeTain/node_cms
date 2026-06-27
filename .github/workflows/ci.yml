@@ -52,6 +52,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Wait for MySQL service
+        run: node scripts/wait-for-mysql.js
       - run: npm run test:ci
       - name: Report coverage summary
         run: node scripts/coverage-summary.js
