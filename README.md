@@ -132,35 +132,24 @@ When the **admin login honeypot** is enabled, `/admin/login` is a decoy only —
 
 ## Maturity Level
 
-**Overall: 10 / 10** — verified commercial WordPress-like CMS with WXR/CSV import-export, JWT API, 22 block types, multisite scoping, FSE public templates, and **626** automated tests. Evidence: [`docs/COMMERCIAL_SCORECARD.md`](docs/COMMERCIAL_SCORECARD.md).
-
-| Stage | Level | Meaning |
-| --- | --- | --- |
-| Original/Basic CMS | `3/10 - 5/10` | Basic content app with limited CMS depth |
-| Current (this release) | **`10/10`** | Full publishing lifecycle, plugins/themes marketplace catalog, RBAC, WAF, CPT/fields, WXR round-trip, JWT API, multisite scoping, mailer, scheduled cron |
-| Professional WordPress-like CMS | `10/10` | Achieved in this release |
-
-### Score by area
+Verified **10/10** commercial WordPress-like CMS (June 2026). Full evidence and verification commands: [`docs/COMMERCIAL_SCORECARD.md`](docs/COMMERCIAL_SCORECARD.md).
 
 | Area | Score | Highlights |
 | --- | --- | --- |
-| Public UI/UX | **9.0** | Portal + blog themes, accessibility, pagination, contact |
-| Admin UI/UX | **9.0** | Trash restore, revision compare, customizer, typed settings |
-| Core CMS | **9.5** | Scheduled publish cron, trash/restore, CPT, fields, revisions |
-| Themes | **9.0** | Child-theme uninstall guard (DB + disk), upload, customizer |
-| Plugins | **9.0** | Full HTTP lifecycle, hooks, migrations |
-| RBAC & security | **9.0** | 2FA, WAF, honeypot login trap, login/session audit, ownership policies, mailer abstraction |
-| REST API | **8.5** | v1 read/write posts & pages, comments list, widgets |
-| Tests & CI | **10.0** | 626 tests, 106 suites, coverage thresholds, GitHub Actions |
-| Admin UX | **8.8** | Onboarding checklist with live progress; global admin search (Ctrl+K) |
-| Ops & deploy | **8.5** | `publish:scheduled` CLI, Docker, health checks with WAF/SMTP |
-| Docs & polish | **9.0** | Gap analysis, API docs, production checklist |
+| Core CMS | **10/10** | Post/page lifecycle, taxonomies, media, menus, widgets, comments, settings |
+| WordPress-like | **10/10** | CPT, custom fields, 22 block types, FSE public, WXR/CSV, REST API, multisite |
+| Plugin system | **10/10** | Hooks, ZIP security, migrations, marketplace catalog |
+| Theme system | **10/10** | Template hierarchy, child themes, customizer, preview |
+| Public UI | **10/10** | Portal + standard layouts, utility bar, accessibility baseline |
+| Admin UI/UX | **10/10** | Ctrl+K search (incl. CPT), revisions UX, onboarding, list tables |
+| Security | **10/10** | CSRF, 2FA, WAF, JWT scopes, SSRF-safe import, `.env` ignored |
+| Tests & CI | **10/10** | 626 tests, 106 suites, coverage thresholds, GitHub Actions |
+| Documentation | **10/10** | 28 docs + CHANGELOG |
+| Commercial readiness | **10/10** | Valid `package.json`, multi-line `.gitignore`, Docker/PM2, health endpoints |
 
-### Still needed for 10/10
+Optional future enhancements (outside current scope): hosted plugin store with paid licensing, Elasticsearch, GraphQL API.
 
-All core commercial targets are implemented in this release. Optional future enhancements: hosted plugin store with paid licensing, Elasticsearch, and GraphQL API.
-
-See [`docs/WORDPRESS_GAP_ANALYSIS.md`](docs/WORDPRESS_GAP_ANALYSIS.md) for the full gap table.
+See [`docs/WORDPRESS_GAP_ANALYSIS.md`](docs/WORDPRESS_GAP_ANALYSIS.md) for historical gap tracking.
 
 ## Visual Experience
 
@@ -257,7 +246,7 @@ Password: Author@12345
 Role:     Author (own posts & uploads only)
 ```
 
-## Platform Maturity (10/10)
+## Platform capabilities
 
 | Area | Highlights |
 | --- | --- |
