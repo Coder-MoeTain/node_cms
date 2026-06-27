@@ -76,6 +76,15 @@ async function getSettingsObject() {
   }, {});
 }
 
+async function upsertWafSetting(key, value, type) {
+  const existing = await WafSetting.findOne({ where: { setting_key: key } });
+  if (existing) {
+    await existing.update({ setting_value: value, setting_type: type });
+    return existing;
+  }
+  return WafSetting.create({ setting_key: key, setting_value: value, setting_type: type });
+}
+
 function buildRulePayload(body, userId, existing = null) {
   const category = categories.includes(body.category) ? body.category : 'custom';
   const target = targets.includes(body.target) ? body.target : 'all';
@@ -219,7 +228,7 @@ async function updateSettings(req, res, next) {
       } else {
         value = String(req.body[key] || '').trim();
       }
-      await WafSetting.upsert({ setting_key: key, setting_value: value, setting_type: type });
+      await upsertWafSetting(key, value, type);
     }
     clearWafCache();
     const { invalidateTrustedProxyCache } = require('../../utils/loginSessionHelper');

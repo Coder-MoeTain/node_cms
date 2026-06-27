@@ -4,47 +4,178 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header">
-      <h1>Custom Post Types</h1>
-      <% if (can('manage_custom_post_types')) { %>
-        <a class="np-btn np-btn-primary" href="/admin/custom-post-types/create"><i class="bi bi-plus-lg"></i> Add New</a>
+    <div id="np-content-types-admin">
+      <div class="np-page-header np-page-header-split mb-4">
+        <div>
+          <h1>Content Types</h1>
+          <p class="np-help-text mb-0">Define custom post types for news, events, jobs, and more — WordPress-style structured content with archives and REST API.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <form method="post" action="/admin/custom-post-types/defaults" class="d-inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="np-btn np-btn-secondary" type="submit"><i class="bi bi-magic"></i> Add starters</button>
+          </form>
+          <% if (can('manage_custom_fields')) { %>
+            <a class="np-btn np-btn-secondary" href="/admin/field-groups"><i class="bi bi-input-cursor-text"></i> Field Groups</a>
+          <% } %>
+          <a class="np-btn np-btn-primary" href="/admin/custom-post-types/create"><i class="bi bi-plus-lg"></i> New type</a>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="np-cpt-stat">
+            <i class="bi bi-collection" aria-hidden="true"></i>
+            <div><strong><%= stats.total %></strong><span>Types</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-cpt-stat np-cpt-stat-success">
+            <i class="bi bi-check-circle" aria-hidden="true"></i>
+            <div><strong><%= stats.active %></strong><span>Active</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-cpt-stat">
+            <i class="bi bi-list-ul" aria-hidden="true"></i>
+            <div><strong><%= stats.inMenu %></strong><span>In sidebar</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-cpt-stat">
+            <i class="bi bi-files" aria-hidden="true"></i>
+            <div><strong><%= stats.totalItems %></strong><span>Total items</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+          <div class="np-widget h-100">
+            <div class="np-widget-header"><span><i class="bi bi-lightbulb me-1"></i> Getting started</span></div>
+            <div class="np-widget-body">
+              <ul class="np-cpt-tips mb-0">
+                <li>Create a type, enable <strong>Show in admin menu</strong>, then add items from the sidebar or the type card.</li>
+                <li>Enable <strong>Has archive</strong> for public listings at <code>/types/{slug}</code>.</li>
+                <li>Attach <strong>Field Groups</strong> to add structured metadata per content type.</li>
+                <li>Use <strong>REST API</strong> exposure for headless integrations at <code>/api/v1/types</code>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="np-widget h-100">
+            <div class="np-widget-header"><span><i class="bi bi-stars me-1"></i> Starter types</span></div>
+            <div class="np-widget-body">
+              <p class="small mb-2">One click adds News, Events, and Jobs with sensible defaults.</p>
+              <form method="post" action="/admin/custom-post-types/defaults">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="np-btn np-btn-secondary np-btn-small w-100" type="submit">Add News, Events & Jobs</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="np-cpt-toolbar mb-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label" for="cpt-search">Search types</label>
+            <input class="form-control" id="cpt-search" type="search" value="<%= query || '' %>" placeholder="Name, slug, description…" data-cpt-filter>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="cpt-status-filter">Status</label>
+            <select class="form-select" id="cpt-status-filter" data-cpt-status>
+              <option value="all">All statuses</option>
+              <option value="active">Active only</option>
+              <option value="inactive">Inactive only</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <div class="np-help-text pt-4"><span data-cpt-visible-count><%= rows.length %></span> of <%= rows.length %> shown</div>
+          </div>
+        </div>
+      </div>
+
+      <% if (rows.length) { %>
+        <div class="row g-3" data-cpt-list>
+          <% rows.forEach(function(row) { %>
+            <div class="col-xl-6" data-cpt-card data-name="<%= (row.name + ' ' + row.slug + ' ' + (row.description || '')).toLowerCase() %>" data-status="<%= row.status %>">
+              <article class="np-cpt-card h-100">
+                <div class="np-cpt-card-head">
+                  <div class="np-cpt-card-icon"><i class="bi <%= row.icon || 'bi-file-earmark' %>" aria-hidden="true"></i></div>
+                  <div class="flex-grow-1 min-w-0">
+                    <h2 class="h6 mb-1 text-truncate"><%= row.name %></h2>
+                    <p class="np-help-text mb-0"><code><%= row.slug %></code></p>
+                  </div>
+                  <span class="np-badge np-badge-<%= row.status === 'active' ? 'success' : 'secondary' %>"><%= row.status %></span>
+                </div>
+
+                <% if (row.description) { %>
+                  <p class="np-cpt-card-desc"><%= row.description %></p>
+                <% } %>
+
+                <div class="np-cpt-card-stats">
+                  <span><i class="bi bi-files"></i> <%= row.itemCount %> items</span>
+                  <% if (row.publishedCount) { %><span><i class="bi bi-check2"></i> <%= row.publishedCount %> published</span><% } %>
+                  <% if (row.draftCount) { %><span><i class="bi bi-pencil"></i> <%= row.draftCount %> drafts</span><% } %>
+                  <% if (row.fieldGroupCount) { %><span><i class="bi bi-input-cursor-text"></i> <%= row.fieldGroupCount %> field groups</span><% } %>
+                </div>
+
+                <% if (row.supports.length) { %>
+                  <div class="np-cpt-support-tags">
+                    <% row.supports.slice(0, 6).forEach(function(s) { %>
+                      <span title="<%= s.label %>"><i class="bi <%= s.icon %>"></i> <%= s.label %></span>
+                    <% }) %>
+                    <% if (row.supports.length > 6) { %>
+                      <span class="text-muted">+<%= row.supports.length - 6 %></span>
+                    <% } %>
+                  </div>
+                <% } %>
+
+                <div class="np-cpt-card-actions">
+                  <% if (canManageContent && row.status === 'active') { %>
+                    <a class="np-btn np-btn-primary np-btn-small" href="/admin/content/<%= row.slug %>"><i class="bi bi-folder2-open"></i> Manage</a>
+                    <a class="np-btn np-btn-secondary np-btn-small" href="/admin/content/<%= row.slug %>/create"><i class="bi bi-plus-lg"></i> Add</a>
+                  <% } %>
+                  <a class="np-btn np-btn-secondary np-btn-small" href="/admin/custom-post-types/<%= row.id %>/edit"><i class="bi bi-gear"></i> Settings</a>
+                  <% if (row.publicUrl) { %>
+                    <a class="np-btn np-btn-secondary np-btn-small" href="<%= row.publicUrl %>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Archive</a>
+                  <% } %>
+                  <form method="post" action="/admin/custom-post-types/<%= row.id %>/duplicate" class="d-inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="np-btn np-btn-secondary np-btn-small" type="submit"><i class="bi bi-copy"></i></button>
+                  </form>
+                  <form method="post" action="/admin/custom-post-types/<%= row.id %>?_method=DELETE&_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" data-confirm="Delete content type &quot;<%= row.name %>&quot;? Existing items block deletion.">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="np-btn np-btn-small np-btn-danger" type="submit" <%= row.itemCount ? 'disabled title="Has content — deactivate instead"' : '' %>><i class="bi bi-trash"></i></button>
+                  </form>
+                </div>
+              </article>
+            </div>
+          <% }) %>
+        </div>
+        <div class="empty-state d-none mt-3" data-cpt-no-results>
+          <i class="bi bi-search d-block"></i>
+          <strong>No matching content types</strong>
+          <p class="mb-0">Try a different search or filter.</p>
+        </div>
+      <% } else { %>
+        <div class="empty-state">
+          <i class="bi bi-collection d-block"></i>
+          <strong>No content types yet</strong>
+          <p class="mb-3">Create your first type or add starter News, Events, and Jobs templates.</p>
+          <div class="d-flex flex-wrap gap-2 justify-content-center">
+            <a class="np-btn np-btn-primary" href="/admin/custom-post-types/create">Create content type</a>
+            <form method="post" action="/admin/custom-post-types/defaults">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="np-btn np-btn-secondary" type="submit">Add starters</button>
+            </form>
+          </div>
+        </div>
       <% } %>
     </div>
-    <div class="list-toolbar mb-3">
-      <form class="admin-search" method="get">
-        <input type="search" name="q" value="<%= query || '' %>" placeholder="Search types…" class="form-control">
-      </form>
-    </div>
-    <div class="np-table-wrap">
-      <table class="np-table">
-        <thead>
-          <tr><th>Name</th><th>Slug</th><th>Status</th><th>Menu</th><th>API</th><th></th></tr>
-        </thead>
-        <tbody>
-          <% if (!rows.length) { %>
-            <tr><td colspan="6" class="text-muted">No custom post types yet.</td></tr>
-          <% } %>
-          <% rows.forEach(function(row) { %>
-            <tr>
-              <td><i class="bi <%= row.icon || 'bi-file-earmark' %> me-1"></i> <%= row.name %></td>
-              <td><code><%= row.slug %></code></td>
-              <td><span class="np-badge np-badge-<%= row.status === 'active' ? 'success' : 'muted' %>"><%= row.status %></span></td>
-              <td><%= row.show_in_menu ? 'Yes' : 'No' %></td>
-              <td><%= row.show_in_api ? 'Yes' : 'No' %></td>
-              <td class="text-end">
-                <a href="/admin/content/<%= row.slug %>" class="np-btn np-btn-link np-btn-small">Content</a>
-                <a href="/admin/custom-post-types/<%= row.id %>/edit" class="np-btn np-btn-link np-btn-small">Edit</a>
-                <form method="post" action="/admin/custom-post-types/<%= row.id %>?_method=DELETE&_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" onsubmit="return confirm('Delete this post type?');">
-                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                  <button type="submit" class="np-btn np-btn-link np-btn-small text-danger">Delete</button>
-                </form>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
-    <%- include('../../partials/pagination', { pagination, basePath: '/admin/custom-post-types' }) %>
   </main>
 </div>
+<script src="/js/admin-content-types.js"></script>
 <%- include('../partials/footer') %>

@@ -102,7 +102,8 @@ describe('Custom Post Types', () => {
     await login(agent, 'admin@example.com', 'Admin@12345');
     const list = await agent.get('/admin/custom-post-types');
     expect(list.status).toBe(200);
-    expect(list.text).toMatch(/Test News|Custom Post Types/i);
+    expect(list.text).toMatch(/Test News|Content Types/i);
+    expect(list.text).toMatch(/Add starters|New type/i);
     const type = await models.CustomPostType.findOne({ where: { slug: typeSlug } });
     const edit = await agent.get(`/admin/custom-post-types/${type.id}/edit`);
     expect(edit.status).toBe(200);

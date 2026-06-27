@@ -8,15 +8,16 @@
       <nav aria-label="breadcrumb" class="mb-2">
         <ol class="breadcrumb np-breadcrumb">
           <li class="breadcrumb-item"><a href="/admin/templates">Site Templates</a></li>
+          <li class="breadcrumb-item"><a href="/admin/templates#panel-parts">Template parts</a></li>
           <li class="breadcrumb-item active" aria-current="page"><%= record.name %></li>
         </ol>
       </nav>
 
       <div class="np-page-header np-page-header-split mb-4">
         <div class="d-flex align-items-start gap-3">
-          <div class="np-template-edit-icon"><i class="bi <%= record.typeMeta.icon %>" aria-hidden="true"></i></div>
+          <div class="np-template-edit-icon np-template-edit-icon-part"><i class="bi <%= record.typeMeta.icon %>" aria-hidden="true"></i></div>
           <div>
-            <h1>Edit template</h1>
+            <h1>Edit template part</h1>
             <p class="np-help-text mb-0"><%= record.typeMeta.description %></p>
           </div>
         </div>
@@ -24,7 +25,7 @@
       </div>
 
       <%- include('./partials/block-form', {
-        formAction: '/admin/templates/' + record.id + '?_method=PUT&_csrf=' + encodeURIComponent(csrfToken),
+        formAction: '/admin/templates/parts/' + record.id + '?_method=PUT&_csrf=' + encodeURIComponent(csrfToken),
         record,
         initialBlocks,
         previewHtml

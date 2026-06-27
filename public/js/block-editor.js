@@ -28,8 +28,9 @@
 
   function renderBlockEditor(container, initialBlocks) {
     let blocks = Array.isArray(initialBlocks) ? initialBlocks : [];
-    const hiddenInput = document.querySelector('[data-block-json-input]');
-    const previewEl = document.querySelector('[data-block-preview]');
+    const wrap = container.closest('[data-block-editor-wrap]') || container.parentElement;
+    const hiddenInput = wrap?.querySelector('[data-block-json-input]') || document.querySelector('[data-block-json-input]');
+    const previewEl = wrap?.querySelector('[data-block-preview]') || document.querySelector('[data-block-preview]');
 
     function sync() {
       if (hiddenInput) hiddenInput.value = JSON.stringify(blocks);
@@ -168,7 +169,7 @@
     try {
       initial = JSON.parse(el.dataset.initialBlocks || '[]');
     } catch { initial = []; }
-    renderBlockEditor(el, initial);
+    el.__npBlockEditor = renderBlockEditor(el, initial);
   });
 
   document.querySelectorAll('[data-editor-mode-toggle]').forEach((toggle) => {

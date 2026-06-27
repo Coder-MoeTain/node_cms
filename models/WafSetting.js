@@ -11,5 +11,8 @@ module.exports = (sequelize) =>
     }
   }, {
     tableName: 'waf_settings',
-    paranoid: false
+    paranoid: false,
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
   });

@@ -136,6 +136,7 @@ async function index(req, res, next) {
       ];
     }
     if (req.query.status) where.status = req.query.status;
+    const { fn, col } = models.sequelize;
     const { rows, count } = await models.Post.findAndCountAll({
       where,
       include: [{ model: models.User, as: 'author' }],
@@ -143,13 +144,24 @@ async function index(req, res, next) {
       offset,
       order: [['created_at', 'DESC']]
     });
+    const statusCountRows = await models.Post.findAll({
+      attributes: ['status', [fn('COUNT', col('id')), 'count']],
+      where: { post_type: type.slug },
+      group: ['status'],
+      raw: true
+    });
+    const statusCounts = Object.fromEntries(statusCountRows.map((row) => [row.status, Number(row.count)]));
+    const totalItems = Object.values(statusCounts).reduce((sum, value) => sum + value, 0);
+
     return res.render('admin/custom-content/index', {
       title: type.name,
       type,
       rows,
       query,
       pagination: pageMeta(count, page, limit),
-      filters: { status: req.query.status || '' }
+      filters: { status: req.query.status || '' },
+      statusCounts,
+      totalItems
     });
   } catch (error) {
     return next(error);

@@ -4,12 +4,229 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <div class="np-page-header"><h1>Site Templates</h1><form method="post" action="/admin/templates/defaults" class="d-inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="np-btn np-btn-secondary">Create defaults</button></form></div>
-    <div class="np-table-wrap mt-3">
-      <table class="np-table"><thead><tr><th>Name</th><th>Type</th><th>Status</th><th></th></tr></thead>
-        <tbody><% templates.forEach(function(t) { %><tr><td><%= t.name %></td><td><%= t.template_type %></td><td><%= t.status %></td><td><a href="/admin/templates/<%= t.id %>/edit">Edit</a></td></tr><% }) %></tbody>
-      </table>
+    <div id="np-templates-admin">
+      <div class="np-page-header np-page-header-split mb-4">
+        <div>
+          <h1>Site Templates</h1>
+          <p class="np-help-text mb-0">Block-based full-site editing (FSE-lite) — manage layout templates and reusable template parts for your active theme.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <form method="post" action="/admin/templates/defaults" class="d-inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="np-btn np-btn-secondary" type="submit"><i class="bi bi-magic"></i> Create defaults</button>
+          </form>
+          <a class="np-btn np-btn-secondary" href="/admin/themes" rel="noopener"><i class="bi bi-palette"></i> Themes</a>
+          <a class="np-btn np-btn-secondary" href="/" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> View Site</a>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="np-template-stat">
+            <i class="bi bi-file-earmark-code" aria-hidden="true"></i>
+            <div><strong><%= stats.templatesTotal %></strong><span>Templates</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-template-stat np-template-stat-success">
+            <i class="bi bi-check-circle" aria-hidden="true"></i>
+            <div><strong><%= stats.templatesActive %></strong><span>Active templates</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-template-stat">
+            <i class="bi bi-puzzle" aria-hidden="true"></i>
+            <div><strong><%= stats.partsTotal %></strong><span>Template parts</span></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="np-template-stat">
+            <i class="bi bi-palette2" aria-hidden="true"></i>
+            <div><strong><%= activeTheme ? activeTheme.name : 'Default' %></strong><span>Theme scope</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+          <div class="np-widget h-100">
+            <div class="np-widget-header"><span><i class="bi bi-lightbulb me-1"></i> How templates work</span></div>
+            <div class="np-widget-body">
+              <p class="mb-2">Site templates define block layouts for key views (homepage, single post, 404, etc.). Template parts are reusable regions like headers and footers.</p>
+              <ul class="np-template-tips mb-0">
+                <li>Click <strong>Create defaults</strong> to seed starter templates and parts for <%= activeTheme ? activeTheme.name : 'your site' %>.</li>
+                <li>Use the visual block editor to build layouts — no JSON required.</li>
+                <li>Inactive templates are kept for drafts and experiments without affecting the live site.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="np-widget h-100">
+            <div class="np-widget-header"><span><i class="bi bi-braces me-1"></i> Block types</span></div>
+            <div class="np-widget-body">
+              <div class="np-template-block-tags">
+                <span>Paragraph</span><span>Heading</span><span>Image</span><span>Quote</span>
+                <span>Button</span><span>List</span><span>HTML</span><span>Spacer</span>
+              </div>
+              <p class="np-help-text mb-0 mt-2">Rendered via <code>blockRenderer.js</code> with sanitization on save.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="nav nav-tabs np-template-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="tab-templates" data-bs-toggle="tab" data-bs-target="#panel-templates" type="button" role="tab">Site templates <span class="np-tab-count"><%= templates.length %></span></button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-parts" data-bs-toggle="tab" data-bs-target="#panel-parts" type="button" role="tab">Template parts <span class="np-tab-count"><%= parts.length %></span></button>
+        </li>
+      </ul>
+
+      <div class="np-template-toolbar mb-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label" for="template-search">Search</label>
+            <input class="form-control" id="template-search" type="search" placeholder="Name, slug, type…" data-template-filter>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="template-status-filter">Status</label>
+            <select class="form-select" id="template-status-filter" data-template-status>
+              <option value="all">All statuses</option>
+              <option value="active">Active only</option>
+              <option value="inactive">Inactive only</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <div class="np-help-text pt-4"><span data-template-visible-count>0</span> shown</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="panel-templates" role="tabpanel">
+          <% if (templates.length) { %>
+            <div class="row g-3" data-template-list="templates">
+              <% templates.forEach(function(t) { %>
+                <div class="col-xl-6" data-template-card data-kind="template" data-name="<%= (t.name + ' ' + t.slug + ' ' + t.template_type + ' ' + (t.theme_slug || '')).toLowerCase() %>" data-status="<%= t.status %>">
+                  <article class="np-template-card h-100">
+                    <div class="np-template-card-head">
+                      <div class="np-template-card-icon"><i class="bi <%= t.typeMeta.icon %>" aria-hidden="true"></i></div>
+                      <div class="flex-grow-1 min-w-0">
+                        <h2 class="h6 mb-1 text-truncate"><%= t.name %></h2>
+                        <p class="np-help-text mb-0"><%= t.typeMeta.label %> · <code><%= t.slug %></code></p>
+                      </div>
+                      <span class="np-badge np-badge-<%= t.status === 'active' ? 'success' : 'secondary' %>"><%= t.status %></span>
+                    </div>
+                    <p class="np-template-card-desc"><%= t.typeMeta.description %></p>
+                    <div class="np-template-card-preview" data-template-preview-trigger data-preview-title="<%= t.name %>" data-preview-html="<%- encodeURIComponent(t.previewHtml || '') %>">
+                      <% if (t.previewHtml) { %>
+                        <div class="np-template-preview-snippet"><%- t.previewHtml %></div>
+                      <% } else { %>
+                        <span class="text-muted small">No blocks yet</span>
+                      <% } %>
+                      <span class="np-template-preview-hint"><i class="bi bi-arrows-fullscreen"></i> Preview</span>
+                    </div>
+                    <div class="np-template-card-meta">
+                      <span><i class="bi bi-bricks"></i> <%= t.blockCount %> blocks</span>
+                      <% if (t.theme_slug) { %><span><i class="bi bi-palette"></i> <%= t.theme_slug %></span><% } %>
+                    </div>
+                    <div class="np-template-card-actions">
+                      <a class="np-btn np-btn-primary np-btn-small" href="/admin/templates/<%= t.id %>/edit"><i class="bi bi-pencil"></i> Edit</a>
+                      <form method="post" action="/admin/templates/<%= t.id %>/duplicate" class="d-inline">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="np-btn np-btn-secondary np-btn-small" type="submit"><i class="bi bi-copy"></i> Duplicate</button>
+                      </form>
+                      <form method="post" action="/admin/templates/<%= t.id %>?_method=DELETE&_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" data-confirm="Delete template &quot;<%= t.name %>&quot;?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="np-btn np-btn-small np-btn-danger" type="submit"><i class="bi bi-trash"></i></button>
+                      </form>
+                    </div>
+                  </article>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <i class="bi bi-file-earmark-code d-block"></i>
+              <strong>No site templates yet</strong>
+              <p class="mb-3">Seed default templates for header, footer, homepage, and more.</p>
+              <form method="post" action="/admin/templates/defaults">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="np-btn np-btn-primary" type="submit">Create defaults</button>
+              </form>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="tab-pane fade" id="panel-parts" role="tabpanel">
+          <% if (parts.length) { %>
+            <div class="row g-3" data-template-list="parts">
+              <% parts.forEach(function(p) { %>
+                <div class="col-xl-6" data-template-card data-kind="part" data-name="<%= (p.name + ' ' + p.slug + ' ' + p.part_type + ' ' + (p.theme_slug || '')).toLowerCase() %>" data-status="<%= p.status %>">
+                  <article class="np-template-card h-100">
+                    <div class="np-template-card-head">
+                      <div class="np-template-card-icon np-template-card-icon-part"><i class="bi <%= p.typeMeta.icon %>" aria-hidden="true"></i></div>
+                      <div class="flex-grow-1 min-w-0">
+                        <h2 class="h6 mb-1 text-truncate"><%= p.name %></h2>
+                        <p class="np-help-text mb-0"><%= p.typeMeta.label %> · <code><%= p.slug %></code></p>
+                      </div>
+                      <span class="np-badge np-badge-<%= p.status === 'active' ? 'success' : 'secondary' %>"><%= p.status %></span>
+                    </div>
+                    <p class="np-template-card-desc"><%= p.typeMeta.description %></p>
+                    <div class="np-template-card-preview" data-template-preview-trigger data-preview-title="<%= p.name %>" data-preview-html="<%- encodeURIComponent(p.previewHtml || '') %>">
+                      <% if (p.previewHtml) { %>
+                        <div class="np-template-preview-snippet"><%- p.previewHtml %></div>
+                      <% } else { %>
+                        <span class="text-muted small">No blocks yet</span>
+                      <% } %>
+                      <span class="np-template-preview-hint"><i class="bi bi-arrows-fullscreen"></i> Preview</span>
+                    </div>
+                    <div class="np-template-card-meta">
+                      <span><i class="bi bi-bricks"></i> <%= p.blockCount %> blocks</span>
+                      <% if (p.theme_slug) { %><span><i class="bi bi-palette"></i> <%= p.theme_slug %></span><% } %>
+                    </div>
+                    <div class="np-template-card-actions">
+                      <a class="np-btn np-btn-primary np-btn-small" href="/admin/templates/parts/<%= p.id %>/edit"><i class="bi bi-pencil"></i> Edit</a>
+                      <form method="post" action="/admin/templates/parts/<%= p.id %>?_method=DELETE&_csrf=<%= encodeURIComponent(csrfToken) %>" class="d-inline" data-confirm="Delete template part &quot;<%= p.name %>&quot;?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="np-btn np-btn-small np-btn-danger" type="submit"><i class="bi bi-trash"></i></button>
+                      </form>
+                    </div>
+                  </article>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <i class="bi bi-puzzle d-block"></i>
+              <strong>No template parts yet</strong>
+              <p class="mb-3">Template parts hold reusable header, footer, and sidebar block regions.</p>
+              <form method="post" action="/admin/templates/defaults">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="np-btn np-btn-primary" type="submit">Create defaults</button>
+              </form>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="npTemplatePreviewModal" tabindex="-1" aria-labelledby="npTemplatePreviewModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="npTemplatePreviewModalLabel" data-template-preview-title>Preview</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="np-template-preview-modal-body" data-template-preview-body></div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
+<script src="/js/admin-templates.js"></script>
 <%- include('../partials/footer') %>

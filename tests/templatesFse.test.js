@@ -22,18 +22,23 @@ describe('Site templates / FSE foundation', () => {
 
     const index = await agent.get('/admin/templates');
     expect(index.status).toBe(200);
+    expect(index.text).toMatch(/Site Templates/i);
+    expect(index.text).toMatch(/Template parts/i);
+    expect(index.text).toMatch(/Create defaults/);
 
     const csrfDefaults = await getCsrf(agent, '/admin/templates');
     const seed = await agent.post('/admin/templates/defaults').type('form').send({ _csrf: csrfDefaults });
     expect(seed.status).toBe(302);
 
-    const homepage = await models.SiteTemplate.findOne({ where: { slug: 'homepage', theme_slug: 'default' } });
+    const homepage = await models.SiteTemplate.findOne({ where: { slug: 'homepage' } });
     expect(homepage).toBeTruthy();
     expect(homepage.status).toBe('active');
 
     const editPage = await agent.get(`/admin/templates/${homepage.id}/edit`);
     expect(editPage.status).toBe(200);
     expect(editPage.text).toMatch(/homepage/i);
+    expect(editPage.text).toMatch(/data-block-editor/);
+    expect(editPage.text).toMatch(/name="status"/);
 
     const blocks = [
       { type: 'heading', content: 'FSE Test Heading', attrs: { level: 2 } },
