@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) =>
   sequelize.define('Banner', {
+    site_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     title: { type: DataTypes.STRING(180), allowNull: false },
     subtitle: DataTypes.STRING(255),
     image: DataTypes.STRING(255),

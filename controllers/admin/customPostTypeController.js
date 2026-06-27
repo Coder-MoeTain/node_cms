@@ -10,6 +10,7 @@ const {
   enrichContentType,
   loadContentTypeCounts
 } = require('../../utils/contentTypeRegistry');
+const { siteScopeWhere, assignSiteScope } = require('../../utils/siteScope');
 
 function sanitizeText(value, max = 500) {
   return sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).slice(0, max);
@@ -48,9 +49,9 @@ async function index(req, res, next) {
     }
 
     const query = req.query.q || '';
-    const where = query
+    const where = siteScopeWhere(req, query
       ? { [Op.or]: [{ name: { [Op.like]: `%${query}%` } }, { slug: { [Op.like]: `%${query}%` } }] }
-      : {};
+      : {});
 
     const [rows, counts] = await Promise.all([
       models.CustomPostType.findAll({ where, order: [['name', 'ASC']] }),
@@ -104,7 +105,7 @@ async function store(req, res, next) {
     }
     const data = payloadFromBody(req.body);
     data.slug = await createUniqueSlug(models.CustomPostType, data.slug || data.name, 'type');
-    await models.CustomPostType.create(data);
+    await models.CustomPostType.create(assignSiteScope(req, data));
     req.flash('success', 'Content type created.');
     return res.redirect('/admin/custom-post-types');
   } catch (error) {

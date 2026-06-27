@@ -16,6 +16,9 @@ const policy = require('../utils/policy');
 const { createEngine, normalizeLocale } = require('../utils/translationEngine');
 const { createDateFormatters, resolveSiteTimezone } = require('../utils/timezoneHelper');
 const { getPermalinkSettings, postPath, pagePath } = require('../utils/permalinkHelper');
+const appConfig = require('../config/app');
+const { listNetworkSiteSettings } = require('../utils/networkSiteSettings');
+const { siteScopeWhere } = require('../utils/siteScope');
 
 function buildMenuTree(items = []) {
   const plainItems = items
@@ -36,11 +39,11 @@ function buildMenuTree(items = []) {
   return roots;
 }
 
-async function sidebarPostsForCategory(slug, limit = 5) {
-  const categoryRow = await Category.findOne({ where: { slug } });
+async function sidebarPostsForCategory(slug, limit = 5, req = null) {
+  const categoryRow = await Category.findOne({ where: siteScopeWhere(req, { slug }) });
   if (!categoryRow) return [];
   return Post.findAll({
-    where: { category_id: categoryRow.id, status: 'published', post_type: 'post' },
+    where: siteScopeWhere(req, { category_id: categoryRow.id, status: 'published', post_type: 'post' }),
     limit,
     order: [['published_at', 'DESC']],
     attributes: ['id', 'title', 'slug', 'published_at']
@@ -72,18 +75,35 @@ async function loadSiteContext(req, res, next) {
       SecuritySetting.findOne({ where: { key: 'maintenance_mode' } }),
       ThemeSetting.findOne({ where: { active: true } }),
       Menu.findAll({
-        where: { active: true },
+        where: siteScopeWhere(req, { active: true }),
         include: [{ model: MenuItem, as: 'items', where: { active: true }, required: false }],
         order: [[{ model: MenuItem, as: 'items' }, 'display_order', 'ASC']]
       }),
-      Category.findAll({ limit: 20, order: [['name', 'ASC']] }),
-      Post.findAll({ where: { status: 'published', post_type: 'post' }, limit: 5, order: [['published_at', 'DESC']] }),
-      Post.findAll({ where: { status: 'published', post_type: 'post' }, limit: 5, order: [['views_count', 'DESC']] }),
-      sidebarPostsForCategory('announcements', 5),
+      Category.findAll({ where: siteScopeWhere(req), limit: 20, order: [['name', 'ASC']] }),
+      Post.findAll({ where: siteScopeWhere(req, { status: 'published', post_type: 'post' }), limit: 5, order: [['published_at', 'DESC']] }),
+      Post.findAll({ where: siteScopeWhere(req, { status: 'published', post_type: 'post' }), limit: 5, order: [['views_count', 'DESC']] }),
+      sidebarPostsForCategory('announcements', 5, req),
       Plugin.findAll({ where: { active: true }, attributes: ['slug'] })
     ]);
 
     res.locals.siteSettings = settings.reduce((map, row) => ({ ...map, [row.key]: row.value }), {});
+    if (appConfig.multisiteEnabled && req.currentSite?.id) {
+      const networkRows = await listNetworkSiteSettings(req.currentSite.id);
+      const networkAliases = {
+        public_site_title: 'site_title',
+        public_site_tagline: 'site_tagline'
+      };
+      for (const row of networkRows) {
+        if (!row.setting_key) continue;
+        res.locals.siteSettings[row.setting_key] = row.setting_value;
+        if (networkAliases[row.setting_key]) {
+          res.locals.siteSettings[networkAliases[row.setting_key]] = row.setting_value;
+        }
+      }
+      res.locals.currentSite = req.currentSite;
+    } else {
+      res.locals.currentSite = req.currentSite || null;
+    }
     const maintenanceEnabled = maintenanceSetting?.value === 'true' || maintenanceSetting?.enabled === true;
     if (maintenanceEnabled) {
       res.locals.siteSettings.maintenance_mode = 'true';
@@ -155,7 +175,8 @@ async function loadSiteContext(req, res, next) {
       recentPosts,
       isPortal: res.locals.isPortal,
       formatDate: res.locals.formatDate,
-      siteTimezone: res.locals.siteTimezone
+      siteTimezone: res.locals.siteTimezone,
+      req
     });
     res.locals.pluginPublicHead = await pluginLoader.collectHook('publicHead', { req, res });
     res.locals.pluginPublicFooter = await pluginLoader.collectHook('publicFooter', { req, res });

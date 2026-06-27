@@ -7,7 +7,9 @@ const { getPagination, pageMeta } = require('../../../utils/pagination');
 const { loadCustomFieldsMap } = require('../../../utils/customFields');
 const { searchPosts } = require('../../../utils/searchHelper');
 const handlers = require('../../../utils/apiV1Handlers');
+const { buildEmbedded, attachEmbed } = require('../../../utils/apiEmbed');
 const upload = require('../../../middleware/upload');
+const { siteScopeWhere, assignSiteScope } = require('../../../utils/siteScope');
 
 const router = express.Router();
 
@@ -43,6 +45,7 @@ function requireWriteWidgets(req, res, next) {
 
 
 router.get('/search', handlers.searchContent);
+router.post('/auth/token', handlers.issueAuthToken);
 router.get('/pages', handlers.listPages);
 
 router.get('/posts', async (req, res, next) => {
@@ -53,11 +56,12 @@ router.get('/posts', async (req, res, next) => {
         limit,
         offset,
         include: [Category, Tag, { model: TaxonomyTerm, as: 'taxonomyTerms' }],
-        distinct: true
+        distinct: true,
+        scopeReq: req
       });
       return res.json({ data: result.rows, meta: pageMeta(result.count, page, limit) });
     }
-    const where = { status: req.query.status || 'published', post_type: 'post' };
+    const where = siteScopeWhere(req, { status: req.query.status || 'published', post_type: 'post' });
     const { rows, count } = await Post.findAndCountAll({
       where,
       include: [Category, Tag, { model: TaxonomyTerm, as: 'taxonomyTerms' }],
@@ -73,12 +77,14 @@ router.get('/posts', async (req, res, next) => {
 
 router.get('/posts/:idOrSlug', async (req, res, next) => {
   try {
-    const where = { post_type: 'post' };
-    Object.assign(where, Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug });
-    if (!req.query.include_draft) where.status = 'published';
+    const base = { post_type: 'post' };
+    Object.assign(base, Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug });
+    if (!req.query.include_draft) base.status = 'published';
+    const where = siteScopeWhere(req, base);
     const post = await Post.findOne({ where, include: [Category, Tag, { model: TaxonomyTerm, as: 'taxonomyTerms' }] });
     if (!post) return handlers.apiError(res, 404, 'Post not found.');
-    return res.json({ data: post });
+    const embedded = await buildEmbedded(req, post, req.query._embed);
+    return res.json(attachEmbed({ data: post }, embedded));
   } catch (error) {
     return next(error);
   }
@@ -86,11 +92,12 @@ router.get('/posts/:idOrSlug', async (req, res, next) => {
 
 router.get('/pages/:idOrSlug', async (req, res, next) => {
   try {
-    const where = Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug };
-    if (!req.query.include_draft) where.status = 'published';
-    const page = await Page.findOne({ where });
+    const base = Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug };
+    if (!req.query.include_draft) base.status = 'published';
+    const page = await Page.findOne({ where: siteScopeWhere(req, base) });
     if (!page) return handlers.apiError(res, 404, 'Page not found.');
-    return res.json({ data: page });
+    const embedded = await buildEmbedded(req, page, req.query._embed);
+    return res.json(attachEmbed({ data: page }, embedded));
   } catch (error) {
     return next(error);
   }
@@ -98,7 +105,10 @@ router.get('/pages/:idOrSlug', async (req, res, next) => {
 
 router.get('/types', async (req, res, next) => {
   try {
-    const types = await CustomPostType.findAll({ where: { status: 'active', show_in_api: true }, order: [['name', 'ASC']] });
+    const types = await CustomPostType.findAll({
+      where: siteScopeWhere(req, { status: 'active', show_in_api: true }),
+      order: [['name', 'ASC']]
+    });
     res.json({ data: types });
   } catch (error) {
     next(error);
@@ -107,7 +117,9 @@ router.get('/types', async (req, res, next) => {
 
 router.get('/types/:slug', async (req, res, next) => {
   try {
-    const type = await CustomPostType.findOne({ where: { slug: req.params.slug, status: 'active', show_in_api: true } });
+    const type = await CustomPostType.findOne({
+      where: siteScopeWhere(req, { slug: req.params.slug, status: 'active', show_in_api: true })
+    });
     if (!type) return handlers.apiError(res, 404, 'Post type not found.');
     return res.json({ data: type });
   } catch (error) {
@@ -117,11 +129,13 @@ router.get('/types/:slug', async (req, res, next) => {
 
 router.get('/types/:slug/content', async (req, res, next) => {
   try {
-    const type = await CustomPostType.findOne({ where: { slug: req.params.slug, status: 'active', show_in_api: true } });
+    const type = await CustomPostType.findOne({
+      where: siteScopeWhere(req, { slug: req.params.slug, status: 'active', show_in_api: true })
+    });
     if (!type) return handlers.apiError(res, 404, 'Post type not found.');
     const { page, limit, offset } = getPagination(req, 20);
     const { rows, count } = await Post.findAndCountAll({
-      where: { post_type: type.slug, status: 'published' },
+      where: siteScopeWhere(req, { post_type: type.slug, status: 'published' }),
       limit,
       offset,
       order: [['published_at', 'DESC']]
@@ -134,11 +148,13 @@ router.get('/types/:slug/content', async (req, res, next) => {
 
 router.get('/types/:slug/content/:idOrSlug', async (req, res, next) => {
   try {
-    const type = await CustomPostType.findOne({ where: { slug: req.params.slug, status: 'active', show_in_api: true } });
+    const type = await CustomPostType.findOne({
+      where: siteScopeWhere(req, { slug: req.params.slug, status: 'active', show_in_api: true })
+    });
     if (!type) return handlers.apiError(res, 404, 'Post type not found.');
-    const where = { post_type: type.slug, status: 'published' };
-    Object.assign(where, Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug });
-    const item = await Post.findOne({ where });
+    const base = { post_type: type.slug, status: 'published' };
+    Object.assign(base, Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug });
+    const item = await Post.findOne({ where: siteScopeWhere(req, base) });
     if (!item) return handlers.apiError(res, 404, 'Content not found.');
     let customFields = {};
     if (type.supports_custom_fields) {
@@ -186,7 +202,10 @@ router.get('/taxonomies/:slug/terms', handlers.listTaxonomyTerms);
 router.get('/media', async (req, res, next) => {
   try {
     const { page, limit, offset } = getPagination(req, 20);
-    const { rows, count } = await Media.findAndCountAll({ limit, offset, order: [['created_at', 'DESC']] });
+    const { rows, count } = await Media.findAndCountAll({
+      where: siteScopeWhere(req),
+      limit, offset, order: [['created_at', 'DESC']]
+    });
     res.json({ data: rows, meta: pageMeta(count, page, limit) });
   } catch (error) {
     next(error);
@@ -194,7 +213,7 @@ router.get('/media', async (req, res, next) => {
 });
 router.get('/media/:id', async (req, res, next) => {
   try {
-    const media = await Media.findByPk(req.params.id);
+    const media = await Media.findOne({ where: siteScopeWhere(req, { id: req.params.id }) });
     if (!media) return handlers.apiError(res, 404, 'Media not found.');
     return res.json({ data: media });
   } catch (error) {
@@ -221,7 +240,7 @@ router.put('/settings', (req, res, next) => handlers.updateSettings(req, res, ne
 
 router.post('/posts', requireWrite, async (req, res, next) => {
   try {
-    const post = await Post.create({
+    const post = await Post.create(assignSiteScope(req, {
       title: req.body.title || 'Untitled',
       slug: await handlers.createUniqueSlug(Post, req.body.slug || req.body.title, 'post', null, { post_type: 'post' }),
       content: req.body.content || '<p></p>',
@@ -232,7 +251,7 @@ router.post('/posts', requireWrite, async (req, res, next) => {
       seo_title: req.body.seo_title || null,
       seo_description: req.body.seo_description || null,
       published_at: req.body.status === 'published' ? new Date() : null
-    });
+    }));
     if (Array.isArray(req.body.tags)) await post.setTags(req.body.tags);
     if (Array.isArray(req.body.taxonomy_terms)) await handlers.assignPostTaxonomyTerms(post, req.body.taxonomy_terms);
     return res.status(201).json({ data: post });
@@ -243,9 +262,9 @@ router.post('/posts', requireWrite, async (req, res, next) => {
 
 router.put('/posts/:idOrSlug', requireWrite, async (req, res, next) => {
   try {
-    const where = { post_type: 'post' };
-    Object.assign(where, Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug });
-    const post = await Post.findOne({ where });
+    const base = { post_type: 'post' };
+    Object.assign(base, Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug });
+    const post = await Post.findOne({ where: siteScopeWhere(req, base) });
     if (!post) return handlers.apiError(res, 404, 'Post not found.');
     await post.update({
       title: req.body.title ?? post.title,
@@ -266,9 +285,9 @@ router.put('/posts/:idOrSlug', requireWrite, async (req, res, next) => {
 
 router.delete('/posts/:idOrSlug', requireWrite, async (req, res, next) => {
   try {
-    const where = { post_type: 'post' };
-    Object.assign(where, Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug });
-    const post = await Post.findOne({ where });
+    const base = { post_type: 'post' };
+    Object.assign(base, Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug });
+    const post = await Post.findOne({ where: siteScopeWhere(req, base) });
     if (!post) return handlers.apiError(res, 404, 'Post not found.');
     await post.destroy();
     return res.json({ data: { deleted: true } });
@@ -279,7 +298,7 @@ router.delete('/posts/:idOrSlug', requireWrite, async (req, res, next) => {
 
 router.post('/pages', requireWritePages, async (req, res, next) => {
   try {
-    const page = await Page.create({
+    const page = await Page.create(assignSiteScope(req, {
       title: req.body.title || 'Untitled',
       slug: await handlers.createUniqueSlug(Page, req.body.slug || req.body.title, 'page'),
       content: req.body.content || '<p></p>',
@@ -287,7 +306,7 @@ router.post('/pages', requireWritePages, async (req, res, next) => {
       parent_id: req.body.parent_id || null,
       menu_order: Number(req.body.menu_order) || 0,
       published_at: req.body.status === 'published' ? new Date() : null
-    });
+    }));
     return res.status(201).json({ data: page });
   } catch (error) {
     return next(error);
@@ -296,8 +315,8 @@ router.post('/pages', requireWritePages, async (req, res, next) => {
 
 router.put('/pages/:idOrSlug', requireWritePages, async (req, res, next) => {
   try {
-    const where = Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug };
-    const page = await Page.findOne({ where });
+    const base = Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug };
+    const page = await Page.findOne({ where: siteScopeWhere(req, base) });
     if (!page) return handlers.apiError(res, 404, 'Page not found.');
     await page.update({
       title: req.body.title ?? page.title,
@@ -315,8 +334,8 @@ router.put('/pages/:idOrSlug', requireWritePages, async (req, res, next) => {
 
 router.delete('/pages/:idOrSlug', requireWritePages, async (req, res, next) => {
   try {
-    const where = Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug };
-    const page = await Page.findOne({ where });
+    const base = Number.isFinite(Number(req.params.idOrSlug)) ? { id: req.params.idOrSlug } : { slug: req.params.idOrSlug };
+    const page = await Page.findOne({ where: siteScopeWhere(req, base) });
     if (!page) return handlers.apiError(res, 404, 'Page not found.');
     await page.destroy();
     return res.json({ data: { deleted: true } });
@@ -328,8 +347,9 @@ router.delete('/pages/:idOrSlug', requireWritePages, async (req, res, next) => {
 router.get('/comments', async (req, res, next) => {
   try {
     const { page, limit, offset } = getPagination(req, 20);
-    const where = { status: req.query.status || 'approved' };
-    if (req.query.post_id) where.post_id = req.query.post_id;
+    const commentBase = { status: req.query.status || 'approved' };
+    if (req.query.post_id) commentBase.post_id = req.query.post_id;
+    const where = siteScopeWhere(req, commentBase);
     const { rows, count } = await Comment.findAndCountAll({ where, limit, offset, order: [['created_at', 'DESC']] });
     res.json({ data: rows, meta: pageMeta(count, page, limit) });
   } catch (error) {

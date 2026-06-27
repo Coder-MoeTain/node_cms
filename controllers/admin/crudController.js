@@ -10,6 +10,7 @@ const { recordSlugChange } = require('../../utils/slugRedirectHelper');
 const { hashContentPassword } = require('../../utils/contentPasswordHelper');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const policy = require('../../utils/policy');
+const { assignSiteScope, isSiteScopedModel, siteScopeWhere } = require('../../utils/siteScope');
 const pluginLoader = require('../../utils/pluginLoader');
 const { saveRevision } = require('../../utils/revisionHelper');
 const { renderBlocks, validateBlockSchema } = require('../../utils/blockRenderer');
@@ -408,7 +409,7 @@ async function index(req, res, next) {
         ? [['name', 'ASC']]
         : [['created_at', 'DESC']];
     const { rows, count } = await config.model.findAndCountAll({
-      where,
+      where: siteScopeWhere(req, where),
       include: config.include || [],
       distinct: true,
       limit,
@@ -488,6 +489,9 @@ async function store(req, res, next) {
           throw error;
         }
         payload = filtered || payload;
+      }
+      if (isSiteScopedModel(config.model)) {
+        payload = assignSiteScope(req, payload);
       }
       const record = await config.model.create(payload, { transaction });
       if (config.afterSave) await config.afterSave(record, req.body, transaction);

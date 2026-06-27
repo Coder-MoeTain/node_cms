@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) =>
   sequelize.define('Slider', {
+    site_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     title: { type: DataTypes.STRING(180), allowNull: false },
     description: DataTypes.TEXT,
     image: DataTypes.STRING(255),

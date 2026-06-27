@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) =>
   sequelize.define('Post', {
+    site_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     title: { type: DataTypes.STRING(220), allowNull: false },
     slug: { type: DataTypes.STRING(240), allowNull: false, unique: true },
     post_type: { type: DataTypes.STRING(80), allowNull: false, defaultValue: 'post' },

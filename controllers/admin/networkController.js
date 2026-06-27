@@ -2,6 +2,7 @@ const appConfig = require('../../config/app');
 const models = require('../../models');
 const policy = require('../../utils/policy');
 const { createUniqueSlug } = require('../../utils/slugGenerator');
+const { setNetworkSiteSetting, listNetworkSiteSettings } = require('../../utils/networkSiteSettings');
 
 async function index(req, res, next) {
   try {
@@ -60,4 +61,44 @@ async function store(req, res, next) {
   }
 }
 
-module.exports = { index, create, store };
+async function settingsForm(req, res, next) {
+  try {
+    if (!appConfig.multisiteEnabled || !policy.isSuperAdmin(req.session.user)) {
+      req.flash('error', 'You do not have permission.');
+      return res.redirect('/admin/network');
+    }
+    const site = await models.Site.findByPk(req.params.id);
+    if (!site) return res.status(404).render('errors/404', { title: 'Not Found' });
+    const rows = await listNetworkSiteSettings(site.id);
+    const settings = rows.reduce((map, row) => ({ ...map, [row.setting_key]: row.setting_value }), {});
+    return res.render('admin/network/settings', {
+      title: `${site.name} Settings`,
+      site,
+      settings
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function settingsUpdate(req, res, next) {
+  try {
+    if (!appConfig.multisiteEnabled || !policy.isSuperAdmin(req.session.user)) {
+      req.flash('error', 'You do not have permission.');
+      return res.redirect('/admin/network');
+    }
+    const site = await models.Site.findByPk(req.params.id);
+    if (!site) return res.status(404).render('errors/404', { title: 'Not Found' });
+    for (const key of ['public_site_title', 'public_site_tagline']) {
+      if (req.body[key] !== undefined) {
+        await setNetworkSiteSetting(site.id, key, String(req.body[key]).trim());
+      }
+    }
+    req.flash('success', 'Site settings saved.');
+    return res.redirect(`/admin/network/${site.id}/settings`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { index, create, store, settingsForm, settingsUpdate };

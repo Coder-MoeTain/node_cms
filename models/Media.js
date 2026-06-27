@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) =>
   sequelize.define('Media', {
+    site_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     filename: { type: DataTypes.STRING(255), allowNull: false },
     original_name: { type: DataTypes.STRING(255), allowNull: false },
     file_path: { type: DataTypes.STRING(500), allowNull: false },

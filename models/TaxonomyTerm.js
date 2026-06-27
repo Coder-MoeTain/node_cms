@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) =>
   sequelize.define('TaxonomyTerm', {
+    site_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     taxonomy_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
     name: { type: DataTypes.STRING(160), allowNull: false },
     slug: { type: DataTypes.STRING(180), allowNull: false },

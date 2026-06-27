@@ -114,6 +114,73 @@ describe('upload security helpers', () => {
     expect(result.valid).toBe(false);
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
+
+  test('rejects MIME and extension mismatches', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'np-upload-'));
+    const filePath = path.join(tempDir, 'wrong.png');
+    fs.writeFileSync(filePath, Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]));
+    const result = await validateMagicBytes(filePath, 'image/png', '.png');
+    expect(result.valid).toBe(false);
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('detects webp, mp4, and pdf headers', async () => {
+    const {
+      detectMimeFromMagic,
+      validateMagicBytes,
+      quarantineUploadPath,
+      finalizeQuarantinedUpload
+    } = require('../utils/uploadSecurity');
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'np-upload-'));
+    const webpPath = path.join(tempDir, 'sample.webp');
+    fs.writeFileSync(webpPath, Buffer.concat([
+      Buffer.from('RIFF', 'ascii'),
+      Buffer.alloc(4),
+      Buffer.from('WEBP', 'ascii')
+    ]));
+    expect(detectMimeFromMagic(webpPath, '.webp')).toBe('image/webp');
+
+    const mp4Path = path.join(tempDir, 'clip.mp4');
+    fs.writeFileSync(mp4Path, Buffer.concat([
+      Buffer.alloc(4),
+      Buffer.from('ftyp', 'ascii'),
+      Buffer.from('isom', 'ascii')
+    ]));
+    expect(detectMimeFromMagic(mp4Path, '.mp4')).toBe('video/mp4');
+
+    const pdfPath = path.join(tempDir, 'doc.pdf');
+    fs.writeFileSync(pdfPath, Buffer.from('%PDF-1.4\n'));
+    const pdfResult = await validateMagicBytes(pdfPath, 'application/pdf', '.pdf');
+    expect(pdfResult.valid).toBe(true);
+
+    expect(quarantineUploadPath('test.bin')).toContain('tmp/quarantine');
+
+    const jpegPath = path.join(tempDir, 'move.jpg');
+    fs.writeFileSync(jpegPath, Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46]));
+    const moved = await finalizeQuarantinedUpload({
+      path: jpegPath,
+      originalname: 'move.jpg',
+      mimetype: 'image/jpeg'
+    });
+    expect(moved.filename).toMatch(/\.jpg$/);
+    expect(fs.existsSync(moved.path)).toBe(true);
+    fs.unlinkSync(moved.path);
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('finalizeQuarantinedUpload rejects double extensions', async () => {
+    const { finalizeQuarantinedUpload } = require('../utils/uploadSecurity');
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'np-upload-'));
+    const filePath = path.join(tempDir, 'evil.php.jpg');
+    fs.writeFileSync(filePath, Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]));
+    await expect(finalizeQuarantinedUpload({
+      path: filePath,
+      originalname: 'evil.php.jpg',
+      mimetype: 'image/jpeg'
+    })).rejects.toThrow(/Double extension/);
+    expect(fs.existsSync(filePath)).toBe(false);
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
 });
 
 describe('package archive security', () => {
@@ -152,6 +219,57 @@ describe('SSRF guard', () => {
   test('allows loopback when explicitly enabled', () => {
     expect(assertSafeOutboundUrl('http://127.0.0.1:8001/health', { allowHttp: true, allowLoopback: true }).hostname).toBe('127.0.0.1');
     expect(assertSafeOutboundUrl('http://localhost:8001/health', { allowHttp: true, allowLoopback: true }).hostname).toBe('localhost');
+  });
+
+  test('isPrivateIpv4 detects RFC1918 and special ranges', () => {
+    const { isPrivateIpv4 } = require('../utils/ssrfGuard');
+    expect(isPrivateIpv4('10.0.0.1')).toBe(true);
+    expect(isPrivateIpv4('127.0.0.1')).toBe(true);
+    expect(isPrivateIpv4('169.254.1.1')).toBe(true);
+    expect(isPrivateIpv4('172.16.0.1')).toBe(true);
+    expect(isPrivateIpv4('192.168.1.1')).toBe(true);
+    expect(isPrivateIpv4('0.0.0.0')).toBe(true);
+    expect(isPrivateIpv4('8.8.8.8')).toBe(false);
+    expect(isPrivateIpv4('not-an-ip')).toBe(false);
+  });
+
+  test('isBlockedIp handles IPv4, IPv6, and invalid input', () => {
+    const { isBlockedIp } = require('../utils/ssrfGuard');
+    expect(isBlockedIp('10.0.0.1')).toBe(true);
+    expect(isBlockedIp('::1')).toBe(true);
+    expect(isBlockedIp('fe80::1')).toBe(true);
+    expect(isBlockedIp('fc00::1')).toBe(true);
+    expect(isBlockedIp('fd12::1')).toBe(true);
+    expect(isBlockedIp('8.8.8.8')).toBe(false);
+    expect(isBlockedIp('not-ip')).toBe(true);
+  });
+
+  test('rejects invalid URLs and plain HTTP without allowHttp', () => {
+    expect(() => assertSafeOutboundUrl('not-a-url')).toThrow(/Invalid URL/);
+    expect(() => assertSafeOutboundUrl('http://example.com/path')).toThrow(/HTTPS is required/);
+  });
+
+  test('rejects direct private IP addresses and .local hostnames', () => {
+    expect(() => assertSafeOutboundUrl('https://10.0.0.1/internal')).toThrow(/Private or internal/);
+    expect(() => assertSafeOutboundUrl('https://192.168.0.1/x')).toThrow(/Private or internal/);
+    expect(() => assertSafeOutboundUrl('https://router.local/config')).toThrow(/Blocked hostname/);
+  });
+
+  test('assertSafeOutboundUrlResolved rejects DNS that resolves to private IP', async () => {
+    const dns = require('dns').promises;
+    const { assertSafeOutboundUrlResolved } = require('../utils/ssrfGuard');
+    jest.spyOn(dns, 'lookup').mockResolvedValue([{ address: '10.0.0.1', family: 4 }]);
+    await expect(assertSafeOutboundUrlResolved('https://evil.example.com/payload')).rejects.toThrow(/private or internal IP/);
+    dns.lookup.mockRestore();
+  });
+
+  test('assertSafeOutboundUrlResolved accepts public DNS resolution', async () => {
+    const dns = require('dns').promises;
+    const { assertSafeOutboundUrlResolved } = require('../utils/ssrfGuard');
+    jest.spyOn(dns, 'lookup').mockResolvedValue([{ address: '93.184.216.34', family: 4 }]);
+    const parsed = await assertSafeOutboundUrlResolved('https://example.com/data.json');
+    expect(parsed.hostname).toBe('example.com');
+    dns.lookup.mockRestore();
   });
 });
 

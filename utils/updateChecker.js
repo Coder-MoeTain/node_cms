@@ -39,16 +39,37 @@ async function checkCoreUpdates() {
 
 async function checkPluginUpdates() {
   const plugins = await models.Plugin.findAll({ where: { installed: true } });
-  return plugins.map((plugin) => ({
-    slug: plugin.slug,
-    name: plugin.name,
-    current: plugin.version,
-    latest: plugin.latest_version || plugin.version,
-    available: Boolean(plugin.update_available),
-    updateUrl: plugin.manifest?.updateUrl || null,
-    changelogUrl: plugin.manifest?.changelogUrl || null,
-    lastCheckedAt: plugin.last_checked_at || null
-  }));
+  const results = [];
+  for (const plugin of plugins) {
+    let latest = plugin.latest_version || plugin.version;
+    let available = Boolean(plugin.update_available);
+    const updateUrl = plugin.manifest?.updateUrl || plugin.manifest?.update_url;
+    if (updateUrl) {
+      try {
+        await assertSafeOutboundUrlResolved(updateUrl, { allowHttp: appConfig.env !== 'production' });
+        const res = await fetch(updateUrl, { signal: AbortSignal.timeout(8000) });
+        if (res.ok) {
+          const data = await res.json();
+          latest = data.version || data.latest || latest;
+          available = latest !== plugin.version;
+          await plugin.update({ latest_version: latest, update_available: available, last_checked_at: new Date() });
+        }
+      } catch {
+        // keep stored values
+      }
+    }
+    results.push({
+      slug: plugin.slug,
+      name: plugin.name,
+      current: plugin.version,
+      latest,
+      available,
+      updateUrl: updateUrl || null,
+      changelogUrl: plugin.manifest?.changelogUrl || null,
+      lastCheckedAt: plugin.last_checked_at || null
+    });
+  }
+  return results;
 }
 
 async function checkThemeUpdates() {

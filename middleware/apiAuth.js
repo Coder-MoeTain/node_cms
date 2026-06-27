@@ -1,4 +1,5 @@
 const appConfig = require('../config/app');
+const { verifyJwt, normalizeScopes } = require('../utils/jwtToken');
 
 function configuredApiKey() {
   return process.env.API_KEY || appConfig.apiKey || '';
@@ -34,13 +35,25 @@ function apiAuth(req, res, next) {
 
   const provided = extractApiKey(req);
   if (provided && provided === apiKey) {
-    req.apiUser = { auth: 'api_key' };
+    req.apiUser = { auth: 'api_key', scopes: normalizeScopes('admin') };
     return next();
+  }
+
+  if (provided) {
+    const payload = verifyJwt(provided);
+    if (payload) {
+      req.apiUser = {
+        auth: 'jwt',
+        sub: payload.sub || null,
+        scopes: normalizeScopes(payload.scopes || payload.scope || 'read')
+      };
+      return next();
+    }
   }
 
   return res.status(401).json({
     error: 'Unauthorized',
-    message: 'A valid API key is required. Send it via the X-API-Key header or Authorization: Bearer <token>.'
+    message: 'A valid API key or JWT is required. Send via X-API-Key or Authorization: Bearer <token>.'
   });
 }
 

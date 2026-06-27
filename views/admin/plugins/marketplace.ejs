@@ -1,0 +1,58 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <h1>Plugin Marketplace</h1>
+      <form class="d-flex gap-2" method="get" action="/admin/plugins/marketplace">
+        <input class="form-control form-control-sm" type="search" name="q" value="<%= query %>" placeholder="Search catalog…">
+        <button class="np-btn np-btn-secondary np-btn-small" type="submit">Search</button>
+      </form>
+    </div>
+    <p class="np-help-text">Browse bundled and remote catalog entries. Bundled plugins ship with NodePress and can be activated from <a href="/admin/plugins">Plugins</a>.</p>
+
+    <h2 class="h5 mt-4">Plugins</h2>
+    <div class="row g-3">
+      <% (catalog.plugins || []).forEach(function(item) { %>
+        <div class="col-md-4">
+          <div class="np-card h-100">
+            <div class="np-card-body">
+              <h3 class="h6 mb-1"><%= item.name %></h3>
+              <p class="small text-muted mb-2"><%= item.description %></p>
+              <p class="small mb-2">v<%= item.version %> · <%= item.author || 'NodePress' %></p>
+              <% if (installed.has(item.slug)) { %>
+                <span class="np-badge np-badge-success">Installed</span>
+              <% } else if (item.bundled) { %>
+                <a class="np-btn np-btn-primary np-btn-small" href="/admin/plugins">Activate from Plugins</a>
+              <% } else { %>
+                <span class="np-badge np-badge-muted">Catalog only</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+      <% if (!(catalog.plugins || []).length) { %>
+        <div class="col-12"><p class="text-muted">No plugins match your search.</p></div>
+      <% } %>
+    </div>
+
+    <h2 class="h5 mt-4">Themes</h2>
+    <div class="row g-3">
+      <% (catalog.themes || []).forEach(function(item) { %>
+        <div class="col-md-4">
+          <div class="np-card h-100">
+            <div class="np-card-body">
+              <h3 class="h6 mb-1"><%= item.name %></h3>
+              <p class="small text-muted mb-2"><%= item.description %></p>
+              <p class="small mb-2">v<%= item.version %></p>
+              <a class="np-btn np-btn-secondary np-btn-small" href="/admin/themes">Manage themes</a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

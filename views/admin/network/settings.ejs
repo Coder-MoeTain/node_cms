@@ -1,0 +1,28 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header">
+      <h1><%= site.name %> — Network Settings</h1>
+      <a href="/admin/network" class="np-btn np-btn-secondary">Back to network</a>
+    </div>
+    <form method="post" action="/admin/network/<%= site.id %>/settings" class="np-metabox mt-3">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="np-metabox-header">Public branding</div>
+      <div class="np-metabox-body">
+        <div class="mb-3">
+          <label class="form-label">Site title</label>
+          <input class="form-control" name="public_site_title" value="<%= settings.public_site_title || '' %>">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Tagline</label>
+          <input class="form-control" name="public_site_tagline" value="<%= settings.public_site_tagline || '' %>">
+        </div>
+        <button class="np-btn np-btn-primary" type="submit">Save settings</button>
+      </div>
+    </form>
+  </main>
+</div>
+<%- include('../partials/footer') %>

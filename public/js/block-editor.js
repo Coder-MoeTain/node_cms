@@ -7,6 +7,16 @@
     { type: 'quote', label: 'Quote', icon: '❝' },
     { type: 'button', label: 'Button', icon: '▣' },
     { type: 'list', label: 'List', icon: '≡' },
+    { type: 'columns', label: 'Columns', icon: '▥' },
+    { type: 'gallery', label: 'Gallery', icon: '▦' },
+    { type: 'cover', label: 'Cover', icon: '▣' },
+    { type: 'embed', label: 'Embed', icon: '▶' },
+    { type: 'separator', label: 'Separator', icon: '—' },
+    { type: 'code', label: 'Code', icon: '{}' },
+    { type: 'video', label: 'Video', icon: '▶' },
+    { type: 'audio', label: 'Audio', icon: '♪' },
+    { type: 'file', label: 'File', icon: '📎' },
+    { type: 'table', label: 'Table', icon: '⊞' },
     { type: 'html', label: 'HTML', icon: '<>' },
     { type: 'spacer', label: 'Spacer', icon: '↕' }
   ];
@@ -17,6 +27,16 @@
       case 'image': return { type, content: '', attrs: { src: '', alt: '' } };
       case 'button': return { type, content: '', attrs: { url: '#', label: 'Click me' } };
       case 'list': return { type, content: '', items: ['Item one', 'Item two'], attrs: { ordered: false } };
+      case 'columns': return { type, content: '', columns: ['Column one', 'Column two'], attrs: { columns: ['Column one', 'Column two'] } };
+      case 'gallery': return { type, content: '', attrs: { images: [] } };
+      case 'cover': return { type, content: 'Cover title', attrs: { src: '', title: 'Cover title' } };
+      case 'embed': return { type, content: '', attrs: { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' } };
+      case 'separator': return { type, content: '' };
+      case 'code': return { type, content: 'console.log("hello");' };
+      case 'video': return { type, content: '', attrs: { src: '' } };
+      case 'audio': return { type, content: '', attrs: { src: '' } };
+      case 'file': return { type, content: '', attrs: { url: '#', label: 'Download' } };
+      case 'table': return { type, content: '', rows: [['Header 1', 'Header 2'], ['Cell', 'Cell']] };
       case 'spacer': return { type, content: '', attrs: { height: 32 } };
       default: return { type, content: '' };
     }
@@ -130,6 +150,18 @@
             <input class="form-control" data-field="label" placeholder="Label" value="${escapeHtml(block.attrs?.label || '')}">`;
         } else if (block.type === 'list') {
           card.innerHTML += `<textarea class="form-control" data-field="items" rows="4">${escapeHtml((block.items || []).join('\n'))}</textarea>`;
+        } else if (block.type === 'columns') {
+          card.innerHTML += `<textarea class="form-control" data-field="columns" rows="4">${escapeHtml((block.columns || block.attrs?.columns || []).join('\n'))}</textarea>`;
+        } else if (block.type === 'embed' || block.type === 'video' || block.type === 'audio' || block.type === 'file') {
+          card.innerHTML += `<input class="form-control mb-1" data-field="url" placeholder="URL" value="${escapeHtml(block.attrs?.url || block.attrs?.src || '')}">
+            ${block.type === 'file' ? `<input class="form-control" data-field="label" placeholder="Label" value="${escapeHtml(block.attrs?.label || '')}">` : ''}`;
+        } else if (block.type === 'cover') {
+          card.innerHTML += `<input class="form-control mb-1" data-field="src" placeholder="Background image URL" value="${escapeHtml(block.attrs?.src || '')}">
+            <input class="form-control" data-field="title" placeholder="Title" value="${escapeHtml(block.attrs?.title || block.content || '')}">`;
+        } else if (block.type === 'table') {
+          card.innerHTML += `<textarea class="form-control" data-field="rows" rows="5">${escapeHtml((block.rows || []).map((r) => r.join('\t')).join('\n'))}</textarea>`;
+        } else if (block.type === 'separator') {
+          card.innerHTML += '<p class="text-muted small mb-0">Horizontal rule</p>';
         } else {
           card.innerHTML += `<textarea class="form-control" data-field="content" rows="3">${escapeHtml(block.content || '')}</textarea>`;
         }
@@ -148,9 +180,16 @@
             const field = el.getAttribute('data-field');
             if (field === 'content') block.content = el.value;
             else if (field === 'items') block.items = el.value.split('\n').filter(Boolean);
-            else {
+            else if (field === 'columns') {
+              block.columns = el.value.split('\n').filter(Boolean);
               block.attrs = block.attrs || {};
-              block.attrs[field] = field === 'level' ? Number(el.value) : el.value;
+              block.attrs.columns = block.columns;
+            } else if (field === 'rows') {
+              block.rows = el.value.split('\n').filter(Boolean).map((line) => line.split('\t'));
+            } else {
+              block.attrs = block.attrs || {};
+              if (field === 'url' && (block.type === 'video' || block.type === 'audio')) block.attrs.src = el.value;
+              else block.attrs[field] = field === 'level' ? Number(el.value) : el.value;
             }
             sync();
           });

@@ -40,7 +40,7 @@ This document compares NodePress CMS (Express + Sequelize + MySQL + EJS) with Wo
 | Widget areas & registry | `register_sidebar()` | Hardcoded portal widgets |
 | Shortcodes | `[gallery]` etc. | Not available |
 | Comment threading UI | Nested replies | Flat list (`parent_id` unused in UI) |
-| Import/export UI | Tools → Export WXR | SQL import script only |
+| Import/export UI | Tools → Export WXR | JSON + WXR export; WXR import with optional remote media download |
 | Update system | Core/plugin/theme updates | Manual npm/git only |
 | Site Health | Tools → Site Health | Health endpoint script only |
 | WP-CLI | `wp` command | No unified CLI |
@@ -57,7 +57,7 @@ This document compares NodePress CMS (Express + Sequelize + MySQL + EJS) with Wo
 | **Revisions** | None | — |
 | **Search** | Title/content LIKE | No faceted search, CPT scope, relevance ranking |
 | **Scheduled posts** | `scheduled` enum value | No background publisher |
-| **Import** | WP SQL importer | No WXR, JSON export, dry-run UI |
+| **Import** | WP SQL importer + WXR round-trip | Menus/CPT/custom fields not yet in WXR path |
 | **SEO** | Meta fields + sitemap | No schema.org JSON-LD builder, Open Graph per CPT |
 
 ## 4. Risk areas

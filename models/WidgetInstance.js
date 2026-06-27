@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) =>
   sequelize.define('WidgetInstance', {
+    site_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     widget_area_id: { type: DataTypes.INTEGER, allowNull: false },
     widget_type: { type: DataTypes.STRING(80), allowNull: false },
     title: DataTypes.STRING(160),

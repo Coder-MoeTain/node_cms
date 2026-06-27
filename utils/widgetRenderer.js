@@ -1,5 +1,6 @@
 const sanitizeHtml = require('sanitize-html');
 const models = require('../models');
+const { siteScopeWhere } = require('./siteScope');
 const {
   WIDGET_TYPES,
   getWidgetDefinition
@@ -24,9 +25,9 @@ function widgetTitleHtml(title) {
   return `<h2 class="widget-title portal-widget-title">${esc(title)}</h2>`;
 }
 
-async function renderNavigationMenu(menuSlug) {
+async function renderNavigationMenu(menuSlug, req = null) {
   const menu = await models.Menu.findOne({
-    where: { slug: menuSlug },
+    where: siteScopeWhere(req, { slug: menuSlug }),
     include: [{ model: models.MenuItem, as: 'items' }]
   });
   if (!menu || !menu.items?.length) {
@@ -50,7 +51,7 @@ async function renderWidget(instance, context = {}) {
     case 'recent_posts': {
       const limit = Number(settings.limit) || 5;
       const posts = await models.Post.findAll({
-        where: { status: 'published', post_type: 'post' },
+        where: siteScopeWhere(context.req, { status: 'published', post_type: 'post' }),
         limit,
         order: [['published_at', 'DESC']],
         attributes: ['title', 'slug', 'published_at']
@@ -88,7 +89,7 @@ async function renderWidget(instance, context = {}) {
       return `${title}<div class="widget-body portal-widget-body"><div class="widget-tags">${items}</div></div>`;
     }
     case 'navigation_menu':
-      return `${title}<div class="widget-body portal-widget-body">${await renderNavigationMenu(settings.menu_slug || 'header')}</div>`;
+      return `${title}<div class="widget-body portal-widget-body">${await renderNavigationMenu(settings.menu_slug || 'header', context.req)}</div>`;
     case 'custom_html':
     case 'text':
       return `${title}<div class="widget-body portal-widget-body widget-text">${sanitizeHtml(settings.content || '', { allowedTags: sanitizeHtml.defaults.allowedTags, allowedAttributes: sanitizeHtml.defaults.allowedAttributes })}</div>`;
@@ -108,8 +109,9 @@ async function renderWidget(instance, context = {}) {
 }
 
 async function renderWidgetArea(slug, context = {}) {
+  const req = context.req || null;
   const area = await models.WidgetArea.findOne({
-    where: { slug, status: 'active' },
+    where: siteScopeWhere(req, { slug, status: 'active' }),
     include: [{
       model: models.WidgetInstance,
       as: 'widgets',
@@ -134,8 +136,9 @@ async function renderWidgetArea(slug, context = {}) {
 
 async function loadAllWidgetAreas(context = {}) {
   try {
+    const req = context.req || null;
     const areas = await models.WidgetArea.findAll({
-      where: { status: 'active' },
+      where: siteScopeWhere(req, { status: 'active' }),
       include: [{ model: models.WidgetInstance, as: 'widgets', where: { status: 'active' }, required: false }],
       order: [['display_order', 'ASC']]
     });
