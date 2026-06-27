@@ -1,5 +1,8 @@
 <%- include(themePartial('head')) %>
 <%- include(themePartial('header')) %>
+<% if (typeof fseTemplateHtml !== 'undefined' && fseTemplateHtml) { %>
+<%- include('partials/fse-template-shell', { fseMainClass: 'site-main' }) %>
+<% } else if (typeof isPortal !== 'undefined' && isPortal) { %>
 <main id="main-content" class="portal-main portal-page container py-5">
   <div class="portal-list-panel portal-card-bordered text-center p-4 p-md-5">
     <p class="portal-error-code display-4 fw-bold mb-2" aria-hidden="true"><%= code || 404 %></p>
@@ -11,4 +14,17 @@
     </div>
   </div>
 </main>
+<% } else { %>
+<main id="main-content" class="site-main container py-5">
+  <div class="site-list-panel text-center p-4 p-md-5 mx-auto" style="max-width: 36rem;">
+    <p class="display-4 fw-bold text-muted mb-2" aria-hidden="true"><%= code || 404 %></p>
+    <h1 class="h3 mb-3"><%= title || 'Page not found' %></h1>
+    <p class="text-muted mb-4"><%= message || 'The page you requested could not be found.' %></p>
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+      <a class="site-btn" href="/">Return home</a>
+      <a class="site-btn site-btn-outline" href="/contact">Contact us</a>
+    </div>
+  </div>
+</main>
+<% } %>
 <%- include(themePartial('footer')) %>

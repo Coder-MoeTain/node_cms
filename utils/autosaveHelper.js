@@ -30,4 +30,23 @@ async function deleteAutosave(resourceType, resourceId, userId) {
   });
 }
 
-module.exports = { saveAutosave, loadAutosave, deleteAutosave };
+async function getResourceSnapshot(resourceType, resourceId) {
+  const { Post, Page, User } = models;
+  let row = null;
+  if (resourceType === 'page') {
+    row = await Page.findByPk(resourceId, { attributes: ['id', 'updated_at', 'author_id'] });
+  } else if (resourceType === 'post' || resourceType === 'custom_post') {
+    row = await Post.findByPk(resourceId, { attributes: ['id', 'updated_at', 'author_id'] });
+  }
+  if (!row) return null;
+  const author = row.author_id
+    ? await User.findByPk(row.author_id, { attributes: ['id', 'name'] })
+    : null;
+  return {
+    updated_at: row.updated_at,
+    updated_by: row.author_id,
+    updated_by_name: author?.name || null
+  };
+}
+
+module.exports = { saveAutosave, loadAutosave, deleteAutosave, getResourceSnapshot };

@@ -41,6 +41,7 @@ const { getPermalinkSettings, pagePath } = require('../../utils/permalinkHelper'
 const { siteScopeWhere } = require('../../utils/siteScope');
 const { attachFseLocals } = require('../../utils/fsePublicHelper');
 const { resolvePublicContent } = require('../../utils/publicContentRenderer');
+const { renderPublicError } = require('../../utils/publicErrorRender');
 
 const publishedPostInclude = [{ model: Category }, { model: User, as: 'author' }, Tag];
 
@@ -126,7 +127,7 @@ async function renderPublic(res, template, locals, renderHooks = null, templateC
   if (!hooks.template) hooks.template = template;
   const data = await applyRenderHooks(res, locals, hooks);
   if (data === null) {
-    return res.status(404).render('public/error', { title: 'Not Found', code: 404, message: 'This content is not available.' });
+    return renderPublicError(res, { title: 'Not Found', code: 404, message: 'This content is not available.' });
   }
   const themeSlug = res.locals.activeTheme?.theme_name || res.locals.activeTheme?.slug;
   const enriched = await attachFseLocals(template, data, themeSlug, {
@@ -264,7 +265,7 @@ async function loadPostForRender(slug, req) {
 async function post(req, res, next) {
   try {
     const loaded = await loadPostForRender(req.params.slug, req);
-    if (!loaded) return res.status(404).render('public/error', { title: 'Post Not Found', code: 404, message: 'This post could not be found or is no longer published.' });
+    if (!loaded) return renderPublicError(res, { title: 'Post Not Found', code: 404, message: 'This post could not be found or is no longer published.' });
     const { row, relatedPosts, prevPost, nextPost } = loaded;
 
     if (row.post_password_hash && !isContentUnlocked(req, 'post', row.id, row.post_password_hash)) {
@@ -317,7 +318,7 @@ async function post(req, res, next) {
 async function category(req, res, next) {
   try {
     const categoryRow = await Category.findOne({ where: siteScopeWhere(req, { slug: req.params.slug }) });
-    if (!categoryRow) return res.status(404).render('public/error', { title: 'Category Not Found', code: 404, message: 'This category could not be found.' });
+    if (!categoryRow) return renderPublicError(res, { title: 'Category Not Found', code: 404, message: 'This category could not be found.' });
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const { rows, count } = await Post.findAndCountAll({
       where: siteScopeWhere(req, { category_id: categoryRow.id, status: 'published', post_type: 'post' }),
@@ -350,7 +351,7 @@ async function tag(req, res, next) {
   try {
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const tagRow = await Tag.findOne({ where: { slug: req.params.slug } });
-    if (!tagRow) return res.status(404).render('public/error', { title: 'Tag Not Found', code: 404, message: 'This tag could not be found.' });
+    if (!tagRow) return renderPublicError(res, { title: 'Tag Not Found', code: 404, message: 'This tag could not be found.' });
     const { rows, count } = await Post.findAndCountAll({
       where: siteScopeWhere(req, { status: 'published', post_type: 'post' }),
       include: [...publishedPostInclude, { model: Tag, where: { id: tagRow.id } }],
@@ -384,13 +385,13 @@ async function taxonomyTerm(req, res, next) {
       where: { slug: req.params.taxonomySlug, status: 'active', public: true }
     });
     if (!taxonomyRow) {
-      return res.status(404).render('public/error', { title: 'Not Found', code: 404, message: 'This taxonomy could not be found.' });
+      return renderPublicError(res, { title: 'Not Found', code: 404, message: 'This taxonomy could not be found.' });
     }
     const termRow = await TaxonomyTerm.findOne({
       where: { taxonomy_id: taxonomyRow.id, slug: req.params.termSlug }
     });
     if (!termRow) {
-      return res.status(404).render('public/error', { title: 'Not Found', code: 404, message: 'This term could not be found.' });
+      return renderPublicError(res, { title: 'Not Found', code: 404, message: 'This term could not be found.' });
     }
     const { page, limit, offset } = getPagination(req, Number(res.locals.siteSettings.posts_per_page || 6));
     const { rows, count } = await Post.findAndCountAll({
@@ -431,9 +432,9 @@ async function page(req, res, next) {
       where: siteScopeWhere(req, where),
       include: [{ model: Page, as: 'parent', attributes: ['id', 'title', 'slug'] }]
     });
-    if (!row) return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
+    if (!row) return renderPublicError(res, { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
     if (row.status !== 'published' && !canPreviewContent(req, 'page', row)) {
-      return res.status(404).render('public/error', { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
+      return renderPublicError(res, { title: 'Page Not Found', code: 404, message: 'This page could not be found.' });
     }
 
     if (row.page_password_hash && !isContentUnlocked(req, 'page', row.id, row.page_password_hash)) {

@@ -59,6 +59,7 @@ describe('Site templates / FSE foundation', () => {
     const rendered = renderBlocks(parsed);
     expect(rendered).toMatch(/FSE Test Heading/);
     expect(rendered).not.toMatch(/<script>/);
+    await models.SiteTemplate.update({ status: 'inactive' }, { where: { slug: 'homepage' } });
   });
 
   test('invalid template block JSON is rejected', async () => {

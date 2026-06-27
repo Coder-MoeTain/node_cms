@@ -56,10 +56,10 @@ test('notFound returns JSON for API routes', () => {
   expect(res.json).toHaveBeenCalledWith({ message: 'Route not found' });
 });
 
-test('notFound renders HTML for public routes', () => {
+test('notFound renders HTML for public routes', async () => {
   const req = { originalUrl: '/missing-page' };
-  const res = mockRes({ locals: {} });
-  notFoundMiddleware(req, res);
+  const res = mockRes({ locals: { activeTheme: { slug: 'classic-blog' } } });
+  await notFoundMiddleware(req, res);
   expect(res.status).toHaveBeenCalledWith(404);
   expect(res.render).toHaveBeenCalled();
 });

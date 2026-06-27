@@ -25,7 +25,7 @@
   <%- include('../partials/topbar') %>
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
-    <form method="post" action="<%= action %>" enctype="multipart/form-data" data-editor-form data-autosave-form data-resource-type="<%= resource === 'pages' ? 'page' : 'post' %>" data-resource-id="<%= record.id || '' %>">
+    <form method="post" action="<%= action %>" enctype="multipart/form-data" data-editor-form data-autosave-form data-resource-type="<%= resource === 'pages' ? 'page' : 'post' %>" data-resource-id="<%= record.id || '' %>"<% if (isEdit && record.updated_at) { %> data-resource-updated-at="<%= new Date(record.updated_at).toISOString() %>"<% } %><% if (currentUser && currentUser.id) { %> data-current-user-id="<%= currentUser.id %>"<% } %>>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div>
         <% if (['posts','pages'].includes(resource)) { %>

@@ -1,4 +1,4 @@
-const { saveAutosave, loadAutosave, deleteAutosave } = require('../../utils/autosaveHelper');
+const { saveAutosave, loadAutosave, deleteAutosave, getResourceSnapshot } = require('../../utils/autosaveHelper');
 const policy = require('../../utils/policy');
 
 const ALLOWED_TYPES = new Set(['post', 'page', 'custom_post']);
@@ -25,7 +25,8 @@ async function show(req, res, next) {
     }
     if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
     const draft = await loadAutosave(resource_type, Number(resource_id), req.session.user.id);
-    return res.json({ draft });
+    const resource = await getResourceSnapshot(resource_type, Number(resource_id));
+    return res.json({ draft, resource });
   } catch (error) {
     return next(error);
   }

@@ -33,6 +33,8 @@ describe('Loop 13 commercial quality', () => {
       expect(show.status).toBe(200);
       expect(show.body.draft.title).toBe('Loop13 Draft Title');
       expect(show.body.draft.draft_data).toBeUndefined();
+      expect(show.body.resource).toMatchObject({ updated_by: admin.id });
+      expect(show.body.resource.updated_at).toBeTruthy();
     });
 
     test('custom_post autosave is accepted', async () => {
