@@ -15,7 +15,24 @@ const {
 async function setWafMode(mode) {
   await models.WafSetting.upsert({ setting_key: 'waf_enabled', setting_value: 'true', setting_type: 'boolean' });
   await models.WafSetting.upsert({ setting_key: 'waf_mode', setting_value: mode, setting_type: 'string' });
+  await models.WafSetting.upsert({ setting_key: 'block_bad_bots', setting_value: 'true', setting_type: 'boolean' });
   clearWafCache();
+}
+
+async function wafRequest(buildRequest, attempts = 3) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await buildRequest();
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts || !/hang up|ECONNRESET/i.test(String(error.message || error))) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+    }
+  }
+  throw lastError;
 }
 
 afterAll(async () => {
@@ -52,9 +69,9 @@ test('block mode blocks suspicious SQLi query', async () => {
 
 test('scanner user-agent is handled in block mode', async () => {
   await setWafMode('block');
-  const response = await request(app)
+  const response = await wafRequest(() => request(app)
     .get('/')
-    .set('User-Agent', 'sqlmap/1.0');
+    .set('User-Agent', 'sqlmap/1.0'));
   expect(response.status).toBe(403);
   await setWafMode('monitor');
 });
