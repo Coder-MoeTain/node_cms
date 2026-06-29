@@ -31,16 +31,13 @@ CREATE TABLE IF NOT EXISTS taxonomy_terms (
   CONSTRAINT fk_taxonomy_terms_taxonomy FOREIGN KEY (taxonomy_id) REFERENCES taxonomies(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Sequelize sync creates posts.id as signed INT; schema.sql uses INT UNSIGNED.
-ALTER TABLE posts
-  MODIFY COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT;
-
+-- Avoid FK to posts(id): legacy DBs mix signed INT (Sequelize sync) and UNSIGNED (schema.sql).
 CREATE TABLE IF NOT EXISTS post_taxonomy_terms (
   post_id INT UNSIGNED NOT NULL,
   term_id INT UNSIGNED NOT NULL,
   PRIMARY KEY (post_id, term_id),
+  KEY idx_post_taxonomy_terms_post (post_id),
   KEY idx_post_taxonomy_terms_term (term_id),
-  CONSTRAINT fk_post_taxonomy_terms_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
   CONSTRAINT fk_post_taxonomy_terms_term FOREIGN KEY (term_id) REFERENCES taxonomy_terms(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
