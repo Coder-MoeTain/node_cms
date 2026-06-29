@@ -14,7 +14,7 @@ Optional: Docker 24+, PM2, Nginx, SSL certificate.
 ## Quick install (development)
 
 ```bash
-git clone https://github.com/Coder-MoeTain/node_cms.git nodepress_cms
+# Clone or copy the project into nodepress_cms, then:
 cd nodepress_cms
 cp .env.example .env
 # Edit .env — set DB_*, SESSION_SECRET, APP_URL
