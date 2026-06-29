@@ -1,7 +1,5 @@
 # NodePress CMS Implementation Report
 
-Repository: `https://github.com/Coder-MoeTain/node_cms`
-
 ## Step 1: Current Repo Analysis
 
 | Area | Current State |

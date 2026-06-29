@@ -65,9 +65,6 @@ Testing uses a dedicated MySQL database configured with `TEST_DB_*` environment 
 </p>
 
 <p align="center">
-  <a href="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml"><img src="https://github.com/Coder-MoeTain/node_cms/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
-  <a href="https://github.com/Coder-MoeTain/node_cms/actions/workflows/security.yml"><img src="https://github.com/Coder-MoeTain/node_cms/actions/workflows/security.yml/badge.svg" alt="Security status"></a>
-  <a href="https://codecov.io/gh/Coder-MoeTain/node_cms"><img src="https://codecov.io/gh/Coder-MoeTain/node_cms/graph/badge.svg" alt="Codecov coverage"></a>
   <img src="https://img.shields.io/badge/coverage-lines-74%25-brightgreen?style=flat-square" alt="Coverage lines 74%">
   <img src="https://img.shields.io/badge/coverage-statements-71%25-brightgreen?style=flat-square" alt="Coverage statements 71%">
   <img src="https://img.shields.io/badge/tests-626%20passing-brightgreen?style=flat-square" alt="626 tests passing">

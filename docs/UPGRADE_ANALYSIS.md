@@ -1,7 +1,5 @@
 # NodePress CMS Upgrade Analysis
 
-Repository: `https://github.com/Coder-MoeTain/node_cms`
-
 This document summarizes the current project structure, the implemented CMS upgrades, remaining risks, and the exact files changed or added to transform the project into a WordPress-like CMS.
 
 For the step-by-step deliverables, run commands, admin instructions, deployment notes, and testing checklist, see [`IMPLEMENTATION_REPORT.md`](IMPLEMENTATION_REPORT.md).

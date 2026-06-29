@@ -1,6 +1,5 @@
 # NodePress CMS — Commercial Readiness Report
 
-**Repository:** [Coder-MoeTain/node_cms](https://github.com/Coder-MoeTain/node_cms)  
 **Assessment date:** June 2026  
 **Architecture:** Node.js · Express · MySQL · Sequelize · EJS
 
