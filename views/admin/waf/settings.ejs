@@ -65,11 +65,47 @@
         </div>
       </div>
       <div class="np-widget">
+        <div class="np-widget-header"><span>WebGuard API Connection</span></div>
+        <div class="np-widget-body">
+          <% if (webguardEnvFallback) { %>
+            <div class="np-alert np-alert-info mb-3">
+              Some WebGuard values are still loaded from environment variables. Saved values below override <code>.env</code> when filled in.
+            </div>
+          <% } %>
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">API URL</label>
+              <input class="form-control" type="url" name="webguard_api_url" value="<%= settings.webguard_api_url || '' %>" placeholder="http://127.0.0.1:8001">
+              <div class="np-help-text">Base URL of the WebGuard-ML service (no trailing slash).</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Timeout (ms)</label>
+              <input class="form-control" type="number" min="100" max="60000" name="webguard_timeout_ms" value="<%= settings.webguard_timeout_ms || '500' %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">API key</label>
+              <input class="form-control" type="password" name="webguard_api_key" autocomplete="new-password" placeholder="<%= settings.webguard_api_key_set ? 'Saved key (leave blank to keep)' : 'X-API-Key header value' %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Bearer token (optional)</label>
+              <input class="form-control" type="password" name="webguard_api_token" autocomplete="new-password" placeholder="<%= settings.webguard_api_token_set ? 'Saved token (leave blank to keep)' : 'Authorization: Bearer token' %>">
+            </div>
+            <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="webguard_allow_localhost" <%= settings.webguard_allow_localhost === 'true' ? 'checked' : '' %>> Allow localhost / loopback URLs</label></div>
+            <div class="col-md-4"><label class="form-check"><input class="form-check-input" type="checkbox" name="webguard_fail_open" <%= settings.webguard_fail_open !== 'false' ? 'checked' : '' %>> Fail open when API is unavailable</label></div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button class="np-btn np-btn-secondary" type="button" id="webguard-test-btn">Test connection</button>
+            </div>
+          </div>
+          <div id="webguard-test-result" class="mt-3" hidden></div>
+          <p class="np-help-text mb-0">Use API key or bearer token. Environment variables remain a fallback until values are saved here.</p>
+        </div>
+      </div>
+      <div class="np-widget">
         <div class="np-widget-header"><span>WebGuard ML Detection</span></div>
         <div class="np-widget-body">
           <% if (!webguardConfigured) { %>
             <div class="np-alert np-alert-warning mb-3">
-              WebGuard is not configured. Set <code>WEBGUARD_API_URL</code> and <code>WEBGUARD_API_KEY</code> (or <code>WEBGUARD_API_TOKEN</code>) in your environment, then enable ML detection below.
+              WebGuard is not configured. Enter API URL and credentials above, save settings, then enable ML detection below.
             </div>
           <% } else if (webguardHealth && !webguardHealth.ok) { %>
             <div class="np-alert np-alert-warning mb-3">
@@ -85,7 +121,7 @@
               <select class="form-select" name="ml_waf_model_id">
                 <option value="" <%= !settings.ml_waf_model_id ? 'selected' : '' %>>Latest / auto-detect</option>
                 <% (mlModels || []).forEach(function(model) { %>
-                  <option value="<%= model.id %>" <%= settings.ml_waf_model_id === model.id ? 'selected' : '' %>><%= model.id %></option>
+                  <option value="<%= model.id %>" <%= settings.ml_waf_model_id === model.id ? 'selected' : '' %>><%= model.name || model.id %><%= model.source === 'webguard' ? ' (WebGuard)' : '' %></option>
                 <% }) %>
               </select>
             </div>
@@ -171,4 +207,44 @@
     </div>
   </main>
 </div>
+<script>
+  (function () {
+    const button = document.getElementById('webguard-test-btn');
+    const result = document.getElementById('webguard-test-result');
+    const form = document.querySelector('form[action="/admin/waf/settings"]');
+    if (!button || !result || !form) return;
+
+    button.addEventListener('click', async function () {
+      button.disabled = true;
+      result.hidden = false;
+      result.className = 'mt-3 np-alert np-alert-info';
+      result.textContent = 'Testing WebGuard API connection...';
+
+      const formData = new FormData(form);
+      try {
+        const response = await fetch('/admin/waf/webguard/test', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+          },
+          body: new URLSearchParams(formData).toString()
+        });
+        const payload = await response.json();
+        if (payload.ok) {
+          result.className = 'mt-3 np-alert np-alert-success';
+          result.textContent = 'WebGuard API is reachable.';
+        } else {
+          result.className = 'mt-3 np-alert np-alert-warning';
+          result.textContent = payload.error || 'WebGuard API is not reachable.';
+        }
+      } catch (error) {
+        result.className = 'mt-3 np-alert np-alert-warning';
+        result.textContent = error.message || 'Connection test failed.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  })();
+</script>
 <%- include('../partials/footer') %>

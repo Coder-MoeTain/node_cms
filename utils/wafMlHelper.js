@@ -51,7 +51,8 @@ function buildWebGuardAnalyzePayload(req, normalizedRequest, modelId) {
 }
 
 function shouldUseMlWaf(settings, config = appConfig) {
-  if (!config.webguard?.enabled) return false;
+  const { getWebGuardConfig } = require('./webguardClient');
+  if (!getWebGuardConfig(settings).enabled) return false;
   return settings.ml_waf_enabled === true || settings.ml_waf_enabled === 'true';
 }
 

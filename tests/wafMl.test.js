@@ -63,9 +63,14 @@ describe('wafMlHelper', () => {
     }, { ml_waf_confidence_threshold: 0.7 })).toBeNull();
   });
 
-  test('shouldUseMlWaf respects env config and setting flag', () => {
-    expect(shouldUseMlWaf({ ml_waf_enabled: true }, { webguard: { enabled: true } })).toBe(true);
-    expect(shouldUseMlWaf({ ml_waf_enabled: false }, { webguard: { enabled: true } })).toBe(false);
-    expect(shouldUseMlWaf({ ml_waf_enabled: true }, { webguard: { enabled: false } })).toBe(false);
+  test('shouldUseMlWaf respects WebGuard config and setting flag', () => {
+    const enabledSettings = {
+      ml_waf_enabled: true,
+      webguard_api_url: 'http://127.0.0.1:8001',
+      webguard_api_key: 'test-key'
+    };
+    expect(shouldUseMlWaf(enabledSettings)).toBe(true);
+    expect(shouldUseMlWaf({ ...enabledSettings, ml_waf_enabled: false })).toBe(false);
+    expect(shouldUseMlWaf({ ml_waf_enabled: true, webguard_api_url: '', webguard_api_key: '' })).toBe(false);
   });
 });

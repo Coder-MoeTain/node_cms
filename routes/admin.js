@@ -182,6 +182,7 @@ const wafPermission = canAny(['manage_waf', 'manage_security']);
 router.get('/waf', requireAuth, wafPermission, waf.dashboard);
 router.get('/waf/settings', requireAuth, wafPermission, waf.settings);
 router.post('/waf/settings', requireAuth, wafPermission, waf.updateSettings);
+router.post('/waf/webguard/test', requireAuth, wafPermission, waf.testWebGuardConnection);
 router.post('/waf/models/upload', requireAuth, wafPermission, zipUpload.single('model_archive'), waf.uploadModel);
 router.post('/waf/models/:id/activate', requireAuth, wafPermission, waf.activateModelAction);
 router.post('/waf/models/:id/delete', requireAuth, wafPermission, waf.deleteModelAction);

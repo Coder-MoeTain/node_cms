@@ -40,6 +40,35 @@ describe('webguardClient', () => {
     );
   });
 
+  test('prefers WAF settings over environment variables', async () => {
+    process.env.WEBGUARD_API_URL = 'http://127.0.0.1:8001';
+    process.env.WEBGUARD_API_KEY = 'env-key';
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ prediction: 'xss', confidence: 0.9, is_attack: true, uncertain: false })
+    });
+
+    const { analyzeRequest } = require('../utils/webguardClient');
+    const result = await analyzeRequest(
+      { method: 'GET', url: '/' },
+      {
+        settings: {
+          webguard_api_url: 'http://127.0.0.2:9000',
+          webguard_api_key: 'ui-key',
+          webguard_allow_localhost: 'true'
+        }
+      }
+    );
+    expect(result.ok).toBe(true);
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.2:9000/api/ids/analyze',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'X-API-Key': 'ui-key' })
+      })
+    );
+  });
+
   test('fails open by default when analyze request errors', async () => {
     process.env.WEBGUARD_API_URL = 'http://127.0.0.1:8001';
     process.env.WEBGUARD_API_KEY = 'test-key';

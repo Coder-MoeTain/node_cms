@@ -31,6 +31,38 @@ test('admin can view WAF settings, rules, logs, and IP lists', async () => {
   expect((await agent.get('/admin/waf/ip-lists')).status).toBe(200);
 });
 
+test('admin can update WebGuard API settings in WAF UI', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/waf/settings');
+  const response = await agent
+    .post('/admin/waf/settings')
+    .type('form')
+    .send({
+      _waf_settings_form: '1',
+      waf_enabled: 'on',
+      waf_mode: 'monitor',
+      max_risk_score_public: '50',
+      max_risk_score_admin: '40',
+      auto_block_threshold: '5',
+      auto_block_window_minutes: '10',
+      auto_block_duration_minutes: '60',
+      waf_response_message: 'Blocked by WAF',
+      webguard_api_url: 'http://127.0.0.1:8001',
+      webguard_api_key: 'ui-test-key',
+      webguard_timeout_ms: '750',
+      webguard_allow_localhost: 'on',
+      webguard_fail_open: 'on',
+      _csrf: csrf
+    });
+  expect(response.status).toBe(302);
+  const urlSetting = await models.WafSetting.findOne({ where: { setting_key: 'webguard_api_url' } });
+  const keySetting = await models.WafSetting.findOne({ where: { setting_key: 'webguard_api_key' } });
+  expect(urlSetting.setting_value).toBe('http://127.0.0.1:8001');
+  expect(keySetting.setting_value).toBe('ui-test-key');
+  clearWafCache();
+});
+
 test('admin can update WAF settings', async () => {
   const agent = request.agent(app);
   await login(agent, 'admin@example.com', 'Admin@12345');

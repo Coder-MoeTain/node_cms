@@ -5,7 +5,7 @@ const { getPagination, pageMeta } = require('../../utils/pagination');
 const { createSlug } = require('../../utils/slugGenerator');
 const { validatePattern, normalizeRequestData, matchRuleAgainstRequest, calculateRiskScore, summarizeMatchedRules } = require('../../utils/wafHelper');
 const { clearWafCache } = require('../../middleware/waf');
-const { checkHealth } = require('../../utils/webguardClient');
+const { checkHealth, listRemoteModels, getWebGuardConfig, clearWebGuardHealthCache } = require('../../utils/webguardClient');
 const {
   listModels,
   installModelFromZip,
@@ -50,8 +50,16 @@ const settingFields = {
   ml_waf_confidence_threshold: 'number',
   ml_waf_model_id: 'string',
   ml_waf_block_standalone: 'boolean',
-  ml_waf_reject_uncertain: 'boolean'
+  ml_waf_reject_uncertain: 'boolean',
+  webguard_api_url: 'string',
+  webguard_api_key: 'string',
+  webguard_api_token: 'string',
+  webguard_timeout_ms: 'number',
+  webguard_allow_localhost: 'boolean',
+  webguard_fail_open: 'boolean'
 };
+
+const SECRET_WAF_SETTING_KEYS = new Set(['webguard_api_key', 'webguard_api_token']);
 
 function flashAndRedirect(req, res, message, path = '/admin/waf') {
   req.flash('error', message);
@@ -192,15 +200,53 @@ async function dashboard(req, res, next) {
 
 async function settings(req, res, next) {
   try {
-    const webguardHealth = appConfig.webguard?.enabled ? await checkHealth() : { configured: false, ok: false };
-    const mlModels = listModels();
+    const settings = await getSettingsObject();
+    const webguardConfig = getWebGuardConfig(settings);
+    const webguardHealth = webguardConfig.enabled
+      ? await checkHealth(false, settings)
+      : { configured: false, ok: false };
+    const localModels = listModels();
+    let remoteModels = [];
+    if (webguardConfig.enabled) {
+      const remote = await listRemoteModels(settings);
+      if (remote.ok) remoteModels = remote.models;
+    }
+    const merged = new Map();
+    for (const model of remoteModels) {
+      if (model?.id) {
+        merged.set(model.id, {
+          id: model.id,
+          name: model.display_name || model.name || model.id,
+          source: 'webguard',
+          remote_synced: true
+        });
+      }
+    }
+    for (const model of localModels) {
+      merged.set(model.id, { ...model, source: model.source || 'local' });
+    }
+    const mlModels = Array.from(merged.values()).sort((left, right) => String(left.id).localeCompare(String(right.id)));
+    const displaySettings = { ...settings };
+    const webguardApiKeySet = Boolean(String(displaySettings.webguard_api_key || '').trim());
+    const webguardApiTokenSet = Boolean(String(displaySettings.webguard_api_token || '').trim());
+    delete displaySettings.webguard_api_key;
+    delete displaySettings.webguard_api_token;
     return res.render('admin/waf/settings', {
       title: 'WAF Settings',
       activeNav: 'settings',
-      settings: await getSettingsObject(),
+      settings: {
+        ...displaySettings,
+        webguard_api_key_set: webguardApiKeySet,
+        webguard_api_token_set: webguardApiTokenSet
+      },
       mlModels,
-      webguardConfigured: Boolean(appConfig.webguard?.enabled),
-      webguardHealth
+      webguardConfigured: webguardConfig.enabled,
+      webguardHealth,
+      webguardEnvFallback: Boolean(
+        (!String(settings.webguard_api_url || '').trim() && appConfig.webguard?.baseUrl)
+        || (!String(settings.webguard_api_key || '').trim() && !String(settings.webguard_api_token || '').trim()
+          && (appConfig.webguard?.apiKey || appConfig.webguard?.bearerToken))
+      )
     });
   } catch (error) {
     return next(error);
@@ -222,15 +268,22 @@ async function updateSettings(req, res, next) {
       } else if (type === 'number') {
         if (key === 'ml_waf_confidence_threshold') {
           value = String(Math.min(Math.max(Number(req.body[key] || 0.7), 0.1), 1));
+        } else if (key === 'webguard_timeout_ms') {
+          value = String(Math.min(Math.max(Number(req.body[key] || 500), 100), 60000));
         } else {
           value = String(Math.max(Number(req.body[key] || 0), 0));
         }
+      } else if (SECRET_WAF_SETTING_KEYS.has(key)) {
+        const incoming = String(req.body[key] || '').trim();
+        if (!incoming) continue;
+        value = incoming;
       } else {
         value = String(req.body[key] || '').trim();
       }
       await upsertWafSetting(key, value, type);
     }
     clearWafCache();
+    clearWebGuardHealthCache();
     const { invalidateTrustedProxyCache } = require('../../utils/loginSessionHelper');
     invalidateTrustedProxyCache();
     req.flash('success', 'WAF settings updated.');
@@ -581,6 +634,46 @@ async function testRule(req, res, next) {
   }
 }
 
+async function testWebGuardConnection(req, res, next) {
+  try {
+    const saved = await getSettingsObject();
+    const draft = {
+      ...saved,
+      webguard_api_url: String(req.body.webguard_api_url ?? saved.webguard_api_url ?? '').trim(),
+      webguard_timeout_ms: req.body.webguard_timeout_ms ?? saved.webguard_timeout_ms,
+      webguard_allow_localhost: req.body.webguard_allow_localhost === 'on'
+        || req.body.webguard_allow_localhost === 'true'
+        || saved.webguard_allow_localhost,
+      webguard_fail_open: req.body.webguard_fail_open === 'on'
+        || req.body.webguard_fail_open === 'true'
+        || saved.webguard_fail_open
+    };
+    const incomingKey = String(req.body.webguard_api_key || '').trim();
+    const incomingToken = String(req.body.webguard_api_token || '').trim();
+    if (incomingKey) draft.webguard_api_key = incomingKey;
+    if (incomingToken) draft.webguard_api_token = incomingToken;
+
+    const config = getWebGuardConfig(draft);
+    if (!config.enabled) {
+      return res.json({
+        ok: false,
+        configured: false,
+        error: 'Enter API URL and API key or bearer token first.'
+      });
+    }
+
+    const health = await checkHealth(true, draft);
+    return res.json({
+      ok: health.ok,
+      configured: true,
+      status: health.status,
+      error: health.error || null
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function uploadModel(req, res, next) {
   try {
     if (!req.file) {
@@ -665,6 +758,7 @@ module.exports = {
   whitelistIpFromLog,
   exportLogsCsv,
   testRule,
+  testWebGuardConnection,
   uploadModel,
   activateModelAction,
   deleteModelAction
