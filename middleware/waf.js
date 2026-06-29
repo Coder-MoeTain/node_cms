@@ -66,7 +66,13 @@ const DEFAULT_SETTINGS = {
   ml_waf_confidence_threshold: 0.7,
   ml_waf_model_id: '',
   ml_waf_block_standalone: true,
-  ml_waf_reject_uncertain: true
+  ml_waf_reject_uncertain: true,
+  webguard_api_url: '',
+  webguard_api_key: '',
+  webguard_api_token: '',
+  webguard_timeout_ms: 500,
+  webguard_allow_localhost: false,
+  webguard_fail_open: true
 };
 
 const categorySettingMap = {
@@ -338,7 +344,7 @@ async function wafMiddleware(req, res, next) {
       const normalizedRequest = normalizeRequestData(req);
       const modelId = String(settings.ml_waf_model_id || '').trim();
       const analyzePayload = buildWebGuardAnalyzePayload(req, normalizedRequest, modelId || undefined);
-      const mlResult = await analyzeRequest(analyzePayload);
+      const mlResult = await analyzeRequest(analyzePayload, { settings });
       if (mlResult.ok) {
         mlMatch = mlResultToMatch(mlResult.data, settings);
         if (mlMatch) matches.push(mlMatch);

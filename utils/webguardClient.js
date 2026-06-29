@@ -1,27 +1,82 @@
 const appConfig = require('../config/app');
 const { assertSafeOutboundUrl } = require('./ssrfGuard');
 
-let healthCache = { checkedAt: 0, ok: false };
+let healthCache = { checkedAt: 0, ok: false, cacheKey: '' };
 
-function getWebGuardConfig() {
-  const webguard = appConfig.webguard || {};
+const WEBGUARD_SETTING_KEYS = [
+  'webguard_api_url',
+  'webguard_api_key',
+  'webguard_api_token',
+  'webguard_timeout_ms',
+  'webguard_allow_localhost',
+  'webguard_fail_open'
+];
+
+function isTruthySetting(value) {
+  return value === true || value === 'true' || value === '1' || value === 1;
+}
+
+function resolveWebGuardConfig(source = {}) {
+  const env = appConfig.webguard || {};
+  const pickString = (uiKey, envValue) => {
+    const ui = String(source[uiKey] ?? '').trim();
+    return ui || String(envValue || '').trim();
+  };
+
+  const baseUrl = pickString('webguard_api_url', env.baseUrl).replace(/\/$/, '');
+  const apiKey = pickString('webguard_api_key', env.apiKey);
+  const bearerToken = pickString('webguard_api_token', env.bearerToken);
+  const hasUiTimeout = source.webguard_timeout_ms !== undefined && source.webguard_timeout_ms !== '';
+  const timeoutMs = Math.max(
+    100,
+    Number(hasUiTimeout ? source.webguard_timeout_ms : (env.timeoutMs || 500))
+  );
+  const hasUiAllowLocalhost = source.webguard_allow_localhost !== undefined && source.webguard_allow_localhost !== '';
+  const allowLocalhost = hasUiAllowLocalhost
+    ? isTruthySetting(source.webguard_allow_localhost)
+    : Boolean(env.allowLocalhost);
+  const hasUiFailOpen = source.webguard_fail_open !== undefined && source.webguard_fail_open !== '';
+  const failOpen = hasUiFailOpen
+    ? isTruthySetting(source.webguard_fail_open)
+    : env.failOpen !== false;
+
   return {
-    enabled: Boolean(webguard.enabled),
-    baseUrl: String(webguard.baseUrl || '').replace(/\/$/, ''),
-    apiKey: String(webguard.apiKey || '').trim(),
-    bearerToken: String(webguard.bearerToken || '').trim(),
-    timeoutMs: Math.max(100, Number(webguard.timeoutMs || 500)),
-    allowLocalhost: Boolean(webguard.allowLocalhost),
-    failOpen: webguard.failOpen !== false
+    enabled: Boolean(baseUrl && (apiKey || bearerToken)),
+    baseUrl,
+    apiKey,
+    bearerToken,
+    timeoutMs,
+    allowLocalhost,
+    failOpen
   };
 }
 
-function buildAnalyzeUrl(baseUrl) {
-  return buildApiUrl(baseUrl, '/api/ids/analyze');
+function getWebGuardConfig(settings) {
+  return resolveWebGuardConfig(settings || {});
 }
 
-function buildHealthUrl(baseUrl) {
-  return buildApiUrl(baseUrl, '/health');
+function getWebGuardCacheKey(config) {
+  return [config.baseUrl, config.apiKey, config.bearerToken, config.timeoutMs].join('|');
+}
+
+async function loadWebGuardSettingsFromDb() {
+  const { Op } = require('sequelize');
+  const { WafSetting } = require('../models');
+  const rows = await WafSetting.findAll({
+    where: { setting_key: { [Op.in]: WEBGUARD_SETTING_KEYS } }
+  });
+  return rows.reduce((settings, row) => {
+    settings[row.setting_key] = row.setting_value;
+    return settings;
+  }, {});
+}
+
+function buildAnalyzeUrl(baseUrl, config = null) {
+  return buildApiUrl(baseUrl, '/api/ids/analyze', config);
+}
+
+function buildHealthUrl(baseUrl, config = null) {
+  return buildApiUrl(baseUrl, '/health', config);
 }
 
 function buildAuthHeaders(config, options = {}) {
@@ -32,17 +87,18 @@ function buildAuthHeaders(config, options = {}) {
   return headers;
 }
 
-function buildApiUrl(baseUrl, apiPath) {
+function buildApiUrl(baseUrl, apiPath, config = null) {
   const normalizedPath = String(apiPath || '').startsWith('/') ? apiPath : `/${apiPath}`;
+  const resolved = config || getWebGuardConfig();
   const parsed = assertSafeOutboundUrl(`${baseUrl}${normalizedPath}`, {
     allowHttp: appConfig.env !== 'production',
-    allowLoopback: getWebGuardConfig().allowLocalhost
+    allowLoopback: resolved.allowLocalhost
   });
   return parsed.toString();
 }
 
 async function analyzeRequest(payload, options = {}) {
-  const config = getWebGuardConfig();
+  const config = getWebGuardConfig(options.settings);
   if (!config.enabled || !config.baseUrl) {
     return { ok: false, error: 'WebGuard integration is not configured.', failOpen: config.failOpen };
   }
@@ -54,7 +110,7 @@ async function analyzeRequest(payload, options = {}) {
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs || config.timeoutMs);
 
   try {
-    const response = await fetch(buildAnalyzeUrl(config.baseUrl), {
+    const response = await fetch(buildAnalyzeUrl(config.baseUrl, config), {
       method: 'POST',
       headers: buildAuthHeaders(config),
       body: JSON.stringify(payload),
@@ -83,13 +139,14 @@ async function analyzeRequest(payload, options = {}) {
   }
 }
 
-async function checkHealth(force = false) {
-  const config = getWebGuardConfig();
+async function checkHealth(force = false, settings = null) {
+  const config = getWebGuardConfig(settings);
   if (!config.enabled || !config.baseUrl) {
     return { ok: false, configured: false, error: 'WebGuard integration is not configured.' };
   }
 
-  if (!force && Date.now() - healthCache.checkedAt < 30000) {
+  const cacheKey = getWebGuardCacheKey(config);
+  if (!force && Date.now() - healthCache.checkedAt < 30000 && healthCache.cacheKey === cacheKey) {
     return { ok: healthCache.ok, configured: true, cached: true };
   }
 
@@ -97,15 +154,16 @@ async function checkHealth(force = false) {
   const timeout = setTimeout(() => controller.abort(), Math.min(config.timeoutMs, 2000));
 
   try {
-    const response = await fetch(buildHealthUrl(config.baseUrl), {
+    const response = await fetch(buildHealthUrl(config.baseUrl, config), {
       method: 'GET',
+      headers: buildAuthHeaders(config),
       signal: controller.signal
     });
     const ok = response.ok;
-    healthCache = { checkedAt: Date.now(), ok };
+    healthCache = { checkedAt: Date.now(), ok, cacheKey };
     return { ok, configured: true, status: response.status };
   } catch (error) {
-    healthCache = { checkedAt: Date.now(), ok: false };
+    healthCache = { checkedAt: Date.now(), ok: false, cacheKey };
     return { ok: false, configured: true, error: error.message };
   } finally {
     clearTimeout(timeout);
@@ -113,11 +171,11 @@ async function checkHealth(force = false) {
 }
 
 function clearWebGuardHealthCache() {
-  healthCache = { checkedAt: 0, ok: false };
+  healthCache = { checkedAt: 0, ok: false, cacheKey: '' };
 }
 
 async function uploadModelArchive(filePath, filename = 'model.zip', options = {}) {
-  const config = getWebGuardConfig();
+  const config = getWebGuardConfig(options.settings);
   if (!config.enabled || !config.baseUrl) {
     return { ok: false, skipped: true, error: 'WebGuard integration is not configured.' };
   }
@@ -142,7 +200,7 @@ async function uploadModelArchive(filePath, filename = 'model.zip', options = {}
     formData.append('file', new Blob([buffer], { type: 'application/zip' }), filename || 'model.zip');
     if (options.modelId) formData.append('model_id', String(options.modelId));
 
-    const response = await fetch(buildApiUrl(config.baseUrl, uploadPath), {
+    const response = await fetch(buildApiUrl(config.baseUrl, uploadPath, config), {
       method: 'POST',
       headers: buildAuthHeaders(config, { multipart: true }),
       body: formData,
@@ -176,8 +234,8 @@ async function uploadModelArchive(filePath, filename = 'model.zip', options = {}
   }
 }
 
-async function listRemoteModels() {
-  const config = getWebGuardConfig();
+async function listRemoteModels(settings = null) {
+  const config = getWebGuardConfig(settings);
   if (!config.enabled || !config.baseUrl) {
     return { ok: false, models: [], error: 'WebGuard integration is not configured.' };
   }
@@ -187,7 +245,7 @@ async function listRemoteModels() {
   const timeout = setTimeout(() => controller.abort(), Math.min(config.timeoutMs, 5000));
 
   try {
-    const response = await fetch(buildApiUrl(config.baseUrl, listPath), {
+    const response = await fetch(buildApiUrl(config.baseUrl, listPath, config), {
       method: 'GET',
       headers: buildAuthHeaders(config),
       signal: controller.signal
@@ -205,8 +263,8 @@ async function listRemoteModels() {
   }
 }
 
-async function deleteRemoteModel(modelId) {
-  const config = getWebGuardConfig();
+async function deleteRemoteModel(modelId, settings = null) {
+  const config = getWebGuardConfig(settings);
   if (!config.enabled || !config.baseUrl || !modelId) {
     return { ok: false, skipped: true };
   }
@@ -216,7 +274,7 @@ async function deleteRemoteModel(modelId) {
   const timeout = setTimeout(() => controller.abort(), Math.min(config.timeoutMs, 5000));
 
   try {
-    const response = await fetch(buildApiUrl(config.baseUrl, deletePath), {
+    const response = await fetch(buildApiUrl(config.baseUrl, deletePath, config), {
       method: 'DELETE',
       headers: buildAuthHeaders(config),
       signal: controller.signal
@@ -230,7 +288,10 @@ async function deleteRemoteModel(modelId) {
 }
 
 module.exports = {
+  WEBGUARD_SETTING_KEYS,
   getWebGuardConfig,
+  resolveWebGuardConfig,
+  loadWebGuardSettingsFromDb,
   analyzeRequest,
   checkHealth,
   uploadModelArchive,

@@ -78,7 +78,13 @@ const wafSettings = {
   ml_waf_confidence_threshold: ['0.7', 'number'],
   ml_waf_model_id: ['', 'string'],
   ml_waf_block_standalone: ['true', 'boolean'],
-  ml_waf_reject_uncertain: ['true', 'boolean']
+  ml_waf_reject_uncertain: ['true', 'boolean'],
+  webguard_api_url: ['', 'string'],
+  webguard_api_key: ['', 'string'],
+  webguard_api_token: ['', 'string'],
+  webguard_timeout_ms: ['500', 'number'],
+  webguard_allow_localhost: ['false', 'boolean'],
+  webguard_fail_open: ['true', 'boolean']
 };
 
 const wafRules = [

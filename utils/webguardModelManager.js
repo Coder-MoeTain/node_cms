@@ -6,7 +6,7 @@ const { clearWafCache } = require('../middleware/waf');
 const { ensureDirectory } = require('./fileHelper');
 const { isZipMagicBytes } = require('./packageScan');
 const { MAX_ARCHIVE_BYTES, MAX_UNCOMPRESSED_BYTES, isSafeEntryName } = require('./packageArchive');
-const { uploadModelArchive, deleteRemoteModel } = require('./webguardClient');
+const { uploadModelArchive, deleteRemoteModel, loadWebGuardSettingsFromDb } = require('./webguardClient');
 
 const ALLOWED_MODEL_EXTENSIONS = new Set([
   '.joblib', '.pkl', '.pickle', '.json', '.yaml', '.yml', '.txt', '.md', '.npy', '.csv'
@@ -188,7 +188,8 @@ async function installModelFromZip(zipPath, options = {}) {
     }
     copyDirectory(tempDir, installDir);
 
-    const remote = await uploadModelArchive(zipPath, path.basename(zipPath), { modelId });
+    const webguardSettings = await loadWebGuardSettingsFromDb();
+    const remote = await uploadModelArchive(zipPath, path.basename(zipPath), { modelId, settings: webguardSettings });
     const shared = syncToSharedModelsPath(modelId, installDir);
 
     const entry = {
@@ -249,7 +250,8 @@ async function deleteModel(modelId) {
     if (fs.existsSync(sharedDir)) fs.rmSync(sharedDir, { recursive: true, force: true });
   }
 
-  await deleteRemoteModel(normalized);
+  const webguardSettings = await loadWebGuardSettingsFromDb();
+  await deleteRemoteModel(normalized, webguardSettings);
 
   const registry = readRegistry();
   registry.models = registry.models.filter((row) => row.id !== normalized);
