@@ -54,6 +54,7 @@ const SlugRedirect = require('./SlugRedirect')(sequelize);
 const Taxonomy = require('./Taxonomy')(sequelize);
 const TaxonomyTerm = require('./TaxonomyTerm')(sequelize);
 const PostTaxonomyTerm = require('./PostTaxonomyTerm')(sequelize);
+const TrafficLog = require('./TrafficLog')(sequelize);
 
 Role.belongsToMany(Permission, { through: 'role_permissions', foreignKey: 'role_id', otherKey: 'permission_id' });
 Permission.belongsToMany(Role, { through: 'role_permissions', foreignKey: 'permission_id', otherKey: 'role_id' });
@@ -219,5 +220,7 @@ module.exports = {
   ContentTranslation,
   SlugRedirect,
   Taxonomy,
-  TaxonomyTerm
+  TaxonomyTerm,
+  PostTaxonomyTerm,
+  TrafficLog
 };

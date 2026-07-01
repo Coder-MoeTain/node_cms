@@ -1,0 +1,105 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header">
+      <div>
+        <h1>Public Traffic Log</h1>
+        <p class="np-help-text mb-0">Live stream of front-end page visits with device, response time, and status details.</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="np-badge np-badge-muted" id="traffic-live-status">Connecting…</span>
+        <button class="np-btn np-btn-secondary" type="button" id="traffic-pause-btn">Pause live</button>
+        <a class="np-btn np-btn-secondary" href="/admin/traffic/export/csv?<%= new URLSearchParams(filters || {}).toString() %>">Export CSV</a>
+        <form class="d-flex gap-2" method="post" action="/admin/traffic/delete-old" onsubmit="return confirm('Delete old traffic logs?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input class="form-control" style="width:100px" type="number" min="1" name="days" value="30">
+          <button class="np-btn np-btn-danger">Delete old</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="np-stat-grid mb-3">
+      <div class="np-stat-card"><span class="stat-label">Hits today</span><h3 id="stat-hits-today"><%= stats.hitsToday %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Last hour</span><h3 id="stat-hits-hour"><%= stats.hitsLastHour %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Unique IPs today</span><h3 id="stat-unique-ips"><%= stats.uniqueIpsToday %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Active (5 min)</span><h3 id="stat-active-now"><%= stats.activeNow %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Avg response today</span><h3><%= stats.avgResponseMs %> ms</h3></div>
+    </div>
+
+    <div class="np-widget mb-3">
+      <div class="np-widget-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-broadcast text-success me-1"></i> Live traffic</span>
+        <span class="text-muted small" id="traffic-live-count">0 events this session</span>
+      </div>
+      <div class="np-widget-body p-0">
+        <div class="table-responsive" style="max-height:420px;overflow-y:auto">
+          <table class="np-list-table mb-0" id="traffic-live-table">
+            <thead><tr><th>Time</th><th>IP</th><th>Path</th><th>Status</th><th>Time</th><th>Device</th><th>Browser</th><th>Referer</th></tr></thead>
+            <tbody id="traffic-live-body">
+              <tr id="traffic-live-empty"><td colspan="8" class="text-center text-muted py-4">Waiting for public page visits…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <form class="np-widget mb-3" method="get" action="/admin/traffic">
+      <div class="np-widget-body">
+        <div class="row g-2">
+          <div class="col-md-3"><input class="form-control" name="ip" value="<%= filters.ip || '' %>" placeholder="IP address"></div>
+          <div class="col-md-3"><input class="form-control" name="path" value="<%= filters.path || '' %>" placeholder="Path contains"></div>
+          <div class="col-md-2">
+            <select class="form-select" name="device">
+              <option value="">Device</option>
+              <% deviceTypes.forEach(function(device) { %>
+                <option value="<%= device %>" <%= filters.device === device ? 'selected' : '' %>><%= device %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-2"><input class="form-control" type="number" name="status" value="<%= filters.status || '' %>" placeholder="HTTP status"></div>
+          <div class="col-md-2"><input class="form-control" type="date" name="date" value="<%= filters.date || '' %>"></div>
+          <div class="col-md-12"><button class="np-btn np-btn-secondary">Filter history</button></div>
+        </div>
+      </div>
+    </form>
+
+    <div class="np-widget">
+      <div class="np-widget-header">Historical log</div>
+      <div class="np-widget-body p-0">
+        <div class="table-responsive">
+          <table class="np-list-table mb-0">
+            <thead><tr><th>Time</th><th>IP</th><th>Method</th><th>Path</th><th>Status</th><th>Response</th><th>Device</th><th>Browser / OS</th><th>Referer</th></tr></thead>
+            <tbody>
+              <% logs.forEach(function(log) { %>
+                <tr>
+                  <td><%= formatDateTime ? formatDateTime(log.created_at) : log.created_at %></td>
+                  <td><code><%= log.ip_address %></code></td>
+                  <td><%= log.method %></td>
+                  <td class="text-truncate" style="max-width:220px" title="<%= log.path %>"><%= log.path %></td>
+                  <td><span class="np-badge np-badge-<%= log.response_status >= 500 ? 'danger' : log.response_status >= 400 ? 'warning' : 'success' %>"><%= log.response_status %></span></td>
+                  <td><%= log.response_ms != null ? log.response_ms + ' ms' : '—' %></td>
+                  <td><span class="np-badge np-badge-muted"><%= log.device_type %></span></td>
+                  <td><%= log.browser %> / <%= log.os %></td>
+                  <td class="text-truncate" style="max-width:180px" title="<%= log.referer || '' %>"><%= log.referer || '—' %></td>
+                </tr>
+              <% }) %>
+              <% if (!logs.length) { %><tr><td colspan="9" class="text-center text-muted py-4">No traffic logs found.</td></tr><% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="np-widget-footer d-flex justify-content-between align-items-center px-3 py-2 border-top">
+        <span class="text-muted">Page <%= meta.page %> of <%= meta.pages %></span>
+        <div class="d-flex gap-2">
+          <a class="np-btn np-btn-small np-btn-secondary <%= meta.page <= 1 ? 'disabled' : '' %>" href="?page=<%= meta.page - 1 %>">Previous</a>
+          <a class="np-btn np-btn-small np-btn-secondary <%= meta.page >= meta.pages ? 'disabled' : '' %>" href="?page=<%= meta.page + 1 %>">Next</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="/js/admin-traffic.js" defer></script>
+<%- include('../partials/footer') %>

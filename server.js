@@ -25,6 +25,7 @@ const { portalVisitMiddleware } = require('./middleware/portalVisit');
 const pluginHooks = require('./middleware/pluginHooks');
 const { wafMiddleware } = require('./middleware/waf');
 const { clientIpMiddleware } = require('./middleware/clientIp');
+const { publicTrafficLogMiddleware } = require('./middleware/publicTrafficLog');
 const errorHandler = require('./middleware/errorHandler');
 const notFoundMiddleware = require('./middleware/notFound');
 const policy = require('./utils/policy');
@@ -144,6 +145,7 @@ app.use(async (req, res, next) => {
 app.use(pluginHooks);
 app.use(wafMiddleware);
 app.use(clientIpMiddleware);
+app.use(publicTrafficLogMiddleware);
 app.use((req, res, next) => {
   const maintenanceOn = res.locals.siteSettings?.maintenance_mode === 'true';
   if (!maintenanceOn || req.path.startsWith('/admin') || req.path.startsWith('/api')) {

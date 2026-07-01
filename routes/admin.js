@@ -38,6 +38,7 @@ const themes = require('../controllers/admin/themeController');
 const security = require('../controllers/admin/securityController');
 const database = require('../controllers/admin/databaseController');
 const waf = require('../controllers/admin/wafController');
+const traffic = require('../controllers/admin/trafficController');
 const customPostTypes = require('../controllers/admin/customPostTypeController');
 const customContent = require('../controllers/admin/customContentController');
 const fieldGroups = require('../controllers/admin/fieldGroupController');
@@ -177,6 +178,11 @@ router.get('/security/login-attempts', requireAuth, can('manage_security'), secu
 router.post('/security/block-ip', requireAuth, can('manage_security'), security.blockIp);
 router.delete('/security/unblock-ip/:id', requireAuth, can('manage_security'), security.unblockIp);
 router.post('/security/backup-database', requireAuth, can('manage_security'), security.backupDatabase);
+
+router.get('/traffic', requireAuth, can('manage_security'), traffic.index);
+router.get('/traffic/stream', requireAuth, can('manage_security'), traffic.stream);
+router.get('/traffic/export/csv', requireAuth, can('manage_security'), traffic.exportCsv);
+router.post('/traffic/delete-old', requireAuth, can('manage_security'), traffic.deleteOld);
 
 const wafPermission = canAny(['manage_waf', 'manage_security']);
 router.get('/waf', requireAuth, wafPermission, waf.dashboard);
