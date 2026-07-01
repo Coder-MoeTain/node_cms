@@ -33,13 +33,25 @@
   <% if (typeof themeStylesheet !== 'undefined' && themeStylesheet) { %><link rel="stylesheet" href="<%= themeStylesheet %>"><% } %>
   <link rel="stylesheet" href="/css/language-switcher.css">
   <% const isPortalLayout = typeof isPortal !== 'undefined' && isPortal; %>
+  <% const isLeoTalkPreset = themePreset === 'leo-talk';
+     const tv = themeVars || {};
+     const dt = (typeof designTokens !== 'undefined' && designTokens && designTokens.vars) ? designTokens.vars : {};
+     const accent = tv.accent || (isLeoTalkPreset ? '#06b6d4' : activeTheme.primary_color || '#d71920');
+     const cardColor = tv.card || '#ffffff';
+     const footerBg = tv.footer || (isLeoTalkPreset ? '#3730a3' : '#0b2f47');
+     const muted = tv.muted || (isLeoTalkPreset ? '#64748b' : '#6b7280');
+     const border = tv.border || (isLeoTalkPreset ? 'rgba(148, 163, 184, 0.35)' : '#d7dde5');
+     const linkColor = tv.link || activeTheme.primary_color || (isLeoTalkPreset ? '#4f46e5' : '#0b5f8a');
+     const buttonColor = tv.button || activeTheme.primary_color || (isLeoTalkPreset ? '#4f46e5' : '#0b5f8a');
+     const primaryDark = isLeoTalkPreset ? '#3730a3' : (themePreset === 'myanmar-portal' ? '#004d7a' : '#06466a');
+  %>
   <% if (isPortalLayout) { %>
   <link rel="stylesheet" href="/css/portal.css">
   <% } %>
   <% if (themePreset === 'myanmar-portal') { %>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;600;700&family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/mnp-portal.css">
-  <% } else if ((activeTheme.font_family || '').includes('Inter')) { %>
+  <% } else if (isLeoTalkPreset || (activeTheme.font_family || '').includes('Inter')) { %>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <% } else if ((activeTheme.font_family || '').includes('Source Sans')) { %>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -48,26 +60,16 @@
   <% } else if ((activeTheme.font_family || '').includes('Lora')) { %>
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
   <% } %>
-  <% const tv = themeVars || {};
-     const dt = (typeof designTokens !== 'undefined' && designTokens && designTokens.vars) ? designTokens.vars : {};
-     const accent = tv.accent || activeTheme.primary_color || '#d71920';
-     const cardColor = tv.card || '#ffffff';
-     const footerBg = tv.footer || '#0b2f47';
-     const muted = tv.muted || '#6b7280';
-     const border = tv.border || '#d7dde5';
-     const linkColor = tv.link || activeTheme.primary_color || '#0b5f8a';
-     const buttonColor = tv.button || activeTheme.primary_color || '#0b5f8a';
-  %>
   <style nonce="<%= cspNonce %>">
     :root {
-      --portal-primary: <%= activeTheme.primary_color || (themePreset === 'myanmar-portal' ? '#006ba6' : '#0b5f8a') %>;
-      --portal-primary-dark: <%= themePreset === 'myanmar-portal' ? '#004d7a' : '#06466a' %>;
-      --portal-secondary: <%= activeTheme.secondary_color || (themePreset === 'myanmar-portal' ? '#ffcc00' : '#f4b000') %>;
+      --portal-primary: <%= activeTheme.primary_color || (themePreset === 'myanmar-portal' ? '#006ba6' : (isLeoTalkPreset ? '#4f46e5' : '#0b5f8a')) %>;
+      --portal-primary-dark: <%= primaryDark %>;
+      --portal-secondary: <%= activeTheme.secondary_color || (themePreset === 'myanmar-portal' ? '#ffcc00' : (isLeoTalkPreset ? '#6366f1' : '#f4b000')) %>;
       --portal-accent: <%= accent %>;
-      --portal-bg: <%= activeTheme.background_color || '#f5f7fa' %>;
+      --portal-bg: <%= activeTheme.background_color || (isLeoTalkPreset ? '#f8fafc' : '#f5f7fa') %>;
       --portal-card: <%= cardColor %>;
       --portal-border: <%= border %>;
-      --portal-text: <%= activeTheme.text_color || '#1f2933' %>;
+      --portal-text: <%= activeTheme.text_color || (isLeoTalkPreset ? '#0f172a' : '#1f2933') %>;
       --portal-muted: <%= muted %>;
       --portal-footer: <%= footerBg %>;
       --gov-primary: var(--portal-primary);
@@ -80,19 +82,19 @@
       --gov-text: var(--portal-text);
       --gov-muted: var(--portal-muted);
       --gov-footer: var(--portal-footer);
-      --np-primary: <%= activeTheme.primary_color || '#0b5f8a' %>;
-      --np-primary-hover: #06466a;
-      --np-secondary: <%= activeTheme.secondary_color || '#f4b000' %>;
-      --np-bg: <%= activeTheme.background_color || '#f5f7fa' %>;
-      --np-text: <%= activeTheme.text_color || '#1f2933' %>;
-      --np-font: <%= activeTheme.font_family || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' %>;
+      --np-primary: <%= activeTheme.primary_color || (isLeoTalkPreset ? '#4f46e5' : '#0b5f8a') %>;
+      --np-primary-hover: <%= primaryDark %>;
+      --np-secondary: <%= activeTheme.secondary_color || (isLeoTalkPreset ? '#6366f1' : '#f4b000') %>;
+      --np-bg: <%= activeTheme.background_color || (isLeoTalkPreset ? '#f8fafc' : '#f5f7fa') %>;
+      --np-text: <%= activeTheme.text_color || (isLeoTalkPreset ? '#0f172a' : '#1f2933') %>;
+      --np-font: <%= activeTheme.font_family || (isLeoTalkPreset ? 'Inter, Arial, sans-serif' : '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif') %>;
       --site-primary: var(--portal-primary);
       --site-primary-dark: var(--portal-primary-dark);
       --site-secondary: var(--portal-secondary);
       --site-accent: var(--portal-accent);
       --site-bg: var(--portal-bg);
       --site-surface: var(--portal-card);
-      --site-surface-soft: #eef4f8;
+      --site-surface-soft: <%= isLeoTalkPreset ? '#f1f5f9' : '#eef4f8' %>;
       --site-card: var(--portal-card);
       --site-border: var(--portal-border);
       --site-text: var(--portal-text);

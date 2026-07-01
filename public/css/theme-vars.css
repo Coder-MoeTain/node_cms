@@ -321,3 +321,44 @@
   --site-button: var(--portal-primary);
   --site-button-hover: var(--portal-primary-dark);
 }
+
+[data-theme-preset="leo-talk"] {
+  --portal-primary: #4f46e5;
+  --portal-primary-dark: #3730a3;
+  --portal-secondary: #6366f1;
+  --portal-accent: #06b6d4;
+  --portal-bg: #f8fafc;
+  --portal-card: #ffffff;
+  --portal-border: rgba(148, 163, 184, 0.35);
+  --portal-text: #0f172a;
+  --portal-muted: #64748b;
+  --portal-footer: #3730a3;
+  --np-primary: #4f46e5;
+  --np-primary-hover: #3730a3;
+  --np-sidebar-active: #6366f1;
+  --site-primary: #4f46e5;
+  --site-primary-dark: #3730a3;
+  --site-secondary: #6366f1;
+  --site-accent: #06b6d4;
+  --site-bg: #f8fafc;
+  --site-surface: #ffffff;
+  --site-surface-soft: #f1f5f9;
+  --site-card: #ffffff;
+  --site-border: rgba(148, 163, 184, 0.35);
+  --site-text: #0f172a;
+  --site-muted: #64748b;
+  --site-header-bg: rgba(255, 255, 255, 0.85);
+  --site-footer-bg: #3730a3;
+  --site-link: #4f46e5;
+  --site-button: #4f46e5;
+  --site-button-hover: #3730a3;
+  --site-hero-overlay: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(6, 182, 212, 0.08) 100%);
+  --site-hero-fallback-bg: linear-gradient(135deg, #eef2ff 0%, #f0f9ff 40%, #ecfeff 100%);
+  --site-focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.25);
+  --site-radius-sm: 8px;
+  --site-radius-md: 12px;
+  --site-radius-lg: 20px;
+  --site-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --site-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --site-shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.12);
+}

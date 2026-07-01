@@ -1,0 +1,60 @@
+{
+  "name": "LeoTalk",
+  "slug": "leo-talk",
+  "version": "1.0.0",
+  "author": "NodePress",
+  "description": "LeoTalk-inspired indigo and cyan palette with Inter typography, soft gradients, and modern messaging-app styling.",
+  "parent": "modern-news",
+  "layouts": ["default", "full-width", "sidebar-right"],
+  "templates": ["home", "blog", "post", "page", "archive", "search", "contact", "error"],
+  "supports": ["logo", "favicon", "menus", "widgets", "customColors", "darkMode", "customCss"],
+  "screenshot": "/themes/leo-talk/screenshot.svg",
+  "defaults": {
+    "preset": "leo-talk",
+    "primary_color": "#4f46e5",
+    "secondary_color": "#6366f1",
+    "background_color": "#f8fafc",
+    "text_color": "#0f172a",
+    "font_family": "Inter, Arial, sans-serif",
+    "header_layout": "centered",
+    "footer_layout": "four-columns",
+    "sidebar_position": "right",
+    "blog_layout": "list",
+    "site_layout": "full-width",
+    "portal_config": {
+      "preset": "leo-talk",
+      "header": {
+        "showUtilityBar": false,
+        "showFontControls": false,
+        "showLanguageSwitcher": true,
+        "showLoginLinks": true,
+        "showSearch": true,
+        "layout": "standard"
+      },
+      "nav": {
+        "megaMenu": false,
+        "sticky": true,
+        "style": "simple"
+      },
+      "homepage": {
+        "hero": true,
+        "quickLinks": true,
+        "emergency": false,
+        "latestNews": true,
+        "announcements": true,
+        "tendersJobs": false,
+        "mediaGallery": true,
+        "hotNews": false,
+        "subscribe": true,
+        "statistics": false,
+        "mobileApp": true,
+        "quickServices": false,
+        "sectionNav": false,
+        "announcementTicker": false
+      },
+      "widgets": {
+        "cardStyle": "shadow"
+      }
+    }
+  }
+}

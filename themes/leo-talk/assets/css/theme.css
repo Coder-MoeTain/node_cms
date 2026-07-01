@@ -1,0 +1,138 @@
+/**
+ * LeoTalk theme — color and surface styling from Leo_Talk_Web
+ */
+
+[data-theme-preset="leo-talk"] {
+  --leo-gradient-primary: linear-gradient(135deg, #6366f1, #06b6d4);
+  --leo-gradient-hero: linear-gradient(135deg, #eef2ff 0%, #f0f9ff 40%, #ecfeff 100%);
+  --leo-gradient-glow: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(6, 182, 212, 0.15));
+  --leo-glass-bg: rgba(255, 255, 255, 0.72);
+  --leo-glass-border: rgba(255, 255, 255, 0.85);
+  --leo-shadow-glow: 0 0 40px rgba(99, 102, 241, 0.22);
+}
+
+[data-theme-preset="leo-talk"] body.site-design-system {
+  background: var(--site-bg);
+  color: var(--site-text);
+  font-family: var(--site-font-family);
+}
+
+[data-theme-preset="leo-talk"] .site-navbar,
+[data-theme-preset="leo-talk"] .portal-identity-bar {
+  background: var(--leo-glass-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--site-border);
+}
+
+[data-theme-preset="leo-talk"] .site-hero,
+[data-theme-preset="leo-talk"] .portal-hero,
+[data-theme-preset="leo-talk"] .home-hero {
+  background: var(--leo-gradient-hero);
+}
+
+[data-theme-preset="leo-talk"] .site-hero::before,
+[data-theme-preset="leo-talk"] .portal-hero::before {
+  background: var(--leo-gradient-glow);
+}
+
+[data-theme-preset="leo-talk"] .btn-primary,
+[data-theme-preset="leo-talk"] .site-btn-primary,
+[data-theme-preset="leo-talk"] .portal-btn-primary {
+  background: var(--leo-gradient-primary);
+  border: none;
+  color: #fff;
+  border-radius: 9999px;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+[data-theme-preset="leo-talk"] .btn-primary:hover,
+[data-theme-preset="leo-talk"] .site-btn-primary:hover,
+[data-theme-preset="leo-talk"] .portal-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
+  color: #fff;
+}
+
+[data-theme-preset="leo-talk"] .btn-outline-primary,
+[data-theme-preset="leo-talk"] .site-btn-outline {
+  border-radius: 9999px;
+  border-width: 2px;
+  border-color: var(--site-primary);
+  color: var(--site-primary);
+}
+
+[data-theme-preset="leo-talk"] .btn-outline-primary:hover,
+[data-theme-preset="leo-talk"] .site-btn-outline:hover {
+  background: var(--site-primary);
+  color: #fff;
+}
+
+[data-theme-preset="leo-talk"] .post-card,
+[data-theme-preset="leo-talk"] .portal-widget,
+[data-theme-preset="leo-talk"] .site-card,
+[data-theme-preset="leo-talk"] .portal-list-panel,
+[data-theme-preset="leo-talk"] .site-list-panel {
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius-lg, 20px);
+  box-shadow: var(--site-shadow-sm);
+  background: var(--site-card);
+}
+
+[data-theme-preset="leo-talk"] .post-card:hover,
+[data-theme-preset="leo-talk"] .portal-widget:hover,
+[data-theme-preset="leo-talk"] .site-card:hover {
+  box-shadow: var(--site-shadow-md);
+  transform: translateY(-2px);
+}
+
+[data-theme-preset="leo-talk"] .site-footer,
+[data-theme-preset="leo-talk"] .portal-footer {
+  background: var(--site-footer-bg);
+  color: #e2e8f0;
+}
+
+[data-theme-preset="leo-talk"] .site-footer a,
+[data-theme-preset="leo-talk"] .portal-footer a {
+  color: #c7d2fe;
+}
+
+[data-theme-preset="leo-talk"] .site-footer a:hover,
+[data-theme-preset="leo-talk"] .portal-footer a:hover {
+  color: #22d3ee;
+}
+
+[data-theme-preset="leo-talk"] a:not(.btn):not(.nav-link):not(.portal-nav-link) {
+  color: var(--site-link);
+}
+
+[data-theme-preset="leo-talk"] a:not(.btn):not(.nav-link):not(.portal-nav-link):hover {
+  color: var(--site-accent);
+}
+
+[data-theme-preset="leo-talk"] .badge.bg-primary,
+[data-theme-preset="leo-talk"] .portal-badge-primary {
+  background: var(--leo-gradient-primary) !important;
+}
+
+[data-theme-preset="leo-talk"] .section-label,
+[data-theme-preset="leo-talk"] .portal-section-kicker {
+  color: var(--site-primary);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+}
+
+[data-theme-preset="leo-talk"] .site-navbar .nav-link.is-active,
+[data-theme-preset="leo-talk"] .portal-nav-link.is-active {
+  color: var(--site-primary);
+}
+
+[data-theme-preset="leo-talk"] .subscribe-panel,
+[data-theme-preset="leo-talk"] .portal-subscribe {
+  background: var(--leo-gradient-glow);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius-lg, 20px);
+}
