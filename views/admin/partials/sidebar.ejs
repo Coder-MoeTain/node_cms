@@ -144,7 +144,7 @@
       </div>
     <% } %>
 
-    <% const securityActive = isAnyActive(['/admin/security','/admin/waf']); %>
+    <% const securityActive = isAnyActive(['/admin/security','/admin/waf','/admin/traffic']); %>
     <% if (canAny(['manage_security','manage_waf'])) { %>
       <div class="nav-menu">
         <button class="nav-menu-toggle <%= securityActive ? 'active' : '' %>" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarSecurity" aria-expanded="<%= securityActive ? 'true' : 'false' %>">
@@ -153,6 +153,7 @@
         <div id="sidebarSecurity" class="collapse <%= securityActive ? 'show' : '' %>">
           <div class="nav-submenu">
             <% if (can('manage_security')) { %><a class="nav-link <%= currentPath === '/admin/security' ? 'active' : '' %>" href="/admin/security">Security Settings</a><% } %>
+            <% if (can('manage_security')) { %><a class="nav-link <%= isActive('/admin/traffic') ? 'active' : '' %>" href="/admin/traffic">Traffic Log</a><% } %>
             <a class="nav-link <%= currentPath === '/admin/waf' ? 'active' : '' %>" href="/admin/waf">WAF Dashboard</a>
             <a class="nav-link <%= isActive('/admin/waf/settings') ? 'active' : '' %>" href="/admin/waf/settings">WAF Settings</a>
             <a class="nav-link <%= isActive('/admin/waf/rules') ? 'active' : '' %>" href="/admin/waf/rules">WAF Rules</a>
