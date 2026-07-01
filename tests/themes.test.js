@@ -12,6 +12,17 @@ test('buildThemeSettingDefaults applies manifest colors', () => {
   expect(defaults.primary_color).toBe('#38bdf8');
 });
 
+test('leo-talk theme applies LeoTalk color defaults', () => {
+  const defaults = themeLoader.buildThemeSettingDefaults('leo-talk');
+  expect(defaults.primary_color).toBe('#4f46e5');
+  expect(defaults.secondary_color).toBe('#6366f1');
+  expect(defaults.background_color).toBe('#f8fafc');
+  expect(defaults.text_color).toBe('#0f172a');
+  expect(defaults.font_family).toContain('Inter');
+  expect(defaults.custom_css).toContain('np-portal-config');
+  expect(defaults.custom_css).toContain('leo-talk');
+});
+
 test('government-portal theme includes portal config', () => {
   const defaults = themeLoader.buildThemeSettingDefaults('government-portal');
   expect(defaults.header_layout).toBe('portal');

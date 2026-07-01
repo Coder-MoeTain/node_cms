@@ -39,9 +39,14 @@ async function bootstrapTestDatabase() {
   await ensureBaseSchema(sequelize);
 
   const { applyPendingMigrations } = require('./migrationRunner');
+  const { ensureSiteScopeColumns } = require('./ensureMultisiteSchema');
   const appliedBeforeWidgets = await applyPendingMigrations(sequelize);
   if (appliedBeforeWidgets.length) {
     console.log(`Applied ${appliedBeforeWidgets.length} test migration(s) before widget seed`);
+  }
+  const repaired = await ensureSiteScopeColumns(sequelize);
+  if (repaired.length) {
+    console.log(`Ensured multisite columns: ${repaired.join(', ')}`);
   }
 
   const { ensureDefaultWidgetAreas } = require('../utils/widgetRegistry');

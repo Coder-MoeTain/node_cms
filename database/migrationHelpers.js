@@ -117,5 +117,7 @@ module.exports = {
   parseAddColumnStatements,
   parseAddColumnIfNotExistsStatements,
   parseCreateIndexIfNotExists,
+  columnExists,
+  ensureColumn,
   executeMigrationStatement
 };

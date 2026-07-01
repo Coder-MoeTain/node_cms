@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LeoTalk — Fast, secure, and expressive instant messaging with voice calls, video calls, group chats, stickers, GIFs, and seamless syncing across all your devices.">
+  <meta name="keywords" content="LeoTalk, instant messaging, chat app, voice calls, video calls, group chat, secure messaging">
+  <meta name="author" content="LeoTalk">
+  <meta property="og:title" content="LeoTalk — Stay Close, Wherever You Are">
+  <meta property="og:description" content="Fast, secure, and expressive messaging with voice calls, video calls, group chats, and seamless syncing across all your devices.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=1200&h=630&fit=crop&q=80&auto=format">
+  <title>LeoTalk — Stay Close, Wherever You Are</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header" id="header">
+    <nav class="nav container" aria-label="Main navigation">
+      <a href="index.html" class="logo" aria-label="LeoTalk home">
+        <span class="logo-icon" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="16" fill="url(#logoGrad)"/>
+            <path d="M10 12c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2h-4l-4 3v-3h-2c-1.1 0-2-.9-2-2v-6z" fill="white"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
+                <stop stop-color="#6366f1"/>
+                <stop offset="1" stop-color="#06b6d4"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </span>
+        <span class="logo-text">LeoTalk</span>
+      </a>
+
+      <ul class="nav-links" role="list">
+        <li><a href="#features">Features</a></li>
+        <li><a href="pages/communities.html">Communities</a></li>
+        <li><a href="pages/blog.html">Blog</a></li>
+        <li><a href="pages/security.html">Security</a></li>
+        <li><a href="pages/business.html">Business</a></li>
+        <li><a href="pages/support.html">Support</a></li>
+        <li><a href="#download" class="nav-cta">Download</a></li>
+      </ul>
+
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span class="hamburger" aria-hidden="true"></span>
+      </button>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+      <ul role="list">
+        <li><a href="#features">Features</a></li>
+        <li><a href="pages/communities.html">Communities</a></li>
+        <li><a href="pages/blog.html">Blog</a></li>
+        <li><a href="pages/security.html">Security</a></li>
+        <li><a href="pages/business.html">Business</a></li>
+        <li><a href="pages/support.html">Support</a></li>
+        <li><a href="#download" class="nav-cta">Download</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-bg" aria-hidden="true">
+        <div class="hero-orb hero-orb--1"></div>
+        <div class="hero-orb hero-orb--2"></div>
+        <div class="hero-orb hero-orb--3"></div>
+      </div>
+
+      <div class="container hero-grid">
+        <div class="hero-content fade-in">
+          <span class="hero-badge">Instant Messaging Reimagined</span>
+          <h1 id="hero-heading">
+            <span class="hero-brand">LeoTalk</span>
+            Stay Close, Wherever You Are
+          </h1>
+          <p class="hero-subtitle">
+            Fast, secure, and expressive messaging with voice calls, video calls, group chats, stickers, GIFs, and seamless syncing across all your devices.
+          </p>
+          <div class="hero-actions">
+            <a href="#download" class="btn btn-primary btn-glow">Download LeoTalk</a>
+            <a href="#features" class="btn btn-secondary">Explore Features</a>
+          </div>
+          <div class="hero-platforms">
+            <a href="https://play.google.com/store/apps/details?id=com.leotalk.app" class="platform-btn" target="_blank" rel="noopener noreferrer" aria-label="Download for Android">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.637.637 0 00-.83.22l-1.88 3.24a11.43 11.43 0 00-8.94 0L5.65 5.67a.643.643 0 00-.87-.2c-.3.16-.42.54-.26.85l1.84 3.18C2.92 11.03 1 14.22 1 17.75h22c0-3.53-1.92-6.72-5.4-8.27zM7 15.25a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm10 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z"/></svg>
+              Android
+            </a>
+            <a href="https://apps.apple.com/app/leotalk/id6478291034" class="platform-btn" target="_blank" rel="noopener noreferrer" aria-label="Download for iOS">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              iOS
+            </a>
+            <a href="https://download.leotalk.com/windows/LeoTalk-Setup-x64.exe" class="platform-btn" aria-label="Download for PC">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 016.5 3h11A2.5 2.5 0 0120 5.5v9A2.5 2.5 0 0117.5 17h-11A2.5 2.5 0 014 14.5v-9zM2 19.5A1.5 1.5 0 003.5 18h17a1.5 1.5 0 010 3h-17A1.5 1.5 0 012 19.5z"/></svg>
+              PC
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-mockup fade-in fade-in-delay">
+          <div class="hero-image-wrap glass">
+            <img
+              src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=640&h=800&fit=crop&q=80&auto=format"
+              alt="Person smiling while using LeoTalk on a smartphone"
+              class="hero-image"
+              width="480"
+              height="600"
+              loading="eager"
+              decoding="async"
+            >
+            <div class="hero-image-badge">
+              <span class="hero-image-dot" aria-hidden="true"></span>
+              Sarah is online
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Highlights -->
+    <section class="features-overview section" id="features" aria-labelledby="features-heading">
+      <div class="container">
+        <div class="section-header fade-in-up">
+          <span class="section-label">Why LeoTalk</span>
+          <h2 id="features-heading">Everything You Need to Stay Connected</h2>
+          <p class="section-desc">From quick texts to group video calls — LeoTalk brings all your conversations together in one beautiful app.</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card glass fade-in-up" id="voice-video">
+            <div class="feature-icon feature-icon--calls" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/><path d="M15 7l4-4M19 7V3"/></svg>
+            </div>
+            <h3>Voice &amp; Video Calls</h3>
+            <p>High-quality calls for a quick hello or a much-needed face-to-face conversation.</p>
+          </article>
+
+          <article class="feature-card glass fade-in-up" id="group-chats">
+            <div class="feature-icon feature-icon--group" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <h3>Group Chats &amp; Calls</h3>
+            <p>Like and reply to messages in group chats, or start a group video or voice call instantly.</p>
+          </article>
+
+          <article class="feature-card glass fade-in-up" id="stickers">
+            <div class="feature-icon feature-icon--stickers" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </div>
+            <h3>Stickers &amp; GIFs</h3>
+            <p>Endless stickers and GIFs for every possible expression. Not enough? Create your own.</p>
+          </article>
+
+          <article class="feature-card glass fade-in-up" id="sync">
+            <div class="feature-icon feature-icon--sync" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M12 7v4l2 2"/><path d="M17 3l4 4-4 4"/></svg>
+            </div>
+            <h3>On Mobile &amp; Desktop</h3>
+            <p>Chats are 100% synced between devices, including one-tap transfer of calls.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Voice & Video Detail -->
+    <section class="feature-detail section section--alt" aria-labelledby="calls-heading">
+      <div class="container feature-detail-grid">
+        <div class="feature-detail-visual fade-in-up">
+          <div class="feature-image glass">
+            <img
+              src="https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?w=800&h=600&fit=crop&q=80&auto=format"
+              alt="Woman enjoying a high-quality video call"
+              width="800"
+              height="600"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+        </div>
+        <div class="feature-detail-content fade-in-up">
+          <span class="section-label">Crystal Clear</span>
+          <h2 id="calls-heading">Voice &amp; Video Calls</h2>
+          <p>Whether it's a quick voice note or a full HD video call, LeoTalk delivers crystal-clear communication. Switch seamlessly between voice and video mid-call, and enjoy low-latency connections powered by modern WebRTC technology.</p>
+          <ul class="feature-list">
+            <li>HD video up to 1080p</li>
+            <li>One-tap call transfer between devices</li>
+            <li>Background noise cancellation</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Group Chats Detail -->
+    <section class="feature-detail section" aria-labelledby="groups-heading">
+      <div class="container feature-detail-grid feature-detail-grid--reverse">
+        <div class="feature-detail-visual fade-in-up">
+          <div class="feature-image glass">
+            <img
+              src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=600&fit=crop&q=80&auto=format"
+              alt="Friends connected in a group chat"
+              width="800"
+              height="600"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+        </div>
+        <div class="feature-detail-content fade-in-up">
+          <span class="section-label">Together</span>
+          <h2 id="groups-heading">Group Chats &amp; Calls</h2>
+          <p>Bring everyone together with powerful group features. React to messages, reply in threads, and launch group calls with a single tap. Perfect for families, friend groups, and teams.</p>
+          <ul class="feature-list">
+            <li>Up to 500 members per group</li>
+            <li>Message reactions and replies</li>
+            <li>Group voice and video calls</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stickers Detail -->
+    <section class="feature-detail section section--alt" aria-labelledby="stickers-heading">
+      <div class="container feature-detail-grid">
+        <div class="feature-detail-visual fade-in-up">
+          <div class="feature-image glass">
+            <img
+              src="https://images.unsplash.com/photo-1611162616305-c69b3fa7bba0?w=800&h=600&fit=crop&q=80&auto=format"
+              alt="Expressive stickers and media on a mobile screen"
+              width="800"
+              height="600"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+        </div>
+        <div class="feature-detail-content fade-in-up">
+          <span class="section-label">Express Yourself</span>
+          <h2 id="stickers-heading">Stickers &amp; GIFs</h2>
+          <p>Words aren't always enough. Browse thousands of stickers and animated GIFs, or create your own custom sticker packs to share with friends and communities.</p>
+          <ul class="feature-list">
+            <li>Curated sticker collections</li>
+            <li>GIF search built-in</li>
+            <li>Custom sticker creator</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sync Detail -->
+    <section class="feature-detail section" aria-labelledby="sync-heading">
+      <div class="container feature-detail-grid feature-detail-grid--reverse">
+        <div class="feature-detail-visual fade-in-up">
+          <div class="feature-image glass">
+            <img
+              src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop&q=80&auto=format"
+              alt="LeoTalk synced across laptop and mobile devices"
+              width="800"
+              height="600"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+        </div>
+        <div class="feature-detail-content fade-in-up">
+          <span class="section-label">Everywhere</span>
+          <h2 id="sync-heading">On Mobile &amp; Desktop</h2>
+          <p>Start a conversation on your phone and continue on your laptop without missing a beat. LeoTalk keeps everything in perfect sync — messages, media, and even active calls.</p>
+          <ul class="feature-list">
+            <li>Instant cross-device sync</li>
+            <li>One-tap call handoff</li>
+            <li>Available on all major platforms</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Privacy & Security -->
+    <section class="security section" id="security" aria-labelledby="security-heading">
+      <div class="container">
+        <div class="security-card glass fade-in-up">
+          <div class="security-visual">
+            <img
+              src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&h=500&fit=crop&q=80&auto=format"
+              alt="Secure messaging with privacy protection"
+              width="600"
+              height="500"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+          <div class="security-content">
+            <span class="section-label">Privacy First</span>
+            <h2 id="security-heading">Built for Private and Secure Conversations</h2>
+            <p>LeoTalk is designed to protect your conversations with modern privacy and security features, giving users more control over their messages and data.</p>
+            <div class="security-actions">
+              <a href="pages/privacy-policy.html" class="btn btn-secondary">Read Privacy Policy</a>
+              <a href="pages/security.html" class="btn btn-outline">Security Overview</a>
+            </div>
+          </div>
+          <div class="security-features" aria-hidden="true">
+            <div class="security-feature">
+              <span class="security-feature-icon">🔒</span>
+              <span>End-to-end encryption</span>
+            </div>
+            <div class="security-feature">
+              <span class="security-feature-icon">👤</span>
+              <span>Privacy controls</span>
+            </div>
+            <div class="security-feature">
+              <span class="security-feature-icon">🛡️</span>
+              <span>Secure cloud backup</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download -->
+    <section class="download section" id="download" aria-labelledby="download-heading">
+      <div class="container">
+        <div class="section-header fade-in-up">
+          <span class="section-label">Get Started</span>
+          <h2 id="download-heading">Download LeoTalk</h2>
+          <p class="section-desc">Available on all your favorite platforms. Pick yours and start chatting in seconds.</p>
+        </div>
+
+        <div class="download-banner fade-in-up">
+          <img
+            src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1200&h=360&fit=crop&q=80&auto=format"
+            alt="LeoTalk on Android, iOS, and desktop devices"
+            width="1200"
+            height="360"
+            loading="lazy"
+            decoding="async"
+          >
+        </div>
+
+        <div class="download-grid">
+          <article class="download-card glass fade-in-up">
+            <div class="download-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.637.637 0 00-.83.22l-1.88 3.24a11.43 11.43 0 00-8.94 0L5.65 5.67a.643.643 0 00-.87-.2c-.3.16-.42.54-.26.85l1.84 3.18C2.92 11.03 1 14.22 1 17.75h22c0-3.53-1.92-6.72-5.4-8.27zM7 15.25a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm10 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z"/></svg>
+            </div>
+            <h3>Android</h3>
+            <p>Get LeoTalk on Google Play for phones and tablets.</p>
+            <a href="https://play.google.com/store/apps/details?id=com.leotalk.app" class="btn btn-primary btn-sm" target="_blank" rel="noopener noreferrer">Download</a>
+          </article>
+
+          <article class="download-card glass fade-in-up">
+            <div class="download-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            </div>
+            <h3>iPhone &amp; iPad</h3>
+            <p>Download from the App Store for iOS devices.</p>
+            <a href="https://apps.apple.com/app/leotalk/id6478291034" class="btn btn-primary btn-sm" target="_blank" rel="noopener noreferrer">Download</a>
+          </article>
+
+          <article class="download-card glass fade-in-up">
+            <div class="download-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5.5A2.5 2.5 0 016.5 3h11A2.5 2.5 0 0120 5.5v9A2.5 2.5 0 0117.5 17h-11A2.5 2.5 0 014 14.5v-9zM2 19.5A1.5 1.5 0 003.5 18h17a1.5 1.5 0 010 3h-17A1.5 1.5 0 012 19.5z"/></svg>
+            </div>
+            <h3>Windows PC</h3>
+            <p>Full desktop experience for Windows 10 and 11.</p>
+            <a href="https://download.leotalk.com/windows/LeoTalk-Setup-x64.exe" class="btn btn-primary btn-sm">Download</a>
+          </article>
+
+          <article class="download-card glass fade-in-up">
+            <div class="download-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            </div>
+            <h3>Mac</h3>
+            <p>Native app for macOS with full feature support.</p>
+            <a href="https://download.leotalk.com/mac/LeoTalk.dmg" class="btn btn-primary btn-sm">Download</a>
+          </article>
+
+          <article class="download-card glass fade-in-up">
+            <div class="download-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.404.131.845.264 1.088.55.22.258.29.61.29.973 0 .364-.07.716-.29.973-.243.286-.684.419-1.088.55-.405.131-.766.267-.94.601-.174.339-.143.804.106 1.484.076.242.018.571-.04.97-.028.136-.055.337-.055.536 0 .208.042.413.132.602.206.411.551.544.864.68.312.133.598.201.797.4.213.239.403.571.663.839.035.036.07.09.11.135-.123.805.009 1.657.287 2.489.589 1.771 1.831 3.47 2.716 4.521.75 1.067.974 1.928 1.05 3.02.065 1.491 1.056 5.965 3.17 6.298.165.013.325.021.48.021 2.347 0 4.32-1.876 4.32-4.188 0-2.31-1.973-4.186-4.32-4.186-.155 0-.315.008-.48.021-.065-.013-.13-.021-.195-.021-1.227 0-2.22.993-2.22 2.218 0 1.225.993 2.218 2.22 2.218.065 0 .13-.008.195-.021.165.013.325.021.48.021 2.347 0 4.32-1.876 4.32-4.188C20.824 1.876 18.851 0 16.504 0h-4z"/></svg>
+            </div>
+            <h3>Linux</h3>
+            <p>Available as AppImage, .deb, and Flatpak packages.</p>
+            <a href="https://download.leotalk.com/linux/LeoTalk-x86_64.AppImage" class="btn btn-primary btn-sm">Download</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Removed placeholder anchors — nav links now point to dedicated pages -->
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="logo" aria-label="LeoTalk home">
+            <span class="logo-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="16" fill="url(#logoGradFooter)"/>
+                <path d="M10 12c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2h-4l-4 3v-3h-2c-1.1 0-2-.9-2-2v-6z" fill="white"/>
+                <defs>
+                  <linearGradient id="logoGradFooter" x1="0" y1="0" x2="32" y2="32">
+                    <stop stop-color="#6366f1"/>
+                    <stop offset="1" stop-color="#06b6d4"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
+            <span class="logo-text">LeoTalk</span>
+          </a>
+          <p class="footer-tagline">Stay close, wherever you are.</p>
+        </div>
+
+        <div class="footer-links-group">
+          <h3>Product</h3>
+          <ul role="list">
+            <li><a href="#features">Features</a></li>
+            <li><a href="pages/communities.html">Communities</a></li>
+            <li><a href="pages/blog.html">Blog</a></li>
+            <li><a href="pages/security.html">Security</a></li>
+            <li><a href="pages/business.html">Business</a></li>
+            <li><a href="pages/support.html">Support</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-group">
+          <h3>Company</h3>
+          <ul role="list">
+            <li><a href="pages/company.html">Company</a></li>
+            <li><a href="pages/brand-center.html">Brand Center</a></li>
+            <li><a href="pages/careers.html">Careers</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-group">
+          <h3>Terms &amp; Policies</h3>
+          <ul role="list">
+            <li><a href="pages/terms-of-service.html">Terms of Service</a></li>
+            <li><a href="pages/privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="pages/ads-policy.html">Ads Policy</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-group">
+          <h3>Download</h3>
+          <ul role="list">
+            <li><a href="https://play.google.com/store/apps/details?id=com.leotalk.app" target="_blank" rel="noopener noreferrer">Android</a></li>
+            <li><a href="https://apps.apple.com/app/leotalk/id6478291034" target="_blank" rel="noopener noreferrer">iPhone &amp; iPad</a></li>
+            <li><a href="https://download.leotalk.com/windows/LeoTalk-Setup-x64.exe">Windows PC</a></li>
+            <li><a href="https://download.leotalk.com/mac/LeoTalk.dmg">Mac</a></li>
+            <li><a href="https://download.leotalk.com/linux/LeoTalk-x86_64.AppImage">Linux</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copy">&copy; 2026 LeoTalk. All rights reserved.</p>
+
+        <div class="footer-social" aria-label="Social media links">
+          <a href="https://x.com/leotalk" target="_blank" rel="noopener noreferrer" aria-label="Twitter / X">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a href="https://facebook.com/leotalk" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
+          <a href="https://instagram.com/leotalk" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          </a>
+          <a href="https://linkedin.com/company/leotalk" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.062 2.062 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </a>
+        </div>
+
+        <div class="footer-lang">
+          <label for="langSelect" class="sr-only">Select language</label>
+          <select id="langSelect" class="lang-select" aria-label="Select language">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data/images.js"></script>
+  <script src="data/links.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -20,6 +20,10 @@ const {
   WafRule
 } = require('../models');
 const themeLoader = require('../utils/themeLoader');
+const { ensureDatabase } = require('./ensureDatabase');
+const { ensureBaseSchema } = require('./ensureBaseSchema');
+const { applyPendingMigrations } = require('./migrationRunner');
+const { ensureSiteScopeColumns } = require('./ensureMultisiteSchema');
 
 const permissions = [
   'view_dashboard',
@@ -146,7 +150,17 @@ const roles = [
 ];
 
 async function seed({ closeConnection = false } = {}) {
+  await ensureDatabase();
   await sequelize.authenticate();
+  if (await ensureBaseSchema(sequelize)) {
+    console.log('Applied base schema from database/schema.sql');
+  }
+  const applied = await applyPendingMigrations(sequelize);
+  applied.forEach((file) => console.log(`Migrated ${file}`));
+  const repaired = await ensureSiteScopeColumns(sequelize);
+  if (repaired.length) {
+    console.log(`Ensured multisite columns: ${repaired.join(', ')}`);
+  }
 
   const permissionRows = {};
   for (const slug of permissions) {
@@ -334,7 +348,7 @@ async function seed({ closeConnection = false } = {}) {
         preview_image: manifest.screenshot || `/themes/${manifest.slug}/screenshot.svg`,
         manifest,
         parent_slug: manifest.parent || null,
-        active: manifest.slug === 'government-portal'
+        active: manifest.slug === 'leo-talk'
       }
     });
     await ThemeSetting.findOrCreate({
@@ -344,9 +358,9 @@ async function seed({ closeConnection = false } = {}) {
   }
 
   await Theme.update({ active: false }, { where: {} });
-  await Theme.update({ active: true }, { where: { slug: 'government-portal' } });
+  await Theme.update({ active: true }, { where: { slug: 'leo-talk' } });
   await ThemeSetting.update({ active: false }, { where: {} });
-  await ThemeSetting.update({ active: true }, { where: { theme_name: 'government-portal' } });
+  await ThemeSetting.update({ active: true }, { where: { theme_name: 'leo-talk' } });
 
   const { PORTAL_SETTING_DEFINITIONS } = require('../utils/portalSettings');
   const settings = {

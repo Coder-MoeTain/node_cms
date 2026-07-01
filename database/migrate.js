@@ -4,6 +4,7 @@ const sequelize = require('../config/database');
 const { ensureDatabase } = require('./ensureDatabase');
 const { ensureBaseSchema } = require('./ensureBaseSchema');
 const { applyPendingMigrations } = require('./migrationRunner');
+const { ensureSiteScopeColumns } = require('./ensureMultisiteSchema');
 
 const migrationsDir = path.join(__dirname, 'migrations');
 
@@ -15,6 +16,10 @@ async function run() {
   }
   const applied = await applyPendingMigrations(sequelize);
   applied.forEach((file) => console.log(`Migrated ${file}`));
+  const repaired = await ensureSiteScopeColumns(sequelize);
+  if (repaired.length) {
+    console.log(`Ensured multisite columns: ${repaired.join(', ')}`);
+  }
   await sequelize.close();
 }
 
