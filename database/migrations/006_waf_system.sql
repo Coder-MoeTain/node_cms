@@ -102,7 +102,7 @@ INSERT INTO waf_settings (setting_key, setting_value, setting_type) VALUES
 ('block_scanners', 'true', 'boolean'),
 ('max_risk_score', '50', 'number'),
 ('log_all_requests', 'false', 'boolean'),
-('log_blocked_only', 'true', 'boolean'),
+('log_blocked_only', 'true', 'boolean'),   
 ('admin_protection_enabled', 'true', 'boolean'),
 ('public_protection_enabled', 'true', 'boolean'),
 ('auto_block_enabled', 'true', 'boolean'),
