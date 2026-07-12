@@ -1130,6 +1130,45 @@ body.admin-sidebar-open {
   font-weight: 600;
 }
 
+.np-waf-settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.np-waf-settings-tab {
+  background: var(--np-surface, #fff);
+  border: 1px solid var(--np-border, #dcdcde);
+  border-radius: 999px;
+  color: var(--np-text, #1d2327);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px 14px;
+}
+
+.np-waf-settings-tab.is-active {
+  background: var(--np-primary, #2271b1);
+  border-color: var(--np-primary, #2271b1);
+  color: #fff;
+}
+
+.np-waf-settings-panel[hidden] {
+  display: none !important;
+}
+
+.np-waf-detail-list dt {
+  color: var(--np-text-muted, #646970);
+  font-weight: 500;
+}
+
+.np-waf-detail-list dd {
+  margin-bottom: 0.75rem;
+}
+
+.np-waf-status-banner form {
+  min-width: 220px;
+}
+
 .np-code-block {
   background: #f6f7f7;
   border-radius: 6px;

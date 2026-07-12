@@ -22,6 +22,7 @@ const { loadSiteContext } = require('./middleware/siteContext');
 const { siteResolver } = require('./middleware/siteResolver');
 const { localeMiddleware } = require('./middleware/locale');
 const { portalVisitMiddleware } = require('./middleware/portalVisit');
+const { visitorTrackingMiddleware } = require('./middleware/visitorTracking');
 const pluginHooks = require('./middleware/pluginHooks');
 const { wafMiddleware } = require('./middleware/waf');
 const { clientIpMiddleware } = require('./middleware/clientIp');
@@ -146,6 +147,7 @@ app.use(pluginHooks);
 app.use(wafMiddleware);
 app.use(clientIpMiddleware);
 app.use(publicTrafficLogMiddleware);
+app.use(visitorTrackingMiddleware);
 app.use((req, res, next) => {
   const maintenanceOn = res.locals.siteSettings?.maintenance_mode === 'true';
   if (!maintenanceOn || req.path.startsWith('/admin') || req.path.startsWith('/api')) {

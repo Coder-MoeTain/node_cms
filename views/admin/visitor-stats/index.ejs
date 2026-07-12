@@ -1,0 +1,171 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+<div class="admin-main">
+  <%- include('../partials/topbar') %>
+  <main class="admin-content" id="np-main-content">
+    <%- include('../partials/flash') %>
+    <div class="np-page-header">
+      <div>
+        <h1>Visitor Statistics</h1>
+        <p class="np-help-text mb-0">Page views, unique visitors, top content, and referrers from local traffic logging.</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <% ALLOWED_RANGES = typeof allowedRanges !== 'undefined' ? allowedRanges : [7, 14, 30, 90]; %>
+        <% const currentDays = typeof selectedDays !== 'undefined' ? selectedDays : stats.days; %>
+        <% ALLOWED_RANGES.forEach(function(range) { %>
+          <a class="np-btn np-btn-small <%= currentDays === range ? 'np-btn-primary' : 'np-btn-secondary' %>" href="/admin/visitor-stats?days=<%= range %>"><%= range %> days</a>
+        <% }) %>
+        <a class="np-btn np-btn-secondary" href="/admin/visitor-stats/export.csv?days=<%= currentDays %>">Export CSV</a>
+      </div>
+    </div>
+
+    <% if (!ready) { %>
+      <div class="np-alert np-alert-warning">
+        <strong>Tracking table not ready.</strong>
+        Run database migrations to create the <code>visitor_page_views</code> table, then reload this page.
+      </div>
+    <% } else if (!trackingEnabled) { %>
+      <div class="np-alert np-alert-info">
+        <strong>Tracking paused.</strong>
+        New page views are not being recorded. Enable tracking in the settings panel below.
+      </div>
+    <% } else { %>
+      <div class="np-alert np-alert-success">
+        <strong>Tracking active.</strong>
+        Public page views are recorded locally (bots and admin routes are excluded).
+      </div>
+    <% } %>
+
+    <div class="np-stat-grid">
+      <div class="np-stat-card"><span class="stat-label">Page views (<%= currentDays %>d)</span><h3><%= stats.totalViews.toLocaleString() %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Unique visitors (<%= currentDays %>d)</span><h3><%= stats.uniqueVisitors.toLocaleString() %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Views today</span><h3><%= stats.viewsToday.toLocaleString() %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Unique today</span><h3><%= stats.uniqueToday.toLocaleString() %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Avg views / day</span><h3><%= stats.avgViewsPerDay.toLocaleString() %></h3></div>
+      <div class="np-stat-card"><span class="stat-label">Retention</span><h3><%= trackingSettings.visitor_retention_days || 90 %> days</h3></div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="np-widget mb-3">
+          <div class="np-widget-header"><span>Page views (<%= currentDays %> days)</span><span class="np-badge np-badge-muted">local tracking</span></div>
+          <div class="np-widget-body">
+            <% if (stats.viewsByDay.length) { %>
+              <div class="np-waf-chart" role="img" aria-label="Page views over the selected period">
+                <% stats.viewsByDay.forEach(function(day) { %>
+                  <div class="np-waf-chart-bar" title="<%= day.label %>: <%= day.count %> views">
+                    <span class="np-waf-chart-value" style="height:<%= day.height %>%"></span>
+                    <span class="np-waf-chart-label"><%= day.weekday %></span>
+                    <span class="np-waf-chart-count"><%= day.count %></span>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <p class="text-muted mb-0 py-4 text-center">No page views recorded for this period yet.</p>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="np-widget">
+          <div class="np-widget-header"><span>Recent page views</span></div>
+          <div class="np-widget-body p-0">
+            <div class="table-responsive">
+              <table class="np-list-table mb-0">
+                <thead><tr><th>Time</th><th>Path</th><th>Referrer</th><th>Browser</th></tr></thead>
+                <tbody>
+                  <% stats.recentViews.forEach(function(row) { %>
+                    <% const browser = (function(ua) {
+                      if (/Edg\//i.test(ua)) return 'Edge';
+                      if (/Chrome\//i.test(ua)) return 'Chrome';
+                      if (/Firefox\//i.test(ua)) return 'Firefox';
+                      if (/Safari\//i.test(ua)) return 'Safari';
+                      return 'Other';
+                    })(row.user_agent || ''); %>
+                    <tr>
+                      <td><%= formatDateTime(row.viewed_at) %></td>
+                      <td><code><%= row.path %></code></td>
+                      <td><%= row.referrer ? row.referrer : '—' %></td>
+                      <td><span class="np-badge np-badge-muted"><%= browser %></span></td>
+                    </tr>
+                  <% }) %>
+                  <% if (!stats.recentViews.length) { %><tr><td colspan="4" class="text-center text-muted py-4">No views recorded yet. Visit the public site to generate data.</td></tr><% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="np-widget mb-3">
+          <div class="np-widget-header"><span>Top pages</span></div>
+          <div class="np-widget-body p-0">
+            <ul class="list-group list-group-flush">
+              <% stats.topPages.forEach(function(row) { %>
+                <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
+                  <code class="small text-break"><%= row.path %></code>
+                  <span class="np-badge np-badge-muted"><%= Number(row.count).toLocaleString() %></span>
+                </li>
+              <% }) %>
+              <% if (!stats.topPages.length) { %><li class="list-group-item text-muted">No data yet.</li><% } %>
+            </ul>
+          </div>
+        </div>
+
+        <div class="np-widget mb-3">
+          <div class="np-widget-header"><span>Top referrers</span></div>
+          <div class="np-widget-body p-0">
+            <ul class="list-group list-group-flush">
+              <% stats.topReferrers.forEach(function(row) { %>
+                <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
+                  <span class="small text-break"><%= row.referrer %></span>
+                  <span class="np-badge np-badge-muted"><%= Number(row.count).toLocaleString() %></span>
+                </li>
+              <% }) %>
+              <% if (!stats.topReferrers.length) { %><li class="list-group-item text-muted">Direct traffic or no referrer data yet.</li><% } %>
+            </ul>
+          </div>
+        </div>
+
+        <div class="np-widget mb-3">
+          <div class="np-widget-header"><span>Browsers</span></div>
+          <div class="np-widget-body p-0">
+            <ul class="list-group list-group-flush">
+              <% stats.browserBreakdown.forEach(function(row) { %>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span><%= row.browser %></span>
+                  <span class="np-badge np-badge-muted"><%= Number(row.count).toLocaleString() %></span>
+                </li>
+              <% }) %>
+              <% if (!stats.browserBreakdown.length) { %><li class="list-group-item text-muted">No browser data yet.</li><% } %>
+            </ul>
+          </div>
+        </div>
+
+        <div class="np-widget">
+          <div class="np-widget-header"><span>Tracking settings</span></div>
+          <div class="np-widget-body">
+            <form method="post" action="/admin/visitor-stats/settings">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="visitor_tracking_enabled" name="visitor_tracking_enabled" <%= trackingEnabled ? 'checked' : '' %>>
+                <label class="form-check-label" for="visitor_tracking_enabled">Record public page views</label>
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="visitor_retention_days">Retention (days)</label>
+                <input class="form-control" type="number" min="7" max="365" id="visitor_retention_days" name="visitor_retention_days" value="<%= trackingSettings.visitor_retention_days || 90 %>">
+                <div class="form-text">Older records can be purged when saving.</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="purge_old" name="purge_old">
+                <label class="form-check-label" for="purge_old">Purge records older than retention period</label>
+              </div>
+              <button class="np-btn np-btn-primary" type="submit">Save settings</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

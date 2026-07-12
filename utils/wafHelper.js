@@ -401,6 +401,7 @@ function buildSafeLogPayload(req, matches, actionTaken, riskScore) {
   if (summary.all?.length) {
     bodySnapshot._waf_meta = { matched_rules: summary.all };
   }
+  const { resolveRequestCountry } = require('./wafAdminHelper');
   return {
     request_id: req.wafRequestId || createRequestId(),
     ip_address: normalized.ip,
@@ -409,6 +410,7 @@ function buildSafeLogPayload(req, matches, actionTaken, riskScore) {
     route_type: normalized.routeType,
     user_agent: normalized.userAgent,
     referer: req.get('referer') || null,
+    country: resolveRequestCountry(req),
     headers_snapshot: sanitizeLogData(req.headers || {}),
     query_snapshot: sanitizeLogData(req.query || {}),
     body_snapshot: bodySnapshot,

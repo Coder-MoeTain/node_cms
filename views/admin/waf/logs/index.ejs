@@ -5,74 +5,118 @@
   <main class="admin-content" id="np-main-content">
     <%- include('../../partials/flash') %>
     <div class="np-page-header">
-      <div><h1>WAF Logs</h1><p class="np-help-text mb-0">Review blocked, rate-limited, and monitored request events.</p></div>
+      <div>
+        <h1>WAF Logs</h1>
+        <p class="np-help-text mb-0">Search, filter, and investigate blocked or suspicious requests.</p>
+      </div>
       <div class="d-flex flex-wrap gap-2">
-        <a class="np-btn np-btn-secondary" href="/admin/waf/logs/export/csv?<%= new URLSearchParams(filters || {}).toString() %>">Export CSV</a>
-        <form class="d-flex gap-2" method="post" action="/admin/waf/logs/delete-old" onsubmit="return confirm('Delete old WAF logs?')">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <input class="form-control" style="width:100px" type="number" min="1" name="days" value="30">
-          <button class="np-btn np-btn-danger">Delete old</button>
-        </form>
+        <a class="np-btn np-btn-secondary" href="/admin/waf/logs/export/csv<%= Object.keys(filters || {}).length ? '?' + new URLSearchParams(filters).toString() : '' %>">Export CSV</a>
+        <a class="np-btn np-btn-secondary" href="/admin/waf">Dashboard</a>
       </div>
     </div>
 
-    <%- include('../../partials/waf-nav', { activeNav: typeof activeNav !== 'undefined' ? activeNav : 'logs' }) %>
+    <%- include('../../partials/waf-nav', { activeNav: 'logs' }) %>
 
     <form class="np-widget mb-3" method="get" action="/admin/waf/logs">
+      <div class="np-widget-header"><span>Filter logs</span><span class="np-badge np-badge-muted"><%= meta.total %> total</span></div>
       <div class="np-widget-body">
         <div class="row g-2">
-          <div class="col-md-3"><input class="form-control" name="ip" value="<%= filters.ip || '' %>" placeholder="IP address"></div>
-          <div class="col-md-2"><select class="form-select" name="category"><option value="">Category</option><% categories.forEach(function(category) { %><option value="<%= category %>" <%= filters.category === category ? 'selected' : '' %>><%= category %></option><% }) %></select></div>
-          <div class="col-md-2"><select class="form-select" name="severity"><option value="">Severity</option><% severities.forEach(function(severity) { %><option value="<%= severity %>" <%= filters.severity === severity ? 'selected' : '' %>><%= severity %></option><% }) %></select></div>
-          <div class="col-md-2"><select class="form-select" name="action"><option value="">Action</option><% actions.forEach(function(action) { %><option value="<%= action %>" <%= filters.action === action ? 'selected' : '' %>><%= action %></option><% }) %></select></div>
+          <div class="col-md-3"><input class="form-control font-monospace" name="ip" value="<%= filters.ip || '' %>" placeholder="IP address"></div>
+          <div class="col-md-3"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search URL, rule, user-agent"></div>
+          <div class="col-md-2">
+            <select class="form-select" name="category">
+              <option value="">All categories</option>
+              <% categories.forEach(function(cat) { %><option value="<%= cat %>" <%= filters.category === cat ? 'selected' : '' %>><%= wafUi.categoryLabel(cat) %></option><% }) %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <select class="form-select" name="severity">
+              <option value="">All severities</option>
+              <% severities.forEach(function(sev) { %><option value="<%= sev %>" <%= filters.severity === sev ? 'selected' : '' %>><%= sev %></option><% }) %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <select class="form-select" name="action">
+              <option value="">All actions</option>
+              <% actions.forEach(function(action) { %><option value="<%= action %>" <%= filters.action === action ? 'selected' : '' %>><%= action %></option><% }) %>
+            </select>
+          </div>
           <div class="col-md-2"><input class="form-control" type="date" name="date" value="<%= filters.date || '' %>"></div>
-          <div class="col-md-1"><button class="np-btn np-btn-secondary w-100">Filter</button></div>
+          <div class="col-md-2"><input class="form-control" name="country" value="<%= filters.country || '' %>" placeholder="Country code"></div>
+          <div class="col-md-2"><button class="np-btn np-btn-primary w-100" type="submit">Apply</button></div>
+          <div class="col-md-2"><a class="np-btn np-btn-secondary w-100" href="/admin/waf/logs">Reset</a></div>
         </div>
       </div>
     </form>
-
-    <% const logsReturnParams = new URLSearchParams(); %>
-    <% if (filters) { Object.entries(filters).forEach(function(entry) { if (entry[1]) logsReturnParams.set(entry[0], entry[1]); }); } %>
-    <% if (meta && meta.page > 1) logsReturnParams.set('page', String(meta.page)); %>
-    <% const logsReturnTo = '/admin/waf/logs' + (logsReturnParams.toString() ? '?' + logsReturnParams.toString() : ''); %>
 
     <div class="np-widget">
       <div class="np-widget-body p-0">
         <div class="table-responsive">
           <table class="np-list-table mb-0">
-            <thead><tr><th>Time</th><th>IP</th><th>Method</th><th>URL</th><th>Rule</th><th>Severity</th><th>Action</th><th>Risk</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>IP</th>
+                <th>Method</th>
+                <th>URL</th>
+                <th>Category</th>
+                <th>Severity</th>
+                <th>Action</th>
+                <th>Risk</th>
+                <th></th>
+              </tr>
+            </thead>
             <tbody>
-              <% logs.forEach(function(log) { %>
+              <% logs.forEach(function(row) { %>
                 <tr>
-                  <td><%= formatDateTime(log.created_at) %></td>
-                  <td><code><%= log.ip_address %></code></td>
-                  <td><%= log.method %></td>
-                  <td class="text-truncate" style="max-width:260px"><%= log.url %></td>
-                  <td><%= log.matched_rule_name || '-' %></td>
-                  <td><span class="np-badge np-badge-<%= log.severity === 'critical' ? 'danger' : log.severity === 'high' ? 'warning' : 'muted' %>"><%= log.severity || '-' %></span></td>
-                  <td><span class="np-badge np-badge-<%= log.action_taken === 'block' ? 'danger' : log.action_taken === 'rate_limit' ? 'warning' : 'muted' %>"><%= log.action_taken %></span></td>
-                  <td><span class="np-badge np-badge-<%= log.risk_score >= 50 ? 'danger' : 'warning' %>"><%= log.risk_score %></span></td>
-                  <td class="text-nowrap">
-                    <a class="np-btn np-btn-small np-btn-secondary" href="/admin/waf/logs/<%= log.id %>">View</a>
-                    <form class="d-inline" method="post" action="/admin/waf/logs/<%= log.id %>/block-ip" data-confirm="Block IP <%= log.ip_address %>?">
+                  <td class="text-nowrap"><%= formatDateTime(row.created_at) %></td>
+                  <td><a href="<%= wafUi.buildLogFilterUrl({ ip: row.ip_address }) %>"><code><%= row.ip_address %></code></a></td>
+                  <td><span class="np-badge np-badge-muted"><%= row.method %></span></td>
+                  <td class="small text-break" style="max-width:240px"><%= row.url %></td>
+                  <td><a href="<%= wafUi.buildLogFilterUrl({ category: row.category }) %>"><span class="np-badge np-badge-muted"><%= wafUi.categoryLabel(row.category) %></span></a></td>
+                  <td><span class="np-badge np-badge-<%= wafUi.severityBadge(row.severity) %>"><%= row.severity || '-' %></span></td>
+                  <td><span class="np-badge np-badge-<%= wafUi.actionBadge(row.action_taken) %>"><%= row.action_taken %></span></td>
+                  <td><span class="np-badge np-badge-<%= wafUi.riskLevel(row.risk_score).class %>"><%= row.risk_score %></span></td>
+                  <td class="text-end text-nowrap">
+                    <a class="np-btn np-btn-small np-btn-secondary" href="/admin/waf/logs/<%= row.id %>">Details</a>
+                    <form method="post" action="/admin/waf/logs/<%= row.id %>/block-ip" class="d-inline">
                       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                      <input type="hidden" name="return_to" value="<%= logsReturnTo %>">
+                      <input type="hidden" name="return_to" value="/admin/waf/logs">
                       <button class="np-btn np-btn-small np-btn-danger" type="submit">Block IP</button>
                     </form>
                   </td>
                 </tr>
               <% }) %>
-              <% if (!logs.length) { %><tr><td colspan="9" class="text-center text-muted py-4">No WAF logs found.</td></tr><% } %>
+              <% if (!logs.length) { %>
+                <tr><td colspan="9" class="text-center text-muted py-5">No WAF logs match your filters.</td></tr>
+              <% } %>
             </tbody>
           </table>
         </div>
       </div>
-      <div class="np-widget-footer d-flex justify-content-between align-items-center px-3 py-2 border-top">
-        <span class="text-muted">Page <%= meta.page %> of <%= meta.pages %></span>
-        <div class="d-flex gap-2">
-          <a class="np-btn np-btn-small np-btn-secondary <%= meta.page <= 1 ? 'disabled' : '' %>" href="?page=<%= meta.page - 1 %>">Previous</a>
-          <a class="np-btn np-btn-small np-btn-secondary <%= meta.page >= meta.pages ? 'disabled' : '' %>" href="?page=<%= meta.page + 1 %>">Next</a>
+      <% if (meta.pages > 1) { %>
+        <% const qs = new URLSearchParams(filters || {}); %>
+        <div class="np-widget-footer px-3 py-2 border-top d-flex justify-content-between align-items-center">
+          <span class="text-muted small">Page <%= meta.page %> of <%= meta.pages %> · <%= meta.total %> entries</span>
+          <div class="d-flex gap-2">
+            <% if (meta.page > 1) { qs.set('page', meta.page - 1); %><a class="np-btn np-btn-small np-btn-secondary" href="/admin/waf/logs?<%= qs.toString() %>">Previous</a><% } %>
+            <% if (meta.page < meta.pages) { qs.set('page', meta.page + 1); %><a class="np-btn np-btn-small np-btn-secondary" href="/admin/waf/logs?<%= qs.toString() %>">Next</a><% } %>
+          </div>
         </div>
+      <% } %>
+    </div>
+
+    <div class="np-widget mt-3">
+      <div class="np-widget-header"><span>Log maintenance</span></div>
+      <div class="np-widget-body">
+        <form method="post" action="/admin/waf/logs/delete-old" class="row g-2 align-items-end" onsubmit="return confirm('Delete logs older than the selected age?');">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="col-md-3">
+            <label class="form-label">Delete logs older than (days)</label>
+            <input class="form-control" type="number" min="1" name="days" value="<%= settings.waf_log_retention_days || 90 %>">
+          </div>
+          <div class="col-md-3"><button class="np-btn np-btn-danger" type="submit">Purge old logs</button></div>
+        </form>
       </div>
     </div>
   </main>

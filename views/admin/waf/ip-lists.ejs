@@ -5,7 +5,7 @@
   <main class="admin-content" id="np-main-content">
     <%- include('../partials/flash') %>
     <div class="np-page-header">
-      <div><h1>WAF IP Lists</h1><p class="np-help-text mb-0">Whitelist trusted clients, block attackers, or apply temporary blocks. IPv4 CIDR notation is supported (e.g. <code>203.0.113.0/24</code>).</p></div>
+      <div><h1>WAF IP Lists</h1><p class="np-help-text mb-0">Whitelist trusted clients, block attackers, or apply temporary blocks. IPv4 CIDR notation is supported.</p></div>
       <a class="np-btn np-btn-secondary" href="/admin/waf">Dashboard</a>
     </div>
 
@@ -13,7 +13,7 @@
 
     <div class="row g-3">
       <div class="col-lg-4">
-        <form class="np-widget" method="post" action="/admin/waf/ip-lists">
+        <form class="np-widget mb-3" method="post" action="/admin/waf/ip-lists">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div class="np-widget-header"><span>Add IP entry</span></div>
           <div class="np-widget-body">
@@ -28,18 +28,33 @@
           </div>
           <div class="np-widget-footer px-3 py-2 border-top"><button class="np-btn np-btn-primary w-100" type="submit">Save entry</button></div>
         </form>
+
+        <form class="np-widget" method="post" action="/admin/waf/ip-lists/bulk">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="np-widget-header"><span>Bulk import</span></div>
+          <div class="np-widget-body">
+            <label class="form-label">IPs (one per line)</label>
+            <textarea class="form-control font-monospace mb-2" name="bulk_ips" rows="6" placeholder="203.0.113.10&#10;198.51.100.0/24"></textarea>
+            <label class="form-label">List type</label>
+            <select class="form-select mb-2" name="list_type"><% listTypes.forEach(function(type) { %><option value="<%= type %>" <%= type === 'blacklist' ? 'selected' : '' %>><%= type %></option><% }) %></select>
+            <label class="form-label">Reason</label>
+            <input class="form-control" name="reason" placeholder="Bulk import">
+          </div>
+          <div class="np-widget-footer px-3 py-2 border-top"><button class="np-btn np-btn-secondary w-100" type="submit">Import entries</button></div>
+        </form>
       </div>
       <div class="col-lg-8">
         <form class="np-widget mb-3" method="get" action="/admin/waf/ip-lists">
           <div class="np-widget-body">
             <div class="row g-2">
-              <div class="col-md-6"><input class="form-control" name="ip" value="<%= filters.ip || '' %>" placeholder="Search IP or CIDR"></div>
+              <div class="col-md-6"><input class="form-control font-monospace" name="ip" value="<%= filters.ip || '' %>" placeholder="Search IP or CIDR"></div>
               <div class="col-md-4"><select class="form-select" name="type"><option value="">All types</option><% listTypes.forEach(function(type) { %><option value="<%= type %>" <%= filters.type === type ? 'selected' : '' %>><%= type %></option><% }) %></select></div>
               <div class="col-md-2"><button class="np-btn np-btn-secondary w-100">Filter</button></div>
             </div>
           </div>
         </form>
         <div class="np-widget">
+          <div class="np-widget-header"><span>IP list entries</span><span class="np-badge np-badge-muted"><%= ipLists.length %></span></div>
           <div class="np-widget-body p-0">
             <div class="table-responsive">
               <table class="np-list-table mb-0">
@@ -53,9 +68,10 @@
                       <td><%= row.expires_at ? formatDateTime(row.expires_at) : '-' %></td>
                       <td><span class="np-badge np-badge-<%= row.status ? 'success' : 'muted' %>"><%= row.status ? 'active' : 'inactive' %></span></td>
                       <td class="text-end">
-                        <form method="post" action="/admin/waf/ip-lists/<%= row.id %>/delete" onsubmit="return confirm('Remove this IP entry?')">
+                        <a class="np-btn np-btn-small np-btn-secondary" href="<%= wafUi.buildLogFilterUrl({ ip: row.ip_address.split('/')[0] }) %>">Logs</a>
+                        <form method="post" action="/admin/waf/ip-lists/<%= row.id %>/delete" class="d-inline" onsubmit="return confirm('Remove this IP entry?')">
                           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                          <button class="np-btn np-btn-small np-btn-danger">Remove</button>
+                          <button class="np-btn np-btn-small np-btn-danger" type="submit">Remove</button>
                         </form>
                       </td>
                     </tr>

@@ -170,6 +170,62 @@ test('admin can block IP from WAF log list', async () => {
   clearWafCache();
 });
 
+test('admin can view WAF log detail with snapshots', async () => {
+  const log = await models.WafLog.create({
+    request_id: `detail-${Date.now()}`,
+    ip_address: '203.0.113.88',
+    method: 'GET',
+    url: '/wp-login.php',
+    action_taken: 'block',
+    severity: 'high',
+    risk_score: 75,
+    category: 'cms_probe',
+    country: 'US',
+    query_snapshot: { redirect: '/admin' },
+    headers_snapshot: { 'user-agent': 'scanner' }
+  });
+
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const detail = await agent.get(`/admin/waf/logs/${log.id}`);
+  expect(detail.status).toBe(200);
+  expect(detail.text).toMatch(/WAF Log|wp-login|Block IP|Request summary/);
+
+  await log.destroy({ force: true });
+});
+
+test('admin can switch WAF mode from dashboard quick control', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/waf');
+  const response = await agent.post('/admin/waf/quick-mode').type('form').send({
+    waf_mode: 'block',
+    return_to: '/admin/waf',
+    _csrf: csrf
+  });
+  expect(response.status).toBe(302);
+  const mode = await models.WafSetting.findOne({ where: { setting_key: 'waf_mode' } });
+  expect(mode.setting_value).toBe('block');
+  clearWafCache();
+});
+
+test('admin can bulk import WAF IP list entries', async () => {
+  const agent = request.agent(app);
+  await login(agent, 'admin@example.com', 'Admin@12345');
+  const csrf = await getCsrf(agent, '/admin/waf/ip-lists');
+  const response = await agent.post('/admin/waf/ip-lists/bulk').type('form').send({
+    bulk_ips: '203.0.113.50\n203.0.113.51',
+    list_type: 'blacklist',
+    reason: 'Bulk test',
+    _csrf: csrf
+  });
+  expect(response.status).toBe(302);
+  const count = await models.WafIpList.count({ where: { ip_address: '203.0.113.50', status: true } });
+  expect(count).toBeGreaterThan(0);
+  await models.WafIpList.destroy({ where: { ip_address: ['203.0.113.50', '203.0.113.51'] }, force: true });
+  clearWafCache();
+});
+
 test('admin can upload and activate a WebGuard ML model zip', async () => {
   const storageRoot = path.join(os.tmpdir(), `wg-admin-${Date.now()}`);
   fs.mkdirSync(storageRoot, { recursive: true });

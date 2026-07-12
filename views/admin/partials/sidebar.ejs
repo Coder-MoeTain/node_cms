@@ -8,6 +8,7 @@
   <nav class="nav flex-column admin-nav">
     <% if (can('view_dashboard')) { %>
       <a class="nav-link <%= isActive('/admin') && currentPath === '/admin' ? 'active' : '' %>" href="/admin"><i class="bi bi-house-door"></i> Dashboard</a>
+      <a class="nav-link <%= isActive('/admin/visitor-stats') ? 'active' : '' %>" href="/admin/visitor-stats"><i class="bi bi-graph-up"></i> Visitor Statistics</a>
     <% } %>
 
     <% const postsActive = isAnyActive(['/admin/posts','/admin/categories','/admin/tags']); %>

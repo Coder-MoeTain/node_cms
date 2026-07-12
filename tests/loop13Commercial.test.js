@@ -190,18 +190,21 @@ describe('Loop 13 commercial quality', () => {
   });
 
   describe('Analytics Lite migration', () => {
-    test('migration SQL file exists and plugin can record page views', async () => {
+    test('migration SQL file exists and core visitor tracking records page views', async () => {
       const sqlPath = path.join(process.cwd(), 'plugins/analytics-lite/migrations/001_page_views.sql');
       expect(fs.existsSync(sqlPath)).toBe(true);
-      await models.Plugin.findOrCreate({
-        where: { slug: 'analytics-lite' },
-        defaults: { name: 'Analytics Lite', slug: 'analytics-lite', version: '1.3.0', active: false }
-      });
-      await pluginLoader.runPluginMigrations('analytics-lite');
-      const analytics = require('../plugins/analytics-lite/index.js');
-      const req = { path: '/loop13-test', get: () => 'jest-agent' };
-      await analytics.recordPageView(req);
-      const count = await analytics.countRecentPageViews(1);
+      const { recordVisitorPageView, countPageViews } = require('../utils/visitorStatsHelper');
+      const req = {
+        method: 'GET',
+        path: '/loop13-test',
+        sessionID: 'loop13',
+        session: { id: 'loop13' },
+        clientIp: '127.0.0.1',
+        get: () => 'jest-agent',
+        res: { locals: { siteSettings: { visitor_tracking_enabled: 'true' } } }
+      };
+      await recordVisitorPageView(req);
+      const count = await countPageViews(null, 1);
       expect(count).toBeGreaterThan(0);
     });
   });

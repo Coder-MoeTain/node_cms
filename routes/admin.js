@@ -52,6 +52,7 @@ const network = require('../controllers/admin/networkController');
 const autosave = require('../controllers/admin/autosaveController');
 const comments = require('../controllers/admin/commentController');
 const translation = require('../controllers/admin/translationController');
+const visitorStats = require('../controllers/admin/visitorStatsController');
 const taxonomies = require('../controllers/admin/taxonomyController');
 
 const router = express.Router();
@@ -111,6 +112,9 @@ router.get('/profile/2fa/recovery-codes', requireAuth, auth.recoveryCodesView);
 router.use(requireAuth, activityLogMiddleware('admin'));
 
 router.get('/', requireAuth, can('view_dashboard'), dashboard.dashboard);
+router.get('/visitor-stats', requireAuth, can('view_dashboard'), visitorStats.index);
+router.post('/visitor-stats/settings', requireAuth, can('manage_settings'), visitorStats.updateSettings);
+router.get('/visitor-stats/export.csv', requireAuth, can('view_dashboard'), visitorStats.exportCsv);
 router.get('/api/search', requireAuth, adminSearch.adminSearch);
 router.get('/api/block-patterns', requireAuth, blockEditorApi.listPatterns);
 router.get('/api/block-patterns/:slug', requireAuth, blockEditorApi.getPattern);
@@ -186,6 +190,9 @@ router.post('/traffic/delete-old', requireAuth, can('manage_security'), traffic.
 
 const wafPermission = canAny(['manage_waf', 'manage_security']);
 router.get('/waf', requireAuth, wafPermission, waf.dashboard);
+router.post('/waf/quick-mode', requireAuth, wafPermission, waf.quickMode);
+router.post('/waf/rate-limits/cleanup', requireAuth, wafPermission, waf.clearExpiredRateLimits);
+router.post('/waf/rate-limits/:id/clear', requireAuth, wafPermission, waf.clearRateLimit);
 router.get('/waf/settings', requireAuth, wafPermission, waf.settings);
 router.post('/waf/settings', requireAuth, wafPermission, waf.updateSettings);
 router.post('/waf/webguard/test', requireAuth, wafPermission, waf.testWebGuardConnection);
@@ -207,6 +214,7 @@ router.post('/waf/logs/delete-old', requireAuth, wafPermission, waf.deleteOldLog
 router.get('/waf/logs/export/csv', requireAuth, wafPermission, waf.exportLogsCsv);
 router.get('/waf/ip-lists', requireAuth, wafPermission, waf.ipLists);
 router.post('/waf/ip-lists', requireAuth, wafPermission, waf.addIpList);
+router.post('/waf/ip-lists/bulk', requireAuth, wafPermission, waf.bulkImportIps);
 router.post('/waf/ip-lists/:id/delete', requireAuth, wafPermission, waf.removeIpList);
 router.post('/waf/logs/:id/block-ip', requireAuth, wafPermission, waf.blockIpFromLog);
 router.post('/waf/logs/:id/whitelist-ip', requireAuth, wafPermission, waf.whitelistIpFromLog);
