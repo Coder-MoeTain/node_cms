@@ -30,6 +30,10 @@ const {
   mlResultToMatch,
   attachMlMetadata
 } = require('../utils/wafMlHelper');
+<<<<<<< HEAD
+=======
+const { isPathExcluded } = require('../utils/wafAdminHelper');
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 
 const cache = {
   loadedAt: 0,
@@ -72,7 +76,17 @@ const DEFAULT_SETTINGS = {
   webguard_api_token: '',
   webguard_timeout_ms: 500,
   webguard_allow_localhost: false,
+<<<<<<< HEAD
   webguard_fail_open: true
+=======
+  webguard_fail_open: true,
+  waf_rate_limit_public: 1000,
+  waf_rate_limit_admin: 600,
+  waf_rate_limit_login: 8,
+  waf_rate_limit_mutation: 60,
+  waf_path_exclusions: '',
+  waf_log_retention_days: 90
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 };
 
 const categorySettingMap = {
@@ -158,21 +172,28 @@ function isLocalRequest(req) {
     || ip.startsWith('::ffff:127.0.0.1');
 }
 
-function routeLimitFor(req) {
+function routeLimitFor(req, settings = {}) {
   const routeType = getRouteType(req);
   const isDev = appConfig.env === 'development' || appConfig.env === 'test';
+  const windowMs = 15 * 60 * 1000;
   if (isDev && isLocalRequest(req)) {
-    return { routeKey: routeType, max: 10000, windowMs: 15 * 60 * 1000 };
+    return { routeKey: routeType, max: 10000, windowMs };
   }
-  if (routeType === 'admin_login') return { routeKey: 'admin_login', max: 8, windowMs: 15 * 60 * 1000 };
-  if (routeType === 'admin') return { routeKey: 'admin', max: 600, windowMs: 15 * 60 * 1000 };
-  if (routeType === 'public_mutation') return { routeKey: `strict:${req.path}`, max: 60, windowMs: 15 * 60 * 1000 };
-  return { routeKey: 'public', max: 1000, windowMs: 15 * 60 * 1000 };
+  if (routeType === 'admin_login') {
+    return { routeKey: 'admin_login', max: Number(settings.waf_rate_limit_login) || 8, windowMs };
+  }
+  if (routeType === 'admin') {
+    return { routeKey: 'admin', max: Number(settings.waf_rate_limit_admin) || 600, windowMs };
+  }
+  if (routeType === 'public_mutation') {
+    return { routeKey: `strict:${req.path}`, max: Number(settings.waf_rate_limit_mutation) || 60, windowMs };
+  }
+  return { routeKey: 'public', max: Number(settings.waf_rate_limit_public) || 1000, windowMs };
 }
 
-async function checkWafRateLimit(req, ipAddress) {
+async function checkWafRateLimit(req, ipAddress, settings = {}) {
   const now = new Date();
-  const limit = routeLimitFor(req);
+  const limit = routeLimitFor(req, settings);
   const firstWindowDate = new Date(now.getTime() - limit.windowMs);
   const [row] = await WafRateLimit.findOrCreate({
     where: { ip_address: ipAddress, route_key: limit.routeKey },
@@ -300,6 +321,7 @@ async function wafMiddleware(req, res, next) {
     const adminRoute = req.path === '/admin' || req.path.startsWith('/admin/');
     if (adminRoute && !settings.admin_protection_enabled) return next();
     if (!adminRoute && !settings.public_protection_enabled) return next();
+    if (isPathExcluded(req.path, settings.waf_path_exclusions)) return next();
 
     const trustProxy = settings.trusted_proxy_enabled === true
       || settings.trusted_proxy_enabled === 'true'
@@ -324,7 +346,7 @@ async function wafMiddleware(req, res, next) {
       return next();
     }
 
-    const rateLimit = await checkWafRateLimit(req, ipAddress);
+    const rateLimit = await checkWafRateLimit(req, ipAddress, settings);
     if (rateLimit.exceeded) {
       const payload = buildSafeLogPayload(req, [], 'rate_limit', adminRoute ? 60 : 35);
       payload.matched_rule_name = `WAF dynamic rate limit: ${rateLimit.routeKey}`;

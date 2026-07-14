@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const { sequelize } = require('../../models');
 const { loadPluginSettings, settingBool, settingValue } = require('../../utils/pluginSettings');
 const { buildDeferredLoader } = require('../../utils/consentScript');
@@ -18,6 +19,11 @@ async function countRecentPageViews(days = 7) {
   );
   return Number(rows?.[0]?.total || 0);
 }
+=======
+const { loadPluginSettings, settingBool, settingValue } = require('../../utils/pluginSettings');
+const { buildDeferredLoader } = require('../../utils/consentScript');
+const { countPageViews, tableReady } = require('../../utils/visitorStatsHelper');
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 
 module.exports = {
   async register({ hooks, manifest }) {
@@ -29,7 +35,10 @@ module.exports = {
     const respectConsent = settingBool(settings.respect_cookie_consent, true);
     const customScript = settingValue(settings, 'custom_script');
     const footerPosition = settingValue(settings, 'footer_position', 'footer');
+<<<<<<< HEAD
     const localPageViews = settingBool(settings.local_page_views, true);
+=======
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 
     const buildGaScript = () => {
       if (!trackingId) return '';
@@ -49,6 +58,7 @@ module.exports = {
       return respectConsent ? buildDeferredLoader(html) : html;
     };
 
+<<<<<<< HEAD
     if (localPageViews) {
       hooks.register('publicFooter', async ({ req }) => {
         if (!trackAdmin && req.path.startsWith('/admin')) return null;
@@ -61,6 +71,8 @@ module.exports = {
       }, 1);
     }
 
+=======
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
     const hookName = footerPosition === 'head' ? 'publicHead' : 'publicFooter';
     hooks.register(hookName, ({ req }) => {
       if (!trackAdmin && req.path.startsWith('/admin')) return null;
@@ -69,6 +81,7 @@ module.exports = {
 
     hooks.register('dashboardWidgets', async () => {
       let localCount = null;
+<<<<<<< HEAD
       if (localPageViews) {
         try {
           localCount = await countRecentPageViews(7);
@@ -78,15 +91,33 @@ module.exports = {
       }
       const localLine = localCount != null
         ? `<br>Local page views (7 days): <strong>${localCount}</strong>`
+=======
+      try {
+        if (await tableReady()) {
+          localCount = await countPageViews(null, 7);
+        }
+      } catch {
+        localCount = null;
+      }
+      const localLine = localCount != null
+        ? `<br>Local page views (7 days): <strong>${localCount}</strong> · <a href="/admin/visitor-stats">View statistics</a>`
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
         : '';
       return {
         title: 'Analytics Lite',
         body: trackingId
           ? `GA4 tracking active for <code>${trackingId}</code>${respectConsent ? ' · waits for cookie consent' : ''}${debugMode ? ' · debug on' : ''}.${localLine}`
+<<<<<<< HEAD
           : `Add a GA4 Measurement ID in plugin settings to start tracking.${localLine || ' Local page view logging is enabled when migrations have run.'}`
       };
     });
   },
   recordPageView,
   countRecentPageViews
+=======
+          : `Add a GA4 Measurement ID in plugin settings to start tracking.${localLine || ' Local page views are recorded by the core visitor statistics module.'}`
+      };
+    });
+  }
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 };

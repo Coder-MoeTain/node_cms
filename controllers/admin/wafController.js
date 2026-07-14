@@ -1,5 +1,9 @@
 const { Op, fn, col } = require('sequelize');
+<<<<<<< HEAD
 const { WafRule, WafLog, WafIpList, WafSetting } = require('../../models');
+=======
+const { WafRule, WafLog, WafIpList, WafSetting, WafRateLimit } = require('../../models');
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 const { createActivityLog } = require('../../utils/activityLogHelper');
 const { getPagination, pageMeta } = require('../../utils/pagination');
 const { createSlug } = require('../../utils/slugGenerator');
@@ -14,6 +18,10 @@ const {
 } = require('../../utils/webguardModelManager');
 const appConfig = require('../../config/app');
 const { formatInTimezone } = require('../../utils/timezoneHelper');
+<<<<<<< HEAD
+=======
+const wafUi = require('../../utils/wafAdminHelper');
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 
 const categories = ['sql_injection', 'xss', 'command_injection', 'path_traversal', 'file_attack', 'bad_bot', 'scanner', 'brute_force', 'spam', 'cms_probe', 'custom'];
 const targets = ['url', 'query', 'body', 'headers', 'user_agent', 'ip', 'file_name', 'all'];
@@ -56,7 +64,17 @@ const settingFields = {
   webguard_api_token: 'string',
   webguard_timeout_ms: 'number',
   webguard_allow_localhost: 'boolean',
+<<<<<<< HEAD
   webguard_fail_open: 'boolean'
+=======
+  webguard_fail_open: 'boolean',
+  waf_rate_limit_public: 'number',
+  waf_rate_limit_admin: 'number',
+  waf_rate_limit_login: 'number',
+  waf_rate_limit_mutation: 'number',
+  waf_path_exclusions: 'string',
+  waf_log_retention_days: 'number'
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 };
 
 const SECRET_WAF_SETTING_KEYS = new Set(['webguard_api_key', 'webguard_api_token']);
@@ -147,33 +165,55 @@ async function dashboard(req, res, next) {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
     const settings = await getSettingsObject();
     const [
       blockedToday,
+      blockedYesterday,
       loggedToday,
+      rateLimitedToday,
       topIps,
       topRules,
       topCategories,
+      topCountries,
       recentBlocked,
       riskSummary,
       activeBlocks,
       systemRuleCount,
       customRuleCount,
       blocksLast7Days,
+<<<<<<< HEAD
       whitelistCount
+=======
+      whitelistCount,
+      activeRateLimits
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
     ] = await Promise.all([
       WafLog.count({ where: { action_taken: 'block', created_at: { [Op.gte]: today } } }),
+      WafLog.count({ where: { action_taken: 'block', created_at: { [Op.gte]: yesterday, [Op.lt]: today } } }),
       WafLog.count({ where: { created_at: { [Op.gte]: today } } }),
+      WafLog.count({ where: { action_taken: 'rate_limit', created_at: { [Op.gte]: today } } }),
       WafLog.findAll({ attributes: ['ip_address', [fn('COUNT', col('id')), 'count']], group: ['ip_address'], order: [[fn('COUNT', col('id')), 'DESC']], limit: 8 }),
       WafLog.findAll({ attributes: ['matched_rule_name', [fn('COUNT', col('id')), 'count']], where: { matched_rule_name: { [Op.ne]: null } }, group: ['matched_rule_name'], order: [[fn('COUNT', col('id')), 'DESC']], limit: 8 }),
       WafLog.findAll({ attributes: ['category', [fn('COUNT', col('id')), 'count']], where: { category: { [Op.ne]: null } }, group: ['category'], order: [[fn('COUNT', col('id')), 'DESC']], limit: 8 }),
+      WafLog.findAll({ attributes: ['country', [fn('COUNT', col('id')), 'count']], where: { country: { [Op.ne]: null } }, group: ['country'], order: [[fn('COUNT', col('id')), 'DESC']], limit: 6 }),
       WafLog.findAll({ where: { action_taken: ['block', 'rate_limit', 'temporary_block'] }, order: [['created_at', 'DESC']], limit: 10 }),
       WafLog.findAll({ attributes: ['severity', [fn('COUNT', col('id')), 'count']], where: { created_at: { [Op.gte]: today }, severity: { [Op.ne]: null } }, group: ['severity'] }),
       WafIpList.count({ where: { status: true, list_type: ['blacklist', 'temporary_block'] } }),
       WafRule.count({ where: { is_system: true } }),
       WafRule.count({ where: { is_system: false } }),
       getBlocksLast7Days(res.locals.siteTimezone),
+<<<<<<< HEAD
       WafIpList.count({ where: { status: true, list_type: 'whitelist' } })
+=======
+      WafIpList.count({ where: { status: true, list_type: 'whitelist' } }),
+      WafRateLimit.findAll({
+        where: { blocked_until: { [Op.gt]: new Date() } },
+        order: [['blocked_until', 'DESC']],
+        limit: 8
+      })
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
     ]);
 
     return res.render('admin/waf/dashboard', {
@@ -181,17 +221,26 @@ async function dashboard(req, res, next) {
       activeNav: 'dashboard',
       settings,
       blockedToday,
+      blockedYesterday,
       loggedToday,
+      rateLimitedToday,
       topIps,
       topRules,
       topCategories,
+      topCountries,
       recentBlocked,
       riskSummary,
       activeBlocks,
       systemRuleCount,
       customRuleCount,
       blocksLast7Days,
+<<<<<<< HEAD
       whitelistCount
+=======
+      whitelistCount,
+      activeRateLimits,
+      wafUi
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
     });
   } catch (error) {
     return next(error);
@@ -246,7 +295,12 @@ async function settings(req, res, next) {
         (!String(settings.webguard_api_url || '').trim() && appConfig.webguard?.baseUrl)
         || (!String(settings.webguard_api_key || '').trim() && !String(settings.webguard_api_token || '').trim()
           && (appConfig.webguard?.apiKey || appConfig.webguard?.bearerToken))
+<<<<<<< HEAD
       )
+=======
+      ),
+      wafUi
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
     });
   } catch (error) {
     return next(error);
@@ -401,6 +455,14 @@ async function logs(req, res, next) {
     if (req.query.category) where.category = req.query.category;
     if (req.query.severity) where.severity = req.query.severity;
     if (req.query.action) where.action_taken = req.query.action;
+    if (req.query.country) where.country = req.query.country;
+    if (req.query.q) {
+      where[Op.or] = [
+        { url: { [Op.like]: `%${req.query.q}%` } },
+        { matched_rule_name: { [Op.like]: `%${req.query.q}%` } },
+        { user_agent: { [Op.like]: `%${req.query.q}%` } }
+      ];
+    }
     if (req.query.date) {
       const start = new Date(req.query.date);
       const end = new Date(start);
@@ -408,7 +470,23 @@ async function logs(req, res, next) {
       where.created_at = { [Op.gte]: start, [Op.lt]: end };
     }
     const { rows, count } = await WafLog.findAndCountAll({ where, order: [['created_at', 'DESC']], limit, offset });
+<<<<<<< HEAD
     return res.render('admin/waf/logs/index', { title: 'WAF Logs', activeNav: 'logs', logs: rows, meta: pageMeta(count, page, limit), filters: req.query, categories, severities, actions });
+=======
+    const settings = await getSettingsObject();
+    return res.render('admin/waf/logs/index', {
+      title: 'WAF Logs',
+      activeNav: 'logs',
+      logs: rows,
+      meta: pageMeta(count, page, limit),
+      filters: req.query,
+      categories,
+      severities,
+      actions,
+      settings,
+      wafUi
+    });
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
   } catch (error) {
     return next(error);
   }
@@ -418,7 +496,11 @@ async function logDetail(req, res, next) {
   try {
     const log = await WafLog.findByPk(req.params.id, { include: [WafRule] });
     if (!log) return flashAndRedirect(req, res, 'WAF log not found.', '/admin/waf/logs');
+<<<<<<< HEAD
     return res.render('admin/waf/logs/show', { title: 'WAF Log Detail', activeNav: 'logs', log });
+=======
+    return res.render('admin/waf/logs/show', { title: 'WAF Log Detail', activeNav: 'logs', log, wafUi });
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
   } catch (error) {
     return next(error);
   }
@@ -453,7 +535,11 @@ async function ipLists(req, res, next) {
     if (req.query.ip) where.ip_address = { [Op.like]: `%${req.query.ip}%` };
     if (req.query.type) where.list_type = req.query.type;
     const ipLists = await WafIpList.findAll({ where, order: [['created_at', 'DESC']] });
+<<<<<<< HEAD
     return res.render('admin/waf/ip-lists', { title: 'WAF IP Lists', activeNav: 'ip-lists', ipLists, filters: req.query, listTypes });
+=======
+    return res.render('admin/waf/ip-lists', { title: 'WAF IP Lists', activeNav: 'ip-lists', ipLists, filters: req.query, listTypes, wafUi });
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
   } catch (error) {
     return next(error);
   }
@@ -736,6 +822,91 @@ async function deleteModelAction(req, res, next) {
   }
 }
 
+<<<<<<< HEAD
+=======
+async function quickMode(req, res, next) {
+  try {
+    const mode = ['monitor', 'block', 'disabled'].includes(req.body.waf_mode) ? req.body.waf_mode : 'monitor';
+    await upsertWafSetting('waf_mode', mode, 'string');
+    if (req.body.waf_enabled === 'on' || req.body.waf_enabled === 'true') {
+      await upsertWafSetting('waf_enabled', 'true', 'boolean');
+    } else if (mode === 'disabled') {
+      await upsertWafSetting('waf_enabled', 'false', 'boolean');
+    }
+    clearWafCache();
+    await createActivityLog({
+      user_id: req.session?.user?.id || null,
+      action: 'waf_quick_mode',
+      entity_type: 'waf',
+      ip_address: req.ip,
+      user_agent: req.get('user-agent'),
+      metadata: { mode }
+    });
+    req.flash('success', `WAF mode switched to ${mode}.`);
+    return res.redirect(req.body.return_to || '/admin/waf');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function bulkImportIps(req, res, next) {
+  try {
+    const listType = listTypes.includes(req.body.list_type) ? req.body.list_type : 'blacklist';
+    const lines = String(req.body.bulk_ips || '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    let imported = 0;
+    for (const ipAddress of lines) {
+      await WafIpList.upsert({
+        ip_address: ipAddress,
+        list_type: listType,
+        reason: req.body.reason || 'Bulk import',
+        expires_at: null,
+        status: true,
+        created_by: req.session.user.id
+      });
+      imported += 1;
+    }
+    clearWafCache();
+    req.flash('success', `Imported ${imported} IP entr${imported === 1 ? 'y' : 'ies'}.`);
+    return res.redirect('/admin/waf/ip-lists');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function clearRateLimit(req, res, next) {
+  try {
+    const row = await WafRateLimit.findByPk(req.params.id);
+    if (row) {
+      await row.update({ request_count: 0, blocked_until: null });
+      req.flash('success', `Rate limit cleared for ${row.ip_address}.`);
+    }
+    return res.redirect('/admin/waf');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function clearExpiredRateLimits(req, res, next) {
+  try {
+    const deleted = await WafRateLimit.destroy({
+      where: {
+        [Op.or]: [
+          { blocked_until: { [Op.lt]: new Date() } },
+          { last_request_at: { [Op.lt]: new Date(Date.now() - 24 * 60 * 60 * 1000) } }
+        ]
+      }
+    });
+    req.flash('success', `Cleaned up ${deleted} stale rate limit record(s).`);
+    return res.redirect('/admin/waf');
+  } catch (error) {
+    return next(error);
+  }
+}
+
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 module.exports = {
   dashboard,
   settings,
@@ -761,5 +932,13 @@ module.exports = {
   testWebGuardConnection,
   uploadModel,
   activateModelAction,
+<<<<<<< HEAD
   deleteModelAction
+=======
+  deleteModelAction,
+  quickMode,
+  bulkImportIps,
+  clearRateLimit,
+  clearExpiredRateLimits
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 };

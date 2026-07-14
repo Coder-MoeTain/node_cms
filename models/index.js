@@ -55,6 +55,10 @@ const Taxonomy = require('./Taxonomy')(sequelize);
 const TaxonomyTerm = require('./TaxonomyTerm')(sequelize);
 const PostTaxonomyTerm = require('./PostTaxonomyTerm')(sequelize);
 const TrafficLog = require('./TrafficLog')(sequelize);
+<<<<<<< HEAD
+=======
+const VisitorPageView = require('./VisitorPageView')(sequelize);
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 
 Role.belongsToMany(Permission, { through: 'role_permissions', foreignKey: 'role_id', otherKey: 'permission_id' });
 Permission.belongsToMany(Role, { through: 'role_permissions', foreignKey: 'permission_id', otherKey: 'role_id' });
@@ -222,5 +226,10 @@ module.exports = {
   Taxonomy,
   TaxonomyTerm,
   PostTaxonomyTerm,
+<<<<<<< HEAD
   TrafficLog
+=======
+  TrafficLog,
+  VisitorPageView
+>>>>>>> be7935be6937b397b41e2643f4300e1b38fa31a8
 };
